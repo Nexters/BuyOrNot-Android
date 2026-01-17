@@ -1,0 +1,95 @@
+name: Orbit CI
+
+on:
+    pull_request:
+        branches: [develop]
+        paths:
+            - '**/*.kt'
+            - 'build.gradle'
+            - 'app/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Gradle Cache
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradle.properties', '**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # Checkout Code
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      # Setup JDK
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      # Setup Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # Grant Execute Permission
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # Decode google-services.json for debug
+      - name: Decode google-services.json (debug)
+        env:
+          FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET_DEBUG }}
+        run: |
+          mkdir -p app/src/dev
+          echo $FIREBASE_SECRET | base64 --decode > app/src/dev/google-services.json
+
+      # Decode google-services.json for release
+      - name: Decode google-services.json (release)
+        env:
+          FIREBASE_SECRET: ${{ secrets.FIREBASE_SECRET_RELEASE }}
+        run: echo $FIREBASE_SECRET | base64 --decode > app/google-services.json
+
+      # Add Local Properties
+      - name: Add Local Properties
+        env:
+            BASE_URL: ${{ secrets.BASE_URL }}
+            AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
+            ADMOB_APP_ID_DEBUG: ${{ secrets.ADMOB_APP_ID_DEBUG }}
+            ADMOB_APP_ID_RELEASE: ${{ secrets.ADMOB_APP_ID_RELEASE }}
+            ADMOB_AD_UNIT_ID_DEBUG: ${{ secrets.ADMOB_AD_UNIT_ID_DEBUG }}
+            ADMOB_AD_UNIT_ID_RELEASE: ${{ secrets.ADMOB_AD_UNIT_ID_RELEASE }}
+        run: |
+            echo -e "baseUrl=$BASE_URL" > local.properties
+            echo -e "amplitudeApiKey=$AMPLITUDE_API_KEY" >> local.properties
+            echo -e "admobAppIdDebug=$ADMOB_APP_ID_DEBUG" >> local.properties
+            echo -e "admobAppIdRelease=$ADMOB_APP_ID_RELEASE" >> local.properties
+            echo -e "admobAdUnitIdDebug=$ADMOB_AD_UNIT_ID_DEBUG" >> local.properties
+            echo -e "admobAdUnitIdRelease=$ADMOB_AD_UNIT_ID_RELEASE" >> local.properties
+
+      # Debug Local Properties Check
+      - name: Debug Local Properties
+        run: cat local.properties
+
+      # Run Lint and Build
+      - name: Run lint and build
+        run: ./gradlew ktlintCheck assembleDebug
+
+      # Run Unit Test and Generate Coverage
+      - name: Run unit tests and generate coverage
+        run: ./gradlew generateTestCoverageReport --no-configuration-cache
+
+      # Upload Coverage to Codecov
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+            token: ${{ secrets.CODECOV_TOKEN }}
+            files: data/build/reports/jacoco/testDebugUnitTestCoverage/testDebugUnitTestCoverage.xml
+            name: codecov-report
+            fail_ci_if_error: true
