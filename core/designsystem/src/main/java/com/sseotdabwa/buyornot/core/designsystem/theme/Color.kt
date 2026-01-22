@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.ui.theme
+package com.sseotdabwa.buyornot.core.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 
