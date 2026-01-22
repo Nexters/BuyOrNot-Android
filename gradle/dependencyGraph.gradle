@@ -1,0 +1,236 @@
+import org.gradle.work.DisableCachingByDefault
+
+import javax.inject.Inject
+
+@DisableCachingByDefault(because = "Generates Graphviz assets from the current project graph")
+abstract class ProjectDependencyGraphTask extends DefaultTask {
+
+    @Internal
+    abstract RegularFileProperty getDotFile()
+
+    @OutputFile
+    abstract RegularFileProperty getGraphImageFile()
+
+    @Input
+    abstract Property<String> getDotGraphContent()
+
+    @Inject
+    protected abstract ExecOperations getExecOperations()
+
+    ProjectDependencyGraphTask() {
+        group = "reporting"
+        description = "Generates a Graphviz dependency graph for all modules in the project."
+        dotFile.convention(project.layout.buildDirectory.file("reports/dependencyGraph/project.dot"))
+        graphImageFile.convention(project.layout.projectDirectory.file("project.dot.png"))
+    }
+
+    @TaskAction
+    void generate() {
+        File dotOutput = dotFile.get().asFile
+        File pngOutput = graphImageFile.get().asFile
+
+        dotOutput.parentFile.mkdirs()
+        pngOutput.parentFile.mkdirs()
+
+        dotOutput.text = dotGraphContent.get()
+
+        execOperations.exec { spec ->
+            spec.commandLine('dot', '-Tpng', dotOutput.absolutePath, '-o', pngOutput.absolutePath)
+        }
+
+        dotOutput.delete()
+        logger.lifecycle("Project module dependency graph created at ${pngOutput.absolutePath}")
+    }
+}
+
+class DependencyGraphBuilder {
+
+    static String build(Project rootProject) {
+        def rootProjects = new LinkedHashSet<Project>()
+        def queue = new ArrayDeque<Project>()
+        queue.add(rootProject)
+        while (!queue.isEmpty()) {
+            def current = queue.removeFirst()
+            rootProjects.add(current)
+            current.childProjects.values().each { queue.add(it) }
+        }
+
+        def projects = new LinkedHashSet<Project>()
+        def dependencies = new LinkedHashMap<String, List<String>>()
+        def featureModules = new LinkedHashSet<Project>()
+        def domainModules = new LinkedHashSet<Project>()
+        def coreModules = new LinkedHashSet<Project>()
+        def dataModules = new LinkedHashSet<Project>()
+        def multiplatformProjects = new LinkedHashSet<Project>()
+        def jsProjects = new LinkedHashSet<Project>()
+        def androidProjects = new LinkedHashSet<Project>()
+        def androidLibraryProjects = new LinkedHashSet<Project>()
+        def androidDynamicFeatureProjects = new LinkedHashSet<Project>()
+        def javaProjects = new LinkedHashSet<Project>()
+
+        queue.clear()
+        queue.add(rootProject)
+        while (!queue.isEmpty()) {
+            def current = queue.removeFirst()
+            current.childProjects.values().each { queue.add(it) }
+
+            categorizeModule(current, featureModules, domainModules, coreModules, dataModules,
+                    multiplatformProjects, jsProjects, androidProjects, androidLibraryProjects,
+                    androidDynamicFeatureProjects, javaProjects)
+
+            current.configurations.configureEach { config ->
+                def lowerName = config.name.toLowerCase(Locale.US)
+                if (lowerName.contains('test')) {
+                    return
+                }
+
+                config.dependencies
+                        .withType(ProjectDependency)
+                        .collect { it.dependencyProject }
+                        .each { dependency ->
+                            projects.add(current)
+                            projects.add(dependency)
+                            rootProjects.remove(dependency)
+
+                            def key = "${current.path}->${dependency.path}"
+                            def traits = dependencies.computeIfAbsent(key) { new ArrayList<String>() }
+
+                            if (lowerName.endsWith('implementation')) {
+                                traits.add('style=dotted')
+                            }
+                        }
+            }
+        }
+
+        def sortedProjects = projects.toList().sort { it.path }
+        def builder = new StringBuilder()
+        builder << 'digraph {\n'
+        builder << "  graph [label=\"${rootProject.name}\\n \",labelloc=t,fontsize=30,ranksep=1.4];\n"
+        builder << '  node [style=filled, fillcolor="#bbbbbb"];\n'
+        builder << '  rankdir=TB;\n\n'
+
+        builder << '  # Projects\n\n'
+        sortedProjects.each { proj ->
+            def traits = []
+            if (rootProjects.contains(proj)) {
+                traits.add('shape=box')
+            }
+
+            applyColorTrait(proj, traits, featureModules, domainModules, coreModules, dataModules,
+                    multiplatformProjects, jsProjects, androidProjects, androidLibraryProjects,
+                    androidDynamicFeatureProjects, javaProjects)
+
+            builder << "  \"${proj.path}\" [${traits.join(', ')}];\n"
+        }
+
+        builder << '\n  {rank = same;'
+        sortedProjects.each { proj ->
+            if (rootProjects.contains(proj)) {
+                builder << " \"${proj.path}\";"
+            }
+        }
+        builder << '}\n\n'
+
+        builder << '  # Dependencies\n\n'
+        dependencies.forEach { key, traits ->
+            def parts = key.split('->', 2)
+            builder << "  \"${parts[0]}\" -> \"${parts[1]}\""
+            if (!traits.isEmpty()) {
+                builder << " [${traits.join(', ')}]"
+            }
+            builder << '\n'
+        }
+        builder << '}\n'
+
+        return builder.toString()
+    }
+
+    private static void categorizeModule(
+            Project current,
+            Set<Project> featureModules,
+            Set<Project> domainModules,
+            Set<Project> coreModules,
+            Set<Project> dataModules,
+            Set<Project> multiplatformProjects,
+            Set<Project> jsProjects,
+            Set<Project> androidProjects,
+            Set<Project> androidLibraryProjects,
+            Set<Project> androidDynamicFeatureProjects,
+            Set<Project> javaProjects
+    ) {
+        if (current.path.startsWith(':feature')) {
+            featureModules.add(current)
+        } else if (current.path.contains(':domain')) {
+            domainModules.add(current)
+        } else if (current.path.contains(':core')) {
+            coreModules.add(current)
+        } else if (current.path.startsWith(':data')) {
+            dataModules.add(current)
+        } else if (current.plugins.hasPlugin('org.jetbrains.kotlin.multiplatform')) {
+            multiplatformProjects.add(current)
+        } else if (current.plugins.hasPlugin('kotlin2js')) {
+            jsProjects.add(current)
+        } else if (current.plugins.hasPlugin('com.android.application')) {
+            androidProjects.add(current)
+        } else if (current.plugins.hasPlugin('com.android.library')) {
+            androidLibraryProjects.add(current)
+        } else if (current.plugins.hasPlugin('com.android.dynamic-feature')) {
+            androidDynamicFeatureProjects.add(current)
+        } else if (current.plugins.hasPlugin('java-library') || current.plugins.hasPlugin('java')) {
+            javaProjects.add(current)
+        }
+    }
+
+    private static void applyColorTrait(
+            Project project,
+            List<String> traits,
+            Set<Project> featureModules,
+            Set<Project> domainModules,
+            Set<Project> coreModules,
+            Set<Project> dataModules,
+            Set<Project> multiplatformProjects,
+            Set<Project> jsProjects,
+            Set<Project> androidProjects,
+            Set<Project> androidLibraryProjects,
+            Set<Project> androidDynamicFeatureProjects,
+            Set<Project> javaProjects
+    ) {
+        if (featureModules.contains(project)) {
+            traits.add('fillcolor="#FFC0CB"')
+        } else if (domainModules.contains(project)) {
+            traits.add('fillcolor="#DAF7A6"')
+        } else if (coreModules.contains(project)) {
+            traits.add('fillcolor="#ADD8E6"')
+        } else if (dataModules.contains(project)) {
+            traits.add('fillcolor="#90EE90"')
+        } else if (multiplatformProjects.contains(project)) {
+            traits.add('fillcolor="#ffd2b3"')
+        } else if (jsProjects.contains(project)) {
+            traits.add('fillcolor="#ffffba"')
+        } else if (androidProjects.contains(project)) {
+            traits.add('fillcolor="#baffc9"')
+        } else if (androidLibraryProjects.contains(project)) {
+            traits.add('fillcolor="#81D4FA"')
+        } else if (androidDynamicFeatureProjects.contains(project)) {
+            traits.add('fillcolor="#c9baff"')
+        } else if (javaProjects.contains(project)) {
+            traits.add('fillcolor="#ffb3ba"')
+        } else {
+            traits.add('fillcolor="#eeeeee"')
+        }
+    }
+}
+
+def projectDependencyGraphTask = tasks.register('projectDependencyGraph', ProjectDependencyGraphTask)
+
+gradle.projectsEvaluated(new Action<Gradle>() {
+    @Override
+    void execute(Gradle gradle) {
+        projectDependencyGraphTask.configure(new Action<ProjectDependencyGraphTask>() {
+            @Override
+            void execute(ProjectDependencyGraphTask task) {
+                task.dotGraphContent.set(DependencyGraphBuilder.build(gradle.rootProject))
+            }
+        })
+    }
+})
