@@ -13,7 +13,6 @@ android {
 
 dependencies {
     implementation(projects.core.designsystem)
-    implementation(projects.domain)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
