@@ -16,8 +16,8 @@ fun BuyOrNotTopBar(title: String) {
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
-        }
+        },
     )
 }

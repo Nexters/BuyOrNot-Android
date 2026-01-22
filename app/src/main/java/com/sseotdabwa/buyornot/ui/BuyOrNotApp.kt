@@ -29,21 +29,22 @@ import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
 @Composable
 fun BuyOrNotApp() {
     val navController = rememberNavController()
-    val destinations = listOf(
-        TopLevelDestination(route = HOME_ROUTE, label = "홈", icon = Icons.Filled.Home),
-        TopLevelDestination(route = UPLOAD_ROUTE, label = "업로드", icon = Icons.Filled.UploadFile),
-        TopLevelDestination(route = MYPAGE_ROUTE, label = "마이페이지", icon = Icons.Filled.AccountCircle),
-        TopLevelDestination(route = AUTH_ROUTE, label = "로그인", icon = Icons.Filled.Login)
-    )
+    val destinations =
+        listOf(
+            TopLevelDestination(route = HOME_ROUTE, label = "홈", icon = Icons.Filled.Home),
+            TopLevelDestination(route = UPLOAD_ROUTE, label = "업로드", icon = Icons.Filled.UploadFile),
+            TopLevelDestination(route = MYPAGE_ROUTE, label = "마이페이지", icon = Icons.Filled.AccountCircle),
+            TopLevelDestination(route = AUTH_ROUTE, label = "로그인", icon = Icons.Filled.Login),
+        )
 
     Scaffold(
         bottomBar = {
             BuyOrNotBottomBar(navController = navController, destinations = destinations)
-        }
+        },
     ) { innerPadding ->
         BuyOrNotNavHost(
             navController = navController,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
         )
     }
 }
@@ -51,7 +52,7 @@ fun BuyOrNotApp() {
 @Composable
 private fun BuyOrNotBottomBar(
     navController: NavHostController,
-    destinations: List<TopLevelDestination>
+    destinations: List<TopLevelDestination>,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -73,7 +74,7 @@ private fun BuyOrNotBottomBar(
                 icon = {
                     Icon(imageVector = destination.icon, contentDescription = destination.label)
                 },
-                label = { Text(text = destination.label) }
+                label = { Text(text = destination.label) },
             )
         }
     }
@@ -82,5 +83,5 @@ private fun BuyOrNotBottomBar(
 private data class TopLevelDestination(
     val route: String,
     val label: String,
-    val icon: ImageVector
+    val icon: ImageVector,
 )

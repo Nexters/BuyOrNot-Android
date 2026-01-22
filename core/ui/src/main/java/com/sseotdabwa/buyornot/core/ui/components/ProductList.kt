@@ -24,11 +24,11 @@ import com.sseotdabwa.buyornot.domain.model.Product
 fun ProductList(
     products: List<Product>,
     modifier: Modifier = Modifier,
-    onProductClick: (Product) -> Unit = {}
+    onProductClick: (Product) -> Unit = {},
 ) {
     LazyColumn(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(products, key = { it.id }) { product ->
             ProductCard(product = product, onClick = { onProductClick(product) })
@@ -39,35 +39,36 @@ fun ProductList(
 @Composable
 private fun ProductCard(
     product: Product,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Card(onClick = onClick) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             AsyncImage(
                 model = product.imageUrl,
-                contentDescription = product.title
+                contentDescription = product.title,
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = product.title,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = product.description,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "${product.price} 원",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
             }
         }

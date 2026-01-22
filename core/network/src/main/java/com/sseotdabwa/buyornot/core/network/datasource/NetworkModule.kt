@@ -9,7 +9,5 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 internal abstract class NetworkModule {
     @Binds
-    abstract fun bindProductNetworkDataSource(
-        impl: FakeProductNetworkDataSource
-    ): ProductNetworkDataSource
+    abstract fun bindProductNetworkDataSource(impl: FakeProductNetworkDataSource): ProductNetworkDataSource
 }

@@ -1,5 +1,5 @@
 package com.sseotdabwa.buyornot.core.datastore
 
 data class UserPreferences(
-    val displayName: String = "손님"
+    val displayName: String = "손님",
 )
