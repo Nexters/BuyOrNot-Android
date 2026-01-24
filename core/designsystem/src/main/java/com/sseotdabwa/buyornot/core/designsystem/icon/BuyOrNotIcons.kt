@@ -50,7 +50,9 @@ object BuyOrNotIcons {
  * ```
  */
 @JvmInline
-value class IconResource(@param:DrawableRes val resId: Int)
+value class IconResource(
+    @param:DrawableRes val resId: Int,
+)
 
 /**
  * IconResource를 ImageVector로 변환하는 확장 함수
