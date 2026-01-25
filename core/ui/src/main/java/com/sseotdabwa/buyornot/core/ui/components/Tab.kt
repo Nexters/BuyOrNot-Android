@@ -22,49 +22,62 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
-enum class BuyOrNotTab(
-    val title: String,
-) {
-    FEED("투표 피드"),
-    REVIEW("상품 리뷰"),
-}
-
 private data class TabPosition(
     val left: Dp,
     val width: Dp,
 )
 
+/**
+ * 개별 탭 컴포넌트
+ *
+ * @param title 탭 타이틀
+ * @param selected 선택 여부
+ * @param onClick 클릭 시 콜백
+ * @param modifier Modifier
+ */
 @Composable
-fun BuyOrNotTabRow(
-    selectedTab: BuyOrNotTab,
-    onTabSelected: (BuyOrNotTab) -> Unit,
+fun Tab(
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .clickable { onClick() }
+                .padding(horizontal = 4.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = title,
+            style =
+                if (selected) {
+                    BuyOrNotTheme.typography.titleT4Bold
+                } else {
+                    BuyOrNotTheme.typography.bodyB4Medium
+                },
+            color = BuyOrNotTheme.colors.gray1000,
+        )
+    }
+}
+
+/**
+ * TabRow 컴포넌트 - 슬롯 형식
+ *
+ * @param selectedTabIndex 현재 선택된 탭 인덱스
+ * @param modifier Modifier
+ * @param tabs 탭 슬롯 (Tab Composable들을 배치)
+ */
+@Composable
+fun TabRow(
+    selectedTabIndex: Int,
+    modifier: Modifier = Modifier,
+    tabs: @Composable () -> Unit,
 ) {
     SubcomposeLayout(modifier = modifier) { constraints ->
         // 먼저 모든 탭을 측정
-        val tabMeasurables =
-            subcompose("tabs") {
-                BuyOrNotTab.entries.forEach { tab ->
-                    Box(
-                        modifier =
-                            Modifier
-                                .clickable { onTabSelected(tab) }
-                                .padding(horizontal = 4.dp, vertical = 12.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = tab.title,
-                            style =
-                                if (selectedTab == tab) {
-                                    BuyOrNotTheme.typography.titleT4Bold
-                                } else {
-                                    BuyOrNotTheme.typography.bodyB4Medium
-                                },
-                            color = BuyOrNotTheme.colors.gray1000,
-                        )
-                    }
-                }
-            }
+        val tabMeasurables = subcompose("tabs", tabs)
 
         // 각 탭의 너비 측정
         val tabPlaceables = tabMeasurables.map { it.measure(constraints) }
@@ -92,10 +105,9 @@ fun BuyOrNotTabRow(
             }
 
         // indicator 측정 (선택된 탭에만 표시)
-        val selectedIndex = BuyOrNotTab.entries.indexOf(selectedTab)
         val indicatorPlaceables =
-            if (selectedIndex >= 0 && selectedIndex < tabPositions.size) {
-                val position = tabPositions[selectedIndex]
+            if (selectedTabIndex >= 0 && selectedTabIndex < tabPositions.size) {
+                val position = tabPositions[selectedTabIndex]
                 val indicatorMeasurables =
                     subcompose("indicator") {
                         Box(
@@ -128,8 +140,8 @@ fun BuyOrNotTabRow(
             }
 
             // indicator 배치
-            if (selectedIndex >= 0 && selectedIndex < tabPositions.size) {
-                val position = tabPositions[selectedIndex]
+            if (selectedTabIndex >= 0 && selectedTabIndex < tabPositions.size) {
+                val position = tabPositions[selectedTabIndex]
                 indicatorPlaceables.forEach { placeable ->
                     placeable.placeRelative(position.left.roundToPx(), tabHeight)
                 }
@@ -138,19 +150,33 @@ fun BuyOrNotTabRow(
     }
 }
 
+// Preview용 enum
+private enum class PreviewTab {
+    FEED,
+    REVIEW,
+}
+
 @Preview(showBackground = true)
 @Composable
-private fun BuyOrNotTabRowPreview() {
-    var selectedTab by remember { mutableStateOf(BuyOrNotTab.FEED) }
+private fun TabRowPreview() {
+    var selectedTab by remember { mutableStateOf(PreviewTab.FEED) }
 
     BuyOrNotTheme {
         Column {
-            BuyOrNotTabRow(
-                selectedTab = selectedTab,
-                onTabSelected = {
-                    selectedTab = it
-                },
-            )
+            TabRow(
+                selectedTabIndex = PreviewTab.entries.indexOf(selectedTab),
+            ) {
+                Tab(
+                    title = "투표 피드",
+                    selected = selectedTab == PreviewTab.FEED,
+                    onClick = { selectedTab = PreviewTab.FEED },
+                )
+                Tab(
+                    title = "상품 리뷰",
+                    selected = selectedTab == PreviewTab.REVIEW,
+                    onClick = { selectedTab = PreviewTab.REVIEW },
+                )
+            }
         }
     }
 }
