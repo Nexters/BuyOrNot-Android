@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.core.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -26,7 +27,7 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 private object TopBarDefaults {
     val Height = 60.dp
-    val StartPadding = 16.dp
+    val StartPadding = 10.dp
     val EndPadding = 20.dp
     val IconSpacing = 4.dp
 }
@@ -34,6 +35,7 @@ private object TopBarDefaults {
 @Composable
 private fun BaseTopBar(
     navigationIcon: @Composable (() -> Unit)? = null,
+    title: @Composable (() -> Unit)? = null,
     actions: @Composable (RowScope.() -> Unit)? = null,
 ) {
     Box(
@@ -44,10 +46,18 @@ private fun BaseTopBar(
                 .padding(start = TopBarDefaults.StartPadding, end = TopBarDefaults.EndPadding),
         contentAlignment = Alignment.CenterStart,
     ) {
-        // 1. 왼쪽 영역 (뒤로가기 또는 로고)
-        navigationIcon?.invoke()
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            // 1. 왼쪽 영역 (뒤로가기 또는 로고)
+            navigationIcon?.invoke()
 
-        // 2. 오른쪽 영역 (아이콘들 또는 버튼)
+            // 2. 중앙 영역 (타이틀)
+            title?.invoke()
+        }
+
+        // 3. 오른쪽 영역 (아이콘들 또는 버튼)
         Row(
             modifier = Modifier.align(Alignment.CenterEnd),
             verticalAlignment = Alignment.CenterVertically,
@@ -68,14 +78,39 @@ fun BackTopBar(onBackClick: () -> Unit) {
                 imageVector = BuyOrNotIcons.ArrowLeft.asImageVector(),
                 contentDescription = "Back",
                 onClick = onBackClick,
-                alignment = Alignment.CenterStart,
             )
         },
     )
 }
 
 /**
- * 2. 홈 화면용 TopBar (로고 + 알림 + 프로필)
+ * 2. 뒤로가기 + 타이틀 전용 TopBar
+ */
+@Composable
+fun BackTopBarWithTitle(
+    title: String,
+    onBackClick: () -> Unit,
+) {
+    BaseTopBar(
+        navigationIcon = {
+            ClickableIcon(
+                imageVector = BuyOrNotIcons.ArrowLeft.asImageVector(),
+                contentDescription = "Back",
+                onClick = onBackClick,
+            )
+        },
+        title = {
+            Text(
+                text = title,
+                style = BuyOrNotTheme.typography.titleT1Bold,
+                color = BuyOrNotTheme.colors.gray900,
+            )
+        },
+    )
+}
+
+/**
+ * 3. 홈 화면용 TopBar (로고 + 알림 + 프로필)
  */
 @Composable
 fun HomeTopBar(
@@ -87,7 +122,7 @@ fun HomeTopBar(
             Icon(
                 imageVector = BuyOrNotIcons.AppLogo.asImageVector(),
                 contentDescription = "App Logo",
-                modifier = Modifier.padding(start = 6.dp),
+                modifier = Modifier.padding(start = 12.dp),
             )
         },
         actions = {
@@ -113,7 +148,7 @@ fun HomeTopBar(
 }
 
 /**
- * 3. 게스트/로그인 유도용 TopBar (로고 + 로그인 버튼)
+ * 4. 게스트/로그인 유도용 TopBar (로고 + 로그인 버튼)
  */
 @Composable
 fun GuestTopBar(onLoginClick: () -> Unit) {
@@ -122,7 +157,7 @@ fun GuestTopBar(onLoginClick: () -> Unit) {
             Icon(
                 imageVector = BuyOrNotIcons.AppLogo.asImageVector(),
                 contentDescription = "App Logo",
-                modifier = Modifier.padding(start = 6.dp),
+                modifier = Modifier.padding(start = 12.dp),
             )
         },
         actions = {
@@ -154,6 +189,17 @@ fun GuestTopBar(onLoginClick: () -> Unit) {
 private fun BackTopBarWithoutTitlePreview() {
     BuyOrNotTheme {
         BackTopBar(
+            onBackClick = {},
+        )
+    }
+}
+
+@Preview(name = "BackTopBarWithTitle", showBackground = true)
+@Composable
+private fun BackTopBarWithTitlePreview() {
+    BuyOrNotTheme {
+        BackTopBarWithTitle(
+            title = "투표 피드",
             onBackClick = {},
         )
     }
