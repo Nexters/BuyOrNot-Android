@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,6 +17,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -45,6 +50,10 @@ fun Tab(
     Box(
         modifier =
             modifier
+                .semantics {
+                    role = Role.Tab
+                    this.selected = selected
+                }
                 .clickable { onClick() }
                 .padding(horizontal = 4.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
@@ -75,7 +84,9 @@ fun TabRow(
     modifier: Modifier = Modifier,
     tabs: @Composable () -> Unit,
 ) {
-    SubcomposeLayout(modifier = modifier) { constraints ->
+    SubcomposeLayout(
+        modifier = modifier.selectableGroup(),
+    ) { constraints ->
         // 먼저 모든 탭을 측정
         val tabMeasurables = subcompose("tabs", tabs)
 
