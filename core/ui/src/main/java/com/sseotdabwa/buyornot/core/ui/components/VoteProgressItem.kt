@@ -37,6 +37,7 @@ private enum class VoteProgressSlot {
     ProgressBar,
     BaseText,
     InvertedText,
+    MaxPercentageText,
 }
 
 private const val PROGRESS_ANIMATION_DURATION = 500
@@ -88,6 +89,15 @@ fun VoteProgressItem(
             val totalHeight = constraints.maxHeight
             val progressWidth = (totalWidth * animatedPercentage.value).toInt()
 
+            // 100% 텍스트 너비 측정 (고정 위치 계산용)
+            val maxPercentageTextWidth =
+                subcompose(VoteProgressSlot.MaxPercentageText) {
+                    Text(
+                        text = "100%",
+                        style = BuyOrNotTheme.typography.subTitleS4SemiBold,
+                    )
+                }.first().measure(constraints).width
+
             // 1. 진행률 바 측정 및 배치
             val progressBarPlaceable =
                 subcompose(VoteProgressSlot.ProgressBar) {
@@ -117,7 +127,7 @@ fun VoteProgressItem(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = text,
-                                style = BuyOrNotTheme.typography.titleT2Bold,
+                                style = BuyOrNotTheme.typography.subTitleS4SemiBold,
                                 color = textColor,
                             )
                         }
@@ -129,11 +139,22 @@ fun VoteProgressItem(
                                 leadingContent()
                                 Spacer(modifier = Modifier.width(6.dp))
                             }
-                            Text(
-                                text = percentageText,
-                                style = BuyOrNotTheme.typography.titleT2Bold,
-                                color = percentageTextColor,
-                            )
+                            // percentageText를 고정 너비로 감싸서 leadingContent 위치 고정
+                            Box(
+                                modifier =
+                                    Modifier.width(
+                                        with(androidx.compose.ui.platform.LocalDensity.current) {
+                                            maxPercentageTextWidth.toDp()
+                                        },
+                                    ),
+                                contentAlignment = Alignment.CenterEnd,
+                            ) {
+                                Text(
+                                    text = percentageText,
+                                    style = BuyOrNotTheme.typography.subTitleS4SemiBold,
+                                    color = percentageTextColor,
+                                )
+                            }
                         }
                     }
                 }.first().measure(constraints)
@@ -169,7 +190,7 @@ fun VoteProgressItem(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
                                     text = text,
-                                    style = BuyOrNotTheme.typography.titleT2Bold,
+                                    style = BuyOrNotTheme.typography.subTitleS4SemiBold,
                                     color = invertedTextColor,
                                 )
                             }
@@ -181,11 +202,22 @@ fun VoteProgressItem(
                                     leadingContent()
                                     Spacer(modifier = Modifier.width(6.dp))
                                 }
-                                Text(
-                                    text = percentageText,
-                                    style = BuyOrNotTheme.typography.titleT2Bold,
-                                    color = invertedTextColor,
-                                )
+                                // percentageText를 고정 너비로 감싸서 leadingContent 위치 고정
+                                Box(
+                                    modifier =
+                                        Modifier.width(
+                                            with(androidx.compose.ui.platform.LocalDensity.current) {
+                                                maxPercentageTextWidth.toDp()
+                                            },
+                                        ),
+                                    contentAlignment = Alignment.CenterEnd,
+                                ) {
+                                    Text(
+                                        text = percentageText,
+                                        style = BuyOrNotTheme.typography.subTitleS4SemiBold,
+                                        color = invertedTextColor,
+                                    )
+                                }
                             }
                         }
                     }.first().measure(constraints)
@@ -239,7 +271,7 @@ private fun VoteProgressItemNotSelectedPreview() {
 private fun VoteProgressItemLowPercentagePreview() {
     BuyOrNotTheme {
         VoteProgressItem(
-            text = "돈 아까워요",
+            text = "사! 가즈아!",
             percentage = 0.1f,
             percentageText = "10%",
             modifier = Modifier.padding(16.dp),
@@ -249,16 +281,29 @@ private fun VoteProgressItemLowPercentagePreview() {
     }
 }
 
-@Preview(name = "VoteProgressItem - 색상 반전 없음 (90%)", showBackground = true)
+@Preview(name = "VoteProgressItem - 높은 퍼센트 (100%)", showBackground = true)
 @Composable
 private fun VoteProgressItemNoInvertPreview() {
     BuyOrNotTheme {
         VoteProgressItem(
             text = "사! 가즈아!",
-            percentage = 0.9f,
-            percentageText = "90%",
+            percentage = 1f,
+            percentageText = "100%",
             modifier = Modifier.padding(16.dp),
             progressBarColor = BuyOrNotTheme.colors.gray900,
+            // ProfileImage 예시 (실제로는 ProfileImage Composable 사용)
+            leadingContent = {
+                Box(
+                    modifier =
+                        Modifier
+                            .height(20.dp)
+                            .width(20.dp)
+                            .background(
+                                color = BuyOrNotTheme.colors.gray500,
+                                shape = RoundedCornerShape(10.dp),
+                            ),
+                )
+            },
             shouldInvertTextColor = true,
         )
     }
