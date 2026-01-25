@@ -19,6 +19,8 @@ import com.sseotdabwa.buyornot.core.designsystem.R
  * ```
  */
 object BuyOrNotIcons {
+    val AppLogo = IconResource(R.drawable.ic_app_logo)
+
     // 액션 아이콘
     val Add = IconResource(R.drawable.ic_add)
     val Plus = IconResource(R.drawable.ic_plus)
