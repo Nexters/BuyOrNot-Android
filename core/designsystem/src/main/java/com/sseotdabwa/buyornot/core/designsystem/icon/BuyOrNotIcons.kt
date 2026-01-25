@@ -23,7 +23,6 @@ object BuyOrNotIcons {
 
     // 액션 아이콘
     val Add = IconResource(R.drawable.ic_add)
-    val Plus = IconResource(R.drawable.ic_plus)
     val Close = IconResource(R.drawable.ic_close)
 
     // 네비게이션 아이콘
