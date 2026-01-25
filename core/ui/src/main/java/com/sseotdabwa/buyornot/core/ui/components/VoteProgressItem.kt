@@ -1,6 +1,6 @@
 package com.sseotdabwa.buyornot.core.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,7 +18,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,15 +57,18 @@ fun VoteProgressItem(
 ) {
     val clampedPercentage = percentage.coerceIn(0f, 1f)
 
-    // 애니메이션이 적용된 진행률
-    val animatedPercentage by animateFloatAsState(
-        targetValue = clampedPercentage,
-        animationSpec =
-            tween(
-                durationMillis = if (animationEnabled) PROGRESS_ANIMATION_DURATION else 0,
-            ),
-        label = "progressAnimation",
-    )
+    // 0%부터 시작하여 원본 percentage까지 애니메이션
+    val animatedPercentage = remember { Animatable(0f) }
+
+    LaunchedEffect(clampedPercentage) {
+        animatedPercentage.animateTo(
+            targetValue = clampedPercentage,
+            animationSpec =
+                tween(
+                    durationMillis = if (animationEnabled) PROGRESS_ANIMATION_DURATION else 0,
+                ),
+        )
+    }
 
     Box(
         modifier =
@@ -82,7 +86,7 @@ fun VoteProgressItem(
         SubcomposeLayout { constraints ->
             val totalWidth = constraints.maxWidth
             val totalHeight = constraints.maxHeight
-            val progressWidth = (totalWidth * animatedPercentage).toInt()
+            val progressWidth = (totalWidth * animatedPercentage.value).toInt()
 
             // 1. 진행률 바 측정 및 배치
             val progressBarPlaceable =
@@ -136,7 +140,7 @@ fun VoteProgressItem(
 
             // 3. 반전 텍스트 레이어 측정 (진행률 영역만큼 클리핑)
             val invertedTextPlaceable =
-                if (shouldInvertTextColor && animatedPercentage > 0f) {
+                if (shouldInvertTextColor && animatedPercentage.value > 0f) {
                     subcompose(VoteProgressSlot.InvertedText) {
                         Box(
                             modifier =
