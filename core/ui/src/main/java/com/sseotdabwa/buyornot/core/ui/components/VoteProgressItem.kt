@@ -176,7 +176,7 @@ fun VoteProgressItem(
                                                     Rect(
                                                         left = 0f,
                                                         top = 0f,
-                                                        right = progressWidth.toFloat() - 16.dp.toPx(), // padding 보정
+                                                        right = (progressWidth.toFloat() - 16.dp.toPx()).coerceAtLeast(0f), // padding 보정, 음수 방지
                                                         bottom = size.height,
                                                     ),
                                                 )
