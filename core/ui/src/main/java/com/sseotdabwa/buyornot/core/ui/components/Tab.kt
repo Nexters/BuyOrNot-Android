@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -24,6 +25,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.constrainHeight
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
@@ -53,8 +56,7 @@ fun Tab(
                 .semantics {
                     role = Role.Tab
                     this.selected = selected
-                }
-                .clickable { onClick() }
+                }.clickable { onClick() }
                 .padding(horizontal = 4.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -87,11 +89,14 @@ fun TabRow(
     SubcomposeLayout(
         modifier = modifier.selectableGroup(),
     ) { constraints ->
+        // 탭 측정 시 minWidth = 0으로 완화하여 제약 위반 방지
+        val looseConstraints = constraints.copy(minWidth = 0, minHeight = 0)
+
         // 먼저 모든 탭을 측정
         val tabMeasurables = subcompose("tabs", tabs)
 
-        // 각 탭의 너비 측정
-        val tabPlaceables = tabMeasurables.map { it.measure(constraints) }
+        // 각 탭의 너비 측정 (완화된 제약 사용)
+        val tabPlaceables = tabMeasurables.map { it.measure(looseConstraints) }
         val tabHeight = tabPlaceables.maxOfOrNull { it.height } ?: 0
 
         // 탭 위치 계산
@@ -141,8 +146,11 @@ fun TabRow(
                 emptyList()
             }
 
-        // 레이아웃
-        layout(totalWidth.roundToPx(), tabHeight + 3.dp.roundToPx()) {
+        // 레이아웃 크기를 제약 범위 내로 제한하여 크래시 방지
+        val layoutWidth = constraints.constrainWidth(totalWidth.roundToPx())
+        val layoutHeight = constraints.constrainHeight(tabHeight + 3.dp.roundToPx())
+
+        layout(layoutWidth, layoutHeight) {
             // 탭 배치
             var left = 0
             tabPlaceables.forEach { placeable ->
