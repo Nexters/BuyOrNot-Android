@@ -175,6 +175,55 @@ internal val Typography =
                 fontSize = 11.sp,
                 lineHeight = (11 * 1.25f).sp,
             ),
+        // Paragraph
+        paragraphP1Medium =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+                lineHeight = (16 * 1.4f).sp,
+            ),
+        paragraphP2Medium =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp,
+                lineHeight = (15 * 1.4f).sp,
+            ),
+        paragraphP3Medium =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                lineHeight = (14 * 1.4f).sp,
+            ),
+        paragraphP4Medium =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Medium,
+                fontSize = 13.sp,
+                lineHeight = (13 * 1.4f).sp,
+            ),
+        paragraphP1Regular =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Normal,
+                fontSize = 16.sp,
+                lineHeight = (16 * 1.4f).sp,
+            ),
+        paragraphP2Regular =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Normal,
+                fontSize = 15.sp,
+                lineHeight = (15 * 1.4f).sp,
+            ),
+        paragraphP3Regular =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                lineHeight = (14 * 1.4f).sp,
+            ),
+        paragraphP4Regular =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Normal,
+                fontSize = 13.sp,
+                lineHeight = (13 * 1.4f).sp,
+            ),
         // Caption
         captionC1Medium =
             baseTextStyle.copy(
@@ -239,6 +288,14 @@ data class BuyOrNotTypography(
     val bodyB5Medium: TextStyle,
     val bodyB6Medium: TextStyle,
     val bodyB7Medium: TextStyle,
+    val paragraphP1Medium: TextStyle,
+    val paragraphP2Medium: TextStyle,
+    val paragraphP3Medium: TextStyle,
+    val paragraphP4Medium: TextStyle,
+    val paragraphP1Regular: TextStyle,
+    val paragraphP2Regular: TextStyle,
+    val paragraphP3Regular: TextStyle,
+    val paragraphP4Regular: TextStyle,
     val captionC1Medium: TextStyle,
     val captionC2Medium: TextStyle,
     val captionC3Medium: TextStyle,
