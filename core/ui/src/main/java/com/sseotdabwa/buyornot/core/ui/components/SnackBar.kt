@@ -1,24 +1,34 @@
 package com.sseotdabwa.buyornot.core.ui.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SnackbarVisuals
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -33,24 +43,45 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
+private val SnackbarVerticalMargin = 10.dp
+private val SnackbarHorizontalMargin = 20.dp
+private val SnackbarMaxWidth = 800.dp
+
+private val snackbarMutex = Mutex()
+
+class BuyOrNotSnackBarVisuals(
+    override val message: String,
+    val icon: ImageVector? = null,
+    override val actionLabel: String? = null,
+    override val withDismissAction: Boolean = false,
+    override val duration: SnackbarDuration = SnackbarDuration.Short,
+) : SnackbarVisuals
+
 @Composable
-fun BuyOrNotSnackBar(snackbarData: SnackbarData) {
+fun BuyOrNotSnackBar(
+    snackbarData: SnackbarData,
+    modifier: Modifier = Modifier,
+) {
     val visuals = snackbarData.visuals as? BuyOrNotSnackBarVisuals
-    Snackbar(
+
+    Surface(
         modifier =
-            Modifier.padding(
-                horizontal = 14.dp,
-                vertical = 12.dp,
-            ),
-        containerColor = BuyOrNotTheme.colors.gray900,
+            modifier
+                .padding(horizontal = SnackbarHorizontalMargin, vertical = SnackbarVerticalMargin)
+                .fillMaxWidth()
+                .widthIn(max = SnackbarMaxWidth),
+        color = BuyOrNotTheme.colors.gray900,
         contentColor = BuyOrNotTheme.colors.gray50,
         shape = RoundedCornerShape(10.dp),
+        shadowElevation = 4.dp,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
         ) {
             visuals?.icon?.let {
                 Icon(
@@ -69,41 +100,57 @@ fun BuyOrNotSnackBar(snackbarData: SnackbarData) {
     }
 }
 
-class BuyOrNotSnackBarVisuals(
-    override val message: String,
-    val icon: ImageVector?,
-    override val actionLabel: String? = null,
-    override val withDismissAction: Boolean = false,
-    override val duration: SnackbarDuration = SnackbarDuration.Short,
-) : SnackbarVisuals
+@Composable
+fun BuyOrNotSnackBarHost(hostState: SnackbarHostState) {
+    AnimatedContent(
+        targetState = hostState.currentSnackbarData,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding(),
+        contentAlignment = Alignment.BottomCenter,
+        transitionSpec = {
+            (slideInVertically { it } + fadeIn(tween(400)))
+                .togetherWith(fadeOut(tween(400)))
+                .using(SizeTransform(clip = false))
+        },
+        label = "BuyOrNotSnackBarAnimation",
+    ) { data ->
+        if (data != null) {
+            BuyOrNotSnackBar(snackbarData = data)
+        }
+    }
+}
+
+suspend fun showBuyOrNotSnackBar(
+    snackbarHostState: SnackbarHostState,
+    message: String,
+    icon: ImageVector? = null,
+    duration: SnackbarDuration = SnackbarDuration.Short,
+): SnackbarResult =
+    snackbarMutex.withLock {
+        try {
+            withTimeout(duration.toMillis()) {
+                snackbarHostState.showSnackbar(
+                    BuyOrNotSnackBarVisuals(
+                        message = message,
+                        icon = icon,
+                        duration = SnackbarDuration.Indefinite, // 직접 타이머 제어
+                    ),
+                )
+            }
+        } catch (e: TimeoutCancellationException) {
+            SnackbarResult.Dismissed
+        } finally {
+            snackbarHostState.currentSnackbarData?.dismiss()
+        }
+    }
 
 private fun SnackbarDuration.toMillis(): Long =
     when (this) {
         SnackbarDuration.Short -> 4000L
         SnackbarDuration.Long -> 10000L
         SnackbarDuration.Indefinite -> Long.MAX_VALUE
-    }
-
-suspend fun showBuyOrNotSnackBar(
-    snackbarHostState: SnackbarHostState, // scope를 밖에서 받을 필요가 없습니다.
-    message: String,
-    icon: ImageVector? = null,
-    duration: SnackbarDuration = SnackbarDuration.Short,
-): SnackbarResult =
-    try {
-        withTimeout(duration.toMillis()) {
-            snackbarHostState.showSnackbar(
-                BuyOrNotSnackBarVisuals(
-                    message = message,
-                    icon = icon,
-                    duration = SnackbarDuration.Indefinite,
-                ),
-            )
-        }
-    } catch (e: TimeoutCancellationException) {
-        SnackbarResult.Dismissed
-    } finally {
-        snackbarHostState.currentSnackbarData?.dismiss()
     }
 
 @Preview(name = "Snackbar Demo Screen")
@@ -117,9 +164,7 @@ private fun SnackbarDemoScreenPreview() {
 
         Scaffold(
             snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState) { data ->
-                    BuyOrNotSnackBar(snackbarData = data)
-                }
+                BuyOrNotSnackBarHost(snackbarHostState)
             },
         ) { paddingValues ->
             Box(
@@ -145,11 +190,13 @@ private fun SnackbarDemoScreenPreview() {
     }
 }
 
-@Preview(name = "BuyOrNotSnackBar with Icon")
+@Preview(name = "BuyOrNotSnackBar")
 @Composable
-private fun BuyOrNotSnackBarWithIconPreview() {
+private fun BuyOrNotSnackBarPreview() {
     BuyOrNotTheme {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             BuyOrNotSnackBar(
                 snackbarData =
                     object : SnackbarData {
@@ -164,15 +211,7 @@ private fun BuyOrNotSnackBarWithIconPreview() {
                         override fun performAction() {}
                     },
             )
-        }
-    }
-}
 
-@Preview(name = "BuyOrNotSnackBar without Icon")
-@Composable
-private fun BuyOrNotSnackBarWithoutIconPreview() {
-    BuyOrNotTheme {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             BuyOrNotSnackBar(
                 snackbarData =
                     object : SnackbarData {
