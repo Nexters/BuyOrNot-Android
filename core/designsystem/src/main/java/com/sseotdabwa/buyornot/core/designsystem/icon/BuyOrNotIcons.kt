@@ -1,0 +1,63 @@
+package com.sseotdabwa.buyornot.core.designsystem.icon
+
+import androidx.annotation.DrawableRes
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
+import com.sseotdabwa.buyornot.core.designsystem.R
+
+/**
+ * BuyOrNot 프로젝트 전체에서 사용하는 아이콘 모음
+ * Drawable 리소스의 커스텀 SVG 아이콘을 통합 관리
+ *
+ * 사용 예시:
+ * ```
+ * Icon(
+ *     imageVector = BuyOrNotIcons.Add.asImageVector(),
+ *     contentDescription = "추가"
+ * )
+ * ```
+ */
+object BuyOrNotIcons {
+    val AppLogo = IconResource(R.drawable.ic_app_logo)
+
+    // 액션 아이콘
+    val Add = IconResource(R.drawable.ic_add)
+    val Close = IconResource(R.drawable.ic_close)
+
+    // 네비게이션 아이콘
+    val ArrowLeft = IconResource(R.drawable.ic_arrow_left)
+    val ArrowRight = IconResource(R.drawable.ic_arrow_right)
+
+    // 기능 아이콘
+    val Vote = IconResource(R.drawable.ic_vote)
+    val VoteDone = IconResource(R.drawable.ic_vote_done)
+    val Bag = IconResource(R.drawable.ic_bag)
+    val Profile = IconResource(R.drawable.ic_profile)
+    val Notification = IconResource(R.drawable.ic_notification)
+    val NotificationFilled = IconResource(R.drawable.ic_notification_filled)
+}
+
+/**
+ * Drawable 리소스를 래핑하는 타입
+ * SVG 아이콘을 타입 안전하게 관리하기 위해 사용
+ *
+ * 사용 예시:
+ * ```
+ * Icon(
+ *     imageVector = BuyOrNotIcons.Vote.asImageVector(),
+ *     contentDescription = "투표"
+ * )
+ * ```
+ */
+@JvmInline
+value class IconResource(
+    @param:DrawableRes val resId: Int,
+)
+
+/**
+ * IconResource를 ImageVector로 변환하는 확장 함수
+ * Composable 컨텍스트에서만 사용 가능
+ */
+@Composable
+fun IconResource.asImageVector(): ImageVector = ImageVector.vectorResource(id = resId)
