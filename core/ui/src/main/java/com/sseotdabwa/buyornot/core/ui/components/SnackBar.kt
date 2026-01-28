@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarDuration
@@ -36,10 +38,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
-import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
@@ -53,9 +56,14 @@ private val SnackbarMaxWidth = 800.dp
 
 private val snackbarMutex = Mutex()
 
+enum class SnackBarIconTint {
+    Success,
+}
+
 class BuyOrNotSnackBarVisuals(
     override val message: String,
-    val icon: ImageVector? = null,
+    val iconResource: IconResource? = null,
+    val iconTint: SnackBarIconTint = SnackBarIconTint.Success,
     override val actionLabel: String? = null,
     override val withDismissAction: Boolean = false,
     override val duration: SnackbarDuration = SnackbarDuration.Short,
@@ -67,6 +75,15 @@ fun BuyOrNotSnackBar(
     modifier: Modifier = Modifier,
 ) {
     val visuals = snackbarData.visuals as? BuyOrNotSnackBarVisuals
+    val tint =
+        when (visuals?.iconTint) {
+            SnackBarIconTint.Success -> BuyOrNotTheme.colors.green200
+            else -> LocalContentColor.current
+        }
+    val icon =
+        visuals?.iconResource?.let {
+            ImageVector.vectorResource(id = it.resId)
+        }
 
     Surface(
         modifier =
@@ -83,11 +100,12 @@ fun BuyOrNotSnackBar(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
         ) {
-            visuals?.icon?.let {
+            icon?.let {
                 Icon(
                     imageVector = it,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
+                    tint = tint,
                 )
                 Spacer(modifier = Modifier.width(6.dp))
             }
@@ -111,7 +129,7 @@ fun BuyOrNotSnackBarHost(hostState: SnackbarHostState) {
         contentAlignment = Alignment.BottomCenter,
         transitionSpec = {
             (slideInVertically { it } + fadeIn(tween(400)))
-                .togetherWith(fadeOut(tween(400)))
+                .togetherWith(slideOutVertically(animationSpec = tween(400)) { it } + fadeOut(tween(400)))
                 .using(SizeTransform(clip = false))
         },
         label = "BuyOrNotSnackBarAnimation",
@@ -125,7 +143,8 @@ fun BuyOrNotSnackBarHost(hostState: SnackbarHostState) {
 suspend fun showBuyOrNotSnackBar(
     snackbarHostState: SnackbarHostState,
     message: String,
-    icon: ImageVector? = null,
+    iconResource: IconResource? = null,
+    iconTint: SnackBarIconTint = SnackBarIconTint.Success,
     duration: SnackbarDuration = SnackbarDuration.Short,
 ): SnackbarResult =
     snackbarMutex.withLock {
@@ -134,7 +153,8 @@ suspend fun showBuyOrNotSnackBar(
                 snackbarHostState.showSnackbar(
                     BuyOrNotSnackBarVisuals(
                         message = message,
-                        icon = icon,
+                        iconResource = iconResource,
+                        iconTint = iconTint,
                         duration = SnackbarDuration.Indefinite, // 직접 타이머 제어
                     ),
                 )
@@ -157,8 +177,6 @@ private fun SnackbarDuration.toMillis(): Long =
 @Composable
 private fun SnackbarDemoScreenPreview() {
     BuyOrNotTheme {
-        val icon = BuyOrNotIcons.Profile.asImageVector()
-
         val snackbarHostState = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
 
@@ -179,7 +197,7 @@ private fun SnackbarDemoScreenPreview() {
                         showBuyOrNotSnackBar(
                             snackbarHostState = snackbarHostState,
                             message = "스낵바입니다. 안내 메세지를 작성해주세요.",
-                            icon = icon,
+                            iconResource = BuyOrNotIcons.Check,
                         )
                     }
                 }) {
@@ -203,7 +221,7 @@ private fun BuyOrNotSnackBarPreview() {
                         override val visuals =
                             BuyOrNotSnackBarVisuals(
                                 message = "아이콘이 있는 스낵바입니다.",
-                                icon = BuyOrNotIcons.Profile.asImageVector(),
+                                iconResource = BuyOrNotIcons.Check,
                             )
 
                         override fun dismiss() {}
@@ -218,7 +236,7 @@ private fun BuyOrNotSnackBarPreview() {
                         override val visuals =
                             BuyOrNotSnackBarVisuals(
                                 message = "아이콘이 없는 스낵바입니다.",
-                                icon = null,
+                                iconResource = null,
                             )
 
                         override fun dismiss() {}
