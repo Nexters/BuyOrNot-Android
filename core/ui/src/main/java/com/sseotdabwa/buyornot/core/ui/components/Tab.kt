@@ -43,7 +43,7 @@ private data class TabPosition(
  * @param modifier Modifier
  */
 @Composable
-fun Tab(
+fun BuyOrNotTab(
     title: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -80,7 +80,7 @@ fun Tab(
  * @param tabs 탭 슬롯 (Tab Composable들을 배치)
  */
 @Composable
-fun TabRow(
+fun BuyOrNotTabRow(
     selectedTabIndex: Int,
     modifier: Modifier = Modifier,
     tabs: @Composable () -> Unit,
@@ -176,20 +176,20 @@ private enum class PreviewTab {
 
 @Preview(showBackground = true)
 @Composable
-private fun TabRowPreview() {
+private fun BuyOrNotTabRowPreview() {
     var selectedTab by remember { mutableStateOf(PreviewTab.FEED) }
 
     BuyOrNotTheme {
         Column {
-            TabRow(
+            BuyOrNotTabRow(
                 selectedTabIndex = PreviewTab.entries.indexOf(selectedTab),
             ) {
-                Tab(
+                BuyOrNotTab(
                     title = "투표 피드",
                     selected = selectedTab == PreviewTab.FEED,
                     onClick = { selectedTab = PreviewTab.FEED },
                 )
-                Tab(
+                BuyOrNotTab(
                     title = "상품 리뷰",
                     selected = selectedTab == PreviewTab.REVIEW,
                     onClick = { selectedTab = PreviewTab.REVIEW },
