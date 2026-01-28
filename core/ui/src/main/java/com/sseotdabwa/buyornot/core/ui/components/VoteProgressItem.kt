@@ -176,7 +176,7 @@ fun VoteProgressItem(
                                                     Rect(
                                                         left = 0f,
                                                         top = 0f,
-                                                        right = (progressWidth.toFloat() - 16.dp.toPx()).coerceAtLeast(0f), // padding 보정, 음수 방지
+                                                        right = (progressWidth.toFloat() - 16.dp.toPx()).coerceAtLeast(0f), // padding 보정
                                                         bottom = size.height,
                                                     ),
                                                 )
@@ -260,6 +260,7 @@ private fun VoteProgressItemNotSelectedPreview() {
             text = "애매하긴 해...",
             percentage = 0.75f,
             percentageText = "75%",
+            percentageTextColor = BuyOrNotTheme.colors.gray700,
             modifier = Modifier.padding(16.dp),
             textColor = BuyOrNotTheme.colors.gray700,
         )
@@ -345,6 +346,7 @@ private fun VoteScreenPreview() {
                 text = "애매하긴 해...",
                 percentage = 0.1f,
                 percentageText = "10%",
+                percentageTextColor = BuyOrNotTheme.colors.gray700,
                 textColor = BuyOrNotTheme.colors.gray700,
             )
 
