@@ -21,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.sseotdabwa.buyornot.core.ui.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -176,7 +178,7 @@ fun GuestTopBar(onLoginClick: () -> Unit) {
                     ),
             ) {
                 Text(
-                    "로그인/회원가입",
+                    stringResource(R.string.login_signup),
                     style = BuyOrNotTheme.typography.subTitleS5SemiBold,
                 )
             }
