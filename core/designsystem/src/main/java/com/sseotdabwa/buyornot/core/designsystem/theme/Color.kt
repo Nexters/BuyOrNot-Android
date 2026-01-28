@@ -5,7 +5,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 internal val LightColorScheme =
-    BuyOrNotColorTheme(
+    BuyOrNotColorScheme(
         // Black & Gray
         black = Color(0xFF000000),
         gray1000 = Color(0xFF1A1C20),
@@ -28,7 +28,7 @@ internal val LightColorScheme =
     )
 
 @Immutable
-data class BuyOrNotColorTheme(
+data class BuyOrNotColorScheme(
     // Black & Gray
     val black: Color,
     val gray1000: Color,
@@ -52,7 +52,7 @@ data class BuyOrNotColorTheme(
 
 val LocalColorScheme =
     staticCompositionLocalOf {
-        BuyOrNotColorTheme(
+        BuyOrNotColorScheme(
             // Black & Gray
             black = Color.Unspecified,
             gray1000 = Color.Unspecified,
