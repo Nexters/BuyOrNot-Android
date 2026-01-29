@@ -58,13 +58,13 @@ fun FeedCard(
     price: String, // 이미지에 있는 가격 정보 추가
     imageAspectRatio: ImageAspectRatio = ImageAspectRatio.SQUARE, // 이미지 비율 (기본값: 1:1)
     isVoteEnded: Boolean, // 투표 종료 여부
-    hasVoted: Boolean = false, // 사용자가 투표했는지 여부
     userVotedOptionIndex: Int? = null, // 사용자가 투표한 옵션 인덱스 (null: 투표 안함, 0: 사!, 1: 애매..)
     buyVoteCount: Int,
     maybeVoteCount: Int,
     totalVoteCount: Int,
     onVote: (Int) -> Unit, // 투표 옵션 인덱스 (0: 사!, 1: 애매..)
 ) {
+    val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
     val maybePercentage = if (totalVoteCount > 0) (maybeVoteCount * 100 / totalVoteCount) else 0
 
@@ -355,7 +355,6 @@ private fun FullscreenButton(
 @Composable
 private fun FeedCardSquareInteractivePreview() {
     BuyOrNotTheme {
-        var hasVoted by remember { mutableStateOf(false) }
         var userVotedOption by remember { mutableStateOf<Int?>(null) }
 
         FeedCard(
@@ -368,14 +367,12 @@ private fun FeedCardSquareInteractivePreview() {
             price = "35,000",
             imageAspectRatio = ImageAspectRatio.SQUARE,
             isVoteEnded = false,
-            hasVoted = hasVoted,
             userVotedOptionIndex = userVotedOption,
             buyVoteCount = 20,
             maybeVoteCount = 10,
             totalVoteCount = 30,
             onVote = { optionIndex ->
                 userVotedOption = optionIndex
-                hasVoted = true
             },
         )
     }
@@ -389,7 +386,6 @@ private fun FeedCardSquareInteractivePreview() {
 @Composable
 private fun FeedCardPortraitInteractivePreview() {
     BuyOrNotTheme {
-        var hasVoted by remember { mutableStateOf(false) }
         var userVotedOption by remember { mutableStateOf<Int?>(null) }
 
         FeedCard(
@@ -402,14 +398,12 @@ private fun FeedCardPortraitInteractivePreview() {
             price = "89,000",
             imageAspectRatio = ImageAspectRatio.PORTRAIT,
             isVoteEnded = false,
-            hasVoted = hasVoted,
             userVotedOptionIndex = userVotedOption,
             buyVoteCount = 45,
             maybeVoteCount = 15,
             totalVoteCount = 60,
             onVote = { optionIndex ->
                 userVotedOption = optionIndex
-                hasVoted = true
             },
         )
     }
