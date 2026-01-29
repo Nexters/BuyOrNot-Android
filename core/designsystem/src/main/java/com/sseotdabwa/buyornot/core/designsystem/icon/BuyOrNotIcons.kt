@@ -25,6 +25,7 @@ object BuyOrNotIcons {
     val Add = IconResource(R.drawable.ic_add)
     val Close = IconResource(R.drawable.ic_close)
     val More = IconResource(R.drawable.ic_more)
+    val Expand = IconResource(R.drawable.ic_expand)
 
     // 네비게이션 아이콘
     val ArrowLeft = IconResource(R.drawable.ic_arrow_left)

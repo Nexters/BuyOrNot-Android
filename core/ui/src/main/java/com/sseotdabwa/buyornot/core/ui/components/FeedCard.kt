@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.core.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -175,6 +176,19 @@ fun FeedCard(
                         contentScale = ContentScale.Crop,
                     )
                 }
+
+                // 이미지 확장 버튼 (원본 크기)
+                FullscreenButton(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(
+                                top = 14.dp,
+                                end = 14.dp,
+                            ),
+                ) {
+                }
+
                 // 가격 태그 (좌측 하단)
                 Text(
                     text = stringResource(R.string.feed_card_price_format, price),
@@ -304,6 +318,31 @@ private fun VoteOption(
                 ),
             style = BuyOrNotTheme.typography.subTitleS4SemiBold,
             color = BuyOrNotTheme.colors.gray900,
+        )
+    }
+}
+
+@Composable
+private fun FullscreenButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier =
+            modifier
+                .size(30.dp)
+                .background(
+                    color = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(8.dp),
+                ).clip(RoundedCornerShape(8.dp))
+                .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = BuyOrNotIcons.Expand.asImageVector(),
+            contentDescription = "Fullscreen",
+            modifier = Modifier.size(18.dp),
+            tint = BuyOrNotTheme.colors.gray300,
         )
     }
 }
