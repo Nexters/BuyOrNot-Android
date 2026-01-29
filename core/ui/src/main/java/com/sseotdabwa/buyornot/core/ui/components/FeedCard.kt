@@ -272,7 +272,7 @@ fun FeedCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // 6. 하단 상태 정보
             Row(verticalAlignment = Alignment.CenterVertically) {
