@@ -140,6 +140,33 @@ fun BuyOrNotSnackBarHost(hostState: SnackbarHostState) {
     }
 }
 
+/**
+ * BuyOrNot 앱의 커스텀 스낵바를 표시합니다.
+ *
+ * 이 함수는 suspend 함수로, 스낵바가 사라질 때까지 대기합니다.
+ * 동시에 여러 스낵바가 표시되지 않도록 Mutex를 사용하여 순차적으로 처리합니다.
+ *
+ * @param snackbarHostState 스낵바를 표시할 [SnackbarHostState]
+ * @param message 스낵바에 표시할 메시지
+ * @param iconResource 메시지 좌측에 표시할 아이콘 리소스 (null이면 아이콘 없음)
+ * @param iconTint 아이콘의 색상 틴트 (기본값: [SnackBarIconTint.Success])
+ * @param duration 스낵바 표시 시간 (기본값: [SnackbarDuration.Short] = 4초)
+ * @return 스낵바가 어떻게 닫혔는지를 나타내는 [SnackbarResult]
+ *
+ * @sample
+ * ```
+ * val snackbarHostState = remember { SnackbarHostState() }
+ * val scope = rememberCoroutineScope()
+ *
+ * scope.launch {
+ *     showBuyOrNotSnackBar(
+ *         snackbarHostState = snackbarHostState,
+ *         message = "저장되었습니다.",
+ *         iconResource = BuyOrNotIcons.Check,
+ *     )
+ * }
+ * ```
+ */
 suspend fun showBuyOrNotSnackBar(
     snackbarHostState: SnackbarHostState,
     message: String,
@@ -159,7 +186,7 @@ suspend fun showBuyOrNotSnackBar(
                     ),
                 )
             }
-        } catch (e: TimeoutCancellationException) {
+        } catch (_: TimeoutCancellationException) {
             SnackbarResult.Dismissed
         } finally {
             snackbarHostState.currentSnackbarData?.dismiss()
