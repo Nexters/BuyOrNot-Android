@@ -15,7 +15,7 @@ fun BuyOrNotTheme(content: @Composable () -> Unit) {
 }
 
 object BuyOrNotTheme {
-    val colors: BuyOrNotColorTheme
+    val colors: BuyOrNotColorScheme
         @Composable
         @ReadOnlyComposable
         get() = LocalColorScheme.current

@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="login_signup">로그인/회원가입</string>
+
+    <!-- FeedCard -->
+    <string name="feed_card_price_format">₩ %1$s</string>
+    <string name="feed_card_vote_buy">사! 가즈아!</string>
+    <string name="feed_card_vote_maybe">애매하긴 해..</string>
+    <string name="feed_card_vote_count_format">%1$d명이 투표했어요 · %2$s</string>
+    <string name="feed_card_vote_status_ended">종료됨</string>
+    <string name="feed_card_vote_status_ongoing">진행중</string>
 </resources>
