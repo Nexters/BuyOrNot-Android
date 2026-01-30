@@ -57,7 +57,7 @@ fun BuyOrNotButton(
                     containerColor = BuyOrNotTheme.colors.gray900,
                     contentColor = BuyOrNotTheme.colors.gray0,
                     disabledContainerColor = BuyOrNotTheme.colors.gray400,
-                    disabledContentColor = BuyOrNotTheme.colors.gray0,
+                    disabledContentColor = BuyOrNotTheme.colors.gray700,
                 )
             BuyOrNotButtonType.Secondary ->
                 ButtonDefaults.buttonColors(
