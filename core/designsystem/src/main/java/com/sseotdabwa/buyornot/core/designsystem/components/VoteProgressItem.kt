@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.core.ui.components
+package com.sseotdabwa.buyornot.core.designsystem.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -143,7 +144,7 @@ fun VoteProgressItem(
                             Box(
                                 modifier =
                                     Modifier.width(
-                                        with(androidx.compose.ui.platform.LocalDensity.current) {
+                                        with(LocalDensity.current) {
                                             maxPercentageTextWidth.toDp()
                                         },
                                     ),
@@ -206,7 +207,7 @@ fun VoteProgressItem(
                                 Box(
                                     modifier =
                                         Modifier.width(
-                                            with(androidx.compose.ui.platform.LocalDensity.current) {
+                                            with(LocalDensity.current) {
                                                 maxPercentageTextWidth.toDp()
                                             },
                                         ),
