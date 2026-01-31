@@ -14,6 +14,11 @@ val localProperties = Properties().apply {
     }
 }
 
+fun Properties.getRequiredProperty(key: String): String {
+    return getProperty(key)
+        ?: error("Required property '$key' is missing in local.properties")
+}
+
 android {
     namespace = "com.sseotdabwa.buyornot"
 
@@ -25,10 +30,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(localProperties.getProperty("signed.store.file"))
-            storePassword = localProperties.getProperty("signed.store.password")
-            keyAlias = localProperties.getProperty("signed.key.alias")
-            keyPassword = localProperties.getProperty("signed.key.password")
+            storeFile = file(localProperties.getRequiredProperty("signed.store.file"))
+            storePassword = localProperties.getRequiredProperty("signed.store.password")
+            keyAlias = localProperties.getRequiredProperty("signed.key.alias")
+            keyPassword = localProperties.getRequiredProperty("signed.key.password")
         }
     }
 
