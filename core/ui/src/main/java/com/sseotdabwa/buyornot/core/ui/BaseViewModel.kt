@@ -92,7 +92,7 @@ abstract class BaseViewModel<S, I, E>(
     private val _uiState = MutableStateFlow(initialState)
     val uiState: StateFlow<S> = _uiState.asStateFlow()
 
-    private val _sideEffect = Channel<E>()
+    private val _sideEffect = Channel<E>(Channel.BUFFERED)
     val sideEffect = _sideEffect.receiveAsFlow()
 
     abstract fun handleIntent(intent: I)
