@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.core.ui.components
+package com.sseotdabwa.buyornot.core.designsystem.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform

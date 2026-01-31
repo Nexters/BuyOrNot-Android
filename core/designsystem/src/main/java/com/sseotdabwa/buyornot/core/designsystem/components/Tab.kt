@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.core.ui.components
+package com.sseotdabwa.buyornot.core.designsystem.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
