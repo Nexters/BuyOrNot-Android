@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -97,7 +98,7 @@ abstract class BaseViewModel<S, I, E>(
     abstract fun handleIntent(intent: I)
 
     protected fun updateState(reducer: (S) -> S) {
-        _uiState.value = reducer(_uiState.value)
+        _uiState.update(reducer)
     }
 
     protected fun sendSideEffect(effect: E) {
