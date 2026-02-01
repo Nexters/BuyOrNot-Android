@@ -17,6 +17,14 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import kotlinx.coroutines.delay
 
 /**
+ * 스플래시 화면 관련 상수
+ */
+private object SplashConstants {
+    const val SPLASH_TIMEOUT_MILLIS = 2000L
+    val APP_LOGO_SIZE = 120.dp
+}
+
+/**
  * 스플래시 화면의 네비게이션 진입점
  *
  * 앱 최초 진입 시 표시되는 스플래시 화면입니다.
@@ -25,11 +33,9 @@ import kotlinx.coroutines.delay
  * @param onTimeout 스플래시 타임아웃 후 실행될 콜백 (로그인 화면으로 이동)
  */
 @Composable
-fun SplashRoute(
-    onTimeout: () -> Unit,
-) {
+fun SplashRoute(onTimeout: () -> Unit) {
     LaunchedEffect(Unit) {
-        delay(2000L) // 2초 대기
+        delay(SplashConstants.SPLASH_TIMEOUT_MILLIS)
         onTimeout()
     }
 
@@ -44,15 +50,16 @@ fun SplashRoute(
 @Composable
 private fun SplashScreen() {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BuyOrNotTheme.colors.gray0),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(BuyOrNotTheme.colors.gray0),
+        contentAlignment = Alignment.Center,
     ) {
         Image(
             painter = painterResource(id = BuyOrNotIcons.AppLogo.resId),
             contentDescription = "App Logo",
-            modifier = Modifier.size(120.dp)
+            modifier = Modifier.size(SplashConstants.APP_LOGO_SIZE),
         )
     }
 }
