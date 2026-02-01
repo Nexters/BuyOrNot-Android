@@ -32,6 +32,7 @@ object BuyOrNotIcons {
     val ArrowRight = IconResource(R.drawable.ic_arrow_right)
 
     // 기능 아이콘
+    val Camera = IconResource(R.drawable.ic_camera)
     val Check = IconResource(R.drawable.ic_check)
     val Vote = IconResource(R.drawable.ic_vote)
     val VoteDone = IconResource(R.drawable.ic_vote_done)
