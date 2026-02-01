@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("buyornot.android.application")
     alias(libs.plugins.kotlin.compose)
@@ -5,11 +7,48 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(localPropertiesFile.inputStream())
+    }
+}
+
+fun Properties.getRequiredProperty(key: String): String {
+    return getProperty(key)
+        ?: error("Required property '$key' is missing in local.properties")
+}
+
 android {
     namespace = "com.sseotdabwa.buyornot"
 
     defaultConfig {
         applicationId = "com.sseotdabwa.buyornot"
+        versionCode = 1
+        versionName = "1.0.0"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file(localProperties.getRequiredProperty("signed.store.file"))
+            storePassword = localProperties.getRequiredProperty("signed.store.password")
+            keyAlias = localProperties.getRequiredProperty("signed.key.alias")
+            keyPassword = localProperties.getRequiredProperty("signed.key.password")
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("release")
+        }
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("release")
+        }
     }
 
     buildFeatures {
