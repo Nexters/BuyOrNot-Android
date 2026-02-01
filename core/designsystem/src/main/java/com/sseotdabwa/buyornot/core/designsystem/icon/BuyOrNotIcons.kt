@@ -21,6 +21,10 @@ import com.sseotdabwa.buyornot.core.designsystem.R
 object BuyOrNotIcons {
     val AppLogo = IconResource(R.drawable.ic_app_logo)
 
+    // 로그인 화면 아이콘
+    val GoogleLogo = IconResource(R.drawable.ic_google_logo)
+    val KakaoLogo = IconResource(R.drawable.ic_kakao_logo)
+
     // 액션 아이콘
     val Add = IconResource(R.drawable.ic_add)
     val Close = IconResource(R.drawable.ic_close)
