@@ -36,6 +36,7 @@ coil = "2.7.0"
 # Code Quality
 ktlint = "14.0.1"
 navigationCompose = "2.8.2"
+materialNavigation = "1.7.0"
 
 
 [libraries]
@@ -56,6 +57,7 @@ androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-te
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-compose-material-navigation = { group = "androidx.compose.material", name = "material-navigation", version.ref = "materialNavigation" }
 
 # Hilt
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }

@@ -7,17 +7,17 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-val localProperties = Properties().apply {
-    val localPropertiesFile = rootProject.file("local.properties")
-    if (localPropertiesFile.exists()) {
-        load(localPropertiesFile.inputStream())
+val localProperties =
+    Properties().apply {
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            load(localPropertiesFile.inputStream())
+        }
     }
-}
 
-fun Properties.getRequiredProperty(key: String): String {
-    return getProperty(key)
+fun Properties.getRequiredProperty(key: String): String =
+    getProperty(key)
         ?: error("Required property '$key' is missing in local.properties")
-}
 
 android {
     namespace = "com.sseotdabwa.buyornot"
@@ -45,7 +45,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             signingConfig = signingConfigs.getByName("release")
         }
@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.material.navigation)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
