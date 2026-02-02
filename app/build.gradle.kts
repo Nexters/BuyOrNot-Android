@@ -37,12 +37,13 @@ android {
                 keyAlias = keyAliasValue
                 keyPassword = keyPass
             } else {
-                val missingProps = listOfNotNull(
-                    if (storeFilePath == null) "signed.store.file" else null,
-                    if (storePass == null) "signed.store.password" else null,
-                    if (keyAliasValue == null) "signed.key.alias" else null,
-                    if (keyPass == null) "signed.key.password" else null,
-                )
+                val missingProps =
+                    listOfNotNull(
+                        if (storeFilePath == null) "signed.store.file" else null,
+                        if (storePass == null) "signed.store.password" else null,
+                        if (keyAliasValue == null) "signed.key.alias" else null,
+                        if (keyPass == null) "signed.key.password" else null,
+                    )
                 logger.warn("⚠️ Signing config incomplete. Missing properties in local.properties: $missingProps")
                 logger.warn("⚠️ Build will use debug signing instead.")
             }
