@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.ui
 
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -14,6 +15,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.ExpandableFloatingAc
 import com.sseotdabwa.buyornot.core.designsystem.components.FabOption
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.feature.upload.navigation.UPLOAD_ROUTE
 import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
 
@@ -39,13 +41,15 @@ fun BuyOrNotApp() {
                     ),
             )
         },
+        containerColor = BuyOrNotTheme.colors.gray0,
     ) { innerPadding ->
         BuyOrNotNavHost(
             navController = navController,
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding),
         )
     }
 }
