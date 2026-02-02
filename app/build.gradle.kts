@@ -11,7 +11,7 @@ val localProperties =
     Properties().apply {
         val localPropertiesFile = rootProject.file("local.properties")
         if (localPropertiesFile.exists()) {
-            load(localPropertiesFile.inputStream())
+            localPropertiesFile.inputStream().use { load(it) }
         }
     }
 
