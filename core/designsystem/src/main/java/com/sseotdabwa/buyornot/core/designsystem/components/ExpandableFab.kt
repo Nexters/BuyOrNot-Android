@@ -28,8 +28,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -93,7 +93,9 @@ fun ExpandableFloatingActionButton(
                 modifier =
                     Modifier
                         .size(24.dp)
-                        .rotate(rotationAngle),
+                        .graphicsLayer {
+                            rotationZ = rotationAngle
+                        },
             )
         }
     }
