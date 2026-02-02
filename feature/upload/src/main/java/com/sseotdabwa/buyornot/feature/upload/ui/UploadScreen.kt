@@ -6,10 +6,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -41,7 +42,7 @@ import java.text.DecimalFormat
 @Composable
 fun UploadScreen(
     modifier: Modifier = Modifier,
-    onDismiss: () -> Unit = {},
+    onNavigateBack: () -> Unit = {},
 ) {
     var priceRaw by remember { mutableStateOf("") }
     var priceFieldValue by remember { mutableStateOf(TextFieldValue("")) }
@@ -51,10 +52,8 @@ fun UploadScreen(
     Column(
         modifier =
             modifier
-                .fillMaxWidth()
-                .background(BuyOrNotTheme.colors.gray0)
-                .padding(bottom = 10.dp)
-                .navigationBarsPadding(),
+                .fillMaxSize()
+                .background(BuyOrNotTheme.colors.gray0),
     ) {
         Text(
             text = "취소",
@@ -64,7 +63,7 @@ fun UploadScreen(
                         start = 20.dp,
                         top = 20.dp,
                         bottom = 14.dp,
-                    ).clickable(onClick = onDismiss),
+                    ).clickable(onClick = onNavigateBack),
             style = BuyOrNotTheme.typography.subTitleS4SemiBold,
             color = BuyOrNotTheme.colors.gray700,
         )
@@ -76,9 +75,11 @@ fun UploadScreen(
 
         Column(
             modifier =
-                Modifier.padding(
-                    horizontal = 20.dp,
-                ),
+                Modifier
+                    .weight(1f)
+                    .padding(
+                        horizontal = 20.dp,
+                    ),
         ) {
             Row(
                 modifier = Modifier.padding(vertical = 18.dp),
@@ -253,12 +254,20 @@ fun UploadScreen(
                     )
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(30.dp))
-
+        // 바텀바 형태의 투표 게시 버튼
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 10.dp)
+                    .imePadding(),
+            horizontalArrangement = Arrangement.End,
+        ) {
             SecondaryButton(
                 onClick = { },
-                modifier = Modifier.align(Alignment.End),
                 cornerRadius = 100.dp,
                 enabled = priceRaw.isNotEmpty() && content.isNotEmpty(),
             ) {

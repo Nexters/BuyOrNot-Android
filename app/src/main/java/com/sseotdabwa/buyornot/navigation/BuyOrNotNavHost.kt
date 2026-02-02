@@ -8,7 +8,7 @@ import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.HOME_ROUTE
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageScreen
-import com.sseotdabwa.buyornot.feature.upload.navigation.uploadBottomSheet
+import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
 
 @Composable
 fun BuyOrNotNavHost(
@@ -21,8 +21,8 @@ fun BuyOrNotNavHost(
         modifier = modifier,
     ) {
         homeScreen()
-        uploadBottomSheet(
-            onDismiss = { navController.popBackStack() },
+        uploadScreen(
+            onNavigateBack = { navController.popBackStack() },
         )
         myPageScreen()
         authScreen()
