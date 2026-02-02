@@ -1,22 +1,25 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -28,11 +31,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.SecondaryButton
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
@@ -48,38 +53,31 @@ fun UploadScreen(
     var priceFieldValue by remember { mutableStateOf(TextFieldValue("")) }
     var content by remember { mutableStateOf("") }
     val decimalFormat = remember { DecimalFormat("#,###") }
+    val scrollState = rememberScrollState()
+
+    val density = LocalDensity.current
+    val imeHeight = WindowInsets.ime.getBottom(density)
+    val isKeyboardVisible = imeHeight > 0
+    val bottomPadding = if (isKeyboardVisible) 10.dp else 20.dp
 
     Column(
         modifier =
             modifier
                 .fillMaxSize()
-                .background(BuyOrNotTheme.colors.gray0),
+                .background(BuyOrNotTheme.colors.gray0)
+                .imePadding(),
     ) {
-        Text(
-            text = "취소",
-            modifier =
-                Modifier
-                    .padding(
-                        start = 20.dp,
-                        top = 20.dp,
-                        bottom = 14.dp,
-                    ).clickable(onClick = onNavigateBack),
-            style = BuyOrNotTheme.typography.subTitleS4SemiBold,
-            color = BuyOrNotTheme.colors.gray700,
-        )
-
-        HorizontalDivider(
-            thickness = 2.dp,
-            color = BuyOrNotTheme.colors.gray100,
-        )
+        BackTopBar {
+            onNavigateBack()
+        }
 
         Column(
             modifier =
                 Modifier
-                    .weight(1f)
+                    .verticalScroll(scrollState)
                     .padding(
                         horizontal = 20.dp,
-                    ),
+                    ).weight(1f),
         ) {
             Row(
                 modifier = Modifier.padding(vertical = 18.dp),
@@ -262,8 +260,7 @@ fun UploadScreen(
                 Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
-                    .padding(bottom = 10.dp)
-                    .imePadding(),
+                    .padding(bottom = bottomPadding),
             horizontalArrangement = Arrangement.End,
         ) {
             SecondaryButton(
