@@ -15,10 +15,6 @@ val localProperties =
         }
     }
 
-fun Properties.getRequiredProperty(key: String): String =
-    getProperty(key)
-        ?: error("Required property '$key' is missing in local.properties")
-
 android {
     namespace = "com.sseotdabwa.buyornot"
 
@@ -30,10 +26,26 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(localProperties.getRequiredProperty("signed.store.file"))
-            storePassword = localProperties.getRequiredProperty("signed.store.password")
-            keyAlias = localProperties.getRequiredProperty("signed.key.alias")
-            keyPassword = localProperties.getRequiredProperty("signed.key.password")
+            val storeFilePath = localProperties.getProperty("signed.store.file")
+            val storePass = localProperties.getProperty("signed.store.password")
+            val keyAliasValue = localProperties.getProperty("signed.key.alias")
+            val keyPass = localProperties.getProperty("signed.key.password")
+
+            if (storeFilePath != null && storePass != null && keyAliasValue != null && keyPass != null) {
+                storeFile = file(storeFilePath)
+                storePassword = storePass
+                keyAlias = keyAliasValue
+                keyPassword = keyPass
+            } else {
+                val missingProps = listOfNotNull(
+                    if (storeFilePath == null) "signed.store.file" else null,
+                    if (storePass == null) "signed.store.password" else null,
+                    if (keyAliasValue == null) "signed.key.alias" else null,
+                    if (keyPass == null) "signed.key.password" else null,
+                )
+                logger.warn("⚠️ Signing config incomplete. Missing properties in local.properties: $missingProps")
+                logger.warn("⚠️ Build will use debug signing instead.")
+            }
         }
     }
 

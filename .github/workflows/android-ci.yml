@@ -21,6 +21,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Create local.properties
+        run: |
+          echo "signed.store.file=keystore.jks" >> local.properties
+          echo "signed.store.password=${{ secrets.SIGNED_STORE_PASSWORD }}" >> local.properties
+          echo "signed.key.alias=${{ secrets.SIGNED_KEY_ALIAS }}" >> local.properties
+          echo "signed.key.password=${{ secrets.SIGNED_KEY_PASSWORD }}" >> local.properties
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
+
       - name: Configure Gradle
         uses: gradle/actions/setup-gradle@v3
 
