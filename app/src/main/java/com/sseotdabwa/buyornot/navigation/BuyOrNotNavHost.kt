@@ -33,7 +33,7 @@ fun BuyOrNotNavHost(
     ) {
         // 스플래시 화면 - 앱 시작점
         splashScreen(
-            onNavigateToLogin = { navController.navigateToLogin() }
+            onNavigateToLogin = { navController.navigateToLogin() },
         )
 
         // 인증 화면 - 로그인
@@ -43,7 +43,7 @@ fun BuyOrNotNavHost(
             },
             onKakaoLoginClick = {
                 // TODO: 카카오 로그인 후 홈으로 이동
-            }
+            },
         )
 
         // 메인 화면들

@@ -137,11 +137,9 @@ private data class TopLevelDestination(
 private fun Modifier.bottomBarPadding(
     currentDestination: NavDestination?,
     padding: PaddingValues,
-): Modifier {
-    return if (currentDestination?.route in listOf(SPLASH_ROUTE, AUTH_ROUTE)) {
+): Modifier =
+    if (currentDestination?.route in listOf(SPLASH_ROUTE, AUTH_ROUTE)) {
         this
     } else {
         this.padding(padding)
     }
-}
-
