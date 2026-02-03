@@ -36,4 +36,3 @@ object BuyOrNotImgs {
 value class ImgsResource(
     @param:DrawableRes val resId: Int,
 )
-
