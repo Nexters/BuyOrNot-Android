@@ -1,8 +1,6 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -81,58 +79,66 @@ fun BuyOrNotBottomSheet(
     }
 
     ModalBottomSheet(
-        onDismissRequest = hideSheetWithAnimation,
+        onDismissRequest = onDismissRequest,
         modifier =
             Modifier
-                .padding(horizontal = 14.dp)
-                .navigationBarsPadding()
-                .padding(bottom = 20.dp),
+                .padding(horizontal = 14.dp),
         sheetState = sheetState,
         shape = RoundedCornerShape(26.dp),
-        containerColor = BuyOrNotTheme.colors.gray0,
-        tonalElevation = 8.dp,
+        containerColor = Color.Transparent,
+        tonalElevation = 0.dp,
         scrimColor = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.5f),
-        dragHandle = {
-            Box(
+        dragHandle = null,
+    ) {
+        // 실제 보이는 시트 컨테이너
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            // indication을 null로 설정하여 Ripple 제거
-                            indication = null,
-                        ) { }
-                        .padding(
-                            top = 10.dp,
+                        .background(
+                            color = BuyOrNotTheme.colors.gray0,
+                            shape = RoundedCornerShape(26.dp),
+                        ).then(
+                            if (isHalfExpandedOnly) {
+                                Modifier.heightIn(max = screenHeight / 2f)
+                            } else {
+                                Modifier
+                            },
                         ),
             ) {
-                Spacer(
+                // 드래그 핸들
+                Box(
                     modifier =
                         Modifier
-                            .align(Alignment.Center)
-                            .width(40.dp)
-                            .height(4.dp)
-                            .background(
-                                color = Color(0xFFD9D9D9),
-                                shape = RoundedCornerShape(18.dp),
-                            ),
-                )
-            }
-        },
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .then(
-                        if (isHalfExpandedOnly) {
-                            Modifier.heightIn(max = screenHeight / 2f)
-                        } else {
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
+                ) {
+                    Spacer(
+                        modifier =
                             Modifier
-                        },
-                    ),
-        ) {
-            content(hideSheetWithAnimation)
+                                .align(Alignment.Center)
+                                .width(40.dp)
+                                .height(4.dp)
+                                .background(
+                                    color = Color(0xFFD9D9D9),
+                                    shape = RoundedCornerShape(18.dp),
+                                ),
+                    )
+                }
+
+                // 콘텐츠
+                content(hideSheetWithAnimation)
+            }
+
+            Spacer(
+                modifier =
+                    Modifier
+                        .navigationBarsPadding() // 시스템 네비게이션 바 대응
+                        .height(20.dp), // 하단에서 띄우고 싶은 만큼 높이 설정
+            )
         }
     }
 }
