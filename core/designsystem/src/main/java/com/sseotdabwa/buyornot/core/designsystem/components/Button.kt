@@ -49,21 +49,33 @@ object BuyOrNotButtonDefaults {
             defaultContainer = BuyOrNotTheme.colors.gray900,
             hoverContainer = BuyOrNotTheme.colors.gray800,
             pressedContainer = BuyOrNotTheme.colors.gray1000,
-            disabledContainer = BuyOrNotTheme.colors.gray300,
+            disabledContainer = BuyOrNotTheme.colors.gray200,
             content = BuyOrNotTheme.colors.gray0,
-            disabledContent = BuyOrNotTheme.colors.gray700,
+            disabledContent = BuyOrNotTheme.colors.gray600,
         )
 
     @Composable
-    fun neutralButtonColors() =
-        BuyOrNotButtonColors(
-            defaultContainer = BuyOrNotTheme.colors.gray100,
-            hoverContainer = BuyOrNotTheme.colors.gray300,
-            pressedContainer = BuyOrNotTheme.colors.gray400,
-            disabledContainer = BuyOrNotTheme.colors.gray100,
-            content = BuyOrNotTheme.colors.gray700,
-            disabledContent = BuyOrNotTheme.colors.gray500,
-        )
+    fun neutralButtonColors(size: ButtonSize) =
+        when (size) {
+            ButtonSize.Large ->
+                BuyOrNotButtonColors(
+                    defaultContainer = BuyOrNotTheme.colors.gray300,
+                    hoverContainer = BuyOrNotTheme.colors.gray300,
+                    pressedContainer = BuyOrNotTheme.colors.gray400,
+                    disabledContainer = BuyOrNotTheme.colors.gray100,
+                    content = BuyOrNotTheme.colors.gray700,
+                    disabledContent = BuyOrNotTheme.colors.gray500,
+                )
+            ButtonSize.Small ->
+                BuyOrNotButtonColors(
+                    defaultContainer = BuyOrNotTheme.colors.gray100,
+                    hoverContainer = BuyOrNotTheme.colors.gray300,
+                    pressedContainer = BuyOrNotTheme.colors.gray400,
+                    disabledContainer = BuyOrNotTheme.colors.gray100,
+                    content = BuyOrNotTheme.colors.gray700,
+                    disabledContent = BuyOrNotTheme.colors.gray500,
+                )
+        }
 
     @Composable
     fun secondaryOutlinedButtonColors() =
@@ -178,7 +190,7 @@ fun NeutralButton(
         enabled = enabled,
         height = height,
         shape = RoundedCornerShape(10.dp),
-        buttonColors = BuyOrNotButtonDefaults.neutralButtonColors(),
+        buttonColors = BuyOrNotButtonDefaults.neutralButtonColors(size = size),
         contentPadding = PaddingValues(horizontal = 12.dp),
         interactionSource = interactionSource,
     ) {
