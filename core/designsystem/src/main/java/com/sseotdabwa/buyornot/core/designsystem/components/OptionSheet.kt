@@ -14,9 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,10 +49,7 @@ fun OptionSheet(
 ) {
     BuyOrNotBottomSheet(
         onDismissRequest = onDismissRequest,
-        sheetState = rememberModalBottomSheetState(
-            skipPartiallyExpanded = false,
-            confirmValueChange = { it != SheetValue.Expanded }
-        ),
+        isHalfExpandedOnly = true,
     ) { hideSheet ->
         Box {
             Column(
@@ -77,9 +72,7 @@ fun OptionSheet(
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // 옵션 목록 영역
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(18.dp),
-                ) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(18.dp)) {
                     items(
                         count = options.size,
                         key = { it },
@@ -120,9 +113,6 @@ fun OptionSheet(
     }
 }
 
-/**
- * 개별 옵션 아이템 컴포저블
- */
 @Composable
 private fun OptionItem(
     text: String,

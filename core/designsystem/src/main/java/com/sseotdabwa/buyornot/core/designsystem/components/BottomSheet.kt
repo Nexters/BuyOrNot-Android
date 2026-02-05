@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -55,10 +57,16 @@ import kotlinx.coroutines.launch
 @Composable
 fun BuyOrNotBottomSheet(
     onDismissRequest: () -> Unit,
-    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    isHalfExpandedOnly: Boolean = false,
+    sheetState: SheetState =
+        rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
+        ),
     content: @Composable ColumnScope.(hideSheet: () -> Unit) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
 
     val hideSheetWithAnimation: () -> Unit = {
         scope.launch { sheetState.hide() }.invokeOnCompletion {
@@ -103,7 +111,20 @@ fun BuyOrNotBottomSheet(
             }
         },
     ) {
-        content(hideSheetWithAnimation)
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (isHalfExpandedOnly) {
+                            Modifier.heightIn(max = screenHeight / 2f)
+                        } else {
+                            Modifier
+                        },
+                    ),
+        ) {
+            content(hideSheetWithAnimation)
+        }
     }
 }
 
