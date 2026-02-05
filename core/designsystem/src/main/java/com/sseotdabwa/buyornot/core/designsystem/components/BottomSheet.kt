@@ -1,21 +1,25 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
-import android.R.attr.top
-import android.view.Gravity
+import android.R.attr.bottom
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,73 +28,52 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindowProvider
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuyOrNotCustomBottomSheet(
     onDismissRequest: () -> Unit,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Dialog(
+    ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        properties =
-            DialogProperties(
-                usePlatformDefaultWidth = false, // 가로 길이를 Modifier에서 제어하기 위해 필수
-            ),
-    ) {
-        // 1. 다이얼로그 윈도우 자체의 배치를 하단으로 고정
-        val dialogWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
-        dialogWindow?.let { window ->
-            window.setGravity(Gravity.BOTTOM) // 하단 배치
-            window.setDimAmount(0.5f) // 뒷배경 흐림 정도
-        }
-
-        // 2. 내부 카드 디자인
-        Surface(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 24.dp),
-            // 기기 하단 끝에서 띄우기 위한 여백
-            shape = RoundedCornerShape(28.dp),
-            color = BuyOrNotTheme.colors.gray0,
-            tonalElevation = 8.dp,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier
+                .padding(horizontal = 14.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 20.dp),
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        shape = RoundedCornerShape(26.dp),
+        containerColor = BuyOrNotTheme.colors.gray0,
+        tonalElevation = 8.dp,
+        scrimColor = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.5f),
+        dragHandle = {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            top = 10.dp,
+                        ),
             ) {
-                // 상단 커스텀 핸들바
-                Box(
+                Spacer(
                     modifier =
                         Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                top = 10.dp,
+                            .align(Alignment.Center)
+                            .width(40.dp)
+                            .height(4.dp)
+                            .background(
+                                color = Color(0xFFD9D9D9),
+                                shape = RoundedCornerShape(18.dp),
                             ),
-                ) {
-                    Spacer(
-                        modifier =
-                            Modifier
-                                .align(Alignment.Center)
-                                .width(40.dp)
-                                .height(4.dp)
-                                .background(
-                                    color = Color(0xFFD9D9D9),
-                                    shape = RoundedCornerShape(18.dp),
-                                ),
-                    )
-                }
-
-                content()
+                )
             }
-        }
+        },
+    ) {
+        content()
     }
 }
 
@@ -115,7 +98,62 @@ private fun InteractiveBuyOrNotCustomSheetPreview() {
                     Column(
                         modifier = Modifier.padding(18.dp),
                     ) {
-                        Text("여기는 컨텐츠 영역입니다.")
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(50.dp)
+                                    .background(
+                                        color = BuyOrNotTheme.colors.gray300,
+                                        shape = RoundedCornerShape(14.dp),
+                                    ),
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "제목",
+                            style = BuyOrNotTheme.typography.subTitleS1SemiBold,
+                            color = BuyOrNotTheme.colors.gray900,
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Text(
+                            text = "설명",
+                            style = BuyOrNotTheme.typography.bodyB4Medium,
+                            color = BuyOrNotTheme.colors.gray700,
+                        )
+
+                        Spacer(modifier = Modifier.height(26.dp))
+
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .background(BuyOrNotTheme.colors.gray300),
+                        )
+
+                        Spacer(modifier = Modifier.height(26.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            NeutralButton(
+                                text = "아니요",
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                showSheet = false
+                            }
+
+                            PrimaryButton(
+                                text = "예",
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                showSheet = false
+                            }
+                        }
                     }
                 },
             )
