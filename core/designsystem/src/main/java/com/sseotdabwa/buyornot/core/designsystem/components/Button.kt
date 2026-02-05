@@ -149,12 +149,17 @@ fun PrimaryButton(
             ButtonSize.Large -> 50.dp
             ButtonSize.Small -> 40.dp
         }
+    val cornerRadius =
+        when (size) {
+            ButtonSize.Large -> 14.dp
+            ButtonSize.Small -> 10.dp
+        }
     BaseBuyOrNotButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
         height = height,
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(cornerRadius),
         buttonColors = BuyOrNotButtonDefaults.primaryButtonColors(),
         contentPadding = PaddingValues(horizontal = 24.dp), // 시안에 맞게 패딩 조절
         interactionSource = interactionSource,
@@ -184,12 +189,17 @@ fun NeutralButton(
             ButtonSize.Large -> 50.dp
             ButtonSize.Small -> 40.dp
         }
+    val cornerRadius =
+        when (size) {
+            ButtonSize.Large -> 14.dp
+            ButtonSize.Small -> 10.dp
+        }
     BaseBuyOrNotButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
         height = height,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(cornerRadius),
         buttonColors = BuyOrNotButtonDefaults.neutralButtonColors(size = size),
         contentPadding = PaddingValues(horizontal = 12.dp),
         interactionSource = interactionSource,
@@ -219,12 +229,17 @@ fun NeutralOutlinedButton(
             ButtonSize.Large -> 50.dp
             ButtonSize.Small -> 40.dp
         }
+    val cornerRadius =
+        when (size) {
+            ButtonSize.Large -> 14.dp
+            ButtonSize.Small -> 10.dp
+        }
     BaseBuyOrNotButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
         height = height,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(cornerRadius),
         buttonColors = BuyOrNotButtonDefaults.secondaryOutlinedButtonColors(),
         border =
             BorderStroke(
