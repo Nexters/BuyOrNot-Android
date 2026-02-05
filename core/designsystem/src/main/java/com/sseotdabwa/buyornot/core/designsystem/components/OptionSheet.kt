@@ -31,7 +31,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 /**
- * [BuyOrNotOptionSheet]는 여러 선택지 중 하나를 선택할 수 있는 시트입니다.
+ * [OptionSheet]는 여러 선택지 중 하나를 선택할 수 있는 시트입니다.
  * * @param title 시트 상단에 표시될 제목입니다.
  * @param options 선택 가능한 옵션 리스트입니다.
  * @param selectedOption 현재 선택된 옵션 (체크 표시 아이콘 노출 여부 결정)입니다.
