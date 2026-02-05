@@ -28,6 +28,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
+enum class ButtonSize {
+    Large,
+    Small,
+}
+
 data class BuyOrNotButtonColors(
     val defaultContainer: Color,
     val hoverContainer: Color,
@@ -50,7 +55,7 @@ object BuyOrNotButtonDefaults {
         )
 
     @Composable
-    fun secondaryButtonColors() =
+    fun neutralButtonColors() =
         BuyOrNotButtonColors(
             defaultContainer = BuyOrNotTheme.colors.gray100,
             hoverContainer = BuyOrNotTheme.colors.gray300,
@@ -125,12 +130,18 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    size: ButtonSize = ButtonSize.Large,
 ) {
+    val height =
+        when (size) {
+            ButtonSize.Large -> 50.dp
+            ButtonSize.Small -> 40.dp
+        }
     BaseBuyOrNotButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        height = 50.dp,
+        height = height,
         shape = RoundedCornerShape(14.dp),
         buttonColors = BuyOrNotButtonDefaults.primaryButtonColors(),
         contentPadding = PaddingValues(horizontal = 24.dp), // 시안에 맞게 패딩 조절
@@ -141,20 +152,26 @@ fun PrimaryButton(
 }
 
 @Composable
-fun SecondaryButton(
+fun NeutralButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    size: ButtonSize = ButtonSize.Large,
 ) {
+    val height =
+        when (size) {
+            ButtonSize.Large -> 50.dp
+            ButtonSize.Small -> 40.dp
+        }
     BaseBuyOrNotButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        height = 40.dp,
+        height = height,
         shape = RoundedCornerShape(10.dp),
-        buttonColors = BuyOrNotButtonDefaults.secondaryButtonColors(),
+        buttonColors = BuyOrNotButtonDefaults.neutralButtonColors(),
         contentPadding = PaddingValues(horizontal = 12.dp),
         interactionSource = interactionSource,
     ) {
@@ -163,18 +180,24 @@ fun SecondaryButton(
 }
 
 @Composable
-fun SecondaryOutlinedButton(
+fun NeutralOutlinedButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    size: ButtonSize = ButtonSize.Large,
 ) {
+    val height =
+        when (size) {
+            ButtonSize.Large -> 50.dp
+            ButtonSize.Small -> 40.dp
+        }
     BaseBuyOrNotButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        height = 40.dp,
+        height = height,
         shape = RoundedCornerShape(10.dp),
         buttonColors = BuyOrNotButtonDefaults.secondaryOutlinedButtonColors(),
         border =
@@ -196,12 +219,18 @@ fun CapsuleButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    size: ButtonSize = ButtonSize.Large,
 ) {
+    val height =
+        when (size) {
+            ButtonSize.Large -> 50.dp
+            ButtonSize.Small -> 40.dp
+        }
     BaseBuyOrNotButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
-        height = 40.dp,
+        height = height,
         shape = RoundedCornerShape(100.dp),
         buttonColors = BuyOrNotButtonDefaults.primaryButtonColors(), // Primary 색상 사용 예시
         contentPadding = PaddingValues(horizontal = 16.dp),
@@ -222,7 +251,7 @@ private fun BuyOrNotButtonPreview() {
                     .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(text = "Primary Button", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+            Text(text = "Primary Button (Large)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -232,54 +261,123 @@ private fun BuyOrNotButtonPreview() {
                     onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
+                    size = ButtonSize.Large,
                 )
                 PrimaryButton(
                     text = "Disabled",
                     onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
+                    size = ButtonSize.Large,
                 )
             }
 
-            Text(text = "Secondary Button", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+            Text(text = "Primary Button (Small)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SecondaryButton(
+                PrimaryButton(
                     text = "Enabled",
                     onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
+                    size = ButtonSize.Small,
                 )
-                SecondaryButton(
+                PrimaryButton(
                     text = "Disabled",
                     onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
+                    size = ButtonSize.Small,
                 )
             }
 
-            Text(text = "Secondary Outlined Button", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+            Text(text = "Neutral Button (Large)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SecondaryOutlinedButton(
+                NeutralButton(
                     text = "Enabled",
                     onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
+                    size = ButtonSize.Large,
                 )
-                SecondaryOutlinedButton(
+                NeutralButton(
                     text = "Disabled",
                     onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
+                    size = ButtonSize.Large,
                 )
             }
 
-            Text(text = "Capsule Button", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+            Text(text = "Neutral Button (Small)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                NeutralButton(
+                    text = "Enabled",
+                    onClick = { },
+                    modifier = Modifier.weight(1f),
+                    enabled = true,
+                    size = ButtonSize.Small,
+                )
+                NeutralButton(
+                    text = "Disabled",
+                    onClick = { },
+                    modifier = Modifier.weight(1f),
+                    enabled = false,
+                    size = ButtonSize.Small,
+                )
+            }
+
+            Text(text = "Neutral Outlined Button (Large)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                NeutralOutlinedButton(
+                    text = "Enabled",
+                    onClick = { },
+                    modifier = Modifier.weight(1f),
+                    enabled = true,
+                    size = ButtonSize.Large,
+                )
+                NeutralOutlinedButton(
+                    text = "Disabled",
+                    onClick = { },
+                    modifier = Modifier.weight(1f),
+                    enabled = false,
+                    size = ButtonSize.Large,
+                )
+            }
+
+            Text(text = "Neutral Outlined Button (Small)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                NeutralOutlinedButton(
+                    text = "Enabled",
+                    onClick = { },
+                    modifier = Modifier.weight(1f),
+                    enabled = true,
+                    size = ButtonSize.Small,
+                )
+                NeutralOutlinedButton(
+                    text = "Disabled",
+                    onClick = { },
+                    modifier = Modifier.weight(1f),
+                    enabled = false,
+                    size = ButtonSize.Small,
+                )
+            }
+
+            Text(text = "Capsule Button (Large)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -289,12 +387,35 @@ private fun BuyOrNotButtonPreview() {
                     onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
+                    size = ButtonSize.Large,
                 )
                 CapsuleButton(
                     text = "Disabled",
                     onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
+                    size = ButtonSize.Large,
+                )
+            }
+
+            Text(text = "Capsule Button (Small)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                CapsuleButton(
+                    text = "Enabled",
+                    onClick = { },
+                    modifier = Modifier.weight(1f),
+                    enabled = true,
+                    size = ButtonSize.Small,
+                )
+                CapsuleButton(
+                    text = "Disabled",
+                    onClick = { },
+                    modifier = Modifier.weight(1f),
+                    enabled = false,
+                    size = ButtonSize.Small,
                 )
             }
         }
