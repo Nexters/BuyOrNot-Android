@@ -123,7 +123,7 @@ private fun OptionItem(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(20.dp)
+                .height(30.dp)
                 .clickable(onClick = onClick)
                 .padding(horizontal = 24.dp),
         verticalAlignment = Alignment.CenterVertically,
