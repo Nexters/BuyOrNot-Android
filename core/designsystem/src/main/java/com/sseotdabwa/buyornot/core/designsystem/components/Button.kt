@@ -126,11 +126,11 @@ private fun BaseBuyOrNotButton(
 @Composable
 fun PrimaryButton(
     text: String,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     size: ButtonSize = ButtonSize.Large,
+    onClick: () -> Unit,
 ) {
     val height =
         when (size) {
@@ -161,11 +161,11 @@ fun PrimaryButton(
 @Composable
 fun NeutralButton(
     text: String,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     size: ButtonSize = ButtonSize.Large,
+    onClick: () -> Unit,
 ) {
     val height =
         when (size) {
@@ -196,11 +196,11 @@ fun NeutralButton(
 @Composable
 fun NeutralOutlinedButton(
     text: String,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     size: ButtonSize = ButtonSize.Large,
+    onClick: () -> Unit,
 ) {
     val height =
         when (size) {
@@ -236,11 +236,11 @@ fun NeutralOutlinedButton(
 @Composable
 fun CapsuleButton(
     text: String,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     size: ButtonSize = ButtonSize.Large,
+    onClick: () -> Unit,
 ) {
     val height =
         when (size) {
@@ -286,18 +286,16 @@ private fun BuyOrNotButtonPreview() {
             ) {
                 PrimaryButton(
                     text = "Enabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
                     size = ButtonSize.Large,
-                )
+                ) { }
                 PrimaryButton(
                     text = "Disabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
                     size = ButtonSize.Large,
-                )
+                ) { }
             }
 
             Text(text = "Primary Button (Small)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
@@ -307,18 +305,16 @@ private fun BuyOrNotButtonPreview() {
             ) {
                 PrimaryButton(
                     text = "Enabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
                     size = ButtonSize.Small,
-                )
+                ) { }
                 PrimaryButton(
                     text = "Disabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
                     size = ButtonSize.Small,
-                )
+                ) { }
             }
 
             Text(text = "Neutral Button (Large)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
@@ -328,18 +324,16 @@ private fun BuyOrNotButtonPreview() {
             ) {
                 NeutralButton(
                     text = "Enabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
                     size = ButtonSize.Large,
-                )
+                ) { }
                 NeutralButton(
                     text = "Disabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
                     size = ButtonSize.Large,
-                )
+                ) { }
             }
 
             Text(text = "Neutral Button (Small)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
@@ -349,18 +343,16 @@ private fun BuyOrNotButtonPreview() {
             ) {
                 NeutralButton(
                     text = "Enabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
                     size = ButtonSize.Small,
-                )
+                ) { }
                 NeutralButton(
                     text = "Disabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
                     size = ButtonSize.Small,
-                )
+                ) { }
             }
 
             Text(text = "Neutral Outlined Button (Large)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
@@ -370,18 +362,16 @@ private fun BuyOrNotButtonPreview() {
             ) {
                 NeutralOutlinedButton(
                     text = "Enabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
                     size = ButtonSize.Large,
-                )
+                ) { }
                 NeutralOutlinedButton(
                     text = "Disabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
                     size = ButtonSize.Large,
-                )
+                ) { }
             }
 
             Text(text = "Neutral Outlined Button (Small)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
@@ -391,18 +381,16 @@ private fun BuyOrNotButtonPreview() {
             ) {
                 NeutralOutlinedButton(
                     text = "Enabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
                     size = ButtonSize.Small,
-                )
+                ) { }
                 NeutralOutlinedButton(
                     text = "Disabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
                     size = ButtonSize.Small,
-                )
+                ) { }
             }
 
             Text(text = "Capsule Button (Large)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
@@ -412,18 +400,16 @@ private fun BuyOrNotButtonPreview() {
             ) {
                 CapsuleButton(
                     text = "Enabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
                     size = ButtonSize.Large,
-                )
+                ) { }
                 CapsuleButton(
                     text = "Disabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
                     size = ButtonSize.Large,
-                )
+                ) { }
             }
 
             Text(text = "Capsule Button (Small)", style = BuyOrNotTheme.typography.subTitleS5SemiBold)
@@ -433,18 +419,16 @@ private fun BuyOrNotButtonPreview() {
             ) {
                 CapsuleButton(
                     text = "Enabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = true,
                     size = ButtonSize.Small,
-                )
+                ) { }
                 CapsuleButton(
                     text = "Disabled",
-                    onClick = { },
                     modifier = Modifier.weight(1f),
                     enabled = false,
                     size = ButtonSize.Small,
-                )
+                ) { }
             }
         }
     }
