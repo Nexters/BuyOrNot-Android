@@ -147,7 +147,14 @@ fun PrimaryButton(
         contentPadding = PaddingValues(horizontal = 24.dp), // 시안에 맞게 패딩 조절
         interactionSource = interactionSource,
     ) {
-        Text(text = text, style = BuyOrNotTheme.typography.titleT2Bold) // 텍스트 스타일 적용
+        Text(
+            text = text,
+            style =
+                when (size) {
+                    ButtonSize.Large -> BuyOrNotTheme.typography.titleT2Bold
+                    ButtonSize.Small -> BuyOrNotTheme.typography.subTitleS5SemiBold
+                },
+        )
     }
 }
 
@@ -175,7 +182,14 @@ fun NeutralButton(
         contentPadding = PaddingValues(horizontal = 12.dp),
         interactionSource = interactionSource,
     ) {
-        Text(text = text, style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+        Text(
+            text = text,
+            style =
+                when (size) {
+                    ButtonSize.Large -> BuyOrNotTheme.typography.titleT2Bold
+                    ButtonSize.Small -> BuyOrNotTheme.typography.subTitleS5SemiBold
+                },
+        )
     }
 }
 
@@ -208,7 +222,14 @@ fun NeutralOutlinedButton(
         contentPadding = PaddingValues(horizontal = 12.dp),
         interactionSource = interactionSource,
     ) {
-        Text(text = text, style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+        Text(
+            text = text,
+            style =
+                when (size) {
+                    ButtonSize.Large -> BuyOrNotTheme.typography.titleT2Bold
+                    ButtonSize.Small -> BuyOrNotTheme.typography.subTitleS5SemiBold
+                },
+        )
     }
 }
 
@@ -236,7 +257,14 @@ fun CapsuleButton(
         contentPadding = PaddingValues(horizontal = 16.dp),
         interactionSource = interactionSource,
     ) {
-        Text(text = text, style = BuyOrNotTheme.typography.subTitleS5SemiBold)
+        Text(
+            text = text,
+            style =
+                when (size) {
+                    ButtonSize.Large -> BuyOrNotTheme.typography.titleT2Bold
+                    ButtonSize.Small -> BuyOrNotTheme.typography.subTitleS5SemiBold
+                },
+        )
     }
 }
 
