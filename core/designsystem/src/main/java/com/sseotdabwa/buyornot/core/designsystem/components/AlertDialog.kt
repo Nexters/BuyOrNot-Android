@@ -43,7 +43,7 @@ fun BuyOrNotAlertDialog(
             Column(
                 modifier =
                     Modifier
-                        .padding(horizontal = 28.dp)
+                        .padding(horizontal = 18.dp)
                         .padding(top = 26.dp, bottom = 16.dp),
             ) {
                 Column(
@@ -60,7 +60,7 @@ fun BuyOrNotAlertDialog(
                     Text(
                         text = subText,
                         style = BuyOrNotTheme.typography.bodyB3Medium,
-                        color = BuyOrNotTheme.colors.gray500, // 시안의 흐릿한 텍스트 색상
+                        color = BuyOrNotTheme.colors.gray700,
                     )
                 }
 
