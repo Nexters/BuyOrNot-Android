@@ -224,7 +224,7 @@ private fun SnackbarDemoScreenPreview() {
                         showBuyOrNotSnackBar(
                             snackbarHostState = snackbarHostState,
                             message = "스낵바입니다. 안내 메세지를 작성해주세요.",
-                            iconResource = BuyOrNotIcons.Check,
+                            iconResource = BuyOrNotIcons.CheckCircle,
                         )
                     }
                 }) {
@@ -248,7 +248,7 @@ private fun BuyOrNotSnackBarPreview() {
                         override val visuals =
                             BuyOrNotSnackBarVisuals(
                                 message = "아이콘이 있는 스낵바입니다.",
-                                iconResource = BuyOrNotIcons.Check,
+                                iconResource = BuyOrNotIcons.CheckCircle,
                             )
 
                         override fun dismiss() {}
