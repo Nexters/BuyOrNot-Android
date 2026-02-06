@@ -47,6 +47,8 @@ object BuyOrNotIcons {
     val Profile = IconResource(R.drawable.ic_profile)
     val Notification = IconResource(R.drawable.ic_notification)
     val NotificationFilled = IconResource(R.drawable.ic_notification_filled)
+
+    val Won = IconResource(R.drawable.ic_won)
 }
 
 /**

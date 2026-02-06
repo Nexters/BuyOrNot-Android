@@ -35,7 +35,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
-import com.sseotdabwa.buyornot.core.designsystem.components.SecondaryButton
+import com.sseotdabwa.buyornot.core.designsystem.components.CapsuleButton
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -88,9 +88,9 @@ fun UploadScreen(
                     tint = BuyOrNotTheme.colors.gray600,
                 )
                 Text(
-                    text = "음식",
+                    text = "카테고리 추가",
                     style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                    color = BuyOrNotTheme.colors.gray800,
+                    color = BuyOrNotTheme.colors.gray600,
                 )
             }
 
@@ -104,10 +104,11 @@ fun UploadScreen(
                 modifier = Modifier.padding(vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = "₩",
-                    style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                    color = BuyOrNotTheme.colors.gray600,
+                Icon(
+                    imageVector = BuyOrNotIcons.Won.asImageVector(),
+                    contentDescription = "Won",
+                    modifier = Modifier.size(18.dp),
+                    tint = BuyOrNotTheme.colors.gray600,
                 )
                 Spacer(modifier = Modifier.width(6.dp))
 
@@ -255,16 +256,10 @@ fun UploadScreen(
                     .padding(bottom = 20.dp),
             horizontalArrangement = Arrangement.End,
         ) {
-            SecondaryButton(
-                onClick = { },
-                cornerRadius = 100.dp,
-                enabled = priceRaw.isNotEmpty() && content.isNotEmpty(),
+            CapsuleButton(
+                text = "투표 게시!",
+                enabled = false,
             ) {
-                Text(
-                    text = "투표 게시!",
-                    style = BuyOrNotTheme.typography.subTitleS5SemiBold,
-                    color = BuyOrNotTheme.colors.gray700,
-                )
             }
         }
     }
