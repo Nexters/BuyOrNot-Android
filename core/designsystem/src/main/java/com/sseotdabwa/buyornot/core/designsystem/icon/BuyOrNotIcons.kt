@@ -21,19 +21,26 @@ import com.sseotdabwa.buyornot.core.designsystem.R
 object BuyOrNotIcons {
     val AppLogo = IconResource(R.drawable.ic_app_logo)
 
+    // 로그인 화면 아이콘
+    val GoogleLogo = IconResource(R.drawable.ic_google_logo)
+    val KakaoLogo = IconResource(R.drawable.ic_kakao_logo)
+
     // 액션 아이콘
     val Add = IconResource(R.drawable.ic_add)
     val Close = IconResource(R.drawable.ic_close)
     val More = IconResource(R.drawable.ic_more)
     val Expand = IconResource(R.drawable.ic_expand)
+    val Check = IconResource(R.drawable.ic_check)
+    val Clock = IconResource(R.drawable.ic_clock)
 
     // 네비게이션 아이콘
     val ArrowLeft = IconResource(R.drawable.ic_arrow_left)
     val ArrowRight = IconResource(R.drawable.ic_arrow_right)
+    val ArrowDown = IconResource(R.drawable.ic_arrow_down)
 
     // 기능 아이콘
+    val CheckCircle = IconResource(R.drawable.ic_check_circle)
     val Camera = IconResource(R.drawable.ic_camera)
-    val Check = IconResource(R.drawable.ic_check)
     val Vote = IconResource(R.drawable.ic_vote)
     val VoteDone = IconResource(R.drawable.ic_vote_done)
     val Bag = IconResource(R.drawable.ic_bag)

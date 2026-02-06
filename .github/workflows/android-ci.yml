@@ -1,0 +1,38 @@
+name: BuyOrNot CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+
+jobs:
+  ktlint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Create local.properties
+        run: |
+          echo "signed.store.file=keystore.jks" >> local.properties
+          echo "signed.store.password=${{ secrets.SIGNED_STORE_PASSWORD }}" >> local.properties
+          echo "signed.key.alias=${{ secrets.SIGNED_KEY_ALIAS }}" >> local.properties
+          echo "signed.key.password=${{ secrets.SIGNED_KEY_PASSWORD }}" >> local.properties
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
+
+      - name: Configure Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run ktlint check
+        run: ./gradlew ktlintCheck
