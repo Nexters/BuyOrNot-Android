@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
+import android.R.attr.bottom
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -85,63 +86,53 @@ fun BuyOrNotBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier =
             Modifier
-                .padding(horizontal = 14.dp),
+                .padding(horizontal = 14.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 20.dp),
         sheetState = sheetState,
-        shape = RoundedCornerShape(26.dp),
         containerColor = Color.Transparent,
+        shape = RoundedCornerShape(26.dp),
         tonalElevation = 0.dp,
         scrimColor = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.5f),
         dragHandle = null,
     ) {
-        // 실제 보이는 시트 컨테이너
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = BuyOrNotTheme.colors.gray0,
+                        shape = RoundedCornerShape(26.dp),
+                    ).then(
+                        if (isHalfExpandedOnly) {
+                            Modifier.heightIn(max = screenHeight / 2f)
+                        } else {
+                            Modifier
+                        },
+                    ),
         ) {
-            Column(
+            // 드래그 핸들
+            Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .background(
-                            color = BuyOrNotTheme.colors.gray0,
-                            shape = RoundedCornerShape(26.dp),
-                        ).then(
-                            if (isHalfExpandedOnly) {
-                                Modifier.heightIn(max = screenHeight / 2f)
-                            } else {
-                                Modifier
-                            },
-                        ),
+                        .padding(top = 10.dp),
             ) {
-                // 드래그 핸들
-                Box(
+                Spacer(
                     modifier =
                         Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp),
-                ) {
-                    Spacer(
-                        modifier =
-                            Modifier
-                                .align(Alignment.Center)
-                                .width(40.dp)
-                                .height(4.dp)
-                                .background(
-                                    color = Color(0xFFD9D9D9),
-                                    shape = RoundedCornerShape(18.dp),
-                                ),
-                    )
-                }
-
-                // 콘텐츠
-                content(hideSheetWithAnimation)
+                            .align(Alignment.Center)
+                            .width(40.dp)
+                            .height(4.dp)
+                            .background(
+                                color = Color(0xFFD9D9D9),
+                                shape = RoundedCornerShape(18.dp),
+                            ),
+                )
             }
 
-            Spacer(
-                modifier =
-                    Modifier
-                        .navigationBarsPadding() // 시스템 네비게이션 바 대응
-                        .height(20.dp), // 하단에서 띄우고 싶은 만큼 높이 설정
-            )
+            // 콘텐츠
+            content(hideSheetWithAnimation)
         }
     }
 }
