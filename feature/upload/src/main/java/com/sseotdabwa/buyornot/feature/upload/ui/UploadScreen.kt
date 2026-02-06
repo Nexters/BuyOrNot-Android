@@ -41,9 +41,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.addOutline
+import androidx.compose.ui.graphics.asAndroidPath
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -52,6 +59,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
@@ -502,36 +510,24 @@ private fun SelectedImagePreview(
 
 @Composable
 private fun ToolTip(modifier: Modifier = Modifier) {
+    val tooltipShape =
+        remember {
+            BubbleShape(
+                cornerRadius = 10.dp,
+                arrowWidth = 5.dp,
+                arrowHeight = 10.dp,
+            )
+        }
+
     Row(
         modifier =
             modifier
-                .graphicsLayer {
-                    shadowElevation = 20.dp.toPx()
-                }.shadow(
-                    elevation = 20.dp,
-                    shape =
-                        BubbleShape(
-                            cornerRadius = 10.dp,
-                            arrowWidth = 5.dp,
-                            arrowHeight = 10.dp,
-                        ),
-                    ambientColor = Color(0xFF3670DB).copy(alpha = 0.2f),
-                    spotColor = Color(0xFF3670DB).copy(alpha = 0.2f),
-                    clip = false,
-                ).background(
+                .customShadow(shape = tooltipShape)
+                .background(
                     color = BuyOrNotTheme.colors.gray0,
-                    shape =
-                        BubbleShape(
-                            cornerRadius = 10.dp,
-                            arrowWidth = 5.dp,
-                            arrowHeight = 10.dp,
-                        ),
-                ).padding(
-                    vertical = 10.dp,
-                ).padding(
-                    start = 12.dp,
-                    end = 17.dp,
-                ),
+                    shape = tooltipShape,
+                ).padding(vertical = 10.dp)
+                .padding(start = 12.dp, end = 17.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -547,6 +543,38 @@ private fun ToolTip(modifier: Modifier = Modifier) {
             style = BuyOrNotTheme.typography.paragraphP4Medium,
             color = BuyOrNotTheme.colors.gray700,
         )
+    }
+}
+
+fun Modifier.customShadow(
+    shape: Shape,
+    color: Color = Color(0xFF3670DB).copy(alpha = 0.2f),
+    blur: Dp = 50.dp,
+    offsetX: Dp = 40.dp,
+    offsetY: Dp = 4.dp,
+) = this.drawBehind {
+    // 1. 전달받은 Shape로부터 현재 사이즈에 맞는 Outline을 생성합니다.
+    val outline = shape.createOutline(size, layoutDirection, this)
+    val path =
+        Path().apply {
+            // Outline을 Path 형태로 변환합니다.
+            addOutline(outline)
+        }
+
+    drawIntoCanvas { canvas ->
+        val paint =
+            Paint().asFrameworkPaint().apply {
+                this.color = android.graphics.Color.TRANSPARENT
+                // 설정된 Offset과 Blur(Spread)를 적용합니다.
+                setShadowLayer(
+                    blur.toPx(),
+                    offsetX.toPx(),
+                    offsetY.toPx(),
+                    color.toArgb(),
+                )
+            }
+        // Compose Path를 Native Path로 변환하여 그림자를 그립니다.
+        canvas.nativeCanvas.drawPath(path.asAndroidPath(), paint)
     }
 }
 
