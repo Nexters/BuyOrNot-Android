@@ -10,14 +10,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +40,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -48,10 +54,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
+import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
 import com.sseotdabwa.buyornot.core.designsystem.components.CapsuleButton
 import com.sseotdabwa.buyornot.core.designsystem.components.OptionSheet
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.shape.BubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import java.text.DecimalFormat
 
@@ -65,138 +73,71 @@ fun UploadScreen(
     var content by remember { mutableStateOf("") }
     var showCategorySheet by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
-    val categories = remember { listOf("명품∙프리미엄", "패션 ∙ 잡화", "화장품∙뷰티", "트렌드∙가성비템", "음식", "전자기기", "여행 쇼핑템", "헬스∙운동용품", "도서", "기타") }
+    val categories =
+        remember {
+            listOf(
+                "명품 ∙ 프리미엄",
+                "패션 ∙ 잡화",
+                "화장품 ∙ 뷰티",
+                "트렌드 ∙ 가성비템",
+                "음식",
+                "전자기기",
+                "여행 쇼핑템",
+                "헬스 ∙ 운동용품",
+                "도서",
+                "기타",
+            )
+        }
     val decimalFormat = remember { DecimalFormat("#,###") }
     val scrollState = rememberScrollState()
 
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // 선택된 이미지 URI
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val galleryLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri: Uri? ->
-            selectedImageUri = uri // 이미지를 선택하면 URI 업데이트
+            selectedImageUri = uri
         }
+
+    val isSubmitEnabled = selectedCategory != null && priceRaw.isNotEmpty() && selectedImageUri != null
 
     Column(
         modifier =
             modifier
                 .fillMaxSize()
                 .background(BuyOrNotTheme.colors.gray0)
-                .imePadding(),
+                .imePadding()
+                .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        BackTopBar {
-            onNavigateBack()
-        }
+        BackTopBar(onNavigateBack)
 
         Column(
             modifier =
                 Modifier
                     .verticalScroll(scrollState)
-                    .padding(
-                        horizontal = 20.dp,
-                    ).weight(1f),
+                    .padding(horizontal = 20.dp)
+                    .weight(1f),
         ) {
-            Row(
-                modifier = Modifier.padding(vertical = 18.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "투표 등록",
-                    style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                    color = BuyOrNotTheme.colors.gray800,
-                )
-                Icon(
-                    imageVector = BuyOrNotIcons.ArrowRight.asImageVector(),
-                    contentDescription = "Arrow Right",
-                    modifier = Modifier.size(14.dp),
-                    tint = BuyOrNotTheme.colors.gray600,
-                )
-                Text(
-                    text = selectedCategory ?: "카테고리 추가",
-                    modifier = Modifier.clickable { showCategorySheet = true },
-                    style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                    color = if (selectedCategory != null) BuyOrNotTheme.colors.gray800 else BuyOrNotTheme.colors.gray600,
-                )
-            }
+            CategorySelectorRow(
+                selectedCategory = selectedCategory,
+                onCategoryClick = { showCategorySheet = true },
+            )
 
             HorizontalDivider(
                 thickness = 2.dp,
                 color = BuyOrNotTheme.colors.gray100,
             )
 
-            // 4. 가격 입력 필드
-            Row(
+            PriceInputField(
                 modifier = Modifier.padding(vertical = 18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = BuyOrNotIcons.Won.asImageVector(),
-                    contentDescription = "Won",
-                    modifier = Modifier.size(18.dp),
-                    tint = BuyOrNotTheme.colors.gray600,
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-
-                BasicTextField(
-                    value = priceFieldValue,
-                    onValueChange = { newValue ->
-                        val newDigits = newValue.text.filter { it.isDigit() }
-
-                        if (newDigits.length <= 10) {
-                            priceRaw = newDigits
-                            val formattedText =
-                                if (newDigits.isEmpty()) {
-                                    ""
-                                } else {
-                                    decimalFormat.format(newDigits.toLongOrNull() ?: 0)
-                                }
-
-                            // 커서 앞에 있는 숫자 개수를 세어서 새 포맷된 텍스트에서 같은 위치 찾기
-                            val cursorPos = newValue.selection.end
-                            val digitsBeforeCursor = newValue.text.take(cursorPos).count { it.isDigit() }
-
-                            // 새 포맷된 텍스트에서 같은 수의 숫자를 지나간 위치 찾기
-                            var digitCount = 0
-                            var newCursorPos = 0
-                            for (i in formattedText.indices) {
-                                if (formattedText[i].isDigit()) {
-                                    digitCount++
-                                }
-                                if (digitCount == digitsBeforeCursor) {
-                                    newCursorPos = i + 1
-                                    break
-                                }
-                            }
-                            if (digitsBeforeCursor == 0) {
-                                newCursorPos = 0
-                            }
-
-                            priceFieldValue =
-                                TextFieldValue(
-                                    text = formattedText,
-                                    selection = TextRange(newCursorPos),
-                                )
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle =
-                        BuyOrNotTheme.typography.subTitleS3SemiBold.copy(
-                            color = BuyOrNotTheme.colors.gray800,
-                        ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    decorationBox = { innerTextField ->
-                        if (priceRaw.isEmpty()) {
-                            Text(
-                                text = "상품 가격을 입력해주세요",
-                                style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                                color = BuyOrNotTheme.colors.gray600,
-                            )
-                        }
-                        innerTextField()
-                    },
-                )
-            }
+                priceFieldValue = priceFieldValue,
+                priceRaw = priceRaw,
+                decimalFormat = decimalFormat,
+                onPriceChange = { digits, textFieldValue ->
+                    priceRaw = digits
+                    priceFieldValue = textFieldValue
+                },
+            )
 
             HorizontalDivider(
                 thickness = 2.dp,
@@ -205,156 +146,37 @@ fun UploadScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                BasicTextField(
-                    value = content,
-                    onValueChange = { if (it.length <= 100) content = it },
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 84.dp),
-                    textStyle =
-                        BuyOrNotTheme.typography.paragraphP2Medium.copy(
-                            color = BuyOrNotTheme.colors.gray900,
-                        ),
-                    decorationBox = { innerTextField ->
-                        if (content.isEmpty()) {
-                            Text(
-                                text = "고민 이유를 자세히 적을수록 더 정확한 투표 결과를 얻을 수 있어요!",
-                                style = BuyOrNotTheme.typography.paragraphP2Medium,
-                                color = BuyOrNotTheme.colors.gray600,
-                            )
-                        }
-                        innerTextField()
-                    },
-                )
+            ContentInputField(
+                content = content,
+                onContentChange = { content = it },
+            )
 
-                Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-                // 글자 수 표시 (오른쪽 하단)
-                Text(
-                    text = "${content.length}/100",
-                    modifier = Modifier.align(Alignment.End),
-                    style = BuyOrNotTheme.typography.captionC3Medium,
-                    color = BuyOrNotTheme.colors.gray600,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 6. 이미지 선택 버튼
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Surface(
-                    modifier =
-                        Modifier
-                            .size(68.dp)
-                            .clickable { galleryLauncher.launch("image/*") },
-                    shape = RoundedCornerShape(12.dp),
-                    color = BuyOrNotTheme.colors.gray100,
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement =
-                            Arrangement.spacedBy(
-                                space = 2.dp,
-                                alignment = Alignment.CenterVertically,
-                            ),
-                    ) {
-                        Icon(
-                            imageVector = BuyOrNotIcons.Camera.asImageVector(),
-                            contentDescription = "Camera",
-                            modifier = Modifier.size(20.dp),
-                            tint = BuyOrNotTheme.colors.gray600,
-                        )
-                        Text(
-                            text =
-                                buildAnnotatedString {
-                                    withStyle(
-                                        style =
-                                            SpanStyle(
-                                                color =
-                                                    if (selectedImageUri != null) {
-                                                        BuyOrNotTheme.colors.gray800
-                                                    } else {
-                                                        BuyOrNotTheme.colors.gray600
-                                                    },
-                                            ),
-                                    ) {
-                                        append(if (selectedImageUri != null) "1" else "0")
-                                    }
-                                    withStyle(
-                                        style = SpanStyle(color = BuyOrNotTheme.colors.gray600),
-                                    ) {
-                                        append("/1")
-                                    }
-                                },
-                            style = BuyOrNotTheme.typography.subTitleS5SemiBold,
-                        )
-                    }
-                }
-
-                if (selectedImageUri != null) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(68.dp)
-                                .clip(RoundedCornerShape(12.dp)),
-                        contentAlignment = Alignment.TopEnd,
-                    ) {
-                        AsyncImage(
-                            model = selectedImageUri,
-                            contentDescription = "Selected Image",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                        )
-
-                        Box(
-                            modifier =
-                                Modifier
-                                    .padding(
-                                        top = 4.dp,
-                                        end = 4.dp,
-                                    ).size(20.dp)
-                                    .background(
-                                        color =
-                                            BuyOrNotTheme.colors.black.copy(
-                                                alpha = 0.4f,
-                                            ),
-                                        shape = CircleShape,
-                                    ).clip(CircleShape)
-                                    .clickable {
-                                        selectedImageUri = null
-                                    },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = BuyOrNotIcons.Close.asImageVector(),
-                                contentDescription = "Close",
-                                modifier = Modifier.size(10.dp),
-                                tint = BuyOrNotTheme.colors.gray0,
-                            )
-                        }
-                    }
-                }
-            }
+            ImagePickerRow(
+                selectedImageUri = selectedImageUri,
+                onPickImage = { galleryLauncher.launch("image/*") },
+                onRemoveImage = { selectedImageUri = null },
+            )
         }
 
-        // 바텀바 형태의 투표 게시 버튼
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 20.dp),
+                    .padding(20.dp),
             horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
+            if (isSubmitEnabled) {
+                ToolTip()
+                Spacer(modifier = Modifier.width(6.dp))
+            }
+
             CapsuleButton(
                 text = "투표 게시!",
-                enabled = false,
+                enabled = isSubmitEnabled,
+                size = ButtonSize.Small,
             ) {
             }
         }
@@ -371,6 +193,332 @@ fun UploadScreen(
             onDismissRequest = {
                 showCategorySheet = false
             },
+        )
+    }
+}
+
+@Composable
+private fun CategorySelectorRow(
+    selectedCategory: String?,
+    onCategoryClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.padding(vertical = 18.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "투표 등록",
+            style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+            color = BuyOrNotTheme.colors.gray800,
+        )
+        Icon(
+            imageVector = BuyOrNotIcons.ArrowRight.asImageVector(),
+            contentDescription = "Arrow Right",
+            modifier = Modifier.size(14.dp),
+            tint = BuyOrNotTheme.colors.gray600,
+        )
+        Text(
+            text = selectedCategory ?: "카테고리 추가",
+            modifier = Modifier.clickable { onCategoryClick() },
+            style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+            color = if (selectedCategory != null) BuyOrNotTheme.colors.gray800 else BuyOrNotTheme.colors.gray600,
+        )
+    }
+}
+
+@Composable
+private fun PriceInputField(
+    modifier: Modifier = Modifier,
+    priceFieldValue: TextFieldValue,
+    priceRaw: String,
+    decimalFormat: DecimalFormat,
+    onPriceChange: (digits: String, textFieldValue: TextFieldValue) -> Unit,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = BuyOrNotIcons.Won.asImageVector(),
+            contentDescription = "Won",
+            modifier = Modifier.size(18.dp),
+            tint = BuyOrNotTheme.colors.gray600,
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+
+        BasicTextField(
+            value = priceFieldValue,
+            onValueChange = { newValue ->
+                val newDigits = newValue.text.filter { it.isDigit() }
+
+                if (newDigits.length <= 10) {
+                    val formattedText =
+                        if (newDigits.isEmpty()) {
+                            ""
+                        } else {
+                            decimalFormat.format(newDigits.toLongOrNull() ?: 0)
+                        }
+
+                    val cursorPos = newValue.selection.end
+                    val digitsBeforeCursor = newValue.text.take(cursorPos).count { it.isDigit() }
+
+                    var digitCount = 0
+                    var newCursorPos = 0
+                    for (i in formattedText.indices) {
+                        if (formattedText[i].isDigit()) {
+                            digitCount++
+                        }
+                        if (digitCount == digitsBeforeCursor) {
+                            newCursorPos = i + 1
+                            break
+                        }
+                    }
+                    if (digitsBeforeCursor == 0) {
+                        newCursorPos = 0
+                    }
+
+                    onPriceChange(
+                        newDigits,
+                        TextFieldValue(
+                            text = formattedText,
+                            selection = TextRange(newCursorPos),
+                        ),
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle =
+                BuyOrNotTheme.typography.subTitleS3SemiBold.copy(
+                    color = BuyOrNotTheme.colors.gray800,
+                ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            decorationBox = { innerTextField ->
+                if (priceRaw.isEmpty()) {
+                    Text(
+                        text = "상품 가격을 입력해주세요",
+                        style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+                        color = BuyOrNotTheme.colors.gray600,
+                    )
+                }
+                innerTextField()
+            },
+        )
+    }
+}
+
+@Composable
+private fun ContentInputField(
+    content: String,
+    onContentChange: (String) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        BasicTextField(
+            value = content,
+            onValueChange = { if (it.length <= 100) onContentChange(it) },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 84.dp),
+            textStyle =
+                BuyOrNotTheme.typography.paragraphP2Medium.copy(
+                    color = BuyOrNotTheme.colors.gray900,
+                ),
+            decorationBox = { innerTextField ->
+                if (content.isEmpty()) {
+                    Text(
+                        text = "고민 이유를 자세히 적을수록 더 정확한 투표 결과를 얻을 수 있어요!",
+                        style = BuyOrNotTheme.typography.paragraphP2Medium,
+                        color = BuyOrNotTheme.colors.gray600,
+                    )
+                }
+                innerTextField()
+            },
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text(
+            text = "${content.length}/100",
+            modifier = Modifier.align(Alignment.End),
+            style = BuyOrNotTheme.typography.captionC3Medium,
+            color = BuyOrNotTheme.colors.gray600,
+        )
+    }
+}
+
+@Composable
+private fun ImagePickerRow(
+    selectedImageUri: Uri?,
+    onPickImage: () -> Unit,
+    onRemoveImage: () -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        CameraButton(
+            selectedCount = if (selectedImageUri != null) 1 else 0,
+            onClick = onPickImage,
+        )
+
+        selectedImageUri?.let {
+            SelectedImagePreview(
+                imageUri = it,
+                onRemove = onRemoveImage,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CameraButton(
+    selectedCount: Int,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier =
+            Modifier
+                .size(68.dp)
+                .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = BuyOrNotTheme.colors.gray100,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement =
+                Arrangement.spacedBy(
+                    space = 2.dp,
+                    alignment = Alignment.CenterVertically,
+                ),
+        ) {
+            Icon(
+                imageVector = BuyOrNotIcons.Camera.asImageVector(),
+                contentDescription = "Camera",
+                modifier = Modifier.size(20.dp),
+                tint = BuyOrNotTheme.colors.gray600,
+            )
+            Text(
+                text =
+                    buildAnnotatedString {
+                        withStyle(
+                            style =
+                                SpanStyle(
+                                    color =
+                                        if (selectedCount > 0) {
+                                            BuyOrNotTheme.colors.gray800
+                                        } else {
+                                            BuyOrNotTheme.colors.gray600
+                                        },
+                                ),
+                        ) {
+                            append("$selectedCount")
+                        }
+                        withStyle(
+                            style = SpanStyle(color = BuyOrNotTheme.colors.gray600),
+                        ) {
+                            append("/1")
+                        }
+                    },
+                style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SelectedImagePreview(
+    imageUri: Uri,
+    onRemove: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(68.dp)
+                .clip(RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.TopEnd,
+    ) {
+        AsyncImage(
+            model = imageUri,
+            contentDescription = "Selected Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+
+        Box(
+            modifier =
+                Modifier
+                    .padding(
+                        top = 4.dp,
+                        end = 4.dp,
+                    ).size(20.dp)
+                    .background(
+                        color =
+                            BuyOrNotTheme.colors.black.copy(
+                                alpha = 0.4f,
+                            ),
+                        shape = CircleShape,
+                    ).clip(CircleShape)
+                    .clickable { onRemove() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = BuyOrNotIcons.Close.asImageVector(),
+                contentDescription = "Close",
+                modifier = Modifier.size(10.dp),
+                tint = BuyOrNotTheme.colors.gray0,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ToolTip(modifier: Modifier = Modifier) {
+    Row(
+        modifier =
+            modifier
+                .graphicsLayer {
+                    shadowElevation = 20.dp.toPx()
+                }.shadow(
+                    elevation = 20.dp,
+                    shape =
+                        BubbleShape(
+                            cornerRadius = 10.dp,
+                            arrowWidth = 5.dp,
+                            arrowHeight = 10.dp,
+                        ),
+                    ambientColor = Color(0xFF3670DB).copy(alpha = 0.2f),
+                    spotColor = Color(0xFF3670DB).copy(alpha = 0.2f),
+                    clip = false,
+                ).background(
+                    color = BuyOrNotTheme.colors.gray0,
+                    shape =
+                        BubbleShape(
+                            cornerRadius = 10.dp,
+                            arrowWidth = 5.dp,
+                            arrowHeight = 10.dp,
+                        ),
+                ).padding(
+                    vertical = 10.dp,
+                ).padding(
+                    start = 12.dp,
+                    end = 17.dp,
+                ),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = BuyOrNotIcons.Clock.asImageVector(),
+            contentDescription = "Clock",
+            modifier = Modifier.size(16.dp),
+            tint = BuyOrNotTheme.colors.gray700,
+        )
+
+        Text(
+            text = "투표는 48시간동안 진행돼요.",
+            style = BuyOrNotTheme.typography.paragraphP4Medium,
+            color = BuyOrNotTheme.colors.gray700,
         )
     }
 }
