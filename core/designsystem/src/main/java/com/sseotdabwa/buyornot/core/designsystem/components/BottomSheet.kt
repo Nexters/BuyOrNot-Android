@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
-import android.R.attr.bottom
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
