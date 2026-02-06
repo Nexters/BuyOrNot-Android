@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -55,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotAlertDialog
 import com.sseotdabwa.buyornot.core.designsystem.components.CapsuleButton
 import com.sseotdabwa.buyornot.core.designsystem.components.OptionSheet
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
@@ -72,6 +74,7 @@ fun UploadScreen(
     var priceFieldValue by remember { mutableStateOf(TextFieldValue("")) }
     var content by remember { mutableStateOf("") }
     var showCategorySheet by remember { mutableStateOf(false) }
+    var showExitDialog by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<String?>(null) }
     val categories =
         remember {
@@ -101,6 +104,10 @@ fun UploadScreen(
 
     val isSubmitEnabled = selectedCategory != null && priceRaw.isNotEmpty() && selectedImageUri != null
 
+    BackHandler {
+        if (!showExitDialog) showExitDialog = true
+    }
+
     Column(
         modifier =
             modifier
@@ -109,7 +116,9 @@ fun UploadScreen(
                 .imePadding()
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
-        BackTopBar(onNavigateBack)
+        BackTopBar {
+            showExitDialog = true
+        }
 
         Column(
             modifier =
@@ -181,6 +190,7 @@ fun UploadScreen(
             }
         }
     }
+
     if (showCategorySheet) {
         OptionSheet(
             title = "카테고리 선택",
@@ -192,6 +202,23 @@ fun UploadScreen(
             },
             onDismissRequest = {
                 showCategorySheet = false
+            },
+        )
+    }
+
+    if (showExitDialog) {
+        BuyOrNotAlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = "다음에 등록할까요?",
+            subText = "지금까지 쓴 내용은 저장되지 않아요.",
+            confirmText = "유지하기",
+            dismissText = "나가기",
+            onConfirm = {
+                showExitDialog = false
+            },
+            onDismiss = {
+                showExitDialog = false
+                onNavigateBack()
             },
         )
     }
