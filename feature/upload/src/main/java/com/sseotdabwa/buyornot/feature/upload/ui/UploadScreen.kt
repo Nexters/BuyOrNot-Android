@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
+import android.R.attr.text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -78,10 +79,7 @@ fun UploadScreen(
                     ).weight(1f),
         ) {
             Row(
-                modifier =
-                    Modifier
-                        .padding(vertical = 18.dp)
-                        .clickable { showCategorySheet = true },
+                modifier = Modifier.padding(vertical = 18.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -98,6 +96,7 @@ fun UploadScreen(
                 )
                 Text(
                     text = selectedCategory ?: "카테고리 추가",
+                    modifier = Modifier.clickable { showCategorySheet = true },
                     style = BuyOrNotTheme.typography.subTitleS3SemiBold,
                     color = if (selectedCategory != null) BuyOrNotTheme.colors.gray800 else BuyOrNotTheme.colors.gray600,
                 )
