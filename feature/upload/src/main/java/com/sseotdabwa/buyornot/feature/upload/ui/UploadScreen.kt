@@ -1,9 +1,12 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
-import android.R.attr.text
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,11 +36,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.CapsuleButton
 import com.sseotdabwa.buyornot.core.designsystem.components.OptionSheet
@@ -58,6 +68,14 @@ fun UploadScreen(
     val categories = remember { listOf("명품∙프리미엄", "패션 ∙ 잡화", "화장품∙뷰티", "트렌드∙가성비템", "음식", "전자기기", "여행 쇼핑템", "헬스∙운동용품", "도서", "기타") }
     val decimalFormat = remember { DecimalFormat("#,###") }
     val scrollState = rememberScrollState()
+
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) } // 선택된 이미지 URI
+    val galleryLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+        ) { uri: Uri? ->
+            selectedImageUri = uri // 이미지를 선택하면 URI 업데이트
+        }
 
     Column(
         modifier =
@@ -227,30 +245,100 @@ fun UploadScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             // 6. 이미지 선택 버튼
-            Surface(
-                modifier = Modifier.size(68.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = BuyOrNotTheme.colors.gray100,
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement =
-                        Arrangement.spacedBy(
-                            space = 2.dp,
-                            alignment = Alignment.CenterVertically,
-                        ),
+                Surface(
+                    modifier =
+                        Modifier
+                            .size(68.dp)
+                            .clickable { galleryLauncher.launch("image/*") },
+                    shape = RoundedCornerShape(12.dp),
+                    color = BuyOrNotTheme.colors.gray100,
                 ) {
-                    Icon(
-                        imageVector = BuyOrNotIcons.Camera.asImageVector(),
-                        contentDescription = "Camera",
-                        modifier = Modifier.size(20.dp),
-                        tint = BuyOrNotTheme.colors.gray600,
-                    )
-                    Text(
-                        text = "0/1",
-                        style = BuyOrNotTheme.typography.subTitleS5SemiBold,
-                        color = BuyOrNotTheme.colors.gray600,
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement =
+                            Arrangement.spacedBy(
+                                space = 2.dp,
+                                alignment = Alignment.CenterVertically,
+                            ),
+                    ) {
+                        Icon(
+                            imageVector = BuyOrNotIcons.Camera.asImageVector(),
+                            contentDescription = "Camera",
+                            modifier = Modifier.size(20.dp),
+                            tint = BuyOrNotTheme.colors.gray600,
+                        )
+                        Text(
+                            text =
+                                buildAnnotatedString {
+                                    withStyle(
+                                        style =
+                                            SpanStyle(
+                                                color =
+                                                    if (selectedImageUri != null) {
+                                                        BuyOrNotTheme.colors.gray800
+                                                    } else {
+                                                        BuyOrNotTheme.colors.gray600
+                                                    },
+                                            ),
+                                    ) {
+                                        append(if (selectedImageUri != null) "1" else "0")
+                                    }
+                                    withStyle(
+                                        style = SpanStyle(color = BuyOrNotTheme.colors.gray600),
+                                    ) {
+                                        append("/1")
+                                    }
+                                },
+                            style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+                        )
+                    }
+                }
+
+                if (selectedImageUri != null) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(68.dp)
+                                .clip(RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.TopEnd,
+                    ) {
+                        AsyncImage(
+                            model = selectedImageUri,
+                            contentDescription = "Selected Image",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                        )
+
+                        Box(
+                            modifier =
+                                Modifier
+                                    .padding(
+                                        top = 4.dp,
+                                        end = 4.dp,
+                                    ).size(20.dp)
+                                    .background(
+                                        color =
+                                            BuyOrNotTheme.colors.black.copy(
+                                                alpha = 0.4f,
+                                            ),
+                                        shape = CircleShape,
+                                    ).clip(CircleShape)
+                                    .clickable {
+                                        selectedImageUri = null
+                                    },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = BuyOrNotIcons.Close.asImageVector(),
+                                contentDescription = "Close",
+                                modifier = Modifier.size(10.dp),
+                                tint = BuyOrNotTheme.colors.gray0,
+                            )
+                        }
+                    }
                 }
             }
         }
