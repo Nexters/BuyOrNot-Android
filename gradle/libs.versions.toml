@@ -36,8 +36,6 @@ coil = "2.7.0"
 # Code Quality
 ktlint = "14.0.1"
 navigationCompose = "2.8.2"
-materialNavigation = "1.7.0"
-
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -58,7 +56,6 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 androidx-compose-material = { group = "androidx.compose.material", name = "material" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
-androidx-compose-material-navigation = { group = "androidx.compose.material", name = "material-navigation", version.ref = "materialNavigation" }
 
 # Hilt
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
@@ -90,7 +87,6 @@ androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
 
 # Image Loading
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
-
 
 # Build-logic dependencies (for convention plugins)
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
