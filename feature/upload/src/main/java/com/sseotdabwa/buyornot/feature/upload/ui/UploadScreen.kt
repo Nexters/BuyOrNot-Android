@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.CapsuleButton
+import com.sseotdabwa.buyornot.core.designsystem.components.OptionSheet
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -49,6 +52,9 @@ fun UploadScreen(
     var priceRaw by remember { mutableStateOf("") }
     var priceFieldValue by remember { mutableStateOf(TextFieldValue("")) }
     var content by remember { mutableStateOf("") }
+    var showCategorySheet by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    val categories = remember { listOf("명품∙프리미엄", "패션 ∙ 잡화", "화장품∙뷰티", "트렌드∙가성비템", "음식", "전자기기", "여행 쇼핑템", "헬스∙운동용품", "도서", "기타") }
     val decimalFormat = remember { DecimalFormat("#,###") }
     val scrollState = rememberScrollState()
 
@@ -72,7 +78,10 @@ fun UploadScreen(
                     ).weight(1f),
         ) {
             Row(
-                modifier = Modifier.padding(vertical = 18.dp),
+                modifier =
+                    Modifier
+                        .padding(vertical = 18.dp)
+                        .clickable { showCategorySheet = true },
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -88,9 +97,9 @@ fun UploadScreen(
                     tint = BuyOrNotTheme.colors.gray600,
                 )
                 Text(
-                    text = "카테고리 추가",
+                    text = selectedCategory ?: "카테고리 추가",
                     style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                    color = BuyOrNotTheme.colors.gray600,
+                    color = if (selectedCategory != null) BuyOrNotTheme.colors.gray800 else BuyOrNotTheme.colors.gray600,
                 )
             }
 
@@ -263,12 +272,28 @@ fun UploadScreen(
             }
         }
     }
+    if (showCategorySheet) {
+        OptionSheet(
+            title = "카테고리 선택",
+            options = categories,
+            selectedOption = selectedCategory,
+            onOptionClick = {
+                selectedCategory = it
+                showCategorySheet = false
+            },
+            onDismissRequest = {
+                showCategorySheet = false
+            },
+        )
+    }
 }
 
 @Preview
 @Composable
 private fun UploadScreenPreview() {
     BuyOrNotTheme {
-        UploadScreen()
+        Scaffold {
+            UploadScreen(modifier = Modifier.padding(it))
+        }
     }
 }
