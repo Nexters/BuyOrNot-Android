@@ -40,12 +40,15 @@ object BuyOrNotIcons {
 
     // 기능 아이콘
     val CheckCircle = IconResource(R.drawable.ic_check_circle)
+    val Camera = IconResource(R.drawable.ic_camera)
     val Vote = IconResource(R.drawable.ic_vote)
     val VoteDone = IconResource(R.drawable.ic_vote_done)
     val Bag = IconResource(R.drawable.ic_bag)
     val Profile = IconResource(R.drawable.ic_profile)
     val Notification = IconResource(R.drawable.ic_notification)
     val NotificationFilled = IconResource(R.drawable.ic_notification_filled)
+
+    val Won = IconResource(R.drawable.ic_won)
 }
 
 /**

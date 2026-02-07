@@ -48,7 +48,9 @@ fun BuyOrNotNavHost(
 
         // 메인 화면들
         homeScreen()
-        uploadScreen()
+        uploadScreen(
+            onNavigateBack = { navController.popBackStack() },
+        )
         myPageScreen()
     }
 }

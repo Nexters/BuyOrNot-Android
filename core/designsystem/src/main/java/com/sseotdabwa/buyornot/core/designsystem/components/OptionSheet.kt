@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -22,8 +23,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
@@ -44,14 +47,18 @@ fun OptionSheet(
     title: String,
     options: List<String>,
     selectedOption: String? = null,
+    sheetShape: Shape = RoundedCornerShape(26.dp),
     onOptionClick: (String) -> Unit,
     onDismissRequest: () -> Unit,
 ) {
     BuyOrNotBottomSheet(
         onDismissRequest = onDismissRequest,
         isHalfExpandedOnly = true,
+        sheetShape = sheetShape,
     ) { hideSheet ->
-        Box {
+        Box(
+            modifier = Modifier.clip(sheetShape),
+        ) {
             Column(
                 modifier =
                     Modifier
@@ -104,7 +111,7 @@ fun OptionSheet(
                                     colors =
                                         listOf(
                                             Color.Transparent, // 시작점 (위): 투명
-                                            Color.White, // 끝점 (아래): 흰색
+                                            BuyOrNotTheme.colors.gray0, // 끝점 (아래): 배경색
                                         ),
                                 ),
                         ),

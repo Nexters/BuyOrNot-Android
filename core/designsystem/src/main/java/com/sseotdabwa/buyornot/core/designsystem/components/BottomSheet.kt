@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,6 +62,7 @@ import kotlinx.coroutines.launch
 fun BuyOrNotBottomSheet(
     onDismissRequest: () -> Unit,
     isHalfExpandedOnly: Boolean = false,
+    sheetShape: Shape = RoundedCornerShape(26.dp),
     sheetState: SheetState =
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
@@ -86,9 +88,10 @@ fun BuyOrNotBottomSheet(
         modifier =
             Modifier
                 .padding(horizontal = 14.dp),
+        //  기존 하단 패딩 제거?
         sheetState = sheetState,
-        shape = RoundedCornerShape(26.dp),
-        containerColor = Color.Transparent,
+        shape = sheetShape,
+        containerColor = Color.Transparent, // 배경 투명하게 -> Spacer
         tonalElevation = 0.dp,
         scrimColor = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.5f),
         dragHandle = null,
@@ -103,7 +106,7 @@ fun BuyOrNotBottomSheet(
                         .fillMaxWidth()
                         .background(
                             color = BuyOrNotTheme.colors.gray0,
-                            shape = RoundedCornerShape(26.dp),
+                            shape = sheetShape,
                         ).then(
                             if (isHalfExpandedOnly) {
                                 Modifier.heightIn(max = screenHeight / 2f)
@@ -139,6 +142,7 @@ fun BuyOrNotBottomSheet(
             Spacer(
                 modifier =
                     Modifier
+                        .fillMaxWidth()
                         .navigationBarsPadding() // 시스템 네비게이션 바 대응
                         .height(20.dp), // 하단에서 띄우고 싶은 만큼 높이 설정
             )
