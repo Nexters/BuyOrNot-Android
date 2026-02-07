@@ -419,12 +419,10 @@ private fun CameraButton(
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier =
-            Modifier
-                .size(68.dp)
-                .clickable(onClick = onClick),
+        modifier = Modifier.size(68.dp),
         shape = RoundedCornerShape(12.dp),
         color = BuyOrNotTheme.colors.gray100,
+        onClick = onClick,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
