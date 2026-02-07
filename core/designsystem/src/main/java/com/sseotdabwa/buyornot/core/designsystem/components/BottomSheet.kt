@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,6 +62,7 @@ import kotlinx.coroutines.launch
 fun BuyOrNotBottomSheet(
     onDismissRequest: () -> Unit,
     isHalfExpandedOnly: Boolean = false,
+    sheetShape: Shape = RoundedCornerShape(26.dp),
     sheetState: SheetState =
         rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
@@ -85,53 +87,65 @@ fun BuyOrNotBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier =
             Modifier
-                .padding(horizontal = 14.dp)
-                .navigationBarsPadding()
-                .padding(bottom = 20.dp),
+                .padding(horizontal = 14.dp),
+        //  기존 하단 패딩 제거?
         sheetState = sheetState,
-        containerColor = Color.Transparent,
-        shape = RoundedCornerShape(26.dp),
+        shape = sheetShape,
+        containerColor = Color.Transparent, // 배경 투명하게 -> Spacer
         tonalElevation = 0.dp,
         scrimColor = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.5f),
         dragHandle = null,
     ) {
+        // 실제 보이는 시트 컨테이너
         Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = BuyOrNotTheme.colors.gray0,
-                        shape = RoundedCornerShape(26.dp),
-                    ).then(
-                        if (isHalfExpandedOnly) {
-                            Modifier.heightIn(max = screenHeight / 2f)
-                        } else {
-                            Modifier
-                        },
-                    ),
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            // 드래그 핸들
-            Box(
+            Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = 10.dp),
+                        .background(
+                            color = BuyOrNotTheme.colors.gray0,
+                            shape = sheetShape,
+                        ).then(
+                            if (isHalfExpandedOnly) {
+                                Modifier.heightIn(max = screenHeight / 2f)
+                            } else {
+                                Modifier
+                            },
+                        ),
             ) {
-                Spacer(
+                // 드래그 핸들
+                Box(
                     modifier =
                         Modifier
-                            .align(Alignment.Center)
-                            .width(40.dp)
-                            .height(4.dp)
-                            .background(
-                                color = Color(0xFFD9D9D9),
-                                shape = RoundedCornerShape(18.dp),
-                            ),
-                )
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
+                ) {
+                    Spacer(
+                        modifier =
+                            Modifier
+                                .align(Alignment.Center)
+                                .width(40.dp)
+                                .height(4.dp)
+                                .background(
+                                    color = Color(0xFFD9D9D9),
+                                    shape = RoundedCornerShape(18.dp),
+                                ),
+                    )
+                }
+
+                // 콘텐츠
+                content(hideSheetWithAnimation)
             }
 
-            // 콘텐츠
-            content(hideSheetWithAnimation)
+            Spacer(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding() // 시스템 네비게이션 바 대응
+                        .height(20.dp), // 하단에서 띄우고 싶은 만큼 높이 설정
+            )
         }
     }
 }
