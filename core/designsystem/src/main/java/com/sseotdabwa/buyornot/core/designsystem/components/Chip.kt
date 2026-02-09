@@ -39,7 +39,7 @@ fun BuyOrNotChip(
         targetValue =
             when {
                 isSelected -> BuyOrNotTheme.colors.gray900 // Selected
-                isPressed || isHovered -> BuyOrNotTheme.colors.gray400 // Hover/Pressed
+                isPressed || isHovered -> BuyOrNotTheme.colors.gray300 // Hover/Pressed
                 else -> BuyOrNotTheme.colors.gray200 // Unselected
             },
         label = "backgroundColor",
