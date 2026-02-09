@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.feature.home.ui
 
+import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,10 +19,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
@@ -62,6 +71,9 @@ private object HomeBannerDefaults {
  * @param modifier 컴포넌트에 적용할 Modifier
  * @param onDismiss 닫기 버튼 클릭 시 호출되는 콜백
  * @param onClick 배너 클릭 시 호출되는 콜백
+ *
+ * 주의: dropShadow의 blur값은 기존 40,
+ * 그러나 위쪽 clipping 방지를 위해 임시로 30으로 설정
  */
 @Composable
 fun HomeBanner(
@@ -73,6 +85,14 @@ fun HomeBanner(
         modifier = modifier
             .width(HomeBannerDefaults.BannerWidth)
             .height(HomeBannerDefaults.BannerHeight)
+            .dropShadow(
+                color = Color(0xFFE0E3E5).copy(alpha = 0.6f),
+                shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius),
+                blur = 30.dp, //기존 40이나
+                offsetY = 4.dp,
+                offsetX = 0.dp,
+                spread = 0.dp
+            )
             .background(
                 color = Color.White,
                 shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius)
@@ -80,7 +100,7 @@ fun HomeBanner(
             .border(
                 width = 1.dp,
                 color = BuyOrNotTheme.colors.gray300,
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius)
             )
             .clickable { onClick() }
             .padding(
@@ -88,6 +108,7 @@ fun HomeBanner(
                 end = HomeBannerDefaults.BannerPaddingEnd,
                 bottom = HomeBannerDefaults.BannerPaddingBottom
             )
+
     ) {
         HomeBannerCloseButton(
             onDismiss = onDismiss,
@@ -217,6 +238,42 @@ private fun HomeBannerDivider(
             .height(HomeBannerDefaults.DividerHeight)
             .background(BuyOrNotTheme.colors.gray300)
     )
+}
+
+//커스텀 배너 DropShadow
+fun Modifier.dropShadow(
+    shape: Shape,
+    color: Color = Color.Black.copy(0.25f),
+    blur: Dp = 4.dp,
+    offsetY: Dp = 4.dp,
+    offsetX: Dp = 0.dp,
+    spread: Dp = 0.dp
+) = this.drawBehind {
+    val shadowSize = Size(
+        size.width + (spread.toPx()*2),
+        size.height + (spread.toPx()*2)
+    )
+    val shadowOutline = shape.createOutline(shadowSize, layoutDirection, this)
+
+    val paint = Paint().apply {
+        this.color = color
+    }
+
+    if (blur.toPx() > 0) {
+        paint.asFrameworkPaint().apply {
+            maskFilter = BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
+        }
+    }
+
+    drawIntoCanvas { canvas ->
+        canvas.save()
+        canvas.translate(
+            offsetX.toPx()-spread.toPx(),
+            offsetY.toPx()-spread.toPx()
+        )
+        canvas.drawOutline(shadowOutline, paint)
+        canvas.restore()
+    }
 }
 
 @Preview(name = "HomeBanner - Pixel 5", device = "id:pixel_5", showBackground = true)
