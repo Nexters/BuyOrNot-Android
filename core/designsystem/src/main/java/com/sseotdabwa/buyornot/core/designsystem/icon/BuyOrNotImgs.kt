@@ -22,6 +22,8 @@ object BuyOrNotImgs {
      * 로그인 화면 배경 이미지
      */
     val LoginBackground = ImgsResource(R.drawable.img_login_bg)
+
+    val HomeBanner = ImgsResource(R.drawable.img_home_banner)
 }
 
 /**
