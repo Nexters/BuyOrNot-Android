@@ -11,6 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.domain.model.AppConstants
 import com.sseotdabwa.buyornot.feature.mypage.component.SettingItem
 
 @Composable
@@ -23,13 +24,13 @@ fun PolicyRoute(
         onPrivacyPolicyClick = {
             onNavigateToWebView(
                 "개인정보처리방침",
-                "https://littlemoom.notion.site/buy-or-not-privacy-term?source=copy_link",
+                AppConstants.PRIVACY_URL,
             )
         },
         onServiceTermClick = {
             onNavigateToWebView(
                 "서비스 약관",
-                "https://littlemoom.notion.site/buy-or-not-service-term?source=copy_link",
+                AppConstants.TERMS_URL,
             )
         },
     )

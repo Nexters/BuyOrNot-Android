@@ -5,6 +5,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.sseotdabwa.buyornot.BuildConfig
+import com.sseotdabwa.buyornot.core.ui.navigateToWebView
+import com.sseotdabwa.buyornot.core.ui.webViewScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
@@ -45,6 +47,7 @@ fun BuyOrNotNavHost(
             onKakaoLoginClick = {
                 // TODO: 카카오 로그인 후 홈으로 이동
             },
+            onNavigateToWebView = navController::navigateToWebView,
         )
 
         // 메인 화면들
@@ -55,6 +58,9 @@ fun BuyOrNotNavHost(
         myPageGraph(
             navController = navController,
             versionName = BuildConfig.VERSION_NAME,
+        )
+        webViewScreen(
+            onBackClick = navController::popBackStack,
         )
     }
 }

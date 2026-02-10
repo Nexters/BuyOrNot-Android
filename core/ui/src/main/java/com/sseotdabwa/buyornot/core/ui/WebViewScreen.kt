@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.feature.mypage.ui
+package com.sseotdabwa.buyornot.core.ui
 
 import android.view.ViewGroup
 import android.webkit.WebView

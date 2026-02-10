@@ -2,17 +2,13 @@ package com.sseotdabwa.buyornot.feature.mypage.navigation
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavType
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
 import androidx.navigation.navigation
+import com.sseotdabwa.buyornot.core.ui.navigateToWebView
 import com.sseotdabwa.buyornot.feature.mypage.ui.AccountSettingRoute
 import com.sseotdabwa.buyornot.feature.mypage.ui.MyPageRoute
 import com.sseotdabwa.buyornot.feature.mypage.ui.PolicyRoute
-import com.sseotdabwa.buyornot.feature.mypage.ui.WebViewRoute
 import com.sseotdabwa.buyornot.feature.mypage.ui.WithdrawalRoute
-import java.net.URLDecoder
-import java.net.URLEncoder
 
 sealed class MyPageScreens(
     val route: String,
@@ -25,17 +21,7 @@ sealed class MyPageScreens(
 
     object Policy : MyPageScreens("policy")
 
-    object WebView : MyPageScreens("webview")
-
     object Withdrawal : MyPageScreens("withdrawal")
-}
-
-fun NavController.navigateToWebView(
-    title: String,
-    url: String,
-) {
-    val encodedUrl = URLEncoder.encode(url, "UTF-8")
-    this.navigate("${MyPageScreens.WebView.route}?title=$title&url=$encodedUrl")
 }
 
 fun NavController.navigateToAccountSetting() {
@@ -80,23 +66,6 @@ fun NavGraphBuilder.myPageGraph(
                 onNavigateToWebView = { title, url ->
                     navController.navigateToWebView(title, url)
                 },
-            )
-        }
-
-        composable(
-            route = "${MyPageScreens.WebView.route}?title={title}&url={url}",
-            arguments =
-            listOf(
-                navArgument("title") { type = NavType.StringType },
-                navArgument("url") { type = NavType.StringType },
-            ),
-        ) { backStackEntry ->
-            val title = backStackEntry.arguments?.getString("title") ?: ""
-            val url = backStackEntry.arguments?.getString("url") ?: ""
-            WebViewRoute(
-                title = title,
-                url = URLDecoder.decode(url, "UTF-8"),
-                onBackClick = navController::popBackStack,
             )
         }
 
