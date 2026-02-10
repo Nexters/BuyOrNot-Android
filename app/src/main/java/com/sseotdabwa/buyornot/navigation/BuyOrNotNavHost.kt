@@ -34,7 +34,7 @@ fun BuyOrNotNavHost(
     ) {
         // 스플래시 화면 - 앱 시작점
         splashScreen(
-            onNavigateToLogin = { navController.navigateToLogin() },
+            onNavigateToLogin = navController::navigateToLogin,
         )
 
         // 인증 화면 - 로그인
@@ -50,7 +50,7 @@ fun BuyOrNotNavHost(
         // 메인 화면들
         homeScreen()
         uploadScreen(
-            onNavigateBack = { navController.popBackStack() },
+            onNavigateBack = navController::popBackStack,
         )
         myPageGraph(
             navController = navController,

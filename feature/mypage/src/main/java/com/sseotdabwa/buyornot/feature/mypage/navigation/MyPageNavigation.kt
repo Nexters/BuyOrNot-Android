@@ -38,6 +38,18 @@ fun NavController.navigateToWebView(
     this.navigate("${MyPageScreens.WebView.route}?title=$title&url=$encodedUrl")
 }
 
+fun NavController.navigateToAccountSetting() {
+    this.navigate(MyPageScreens.AccountSetting.route)
+}
+
+fun NavController.navigateToPolicy() {
+    this.navigate(MyPageScreens.Policy.route)
+}
+
+fun NavController.navigateToWithdrawal() {
+    this.navigate(MyPageScreens.Withdrawal.route)
+}
+
 fun NavGraphBuilder.myPageGraph(
     navController: NavController,
     versionName: String,
@@ -49,22 +61,22 @@ fun NavGraphBuilder.myPageGraph(
         composable(MyPageScreens.Main.route) {
             MyPageRoute(
                 versionName = versionName,
-                onBackClick = { navController.popBackStack() },
-                onAccountSettingClick = { navController.navigate(MyPageScreens.AccountSetting.route) },
-                onPolicyClick = { navController.navigate(MyPageScreens.Policy.route) },
+                onBackClick = navController::popBackStack,
+                onAccountSettingClick = navController::navigateToAccountSetting,
+                onPolicyClick = navController::navigateToPolicy,
             )
         }
 
         composable(MyPageScreens.AccountSetting.route) {
             AccountSettingRoute(
-                onBackClick = { navController.popBackStack() },
-                onWithdrawalClick = { navController.navigate(MyPageScreens.Withdrawal.route) },
+                onBackClick = navController::popBackStack,
+                onWithdrawalClick = navController::navigateToWithdrawal,
             )
         }
 
         composable(MyPageScreens.Policy.route) {
             PolicyRoute(
-                onBackClick = { navController.popBackStack() },
+                onBackClick = navController::popBackStack,
                 onNavigateToWebView = { title, url ->
                     navController.navigateToWebView(title, url)
                 },
@@ -74,23 +86,23 @@ fun NavGraphBuilder.myPageGraph(
         composable(
             route = "${MyPageScreens.WebView.route}?title={title}&url={url}",
             arguments =
-                listOf(
-                    navArgument("title") { type = NavType.StringType },
-                    navArgument("url") { type = NavType.StringType },
-                ),
+            listOf(
+                navArgument("title") { type = NavType.StringType },
+                navArgument("url") { type = NavType.StringType },
+            ),
         ) { backStackEntry ->
             val title = backStackEntry.arguments?.getString("title") ?: ""
             val url = backStackEntry.arguments?.getString("url") ?: ""
             WebViewRoute(
                 title = title,
                 url = URLDecoder.decode(url, "UTF-8"),
-                onBackClick = { navController.popBackStack() },
+                onBackClick = navController::popBackStack,
             )
         }
 
         composable(MyPageScreens.Withdrawal.route) {
             WithdrawalRoute(
-                onBackClick = { navController.popBackStack() },
+                onBackClick = navController::popBackStack,
             )
         }
     }
