@@ -9,10 +9,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotConfirmDialog
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.feature.mypage.component.SettingItem
 
@@ -26,6 +31,8 @@ fun AccountSettingScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
 ) {
+    var isLogoutDialogVisible by remember { mutableStateOf(false) }
+
     Column(modifier = modifier.fillMaxSize()) {
         BackTopBarWithTitle(
             title = "계정 설정",
@@ -37,12 +44,23 @@ fun AccountSettingScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             EmailItem("buyornot@gmail.com")
-            SettingItem("로그아웃") { }
+            SettingItem("로그아웃") { isLogoutDialogVisible = true }
             SettingItem(
                 title = "회원 탈퇴",
                 textColor = BuyOrNotTheme.colors.red100,
             ) { }
         }
+    }
+
+    if (isLogoutDialogVisible) {
+        BuyOrNotConfirmDialog(
+            onDismissRequest = { isLogoutDialogVisible = false },
+            title = "로그아웃 하시겠어요?",
+            confirmText = "유지하기",
+            dismissText = "로그아웃",
+            onConfirm = { isLogoutDialogVisible = false },
+            onDismiss = { isLogoutDialogVisible = false },
+        )
     }
 }
 
