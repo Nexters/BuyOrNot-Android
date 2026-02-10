@@ -5,12 +5,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.sseotdabwa.buyornot.BuildConfig
-import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
-import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageScreen
+import com.sseotdabwa.buyornot.feature.mypage.navigation.MyPageScreens
+import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
 import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
 
 /**
@@ -29,7 +29,7 @@ fun BuyOrNotNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = SPLASH_ROUTE,
+        startDestination = MyPageScreens.Graph.route,
         modifier = modifier,
     ) {
         // 스플래시 화면 - 앱 시작점
@@ -52,8 +52,12 @@ fun BuyOrNotNavHost(
         uploadScreen(
             onNavigateBack = { navController.popBackStack() },
         )
-        myPageScreen(
+        myPageGraph(
+            navController = navController,
             versionName = BuildConfig.VERSION_NAME,
+            onNavigateBack = { navController.popBackStack() },
+            onAccountSettingClick = { navController.navigate(MyPageScreens.AccountInfo.route) },
+            onPolicyClick = { navController.navigate(MyPageScreens.Policy.route) },
         )
     }
 }
