@@ -24,7 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
-import com.sseotdabwa.buyornot.feature.mypage.component.SettingItem
+import com.sseotdabwa.buyornot.feature.mypage.components.SettingItem
 
 @Composable
 fun MyPageRoute(
