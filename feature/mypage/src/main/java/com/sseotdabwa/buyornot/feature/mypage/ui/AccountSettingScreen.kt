@@ -22,14 +22,21 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.feature.mypage.component.SettingItem
 
 @Composable
-fun AccountSettingRoute(onBackClick: () -> Unit) {
-    AccountSettingScreen(onBackClick = onBackClick)
+fun AccountSettingRoute(
+    onBackClick: () -> Unit,
+    onWithdrawalClick: () -> Unit,
+) {
+    AccountSettingScreen(
+        onBackClick = onBackClick,
+        onWithdrawalClick = onWithdrawalClick,
+    )
 }
 
 @Composable
 fun AccountSettingScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
+    onWithdrawalClick: () -> Unit,
 ) {
     var isLogoutDialogVisible by remember { mutableStateOf(false) }
 
@@ -48,7 +55,9 @@ fun AccountSettingScreen(
             SettingItem(
                 title = "회원 탈퇴",
                 textColor = BuyOrNotTheme.colors.red100,
-            ) { }
+            ) {
+                onWithdrawalClick()
+            }
         }
     }
 
@@ -97,6 +106,7 @@ fun AccountSettingScreenPreview() {
             AccountSettingScreen(
                 modifier = Modifier.padding(paddingValues),
                 onBackClick = {},
+                onWithdrawalClick = {},
             )
         }
     }

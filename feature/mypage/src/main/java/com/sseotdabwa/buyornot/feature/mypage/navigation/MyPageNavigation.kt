@@ -26,9 +26,6 @@ sealed class MyPageScreens(
 fun NavGraphBuilder.myPageGraph(
     navController: NavController,
     versionName: String,
-    onNavigateBack: () -> Unit,
-    onAccountSettingClick: () -> Unit,
-    onPolicyClick: () -> Unit,
 ) {
     navigation(
         startDestination = MyPageScreens.Main.route,
@@ -37,22 +34,29 @@ fun NavGraphBuilder.myPageGraph(
         composable(MyPageScreens.Main.route) {
             MyPageRoute(
                 versionName = versionName,
-                onNavigateBack = onNavigateBack,
-                onAccountSettingClick = onAccountSettingClick,
-                onPolicyClick = onPolicyClick,
+                onBackClick = { navController.popBackStack() },
+                onAccountSettingClick = { navController.navigate(MyPageScreens.AccountSetting.route) },
+                onPolicyClick = { navController.navigate(MyPageScreens.Policy.route) },
             )
         }
 
         composable(MyPageScreens.AccountSetting.route) {
-            AccountSettingRoute(onBackClick = { navController.popBackStack() })
+            AccountSettingRoute(
+                onBackClick = { navController.popBackStack() },
+                onWithdrawalClick = { navController.navigate(MyPageScreens.Withdrawal.route) },
+            )
         }
 
         composable(MyPageScreens.Policy.route) {
-            PolicyRoute(onBackClick = { navController.popBackStack() })
+            PolicyRoute(
+                onBackClick = { navController.popBackStack() },
+            )
         }
 
         composable(MyPageScreens.Withdrawal.route) {
-            WithdrawalRoute(onBackClick = { navController.popBackStack() })
+            WithdrawalRoute(
+                onBackClick = { navController.popBackStack() },
+            )
         }
     }
 }

@@ -29,13 +29,13 @@ import com.sseotdabwa.buyornot.feature.mypage.component.SettingItem
 @Composable
 fun MyPageRoute(
     versionName: String,
-    onNavigateBack: () -> Unit,
+    onBackClick: () -> Unit,
     onAccountSettingClick: () -> Unit,
     onPolicyClick: () -> Unit,
 ) {
     MyPageScreen(
         versionName = versionName,
-        onNavigateBack = onNavigateBack,
+        onBackClick = onBackClick,
         onAccountSettingClick = onAccountSettingClick,
         onPolicyClick = onPolicyClick,
     )
@@ -45,12 +45,12 @@ fun MyPageRoute(
 fun MyPageScreen(
     modifier: Modifier = Modifier,
     versionName: String,
-    onNavigateBack: () -> Unit = {},
+    onBackClick: () -> Unit = {},
     onAccountSettingClick: () -> Unit = {},
     onPolicyClick: () -> Unit = {},
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        BackTopBar(onBackClick = onNavigateBack)
+        BackTopBar(onBackClick = onBackClick)
 
         Column(
             modifier =
@@ -135,7 +135,7 @@ fun MyPageScreenPreview() {
             MyPageScreen(
                 modifier = Modifier.padding(paddingValues),
                 versionName = "1.0.0",
-                onNavigateBack = {},
+                onBackClick = {},
                 onAccountSettingClick = {},
                 onPolicyClick = {},
             )
