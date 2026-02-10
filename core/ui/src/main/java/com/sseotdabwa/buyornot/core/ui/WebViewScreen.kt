@@ -47,8 +47,14 @@ fun WebViewScreen(
                     loadUrl(url)
                 }
             },
-            update = {
-                it.loadUrl(url)
+            update = { webView ->
+                if (webView.url != url) {
+                    webView.loadUrl(url)
+                }
+            },
+            onRelease = { webView ->
+                webView.stopLoading()
+                webView.destroy()
             },
         )
     }
