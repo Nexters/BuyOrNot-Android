@@ -1,9 +1,9 @@
 package com.sseotdabwa.buyornot.feature.mypage.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,16 +24,14 @@ fun WithdrawalScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
 ) {
-    Scaffold(
-        topBar = { BackTopBar(onBackClick = onBackClick) },
-        modifier = modifier.fillMaxSize(),
-    ) { paddingValues ->
+    Column(modifier = modifier.fillMaxSize()) {
+        BackTopBar(onBackClick = onBackClick)
+
         Column(
             modifier =
                 Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize()
-                    .background(BuyOrNotTheme.colors.gray0),
+                    .weight(1f)
+                    .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
@@ -50,6 +48,13 @@ fun WithdrawalScreen(
 @Composable
 fun WithdrawalScreenPreview() {
     BuyOrNotTheme {
-        WithdrawalScreen(onBackClick = {})
+        Scaffold(
+            containerColor = BuyOrNotTheme.colors.gray0,
+        ) { paddingValues ->
+            WithdrawalScreen(
+                modifier = Modifier.padding(paddingValues),
+                onBackClick = {},
+            )
+        }
     }
 }

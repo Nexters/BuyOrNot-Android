@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.feature.mypage.component.SettingItem
 
 @Composable
 fun MyPageRoute(
@@ -49,16 +49,14 @@ fun MyPageScreen(
     onAccountSettingClick: () -> Unit = {},
     onPolicyClick: () -> Unit = {},
 ) {
-    Scaffold(
-        topBar = { BackTopBar(onBackClick = onNavigateBack) },
-        modifier = modifier.fillMaxSize(),
-    ) { paddingValues ->
+    Column(modifier = modifier.fillMaxSize()) {
+        BackTopBar(onBackClick = onNavigateBack)
+
         Column(
             modifier =
                 Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize()
-                    .background(BuyOrNotTheme.colors.gray0),
+                    .weight(1f)
+                    .fillMaxWidth(),
         ) {
             Row(
                 modifier =
@@ -127,36 +125,20 @@ fun MyPageScreen(
     }
 }
 
-@Composable
-private fun SettingItem(
-    title: String,
-    onClick: () -> Unit,
-) {
-    Surface(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        color = BuyOrNotTheme.colors.gray0,
-    ) {
-        Text(
-            text = title,
-            modifier =
-                Modifier
-                    .padding(horizontal = 20.dp, vertical = 10.dp),
-            style = BuyOrNotTheme.typography.paragraphP1Medium,
-            color = BuyOrNotTheme.colors.gray900,
-        )
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 fun MyPageScreenPreview() {
     BuyOrNotTheme {
-        MyPageScreen(
-            versionName = "1.0.0",
-            onNavigateBack = {},
-            onAccountSettingClick = {},
-            onPolicyClick = {},
-        )
+        Scaffold(
+            containerColor = BuyOrNotTheme.colors.gray0,
+        ) { paddingValues ->
+            MyPageScreen(
+                modifier = Modifier.padding(paddingValues),
+                versionName = "1.0.0",
+                onNavigateBack = {},
+                onAccountSettingClick = {},
+                onPolicyClick = {},
+            )
+        }
     }
 }

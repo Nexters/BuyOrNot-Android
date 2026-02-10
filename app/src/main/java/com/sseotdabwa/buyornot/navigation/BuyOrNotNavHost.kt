@@ -56,7 +56,7 @@ fun BuyOrNotNavHost(
             navController = navController,
             versionName = BuildConfig.VERSION_NAME,
             onNavigateBack = { navController.popBackStack() },
-            onAccountSettingClick = { navController.navigate(MyPageScreens.AccountInfo.route) },
+            onAccountSettingClick = { navController.navigate(MyPageScreens.AccountSetting.route) },
             onPolicyClick = { navController.navigate(MyPageScreens.Policy.route) },
         )
     }

@@ -16,8 +16,6 @@ sealed class MyPageScreens(
 
     object Main : MyPageScreens("mypage_main")
 
-    object AccountInfo : MyPageScreens("account_info")
-
     object AccountSetting : MyPageScreens("account_setting")
 
     object Policy : MyPageScreens("policy")
