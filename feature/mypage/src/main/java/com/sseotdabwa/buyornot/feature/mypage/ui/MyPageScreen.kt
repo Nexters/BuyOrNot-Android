@@ -27,13 +27,16 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 @Composable
-fun MyPageRoute() {
-    MyPageScreen()
+fun MyPageRoute(versionName: String) {
+    MyPageScreen(
+        versionName = versionName,
+    )
 }
 
 @Composable
 fun MyPageScreen(
     modifier: Modifier = Modifier,
+    versionName: String,
     onNavigateBack: () -> Unit = {},
     onSettingsClick: (String) -> Unit = {},
 ) {
@@ -73,7 +76,7 @@ fun MyPageScreen(
         }
 
         HorizontalDivider(
-            thickness = 1.dp,
+            thickness = 2.dp,
             color = BuyOrNotTheme.colors.gray100,
         )
 
@@ -103,7 +106,7 @@ fun MyPageScreen(
                 color = BuyOrNotTheme.colors.gray600,
             )
             Text(
-                text = "v 0.0.1",
+                text = "v $versionName",
                 style = BuyOrNotTheme.typography.paragraphP4Medium,
                 color = BuyOrNotTheme.colors.gray600,
             )
@@ -137,7 +140,10 @@ private fun SettingItem(
 fun MyPageScreenPreview() {
     BuyOrNotTheme {
         Scaffold {
-            MyPageScreen(modifier = Modifier.padding(it))
+            MyPageScreen(
+                modifier = Modifier.padding(it),
+                versionName = "1.0.0",
+            )
         }
     }
 }

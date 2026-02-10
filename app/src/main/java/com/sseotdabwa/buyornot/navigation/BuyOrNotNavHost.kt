@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import com.sseotdabwa.buyornot.BuildConfig
 import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
@@ -51,6 +52,8 @@ fun BuyOrNotNavHost(
         uploadScreen(
             onNavigateBack = { navController.popBackStack() },
         )
-        myPageScreen()
+        myPageScreen(
+            versionName = BuildConfig.VERSION_NAME,
+        )
     }
 }

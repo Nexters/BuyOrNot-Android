@@ -6,8 +6,10 @@ import com.sseotdabwa.buyornot.feature.mypage.ui.MyPageRoute
 
 const val MYPAGE_ROUTE = "mypage"
 
-fun NavGraphBuilder.myPageScreen() {
+fun NavGraphBuilder.myPageScreen(versionName: String) {
     composable(route = MYPAGE_ROUTE) {
-        MyPageRoute()
+        MyPageRoute(
+            versionName = versionName,
+        )
     }
 }
