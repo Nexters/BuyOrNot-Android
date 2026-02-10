@@ -14,14 +14,33 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.feature.mypage.component.SettingItem
 
 @Composable
-fun PolicyRoute(onBackClick: () -> Unit) {
-    PolicyScreen(onBackClick = onBackClick)
+fun PolicyRoute(
+    onBackClick: () -> Unit,
+    onNavigateToWebView: (title: String, url: String) -> Unit,
+) {
+    PolicyScreen(
+        onBackClick = onBackClick,
+        onPrivacyPolicyClick = {
+            onNavigateToWebView(
+                "개인정보처리방침",
+                "https://littlemoom.notion.site/buy-or-not-privacy-term?source=copy_link",
+            )
+        },
+        onServiceTermClick = {
+            onNavigateToWebView(
+                "서비스 약관",
+                "https://littlemoom.notion.site/buy-or-not-service-term?source=copy_link",
+            )
+        },
+    )
 }
 
 @Composable
 fun PolicyScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
+    onPrivacyPolicyClick: () -> Unit,
+    onServiceTermClick: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         BackTopBarWithTitle(
@@ -33,8 +52,8 @@ fun PolicyScreen(
             modifier = Modifier.padding(top = 10.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SettingItem("개인정보처리방침") { }
-            SettingItem("서비스 약관") { }
+            SettingItem("개인정보처리방침") { onPrivacyPolicyClick() }
+            SettingItem("서비스 약관") { onServiceTermClick() }
         }
     }
 }
@@ -49,6 +68,8 @@ fun PolicyScreenPreview() {
             PolicyScreen(
                 modifier = Modifier.padding(paddingValues),
                 onBackClick = {},
+                onPrivacyPolicyClick = {},
+                onServiceTermClick = {},
             )
         }
     }
