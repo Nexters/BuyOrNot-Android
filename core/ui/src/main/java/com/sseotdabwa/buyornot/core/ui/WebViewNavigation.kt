@@ -8,14 +8,25 @@ import androidx.navigation.navArgument
 import java.net.URLDecoder
 import java.net.URLEncoder
 
-const val WEBVIEW_ROUTE = "webview"
+private const val WEBVIEW_ROUTE = "webview"
 
-fun NavController.navigateToWebView(
+internal const val TERMS_URL = "https://littlemoom.notion.site/buy-or-not-service-term?pvs=143"
+internal const val PRIVACY_URL = "https://littlemoom.notion.site/buy-or-not-privacy-term?pvs=143"
+
+private fun NavController.navigateToWebView(
     title: String,
     url: String,
 ) {
     val encodedUrl = URLEncoder.encode(url, "UTF-8")
     this.navigate("$WEBVIEW_ROUTE?title=$title&url=$encodedUrl")
+}
+
+fun NavController.navigateToTerms() {
+    navigateToWebView("서비스 약관", TERMS_URL)
+}
+
+fun NavController.navigateToPrivacyPolicy() {
+    navigateToWebView("개인정보처리방침", PRIVACY_URL)
 }
 
 fun NavGraphBuilder.webViewScreen(onBackClick: () -> Unit) {

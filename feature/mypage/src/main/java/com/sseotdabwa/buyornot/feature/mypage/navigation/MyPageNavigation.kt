@@ -4,7 +4,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.sseotdabwa.buyornot.core.ui.navigateToWebView
+import com.sseotdabwa.buyornot.core.ui.navigateToPrivacyPolicy
+import com.sseotdabwa.buyornot.core.ui.navigateToTerms
 import com.sseotdabwa.buyornot.feature.mypage.ui.AccountSettingRoute
 import com.sseotdabwa.buyornot.feature.mypage.ui.MyPageRoute
 import com.sseotdabwa.buyornot.feature.mypage.ui.PolicyRoute
@@ -63,9 +64,8 @@ fun NavGraphBuilder.myPageGraph(
         composable(MyPageScreens.Policy.route) {
             PolicyRoute(
                 onBackClick = navController::popBackStack,
-                onNavigateToWebView = { title, url ->
-                    navController.navigateToWebView(title, url)
-                },
+                onNavigateToTerms = navController::navigateToTerms,
+                onNavigateToPrivacyPolicy = navController::navigateToPrivacyPolicy,
             )
         }
 

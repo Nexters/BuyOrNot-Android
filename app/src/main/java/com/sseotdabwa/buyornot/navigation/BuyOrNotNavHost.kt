@@ -5,7 +5,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.sseotdabwa.buyornot.BuildConfig
-import com.sseotdabwa.buyornot.core.ui.navigateToWebView
+import com.sseotdabwa.buyornot.core.ui.navigateToPrivacyPolicy
+import com.sseotdabwa.buyornot.core.ui.navigateToTerms
 import com.sseotdabwa.buyornot.core.ui.webViewScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
@@ -47,7 +48,8 @@ fun BuyOrNotNavHost(
             onKakaoLoginClick = {
                 // TODO: 카카오 로그인 후 홈으로 이동
             },
-            onNavigateToWebView = navController::navigateToWebView,
+            onTermsClick = navController::navigateToTerms,
+            onPrivacyClick = navController::navigateToPrivacyPolicy,
         )
 
         // 메인 화면들

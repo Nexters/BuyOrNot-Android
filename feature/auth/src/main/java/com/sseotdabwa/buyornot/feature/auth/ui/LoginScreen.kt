@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
-import com.sseotdabwa.buyornot.domain.model.AppConstants
 
 /**
  * Auth 화면의 네비게이션 진입점
@@ -47,28 +46,21 @@ import com.sseotdabwa.buyornot.domain.model.AppConstants
  *
  * @param onGoogleLoginClick 구글 로그인 버튼 클릭 시 실행될 콜백
  * @param onKakaoLoginClick 카카오 로그인 버튼 클릭 시 실행될 콜백
+ * @param onTermsClick 서비스 약관 링크 클릭 콜백
+ * @param onPrivacyClick 개인정보처리방침 링크 클릭 콜백
  */
 @Composable
 fun AuthRoute(
     onGoogleLoginClick: () -> Unit,
     onKakaoLoginClick: () -> Unit,
-    onNavigateToWebView: (title: String, url: String) -> Unit,
+    onTermsClick: () -> Unit,
+    onPrivacyClick: () -> Unit,
 ) {
     LoginScreen(
         onGoogleLoginClick = onGoogleLoginClick,
         onKakaoLoginClick = onKakaoLoginClick,
-        onTermsClick = {
-            onNavigateToWebView(
-                "서비스 약관",
-                AppConstants.TERMS_URL,
-            )
-        },
-        onPrivacyClick = {
-            onNavigateToWebView(
-                "개인정보처리방침",
-                AppConstants.PRIVACY_URL,
-            )
-        },
+        onTermsClick = onTermsClick,
+        onPrivacyClick = onPrivacyClick,
     )
 }
 
