@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -39,16 +38,6 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 /**
- * 인증 관련 외부 링크 URL 상수
- *
- * 서비스 약관 및 개인정보처리방침 페이지 URL을 관리합니다.
- */
-private object AuthConstants {
-    const val TERMS_URL = "https://littlemoom.notion.site/buy-or-not-service-term?pvs=143"
-    const val PRIVACY_URL = "https://littlemoom.notion.site/buy-or-not-privacy-term?pvs=143"
-}
-
-/**
  * Auth 화면의 네비게이션 진입점
  *
  * 로그인 화면을 표시하며, 네비게이션 그래프에서 호출됩니다.
@@ -57,19 +46,21 @@ private object AuthConstants {
  *
  * @param onGoogleLoginClick 구글 로그인 버튼 클릭 시 실행될 콜백
  * @param onKakaoLoginClick 카카오 로그인 버튼 클릭 시 실행될 콜백
+ * @param onTermsClick 서비스 약관 링크 클릭 콜백
+ * @param onPrivacyClick 개인정보처리방침 링크 클릭 콜백
  */
 @Composable
 fun AuthRoute(
     onGoogleLoginClick: () -> Unit,
     onKakaoLoginClick: () -> Unit,
+    onTermsClick: () -> Unit,
+    onPrivacyClick: () -> Unit,
 ) {
-    val uriHandler = LocalUriHandler.current
-
     LoginScreen(
         onGoogleLoginClick = onGoogleLoginClick,
         onKakaoLoginClick = onKakaoLoginClick,
-        onTermsClick = { uriHandler.openUri(AuthConstants.TERMS_URL) },
-        onPrivacyClick = { uriHandler.openUri(AuthConstants.PRIVACY_URL) },
+        onTermsClick = onTermsClick,
+        onPrivacyClick = onPrivacyClick,
     )
 }
 
