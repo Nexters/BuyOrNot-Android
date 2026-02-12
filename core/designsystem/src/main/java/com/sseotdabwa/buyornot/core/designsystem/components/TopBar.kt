@@ -36,16 +36,16 @@ private object TopBarDefaults {
 
 @Composable
 private fun BaseTopBar(
+    modifier: Modifier = Modifier,
     navigationIcon: @Composable (() -> Unit)? = null,
     title: @Composable (() -> Unit)? = null,
     actions: @Composable (RowScope.() -> Unit)? = null,
 ) {
     Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(TopBarDefaults.Height)
-                .padding(start = TopBarDefaults.StartPadding, end = TopBarDefaults.EndPadding),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(TopBarDefaults.Height)
+            .padding(start = TopBarDefaults.StartPadding, end = TopBarDefaults.EndPadding),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(
@@ -118,8 +118,10 @@ fun BackTopBarWithTitle(
 fun HomeTopBar(
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     BaseTopBar(
+        modifier = modifier,
         navigationIcon = {
             Icon(
                 imageVector = BuyOrNotIcons.AppLogo.asImageVector(),
