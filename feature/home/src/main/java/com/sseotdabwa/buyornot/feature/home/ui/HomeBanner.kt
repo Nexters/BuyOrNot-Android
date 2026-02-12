@@ -20,17 +20,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
@@ -73,56 +76,56 @@ private object HomeBannerDefaults {
  * @param onClick 배너 클릭 시 호출되는 콜백
  *
  * 주의: dropShadow의 blur값은 기존 40,
- * 그러나 위쪽 clipping 방지를 위해 임시로 30으로 설정
+ * 그러나 위쪽 clipping 방지를 위해 임시로 20으로 설정 (이슈 해결 가능할 시 반영)
  */
 @Composable
 fun HomeBanner(
     modifier: Modifier = Modifier,
     onDismiss: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .width(HomeBannerDefaults.BannerWidth)
-            .height(HomeBannerDefaults.BannerHeight)
-            .dropShadow(
-                color = Color(0xFFE0E3E5).copy(alpha = 0.6f),
-                shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius),
-                blur = 30.dp, //기존 40이나
-                offsetY = 4.dp,
-                offsetX = 0.dp,
-                spread = 0.dp
-            )
-            .background(
-                color = Color.White,
-                shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius)
-            )
-            .border(
-                width = 1.dp,
-                color = BuyOrNotTheme.colors.gray300,
-                shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius)
-            )
-            .clickable { onClick() }
-            .padding(
-                start = HomeBannerDefaults.BannerPaddingStart,
-                end = HomeBannerDefaults.BannerPaddingEnd,
-                bottom = HomeBannerDefaults.BannerPaddingBottom
-            )
-
+        modifier =
+            modifier
+                .width(HomeBannerDefaults.BannerWidth)
+                .height(HomeBannerDefaults.BannerHeight)
+                .dropShadow(
+                    shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius),
+                    shadow =
+                        Shadow(
+                            radius = 25.dp,
+                            color = Color(0xFFE0E3E5).copy(alpha = 0.6f),
+                            offset = DpOffset(x=0.dp,y=4.dp)
+                        )
+                )
+                .background(
+                    color = Color.White,
+                    shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius),
+                ).border(
+                    width = 1.dp,
+                    color = BuyOrNotTheme.colors.gray300,
+                    shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius),
+                ).clickable { onClick() }
+                .padding(
+                    start = HomeBannerDefaults.BannerPaddingStart,
+                    end = HomeBannerDefaults.BannerPaddingEnd,
+                    bottom = HomeBannerDefaults.BannerPaddingBottom,
+                ),
     ) {
         HomeBannerCloseButton(
             onDismiss = onDismiss,
-            modifier = Modifier.align(Alignment.TopEnd)
+            modifier = Modifier.align(Alignment.TopEnd),
         )
 
         HomeBannerContent(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopCenter)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter),
         )
 
         HomeBannerDivider(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -136,21 +139,23 @@ fun HomeBanner(
 @Composable
 private fun HomeBannerCloseButton(
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     IconButton(
         onClick = onDismiss,
-        modifier = modifier
-            .padding(top = HomeBannerDefaults.CloseButtonPadding)
-            .size(HomeBannerDefaults.CloseButtonSize)
+        modifier =
+            modifier
+                .padding(top = HomeBannerDefaults.CloseButtonPadding)
+                .size(HomeBannerDefaults.CloseButtonSize),
     ) {
         Icon(
             imageVector = BuyOrNotIcons.Close.asImageVector(),
             contentDescription = "닫기",
             tint = BuyOrNotTheme.colors.gray500,
-            modifier = Modifier
-                .size(HomeBannerDefaults.CloseButtonSize)
-                .padding(HomeBannerDefaults.CloseIconPadding)
+            modifier =
+                Modifier
+                    .size(HomeBannerDefaults.CloseButtonSize)
+                    .padding(HomeBannerDefaults.CloseIconPadding),
         )
     }
 }
@@ -162,12 +167,10 @@ private fun HomeBannerCloseButton(
  * @param modifier 컴포넌트에 적용할 Modifier
  */
 @Composable
-private fun HomeBannerContent(
-    modifier: Modifier = Modifier
-) {
+private fun HomeBannerContent(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         HomeBannerImage()
         HomeBannerActionButton(text = "고민되는 소비가 있나요?")
@@ -182,10 +185,11 @@ private fun HomeBannerImage() {
     Image(
         painter = painterResource(id = BuyOrNotImgs.HomeBanner.resId),
         contentDescription = null,
-        modifier = Modifier.size(
-            width = HomeBannerDefaults.ImageWidth,
-            height = HomeBannerDefaults.ImageHeight
-        )
+        modifier =
+            Modifier.size(
+                width = HomeBannerDefaults.ImageWidth,
+                height = HomeBannerDefaults.ImageHeight,
+            ),
     )
 }
 
@@ -198,28 +202,31 @@ private fun HomeBannerImage() {
 @Composable
 private fun HomeBannerActionButton(
     text: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(HomeBannerDefaults.ActionButtonHeight)
-            .background(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        HomeBannerDefaults.GradientStartColor,
-                        HomeBannerDefaults.GradientEndColor
-                    ),
-                    radius = HomeBannerDefaults.ActionButtonGradientRadius
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(HomeBannerDefaults.ActionButtonHeight)
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    HomeBannerDefaults.GradientStartColor,
+                                    HomeBannerDefaults.GradientEndColor,
+                                ),
+                            radius = HomeBannerDefaults.ActionButtonGradientRadius,
+                        ),
+                    shape = RoundedCornerShape(HomeBannerDefaults.ActionButtonCornerRadius),
                 ),
-                shape = RoundedCornerShape(HomeBannerDefaults.ActionButtonCornerRadius)
-            ),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
             style = BuyOrNotTheme.typography.subTitleS4SemiBold,
-            color = BuyOrNotTheme.colors.gray0
+            color = BuyOrNotTheme.colors.gray0,
         )
     }
 }
@@ -230,50 +237,13 @@ private fun HomeBannerActionButton(
  * @param modifier 컴포넌트에 적용할 Modifier
  */
 @Composable
-private fun HomeBannerDivider(
-    modifier: Modifier = Modifier
-) {
+private fun HomeBannerDivider(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier
-            .height(HomeBannerDefaults.DividerHeight)
-            .background(BuyOrNotTheme.colors.gray300)
+        modifier =
+            modifier
+                .height(HomeBannerDefaults.DividerHeight)
+                .background(BuyOrNotTheme.colors.gray300),
     )
-}
-
-//커스텀 배너 DropShadow
-fun Modifier.dropShadow(
-    shape: Shape,
-    color: Color = Color.Black.copy(0.25f),
-    blur: Dp = 4.dp,
-    offsetY: Dp = 4.dp,
-    offsetX: Dp = 0.dp,
-    spread: Dp = 0.dp
-) = this.drawBehind {
-    val shadowSize = Size(
-        size.width + (spread.toPx()*2),
-        size.height + (spread.toPx()*2)
-    )
-    val shadowOutline = shape.createOutline(shadowSize, layoutDirection, this)
-
-    val paint = Paint().apply {
-        this.color = color
-    }
-
-    if (blur.toPx() > 0) {
-        paint.asFrameworkPaint().apply {
-            maskFilter = BlurMaskFilter(blur.toPx(), BlurMaskFilter.Blur.NORMAL)
-        }
-    }
-
-    drawIntoCanvas { canvas ->
-        canvas.save()
-        canvas.translate(
-            offsetX.toPx()-spread.toPx(),
-            offsetY.toPx()-spread.toPx()
-        )
-        canvas.drawOutline(shadowOutline, paint)
-        canvas.restore()
-    }
 }
 
 @Preview(name = "HomeBanner - Pixel 5", device = "id:pixel_5", showBackground = true)
@@ -282,7 +252,7 @@ private fun HomeBannerPreview() {
     BuyOrNotTheme {
         HomeBanner(
             onDismiss = {},
-            onClick = {}
+            onClick = {},
         )
     }
 }
