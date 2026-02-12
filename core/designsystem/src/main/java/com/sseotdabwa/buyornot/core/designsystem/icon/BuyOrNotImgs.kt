@@ -24,6 +24,8 @@ object BuyOrNotImgs {
     val LoginBackground = ImgsResource(R.drawable.img_login_bg)
 
     val HomeBanner = ImgsResource(R.drawable.img_home_banner)
+
+    val Error = ImgsResource(R.drawable.img_error)
 }
 
 /**
