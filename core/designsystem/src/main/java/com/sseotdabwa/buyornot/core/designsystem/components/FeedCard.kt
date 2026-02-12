@@ -28,6 +28,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
@@ -62,6 +66,7 @@ fun FeedCard(
     buyVoteCount: Int,
     maybeVoteCount: Int,
     totalVoteCount: Int,
+    onExpandClick: (String) -> Unit,
     onVote: (Int) -> Unit, // 투표 옵션 인덱스 (0: 사!, 1: 애매..)
 ) {
     val hasVoted = userVotedOptionIndex != null
@@ -136,7 +141,7 @@ fun FeedCard(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 2. 타이머 배지
+        // 2. 피드 내용 & 이미지
         Column(
             modifier =
                 Modifier
@@ -154,6 +159,7 @@ fun FeedCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            //상품 이미지 박스
             Box(
                 modifier =
                     Modifier
@@ -166,7 +172,7 @@ fun FeedCard(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .background(BuyOrNotTheme.colors.gray400),
+                                .background(BuyOrNotTheme.colors.gray0),
                     )
                 } else {
                     AsyncImage(
@@ -177,17 +183,47 @@ fun FeedCard(
                     )
                 }
 
-                // 이미지 확장 버튼 (원본 크기)
-                FullscreenButton(
+                Box(
                     modifier =
                         Modifier
+                            .fillMaxSize()
+                            .drawBehind{
+                                drawRect(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Transparent, // 시작점 (위): 투명
+                                            Color(0xFF191919).copy(alpha = 0.3f) // 끝점 (아래): 흰색
+                                        ),
+                                        endY = size.height,
+                                        startY = size.height*0.64f
+                                    )
+                                )
+                            }
+//                            .background(
+//                                brush =
+//                                    Brush.verticalGradient(
+//                                        colors =
+//                                            listOf(
+//                                                Color.Transparent, // 시작점 (위): 투명
+//                                                Color(0xFF191919) // 끝점 (아래): 흰색
+//                                            ),
+//                                        startY = 0f,
+//                                        endY = gradientEndY
+//
+//                                    ),
+//                            ),
+                )
+
+                // 이미지 확장 버튼 (원본 크기)
+                FullscreenButton(
+                    modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(
                                 top = 14.dp,
                                 end = 14.dp,
                             ),
-                ) {
-                }
+                    onClick = { onExpandClick(productImageUrl)  }
+                )
 
                 // 가격 태그 (좌측 하단)
                 Text(
@@ -371,6 +407,7 @@ private fun FeedCardSquareInteractivePreview() {
             buyVoteCount = 20,
             maybeVoteCount = 10,
             totalVoteCount = 30,
+            onExpandClick = { },
             onVote = { optionIndex ->
                 userVotedOption = optionIndex
             },
@@ -402,6 +439,7 @@ private fun FeedCardPortraitInteractivePreview() {
             buyVoteCount = 45,
             maybeVoteCount = 15,
             totalVoteCount = 60,
+            onExpandClick = { },
             onVote = { optionIndex ->
                 userVotedOption = optionIndex
             },
