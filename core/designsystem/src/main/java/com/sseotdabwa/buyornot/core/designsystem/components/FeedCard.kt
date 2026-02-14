@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -68,10 +67,14 @@ fun FeedCard(
     totalVoteCount: Int,
     onExpandClick: (String) -> Unit,
     onVote: (Int) -> Unit, // 투표 옵션 인덱스 (0: 사!, 1: 애매..)
+    isOwner: Boolean = false, // 본인 글인지 여부
+    onDeleteClick: () -> Unit = {}, // 삭제 클릭 콜백 추가
+    onReportClick: () -> Unit = {}, // 신고 클릭 콜백 추가
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
     val maybePercentage = if (totalVoteCount > 0) (maybeVoteCount * 100 / totalVoteCount) else 0
+    var showMenu by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier.padding(16.dp),
@@ -131,12 +134,27 @@ fun FeedCard(
                     )
                 }
             }
-            Icon(
-                imageVector = BuyOrNotIcons.More.asImageVector(),
-                contentDescription = "More",
-                modifier = Modifier.size(20.dp),
-                tint = BuyOrNotTheme.colors.gray500,
-            )
+            Box {
+                Icon(
+                    imageVector = BuyOrNotIcons.More.asImageVector(),
+                    contentDescription = "More",
+                    modifier =
+                        Modifier
+                            .size(20.dp)
+                            .clickable { showMenu = true },
+                    tint = BuyOrNotTheme.colors.gray500,
+                )
+                if (showMenu) {
+                    FeedActionPopup(
+                        label = if (isOwner) "삭제하기" else "신고하기",
+                        onDismiss = { showMenu = false },
+                        onClick = {
+                            showMenu = false
+                            if (isOwner) onDeleteClick() else onReportClick()
+                        },
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -159,7 +177,7 @@ fun FeedCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            //상품 이미지 박스
+            // 상품 이미지 박스
             Box(
                 modifier =
                     Modifier
@@ -187,18 +205,20 @@ fun FeedCard(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .drawBehind{
+                            .drawBehind {
                                 drawRect(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Transparent, // 시작점 (위): 투명
-                                            Color(0xFF191919).copy(alpha = 0.3f) // 끝점 (아래): 흰색
+                                    brush =
+                                        Brush.verticalGradient(
+                                            colors =
+                                                listOf(
+                                                    Color.Transparent, // 시작점 (위): 투명
+                                                    Color(0xFF191919).copy(alpha = 0.3f), // 끝점 (아래): 흰색
+                                                ),
+                                            endY = size.height,
+                                            startY = size.height * 0.64f,
                                         ),
-                                        endY = size.height,
-                                        startY = size.height*0.64f
-                                    )
                                 )
-                            }
+                            },
 //                            .background(
 //                                brush =
 //                                    Brush.verticalGradient(
@@ -216,13 +236,14 @@ fun FeedCard(
 
                 // 이미지 확장 버튼 (원본 크기)
                 FullscreenButton(
-                    modifier = Modifier
+                    modifier =
+                        Modifier
                             .align(Alignment.TopEnd)
                             .padding(
                                 top = 14.dp,
                                 end = 14.dp,
                             ),
-                    onClick = { onExpandClick(productImageUrl)  }
+                    onClick = { onExpandClick(productImageUrl) },
                 )
 
                 // 가격 태그 (좌측 하단)
@@ -358,6 +379,38 @@ private fun VoteOption(
     }
 }
 
+/**
+ * 피드 더보기 팝업 UI
+ */
+@Composable
+private fun FeedActionPopup(
+    label: String,
+    onDismiss: () -> Unit,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.width(80.dp),
+        shape = RoundedCornerShape(10.dp),
+        color = Color.White,
+        tonalElevation = 8.dp,
+        shadowElevation = 8.dp,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .clickable { onClick() }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = label,
+                style = BuyOrNotTheme.typography.bodyB4Medium,
+                color = if (label == "삭제하기") Color(0xFFF04438) else BuyOrNotTheme.colors.gray900,
+            )
+        }
+    }
+}
+
 @Composable
 private fun FullscreenButton(
     modifier: Modifier = Modifier,
@@ -411,6 +464,8 @@ private fun FeedCardSquareInteractivePreview() {
             onVote = { optionIndex ->
                 userVotedOption = optionIndex
             },
+            onDeleteClick = {},
+            onReportClick = {},
         )
     }
 }
@@ -443,6 +498,8 @@ private fun FeedCardPortraitInteractivePreview() {
             onVote = { optionIndex ->
                 userVotedOption = optionIndex
             },
+            onDeleteClick = {},
+            onReportClick = {},
         )
     }
 }

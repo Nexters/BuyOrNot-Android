@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.feature.home.ui
 
-import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,20 +18,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
@@ -95,10 +87,9 @@ fun HomeBanner(
                         Shadow(
                             radius = 25.dp,
                             color = Color(0xFFE0E3E5).copy(alpha = 0.6f),
-                            offset = DpOffset(x=0.dp,y=4.dp)
-                        )
-                )
-                .background(
+                            offset = DpOffset(x = 0.dp, y = 4.dp),
+                        ),
+                ).background(
                     color = Color.White,
                     shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius),
                 ).border(

@@ -18,9 +18,11 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 /**
  * 디바이더 사이즈 타입
  */
-enum class BuyOrNotDividerSize(val height: Dp) {
+enum class BuyOrNotDividerSize(
+    val height: Dp,
+) {
     Small(2.dp),
-    Large(10.dp)
+    Large(10.dp),
 }
 
 /**
@@ -34,13 +36,14 @@ enum class BuyOrNotDividerSize(val height: Dp) {
 fun BuyOrNotDivider(
     size: BuyOrNotDividerSize,
     modifier: Modifier = Modifier,
-    color: Color = BuyOrNotTheme.colors.gray100
+    color: Color = BuyOrNotTheme.colors.gray100,
 ) {
     Spacer(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(size.height)
-            .background(color)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(size.height)
+                .background(color),
     )
 }
 

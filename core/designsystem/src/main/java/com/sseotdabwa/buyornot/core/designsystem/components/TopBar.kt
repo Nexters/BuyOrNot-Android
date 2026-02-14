@@ -42,10 +42,11 @@ private fun BaseTopBar(
     actions: @Composable (RowScope.() -> Unit)? = null,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(TopBarDefaults.Height)
-            .padding(start = TopBarDefaults.StartPadding, end = TopBarDefaults.EndPadding),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(TopBarDefaults.Height)
+                .padding(start = TopBarDefaults.StartPadding, end = TopBarDefaults.EndPadding),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(
