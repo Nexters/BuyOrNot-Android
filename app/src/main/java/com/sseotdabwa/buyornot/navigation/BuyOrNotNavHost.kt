@@ -5,12 +5,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
+import androidx.navigation.navOptions
 import com.sseotdabwa.buyornot.BuildConfig
 import com.sseotdabwa.buyornot.core.network.AuthEvent
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.core.ui.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.navigateToTerms
 import com.sseotdabwa.buyornot.core.ui.webViewScreen
+import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateForceToLogin
@@ -53,7 +55,17 @@ fun BuyOrNotNavHost(
         )
 
         authScreen(
-            onLoginSuccess = navController::navigateToHome,
+            onLoginSuccess = {
+                navController.navigateToHome(
+                    navOptions =
+                        navOptions {
+                            popUpTo(AUTH_ROUTE) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        },
+                )
+            },
             onTermsClick = navController::navigateToTerms,
             onPrivacyClick = navController::navigateToPrivacyPolicy,
         )
