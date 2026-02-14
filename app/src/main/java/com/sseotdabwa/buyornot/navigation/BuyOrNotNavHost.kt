@@ -1,59 +1,63 @@
 package com.sseotdabwa.buyornot.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.sseotdabwa.buyornot.BuildConfig
+import com.sseotdabwa.buyornot.core.network.AuthEvent
+import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.core.ui.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.navigateToTerms
 import com.sseotdabwa.buyornot.core.ui.webViewScreen
+import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
+import com.sseotdabwa.buyornot.feature.auth.navigation.navigateForceToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
-import com.sseotdabwa.buyornot.feature.home.navigation.HOME_ROUTE
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
-import com.sseotdabwa.buyornot.feature.mypage.navigation.MyPageScreens
+import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
 import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
 
 /**
  * BuyOrNot 앱의 메인 네비게이션 호스트
  *
- * 앱의 모든 화면 네비게이션을 관리합니다.
- * 시작 화면은 스플래시 화면이며, 자동으로 로그인 화면으로 전환됩니다.
- *
  * @param navController 네비게이션 컨트롤러
+ * @param authEventBus 인증 관련 글로벌 이벤트를 수신하는 버스
  * @param modifier 레이아웃 수정자
  */
 @Composable
 fun BuyOrNotNavHost(
     navController: NavHostController,
+    authEventBus: AuthEventBus,
     modifier: Modifier = Modifier,
 ) {
+    // 강제 로그아웃 이벤트 처리
+    LaunchedEffect(authEventBus) {
+        authEventBus.events.collect { event ->
+            if (event == AuthEvent.FORCE_LOGOUT) {
+                navController.navigateForceToLogin()
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
-        startDestination = MyPageScreens.Graph.route,
+        startDestination = SPLASH_ROUTE,
         modifier = modifier,
     ) {
-        // 스플래시 화면 - 앱 시작점
         splashScreen(
             onNavigateToLogin = navController::navigateToLogin,
         )
 
-        // 인증 화면 - 로그인
         authScreen(
-            onGoogleLoginClick = {
-                // TODO: 구글 로그인 후 홈으로 이동
-            },
-            onKakaoLoginClick = {
-                // TODO: 카카오 로그인 후 홈으로 이동
-            },
+            onLoginSuccess = navController::navigateToHome,
             onTermsClick = navController::navigateToTerms,
             onPrivacyClick = navController::navigateToPrivacyPolicy,
         )
 
-        // 메인 화면들
         homeScreen()
         uploadScreen(
             onNavigateBack = navController::popBackStack,
