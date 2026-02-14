@@ -22,6 +22,9 @@ android {
         applicationId = "com.sseotdabwa.buyornot"
         versionCode = 1
         versionName = "1.0.0"
+
+        buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${localProperties.getProperty("kakao.nativeAppKey", "")}\"")
+        manifestPlaceholders["NATIVE_APP_KEY"] = localProperties.getProperty("kakao.nativeAppKey", "")
     }
 
     signingConfigs {
@@ -45,7 +48,7 @@ android {
                         if (keyPass == null) "signed.key.password" else null,
                     )
                 logger.warn("⚠️ Signing config incomplete. Missing properties in local.properties: $missingProps")
-                logger.warn("⚠️ Build will use debug signing instead.")
+                logger.warn("⚠️ Build will use debug signing provided by Android Gradle Plugin.")
             }
         }
     }
@@ -95,6 +98,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.kakao.common)
 
     ksp(libs.hilt.compiler)
 
