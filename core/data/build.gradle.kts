@@ -10,6 +10,8 @@ android {
 
 dependencies {
     implementation(projects.domain)
+    implementation(projects.core.domain) // Data layer depends on Domain layer
+    implementation(projects.core.common) // For common utilities like runCatchingCancellable
     implementation(projects.core.network)
     implementation(projects.core.datastore)
     implementation(libs.kotlinx.coroutines.core)
