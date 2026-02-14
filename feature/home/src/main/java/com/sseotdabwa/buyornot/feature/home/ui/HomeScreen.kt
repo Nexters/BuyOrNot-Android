@@ -40,6 +40,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -272,7 +273,10 @@ private fun HomeScreenContent(
     snackbarHostState: SnackbarHostState,
 ) {
     val density = LocalDensity.current
-    val topBarHeight = 56.dp
+    val topBarHeight = 60.dp
+    val tabHeight = 48.dp
+
+    val totalHeaderHeight = topBarHeight + tabHeight
     val topBarHeightPx = with(density) { topBarHeight.toPx() }
 
     // TopBar 오프셋 상태 (0 = 보임, -topBarHeightPx = 숨김)
@@ -297,19 +301,10 @@ private fun HomeScreenContent(
         modifier =
             Modifier
                 .fillMaxSize()
-                .nestedScroll(nestedScrollConnection)
-                .offset {
-                    IntOffset(x = 0, y = topBarOffsetHeightPx.roundToInt())
-                },
+                .nestedScroll(nestedScrollConnection),
     ) {
         Scaffold(
             snackbarHost = { BuyOrNotSnackBarHost(snackbarHostState) },
-            topBar = {
-                HomeTopBar(
-                    onNotificationClick = { onIntent(HomeIntent.OnNotificationClicked) },
-                    onProfileClick = { onIntent(HomeIntent.OnProfileClicked) },
-                )
-            },
             floatingActionButton = {
                 HomeFab(
                     expanded = isFabExpanded,
@@ -319,27 +314,34 @@ private fun HomeScreenContent(
             },
             containerColor = BuyOrNotTheme.colors.gray0,
         ) { innerPadding ->
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-            ) {
-                HomeTabSection(
-                    selectedTab = uiState.selectedTab,
-                    onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
-                )
 
-                HomeFeedList(
-                    uiState = uiState,
-                    onIntent = onIntent,
-                )
-            }
+            HomeFeedList(
+                uiState = uiState,
+                onIntent = onIntent,
+                headerPadding = totalHeaderHeight + innerPadding.calculateTopPadding(),
+            )
 
             // FAB 확장 시 배경 딤 처리
             FabDimOverlay(
                 visible = isFabExpanded,
                 onDismiss = { onFabExpandedChange(false) },
+            )
+        }
+
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .offset { IntOffset(x = 0, y = topBarOffsetHeightPx.roundToInt()) }
+                    .background(BuyOrNotTheme.colors.gray0),
+        ) {
+            HomeTopBar(
+                onNotificationClick = { onIntent(HomeIntent.OnNotificationClicked) },
+                onProfileClick = { onIntent(HomeIntent.OnProfileClicked) },
+            )
+            HomeTabSection(
+                selectedTab = uiState.selectedTab,
+                onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
             )
         }
 
@@ -449,6 +451,7 @@ private fun FabDimOverlay(
 private fun HomeFeedList(
     uiState: HomeUiState,
     onIntent: (HomeIntent) -> Unit,
+    headerPadding: Dp, // 추가
     modifier: Modifier = Modifier,
 ) {
     // 탭에 따라 피드 필터링
@@ -460,7 +463,7 @@ private fun HomeFeedList(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 80.dp),
+        contentPadding = PaddingValues(top = headerPadding, bottom = 60.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // 필터 칩

@@ -11,7 +11,6 @@ import com.sseotdabwa.buyornot.core.ui.webViewScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
-import com.sseotdabwa.buyornot.feature.home.navigation.HOME_ROUTE
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
 import com.sseotdabwa.buyornot.feature.mypage.navigation.MyPageScreens
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
