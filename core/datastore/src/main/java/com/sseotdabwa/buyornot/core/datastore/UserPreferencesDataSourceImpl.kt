@@ -18,16 +18,43 @@ class UserPreferencesDataSourceImpl
     constructor(
         @ApplicationContext private val context: Context,
     ) : UserPreferencesDataSource {
-        private val displayNameKey = stringPreferencesKey("display_name")
+        private object Keys {
+            val DISPLAY_NAME = stringPreferencesKey("display_name")
+            val ACCESS_TOKEN = stringPreferencesKey("access_token")
+            val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
+        }
 
         override val preferences: Flow<UserPreferences> =
             context.dataStore.data.map { prefs ->
-                UserPreferences(displayName = prefs[displayNameKey] ?: UserPreferences().displayName)
+                UserPreferences(
+                    displayName = prefs[Keys.DISPLAY_NAME] ?: UserPreferences().displayName,
+                    accessToken = prefs[Keys.ACCESS_TOKEN] ?: UserPreferences().accessToken,
+                    refreshToken = prefs[Keys.REFRESH_TOKEN] ?: UserPreferences().refreshToken,
+                )
             }
+
+        override val accessToken: Flow<String> = context.dataStore.data.map { it[Keys.ACCESS_TOKEN] ?: "" }
 
         override suspend fun updateDisplayName(newName: String) {
             context.dataStore.edit { prefs ->
-                prefs[displayNameKey] = newName
+                prefs[Keys.DISPLAY_NAME] = newName
+            }
+        }
+
+        override suspend fun updateTokens(
+            accessToken: String,
+            refreshToken: String,
+        ) {
+            context.dataStore.edit { prefs ->
+                prefs[Keys.ACCESS_TOKEN] = accessToken
+                prefs[Keys.REFRESH_TOKEN] = refreshToken
+            }
+        }
+
+        override suspend fun clearTokens() {
+            context.dataStore.edit { prefs ->
+                prefs.remove(Keys.ACCESS_TOKEN)
+                prefs.remove(Keys.REFRESH_TOKEN)
             }
         }
     }
