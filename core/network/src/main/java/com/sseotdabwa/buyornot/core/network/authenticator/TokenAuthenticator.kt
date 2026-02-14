@@ -23,6 +23,16 @@ class TokenAuthenticator @Inject constructor(
 ) : Authenticator {
     private val refreshTokenMutex = Mutex()
 
+    private fun retryCount(response: Response): Int {
+        var count = 0
+        var prior = response.priorResponse
+        while (prior != null) {
+            count++
+            prior = prior.priorResponse
+        }
+        return count
+    }
+
     override fun authenticate(
         route: Route?,
         response: Response,
@@ -30,14 +40,23 @@ class TokenAuthenticator @Inject constructor(
         runBlocking {
             if (response.code != 401) return@runBlocking null
 
-            val originalRequestAccessToken = runBlocking {
-                userPreferencesDataSource.preferences.first().accessToken
+            val maxRetries = 2
+            if (retryCount(response) > maxRetries) {
+                userPreferencesDataSource.clearTokens()
+                authEventBus.emit(AuthEvent.FORCE_LOGOUT)
+                return@runBlocking null
             }
 
-            refreshTokenMutex.withLock {
-                val currentAccessToken = runBlocking {
+            val originalRequestAccessToken =
+                runBlocking {
                     userPreferencesDataSource.preferences.first().accessToken
                 }
+
+            refreshTokenMutex.withLock {
+                val currentAccessToken =
+                    runBlocking {
+                        userPreferencesDataSource.preferences.first().accessToken
+                    }
 
                 // 토큰이 이미 재발급된 경우 (다른 스레드에서 처리)
                 if (originalRequestAccessToken != currentAccessToken) {
