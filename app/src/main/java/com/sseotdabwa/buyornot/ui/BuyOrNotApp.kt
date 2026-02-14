@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
+import com.sseotdabwa.buyornot.feature.home.navigation.HOME_ROUTE
 import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
 
 /**
@@ -60,7 +61,7 @@ private fun Modifier.bottomBarPadding(
     currentDestination: NavDestination?,
     padding: PaddingValues,
 ): Modifier =
-    if (currentDestination?.route in listOf(SPLASH_ROUTE, AUTH_ROUTE)) {
+    if (currentDestination?.route in listOf(SPLASH_ROUTE, AUTH_ROUTE, HOME_ROUTE)) {
         this
     } else {
         this.padding(padding)

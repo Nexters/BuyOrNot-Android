@@ -8,6 +8,7 @@ import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
+import com.sseotdabwa.buyornot.feature.home.navigation.HOME_ROUTE
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageScreen
 import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
@@ -28,7 +29,7 @@ fun BuyOrNotNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = SPLASH_ROUTE,
+        startDestination = HOME_ROUTE,
         modifier = modifier,
     ) {
         // 스플래시 화면 - 앱 시작점
