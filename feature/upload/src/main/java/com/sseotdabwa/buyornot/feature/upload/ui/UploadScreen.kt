@@ -34,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -110,8 +111,13 @@ fun UploadScreen(
             selectedImageUri = uri
         }
 
-    val isSubmitEnabled = selectedCategory != null && priceRaw.isNotEmpty() && selectedImageUri != null
-
+    val isSubmitEnabled by remember {
+        derivedStateOf {
+            selectedCategory != null &&
+                priceRaw.isNotEmpty() &&
+                selectedImageUri != null
+        }
+    }
     BackHandler {
         if (!showExitDialog) showExitDialog = true
     }
@@ -413,12 +419,10 @@ private fun CameraButton(
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier =
-            Modifier
-                .size(68.dp)
-                .clickable(onClick = onClick),
+        modifier = Modifier.size(68.dp),
         shape = RoundedCornerShape(12.dp),
         color = BuyOrNotTheme.colors.gray100,
+        onClick = onClick,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

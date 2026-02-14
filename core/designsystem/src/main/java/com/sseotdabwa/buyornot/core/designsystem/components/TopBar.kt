@@ -46,6 +46,7 @@ private fun BaseTopBar(
             modifier
                 .fillMaxWidth()
                 .height(TopBarDefaults.Height)
+                .background(BuyOrNotTheme.colors.gray0)
                 .padding(start = TopBarDefaults.StartPadding, end = TopBarDefaults.EndPadding),
         contentAlignment = Alignment.CenterStart,
     ) {

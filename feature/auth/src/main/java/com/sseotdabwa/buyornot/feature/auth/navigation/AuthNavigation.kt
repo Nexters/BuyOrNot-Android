@@ -56,15 +56,21 @@ fun NavGraphBuilder.splashScreen(onNavigateToLogin: () -> Unit) {
  *
  * @param onGoogleLoginClick 구글 로그인 버튼 클릭 시 실행될 콜백
  * @param onKakaoLoginClick 카카오 로그인 버튼 클릭 시 실행될 콜백
+ * @param onTermsClick 서비스 약관 링크 클릭 콜백
+ * @param onPrivacyClick 개인정보처리방침 링크 클릭 콜백
  */
 fun NavGraphBuilder.authScreen(
     onGoogleLoginClick: () -> Unit = {},
     onKakaoLoginClick: () -> Unit = {},
+    onTermsClick: () -> Unit,
+    onPrivacyClick: () -> Unit,
 ) {
     composable(route = AUTH_ROUTE) {
         AuthRoute(
             onGoogleLoginClick = onGoogleLoginClick,
             onKakaoLoginClick = onKakaoLoginClick,
+            onTermsClick = onTermsClick,
+            onPrivacyClick = onPrivacyClick,
         )
     }
 }
