@@ -7,7 +7,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.viewModelScope
-import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.common.model.ClientError
@@ -39,10 +39,10 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
             try {
-                // 1. GetGoogleIdOption 설정
                 val googleIdOption =
-                    GetSignInWithGoogleOption
-                        .Builder(context.getString(R.string.web_client_id))
+                    GetGoogleIdOption
+                        .Builder()
+                        .setServerClientId(context.getString(R.string.web_client_id))
                         .setNonce(generateSecureRandomNonce())
                         .build()
 
@@ -64,10 +64,8 @@ class LoginViewModel @Inject constructor(
                     handleGoogleLoginError("지원하지 않는 자격 증명 유형입니다.")
                 }
             } catch (e: GetCredentialCancellationException) {
-                // 사용자가 선택창에서 뒤로가기를 누른 경우 - 자연스러운 종료이므로 에러 메시지 생략
                 updateState { it.copy(isLoading = false) }
             } catch (e: NoCredentialException) {
-                // 3. 기기에 구글 계정이 없거나 테스트 사용자가 아닐 때 발생
                 Log.e(TAG, "사용 가능한 계정이 없음", e)
                 sendSideEffect(LoginSideEffect.ShowSnackbar("로그인 가능한 구글 계정을 찾을 수 없습니다. 테스트 사용자 등록 여부를 확인해주세요."))
                 updateState { it.copy(isLoading = false) }
