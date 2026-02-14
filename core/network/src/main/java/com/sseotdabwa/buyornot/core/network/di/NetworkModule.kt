@@ -29,6 +29,7 @@ object NetworkModule {
         Json {
             ignoreUnknownKeys = true
             coerceInputValues = true
+            prettyPrint = true
         }
 
     // For general API calls that need authentication
@@ -49,7 +50,7 @@ object NetworkModule {
             ).authenticator(tokenAuthenticator)
             .build()
 
-    // For token reissue calls (to avoid circular dependency)
+    // 토큰 갱신용 (Interceptor 없이 로깅만 사용)
     @Provides
     @Singleton
     @Named("ReissueClient")
