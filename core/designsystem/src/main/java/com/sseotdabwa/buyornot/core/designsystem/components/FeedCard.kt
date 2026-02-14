@@ -32,10 +32,15 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
@@ -219,19 +224,6 @@ fun FeedCard(
                                         ),
                                 )
                             },
-//                            .background(
-//                                brush =
-//                                    Brush.verticalGradient(
-//                                        colors =
-//                                            listOf(
-//                                                Color.Transparent, // 시작점 (위): 투명
-//                                                Color(0xFF191919) // 끝점 (아래): 흰색
-//                                            ),
-//                                        startY = 0f,
-//                                        endY = gradientEndY
-//
-//                                    ),
-//                            ),
                 )
 
                 // 이미지 확장 버튼 (원본 크기)
@@ -388,24 +380,72 @@ private fun FeedActionPopup(
     onDismiss: () -> Unit,
     onClick: () -> Unit,
 ) {
+    val density = LocalDensity.current
+    val navHeight = 20.dp // Anchor icon height
+    val spacing = 4.dp
+    val offset =
+        remember(density) {
+            with(density) {
+                IntOffset(
+                    x = 0,
+                    y = (navHeight + spacing).roundToPx(),
+                )
+            }
+        }
+
+    Popup(
+        onDismissRequest = onDismiss,
+        alignment = Alignment.TopEnd,
+        offset = offset,
+        properties = PopupProperties(focusable = true),
+    ) {
+        FeedActionPopupContent(
+            label = label,
+            onClick = onClick,
+            tonalElevation = 8.dp,
+            shadowElevation = 8.dp,
+        )
+    }
+}
+
+/**
+ * 피드 더보기 팝업의 실제 내용 UI
+ */
+@Composable
+private fun FeedActionPopupContent(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    tonalElevation: Dp = 0.dp,
+    shadowElevation: Dp = 0.dp,
+) {
     Surface(
-        modifier = Modifier.width(80.dp),
-        shape = RoundedCornerShape(10.dp),
-        color = Color.White,
-        tonalElevation = 8.dp,
-        shadowElevation = 8.dp,
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = BuyOrNotTheme.colors.gray0,
+        border =
+            BorderStroke(
+                color = BuyOrNotTheme.colors.gray100,
+                width = 1.dp,
+            ),
+        tonalElevation = tonalElevation,
+        shadowElevation = shadowElevation,
     ) {
         Box(
-            modifier =
-                Modifier
-                    .clickable { onClick() }
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(vertical = 14.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = label,
-                style = BuyOrNotTheme.typography.bodyB4Medium,
-                color = if (label == "삭제하기") Color(0xFFF04438) else BuyOrNotTheme.colors.gray900,
+                modifier =
+                    Modifier
+                        .clickable { onClick() }
+                        .padding(
+                            horizontal = 20.dp,
+                            vertical = 8.dp,
+                        ),
+                style = BuyOrNotTheme.typography.bodyB3Medium,
+                color = BuyOrNotTheme.colors.gray800,
             )
         }
     }
@@ -466,6 +506,36 @@ private fun FeedCardSquareInteractivePreview() {
             },
             onDeleteClick = {},
             onReportClick = {},
+        )
+    }
+}
+
+@Preview(
+    name = "FeedActionPopupContent Preview - Owner",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+)
+@Composable
+private fun FeedActionPopupContentOwnerPreview() {
+    BuyOrNotTheme {
+        FeedActionPopupContent(
+            label = "삭제하기",
+            onClick = { /* do nothing */ },
+        )
+    }
+}
+
+@Preview(
+    name = "FeedActionPopupContent Preview - User",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+)
+@Composable
+private fun FeedActionPopupContentUserPreview() {
+    BuyOrNotTheme {
+        FeedActionPopupContent(
+            label = "신고하기",
+            onClick = { /* do nothing */ },
         )
     }
 }
