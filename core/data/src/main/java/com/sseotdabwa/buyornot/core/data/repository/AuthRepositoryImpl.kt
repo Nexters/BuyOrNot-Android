@@ -29,4 +29,8 @@ class AuthRepositoryImpl @Inject constructor(
                 refreshToken = response.data.refreshToken,
             )
         }
+
+    override suspend fun clearTokens() {
+        userPreferencesDataSource.clearTokens()
+    }
 }
