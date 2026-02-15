@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.sseotdabwa.buyornot.core.ui.navigateToFeedBack
 import com.sseotdabwa.buyornot.core.ui.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.navigateToTerms
 import com.sseotdabwa.buyornot.feature.mypage.ui.AccountSettingRoute
@@ -57,6 +58,7 @@ fun NavGraphBuilder.myPageGraph(
                 onBackClick = navController::popBackStack,
                 onAccountSettingClick = navController::navigateToAccountSetting,
                 onPolicyClick = navController::navigateToPolicy,
+                onFeedbackClick = navController::navigateToFeedBack,
             )
         }
 

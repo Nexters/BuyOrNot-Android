@@ -48,6 +48,7 @@ fun MyPageRoute(
     onBackClick: () -> Unit,
     onAccountSettingClick: () -> Unit,
     onPolicyClick: () -> Unit,
+    onFeedbackClick: () -> Unit,
     viewModel: MyPageViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -81,6 +82,7 @@ fun MyPageRoute(
             onBackClick = onBackClick,
             onAccountSettingClick = onAccountSettingClick,
             onPolicyClick = onPolicyClick,
+            onFeedbackClick = onFeedbackClick,
             uiState = uiState,
         )
     }
@@ -94,6 +96,7 @@ fun MyPageScreen(
     onBackClick: () -> Unit = {},
     onAccountSettingClick: () -> Unit = {},
     onPolicyClick: () -> Unit = {},
+    onFeedbackClick: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         BackTopBar(onBackClick = onBackClick)
@@ -151,7 +154,7 @@ fun MyPageScreen(
             ) {
                 SettingItem(title = "계정 설정") { onAccountSettingClick() }
                 SettingItem(title = "약관 및 정책") { onPolicyClick() }
-                SettingItem(title = "의견 남기기") { /* TODO : 구글 폼 열기 */ }
+                SettingItem(title = "의견 남기기") { onFeedbackClick() }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -192,6 +195,7 @@ fun MyPageScreenPreview() {
                 onBackClick = {},
                 onAccountSettingClick = {},
                 onPolicyClick = {},
+                onFeedbackClick = {},
                 uiState =
                     MyPageUiState(
                         userProfile =
