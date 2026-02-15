@@ -5,6 +5,7 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.lifecycle.viewModelScope
 import com.kakao.sdk.user.UserApiClient
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
@@ -36,7 +37,7 @@ class AccountSettingViewModel @Inject constructor(
     private fun fetchProfile() {
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
-            runCatching {
+            runCatchingCancellable {
                 userRepository.getMyProfile()
             }.onSuccess { profile ->
                 updateState { it.copy(isLoading = false, userProfile = profile) }
@@ -51,7 +52,7 @@ class AccountSettingViewModel @Inject constructor(
         val socialAccount = currentState.userProfile?.socialAccount ?: return
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
-            runCatching {
+            runCatchingCancellable {
                 // 1. ViewModel에서 소셜 SDK 로그아웃 처리
                 if (socialAccount == "KAKAO") {
                     // 실제 구현은 UserApiClient의 콜백을 코루틴으로 변환해야 함

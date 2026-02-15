@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.mypage.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +25,7 @@ class MyPageViewModel @Inject constructor(
     private fun loadProfile() {
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
-            runCatching {
+            runCatchingCancellable {
                 userRepository.getMyProfile()
             }.onSuccess { profile ->
                 updateState { it.copy(isLoading = false, userProfile = profile) }

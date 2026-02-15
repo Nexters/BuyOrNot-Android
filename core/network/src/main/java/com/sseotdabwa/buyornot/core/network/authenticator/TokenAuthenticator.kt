@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.core.network.authenticator
 
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.datastore.UserPreferencesDataSource
 import com.sseotdabwa.buyornot.core.network.AuthEvent
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
@@ -76,7 +77,7 @@ class TokenAuthenticator @Inject constructor(
 
                 // 토큰 재발급 API 호출
                 val newTokensResult =
-                    runCatching {
+                    runCatchingCancellable {
                         authApiService.refreshToken(RefreshRequest(refreshToken))
                     }
 

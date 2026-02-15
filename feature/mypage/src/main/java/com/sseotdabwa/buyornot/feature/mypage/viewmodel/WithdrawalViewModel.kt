@@ -5,6 +5,7 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.lifecycle.viewModelScope
 import com.kakao.sdk.user.UserApiClient
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
@@ -34,7 +35,7 @@ class WithdrawalViewModel @Inject constructor(
     private fun fetchProfile() {
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
-            runCatching {
+            runCatchingCancellable {
                 userRepository.getMyProfile()
             }.onSuccess { profile ->
                 updateState { it.copy(isLoading = false, userProfile = profile) }
@@ -49,7 +50,7 @@ class WithdrawalViewModel @Inject constructor(
         val socialAccount = currentState.userProfile?.socialAccount ?: return
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
-            runCatching {
+            runCatchingCancellable {
                 // 1. 서버에 회원 탈퇴 요청
                 userRepository.deleteMyAccount()
                 // 2. ViewModel에서 소셜 SDK 연결 해제
