@@ -11,8 +11,10 @@ import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
+import com.sseotdabwa.buyornot.feature.home.navigation.HOME_ROUTE
 import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
 
 /**
@@ -28,7 +30,7 @@ import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
  *
  */
 @Composable
-fun BuyOrNotApp() {
+fun BuyOrNotApp(authEventBus: AuthEventBus) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -38,6 +40,7 @@ fun BuyOrNotApp() {
     ) { innerPadding ->
         BuyOrNotNavHost(
             navController = navController,
+            authEventBus = authEventBus,
             modifier =
                 Modifier
                     .consumeWindowInsets(innerPadding)
@@ -60,7 +63,7 @@ private fun Modifier.bottomBarPadding(
     currentDestination: NavDestination?,
     padding: PaddingValues,
 ): Modifier =
-    if (currentDestination?.route in listOf(SPLASH_ROUTE, AUTH_ROUTE)) {
+    if (currentDestination?.route in listOf(SPLASH_ROUTE, AUTH_ROUTE, HOME_ROUTE)) {
         this
     } else {
         this.padding(padding)

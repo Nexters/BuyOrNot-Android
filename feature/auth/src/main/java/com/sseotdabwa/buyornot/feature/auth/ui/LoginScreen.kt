@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.auth.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,12 +17,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -33,80 +43,95 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import kotlinx.coroutines.launch
 
 /**
  * Auth 화면의 네비게이션 진입점
- *
- * 로그인 화면을 표시하며, 네비게이션 그래프에서 호출됩니다.
- * 사용자의 소셜 로그인 액션을 처리하고, 약관 및 개인정보처리방침은
- * UriHandler를 통해 외부 브라우저로 열립니다.
- *
- * @param onGoogleLoginClick 구글 로그인 버튼 클릭 시 실행될 콜백
- * @param onKakaoLoginClick 카카오 로그인 버튼 클릭 시 실행될 콜백
- * @param onTermsClick 서비스 약관 링크 클릭 콜백
- * @param onPrivacyClick 개인정보처리방침 링크 클릭 콜백
  */
 @Composable
 fun AuthRoute(
-    onGoogleLoginClick: () -> Unit,
-    onKakaoLoginClick: () -> Unit,
+    onLoginSuccess: () -> Unit,
     onTermsClick: () -> Unit,
     onPrivacyClick: () -> Unit,
+    viewModel: LoginViewModel = hiltViewModel(),
 ) {
-    LoginScreen(
-        onGoogleLoginClick = onGoogleLoginClick,
-        onKakaoLoginClick = onKakaoLoginClick,
-        onTermsClick = onTermsClick,
-        onPrivacyClick = onPrivacyClick,
-    )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    // SideEffect 처리
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect {
+            when (it) {
+                is LoginSideEffect.NavigateToHome -> onLoginSuccess()
+                is LoginSideEffect.ShowSnackbar -> {
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(it.message)
+                    }
+                }
+            }
+        }
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            LoginScreen(
+                modifier = Modifier.padding(padding),
+                isLoading = uiState.isLoading,
+                onGoogleLoginClick = { viewModel.handleIntent(LoginIntent.GoogleLogin(context)) },
+                onKakaoLoginClick = { viewModel.handleIntent(LoginIntent.KakaoLogin(context)) },
+                onGuestStartClick = { viewModel.handleIntent(LoginIntent.SkipLogin) },
+                onTermsClick = onTermsClick,
+                onPrivacyClick = onPrivacyClick,
+            )
+            if (uiState.isLoading) {
+                CircularProgressIndicator()
+            }
+        }
+    }
 }
 
 /**
  * 로그인 화면의 메인 컴포저블
- *
- * 상단에는 그래픽 섹션(배경 이미지),
- * 하단에는 소셜 로그인 버튼과 약관 동의 텍스트가 표시됩니다.
- *
- * @param onGoogleLoginClick 구글 로그인 버튼 클릭 콜백
- * @param onKakaoLoginClick 카카오 로그인 버튼 클릭 콜백
- * @param onTermsClick 서비스 약관 링크 클릭 콜백
- * @param onPrivacyClick 개인정보처리방침 링크 클릭 콜백
  */
 @Composable
 private fun LoginScreen(
+    modifier: Modifier = Modifier,
+    isLoading: Boolean,
     onGoogleLoginClick: () -> Unit,
     onKakaoLoginClick: () -> Unit,
+    onGuestStartClick: () -> Unit,
     onTermsClick: () -> Unit,
     onPrivacyClick: () -> Unit,
 ) {
     Column(
         modifier =
-            Modifier
+            modifier
                 .fillMaxSize()
                 .background(BuyOrNotTheme.colors.gray0),
     ) {
         LoginGraphicSection(modifier = Modifier.weight(1f))
 
         LoginInteractionSection(
+            isLoading = isLoading,
             onGoogleLoginClick = onGoogleLoginClick,
             onKakaoLoginClick = onKakaoLoginClick,
+            onGuestStartClick = onGuestStartClick,
             onTermsClick = onTermsClick,
             onPrivacyClick = onPrivacyClick,
         )
     }
 }
 
-/**
- * 로그인 화면의 상단 그래픽 영역
- *
- * 배경 이미지를 전체 너비로 표시합니다.
- * 이미지는 로컬 drawable 리소스에서 로드됩니다.
- *
- * @param modifier 레이아웃 수정자
- */
 @Composable
 private fun LoginGraphicSection(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth()) {
@@ -119,21 +144,12 @@ private fun LoginGraphicSection(modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * 로그인 화면의 하단 인터랙션 영역
- *
- * 타이틀 텍스트, 소셜 로그인 버튼(구글, 카카오),
- * 그리고 서비스 약관 동의 텍스트를 포함합니다.
- *
- * @param onGoogleLoginClick 구글 로그인 버튼 클릭 콜백
- * @param onKakaoLoginClick 카카오 로그인 버튼 클릭 콜백
- * @param onTermsClick 서비스 약관 링크 클릭 콜백
- * @param onPrivacyClick 개인정보처리방침 링크 클릭 콜백
- */
 @Composable
 private fun LoginInteractionSection(
+    isLoading: Boolean,
     onGoogleLoginClick: () -> Unit,
     onKakaoLoginClick: () -> Unit,
+    onGuestStartClick: () -> Unit,
     onTermsClick: () -> Unit,
     onPrivacyClick: () -> Unit,
 ) {
@@ -144,7 +160,7 @@ private fun LoginInteractionSection(
                 .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         Text(
             text = "현명한 소비를 위한\n합리적인 비교 방법",
@@ -161,6 +177,7 @@ private fun LoginInteractionSection(
             containerColor = Color.White,
             contentColor = BuyOrNotTheme.colors.gray900,
             hasBorder = true,
+            enabled = !isLoading,
             onClick = onGoogleLoginClick,
         )
 
@@ -172,30 +189,34 @@ private fun LoginInteractionSection(
             containerColor = Color(0xFFFEE500),
             contentColor = Color(0xFF191919),
             hasBorder = false,
+            enabled = !isLoading,
             onClick = onKakaoLoginClick,
         )
 
-        Spacer(modifier = Modifier.height(30.dp))
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Text(
+            text = "비회원으로 시작하기",
+            modifier =
+                Modifier.clickable(enabled = !isLoading) {
+                    onGuestStartClick()
+                },
+            style = BuyOrNotTheme.typography.captionC2Medium,
+            color = BuyOrNotTheme.colors.gray700,
+            textDecoration = TextDecoration.Underline,
+        )
+
+        Spacer(modifier = Modifier.height(28.dp))
 
         LoginFooterTermsText(
             onTermsClick = onTermsClick,
             onPrivacyClick = onPrivacyClick,
         )
 
-        Spacer(modifier = Modifier.height(105.dp))
+        Spacer(modifier = Modifier.height(72.dp))
     }
 }
 
-/**
- * 소셜 로그인 버튼 컴포넌트
- *
- * @param text 버튼에 표시될 텍스트
- * @param iconResId 버튼 왼쪽에 표시될 아이콘의 drawable 리소스 ID
- * @param containerColor 버튼 배경색
- * @param contentColor 버튼 텍스트 및 아이콘 색상
- * @param hasBorder 테두리 표시 여부
- * @param onClick 버튼 클릭 시 실행될 콜백
- */
 @Composable
 private fun SocialLoginButton(
     text: String,
@@ -203,10 +224,12 @@ private fun SocialLoginButton(
     containerColor: Color,
     contentColor: Color,
     hasBorder: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -242,15 +265,6 @@ private fun SocialLoginButton(
     }
 }
 
-/**
- * 로그인 화면 하단의 약관 동의 텍스트
- *
- * LinkAnnotation을 사용하여 클릭 가능한 링크를 구현합니다.
- * 서비스 약관 및 개인정보처리방침 링크가 포함된 안내 문구를 표시합니다.
- *
- * @param onTermsClick 서비스 약관 링크 클릭 시 실행될 콜백
- * @param onPrivacyClick 개인정보처리방침 링크 클릭 시 실행될 콜백
- */
 @Composable
 private fun LoginFooterTermsText(
     onTermsClick: () -> Unit,
@@ -262,8 +276,6 @@ private fun LoginFooterTermsText(
         buildAnnotatedString {
             withStyle(style = SpanStyle(color = baseColor)) {
                 append("가입을 진행하시면 ")
-
-                // 서비스 약관 링크
                 withLink(
                     LinkAnnotation.Clickable(
                         tag = "terms",
@@ -275,17 +287,12 @@ private fun LoginFooterTermsText(
                                         textDecoration = TextDecoration.Underline,
                                     ),
                             ),
-                        linkInteractionListener = {
-                            onTermsClick()
-                        },
+                        linkInteractionListener = { onTermsClick() },
                     ),
                 ) {
                     append("서비스 약관")
                 }
-
                 append(" 및 ")
-
-                // 개인정보처리방침 링크
                 withLink(
                     LinkAnnotation.Clickable(
                         tag = "privacy",
@@ -297,14 +304,11 @@ private fun LoginFooterTermsText(
                                         textDecoration = TextDecoration.Underline,
                                     ),
                             ),
-                        linkInteractionListener = {
-                            onPrivacyClick()
-                        },
+                        linkInteractionListener = { onPrivacyClick() },
                     ),
                 ) {
                     append("개인정보처리방침")
                 }
-
                 append("에\n동의 하시는 것으로 간주합니다.")
             }
         }
@@ -320,18 +324,15 @@ private fun LoginFooterTermsText(
     )
 }
 
-// --- PREVIEWS ---
-
-/**
- * 로그인 화면 프리뷰
- */
 @Preview(name = "LoginScreen - Pixel 5", device = "id:pixel_5", showBackground = true)
 @Composable
 private fun LoginScreenPreview() {
     BuyOrNotTheme {
         LoginScreen(
+            isLoading = false,
             onGoogleLoginClick = {},
             onKakaoLoginClick = {},
+            onGuestStartClick = {},
             onTermsClick = {},
             onPrivacyClick = {},
         )

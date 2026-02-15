@@ -28,11 +28,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
@@ -62,11 +70,16 @@ fun FeedCard(
     buyVoteCount: Int,
     maybeVoteCount: Int,
     totalVoteCount: Int,
+    onExpandClick: (String) -> Unit,
     onVote: (Int) -> Unit, // 투표 옵션 인덱스 (0: 사!, 1: 애매..)
+    isOwner: Boolean = false, // 본인 글인지 여부
+    onDeleteClick: () -> Unit = {}, // 삭제 클릭 콜백 추가
+    onReportClick: () -> Unit = {}, // 신고 클릭 콜백 추가
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
     val maybePercentage = if (totalVoteCount > 0) (maybeVoteCount * 100 / totalVoteCount) else 0
+    var showMenu by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier.padding(16.dp),
@@ -126,17 +139,32 @@ fun FeedCard(
                     )
                 }
             }
-            Icon(
-                imageVector = BuyOrNotIcons.More.asImageVector(),
-                contentDescription = "More",
-                modifier = Modifier.size(20.dp),
-                tint = BuyOrNotTheme.colors.gray500,
-            )
+            Box {
+                Icon(
+                    imageVector = BuyOrNotIcons.More.asImageVector(),
+                    contentDescription = "More",
+                    modifier =
+                        Modifier
+                            .size(20.dp)
+                            .clickable { showMenu = true },
+                    tint = BuyOrNotTheme.colors.gray500,
+                )
+                if (showMenu) {
+                    FeedActionPopup(
+                        label = if (isOwner) "삭제하기" else "신고하기",
+                        onDismiss = { showMenu = false },
+                        onClick = {
+                            showMenu = false
+                            if (isOwner) onDeleteClick() else onReportClick()
+                        },
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // 2. 타이머 배지
+        // 2. 피드 내용 & 이미지
         Column(
             modifier =
                 Modifier
@@ -154,6 +182,7 @@ fun FeedCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            // 상품 이미지 박스
             Box(
                 modifier =
                     Modifier
@@ -166,7 +195,7 @@ fun FeedCard(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .background(BuyOrNotTheme.colors.gray400),
+                                .background(BuyOrNotTheme.colors.gray0),
                     )
                 } else {
                     AsyncImage(
@@ -177,6 +206,26 @@ fun FeedCard(
                     )
                 }
 
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .drawBehind {
+                                drawRect(
+                                    brush =
+                                        Brush.verticalGradient(
+                                            colors =
+                                                listOf(
+                                                    Color.Transparent, // 시작점 (위): 투명
+                                                    Color(0xFF191919).copy(alpha = 0.3f), // 끝점 (아래): 흰색
+                                                ),
+                                            endY = size.height,
+                                            startY = size.height * 0.64f,
+                                        ),
+                                )
+                            },
+                )
+
                 // 이미지 확장 버튼 (원본 크기)
                 FullscreenButton(
                     modifier =
@@ -186,8 +235,8 @@ fun FeedCard(
                                 top = 14.dp,
                                 end = 14.dp,
                             ),
-                ) {
-                }
+                    onClick = { onExpandClick(productImageUrl) },
+                )
 
                 // 가격 태그 (좌측 하단)
                 Text(
@@ -322,6 +371,86 @@ private fun VoteOption(
     }
 }
 
+/**
+ * 피드 더보기 팝업 UI
+ */
+@Composable
+private fun FeedActionPopup(
+    label: String,
+    onDismiss: () -> Unit,
+    onClick: () -> Unit,
+) {
+    val density = LocalDensity.current
+    val navHeight = 20.dp // Anchor icon height
+    val spacing = 4.dp
+    val offset =
+        remember(density) {
+            with(density) {
+                IntOffset(
+                    x = 0,
+                    y = (navHeight + spacing).roundToPx(),
+                )
+            }
+        }
+
+    Popup(
+        onDismissRequest = onDismiss,
+        alignment = Alignment.TopEnd,
+        offset = offset,
+        properties = PopupProperties(focusable = true),
+    ) {
+        FeedActionPopupContent(
+            label = label,
+            onClick = onClick,
+            tonalElevation = 8.dp,
+            shadowElevation = 8.dp,
+        )
+    }
+}
+
+/**
+ * 피드 더보기 팝업의 실제 내용 UI
+ */
+@Composable
+private fun FeedActionPopupContent(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    tonalElevation: Dp = 0.dp,
+    shadowElevation: Dp = 0.dp,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(14.dp),
+        color = BuyOrNotTheme.colors.gray0,
+        border =
+            BorderStroke(
+                color = BuyOrNotTheme.colors.gray100,
+                width = 1.dp,
+            ),
+        tonalElevation = tonalElevation,
+        shadowElevation = shadowElevation,
+    ) {
+        Box(
+            modifier = Modifier.padding(vertical = 14.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = label,
+                modifier =
+                    Modifier
+                        .clickable { onClick() }
+                        .padding(
+                            horizontal = 20.dp,
+                            vertical = 8.dp,
+                        ),
+                style = BuyOrNotTheme.typography.bodyB3Medium,
+                color = BuyOrNotTheme.colors.gray800,
+            )
+        }
+    }
+}
+
 @Composable
 private fun FullscreenButton(
     modifier: Modifier = Modifier,
@@ -371,9 +500,42 @@ private fun FeedCardSquareInteractivePreview() {
             buyVoteCount = 20,
             maybeVoteCount = 10,
             totalVoteCount = 30,
+            onExpandClick = { },
             onVote = { optionIndex ->
                 userVotedOption = optionIndex
             },
+            onDeleteClick = {},
+            onReportClick = {},
+        )
+    }
+}
+
+@Preview(
+    name = "FeedActionPopupContent Preview - Owner",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+)
+@Composable
+private fun FeedActionPopupContentOwnerPreview() {
+    BuyOrNotTheme {
+        FeedActionPopupContent(
+            label = "삭제하기",
+            onClick = { /* do nothing */ },
+        )
+    }
+}
+
+@Preview(
+    name = "FeedActionPopupContent Preview - User",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+)
+@Composable
+private fun FeedActionPopupContentUserPreview() {
+    BuyOrNotTheme {
+        FeedActionPopupContent(
+            label = "신고하기",
+            onClick = { /* do nothing */ },
         )
     }
 }
@@ -402,9 +564,12 @@ private fun FeedCardPortraitInteractivePreview() {
             buyVoteCount = 45,
             maybeVoteCount = 15,
             totalVoteCount = 60,
+            onExpandClick = { },
             onVote = { optionIndex ->
                 userVotedOption = optionIndex
             },
+            onDeleteClick = {},
+            onReportClick = {},
         )
     }
 }

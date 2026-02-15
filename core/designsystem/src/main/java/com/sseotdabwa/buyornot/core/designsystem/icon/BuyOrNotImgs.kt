@@ -27,6 +27,10 @@ object BuyOrNotImgs {
      * 회원탈퇴 화면 배경 이미지
      */
     val WithdrawalBackground = ImgsResource(R.drawable.img_withdrawal_bg)
+
+    val HomeBanner = ImgsResource(R.drawable.img_home_banner)
+
+    val Error = ImgsResource(R.drawable.img_error)
 }
 
 /**

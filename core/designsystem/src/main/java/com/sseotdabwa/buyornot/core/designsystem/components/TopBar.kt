@@ -36,13 +36,14 @@ private object TopBarDefaults {
 
 @Composable
 private fun BaseTopBar(
+    modifier: Modifier = Modifier,
     navigationIcon: @Composable (() -> Unit)? = null,
     title: @Composable (() -> Unit)? = null,
     actions: @Composable (RowScope.() -> Unit)? = null,
 ) {
     Box(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
                 .height(TopBarDefaults.Height)
                 .background(BuyOrNotTheme.colors.gray0)
@@ -119,8 +120,10 @@ fun BackTopBarWithTitle(
 fun HomeTopBar(
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     BaseTopBar(
+        modifier = modifier,
         navigationIcon = {
             Icon(
                 imageVector = BuyOrNotIcons.AppLogo.asImageVector(),
