@@ -10,7 +10,9 @@ import com.sseotdabwa.buyornot.core.ui.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -49,34 +51,42 @@ class AccountSettingViewModel @Inject constructor(
     }
 
     private fun logout(context: Context) {
-        val socialAccount = currentState.userProfile?.socialAccount ?: return
+        val socialAccount = currentState.userProfile?.socialAccount ?: run {
+            sendSideEffect(AccountSettingSideEffect.ShowSnackbar("사용자 정보를 가져올 수 없습니다."))
+            return
+        }
+
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
-            runCatchingCancellable {
-                // 1. ViewModel에서 소셜 SDK 로그아웃 처리
-                if (socialAccount == "KAKAO") {
-                    // 실제 구현은 UserApiClient의 콜백을 코루틴으로 변환해야 함
-                    suspendCoroutine { continuation ->
-                        UserApiClient.instance.logout { error ->
-                            if (error != null) {
-                                continuation.resumeWithException(error)
-                            } else {
-                                continuation.resume(Unit)
+
+            // 1. 소셜 로그아웃 시도 (백그라운드에서, 실패해도 괜찮음)
+            withContext(Dispatchers.IO) {
+                runCatchingCancellable {
+                    if (socialAccount == "KAKAO") {
+                        suspendCoroutine { continuation ->
+                            UserApiClient.instance.logout { error ->
+                                if (error != null) {
+                                    continuation.resumeWithException(error)
+                                } else {
+                                    continuation.resume(Unit)
+                                }
                             }
                         }
+                    } else {
+                        val credentialManager = CredentialManager.create(context)
+                        // suspend 함수를 올바르게 직접 호출
+                        credentialManager.clearCredentialState(ClearCredentialStateRequest())
                     }
-                } else {
-                    val credentialManager = CredentialManager.create(context)
-                    credentialManager.clearCredentialState(ClearCredentialStateRequest())
                 }
-                // 2. Repository를 통해 로컬 토큰 삭제
-                authRepository.clearTokens()
-            }.onSuccess {
-                sendSideEffect(AccountSettingSideEffect.NavigateToLogin)
-            }.onFailure {
-                updateState { it.copy(isLoading = false) }
-                sendSideEffect(AccountSettingSideEffect.ShowSnackbar("로그아웃 실패"))
+                // .onFailure는 의도적으로 처리하지 않음.
+                // 소셜 로그아웃 실패 여부와 관계없이 로컬 로그아웃은 진행되어야 함.
             }
+
+            // 2. (가장 중요) 어떤 경우든 로컬 토큰은 반드시 삭제
+            authRepository.clearTokens()
+
+            // 3. 로그인 화면으로 이동
+            sendSideEffect(AccountSettingSideEffect.NavigateToLogin)
         }
     }
 }

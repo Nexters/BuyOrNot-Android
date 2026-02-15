@@ -10,7 +10,9 @@ import com.sseotdabwa.buyornot.core.ui.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -47,35 +49,40 @@ class WithdrawalViewModel @Inject constructor(
     }
 
     private fun withdraw(context: Context) {
-        val socialAccount = currentState.userProfile?.socialAccount ?: return
+        val socialAccount = currentState.userProfile?.socialAccount ?: run {
+            sendSideEffect(WithdrawalSideEffect.ShowSnackbar("사용자 정보를 가져올 수 없습니다."))
+            return
+        }
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
-            runCatchingCancellable {
-                // 1. 서버에 회원 탈퇴 요청
-                userRepository.deleteMyAccount()
-                // 2. ViewModel에서 소셜 SDK 연결 해제
-                if (socialAccount == "KAKAO") {
-                    suspendCoroutine { continuation ->
-                        UserApiClient.instance.unlink { error ->
-                            if (error != null) {
-                                continuation.resumeWithException(error)
-                            } else {
-                                continuation.resume(Unit)
+
+            withContext(Dispatchers.IO) {
+                runCatchingCancellable {
+                    // 1. 서버에 회원 탈퇴 요청
+                    userRepository.deleteMyAccount()
+
+                    // 2. ViewModel에서 소셜 SDK 연결 해제
+                    if (socialAccount == "KAKAO") {
+                        suspendCoroutine { continuation ->
+                            UserApiClient.instance.unlink { error ->
+                                if (error != null) {
+                                    continuation.resumeWithException(error)
+                                } else {
+                                    continuation.resume(Unit)
+                                }
                             }
                         }
+                    } else {
+                        // clearCredentialState는 이미 suspend 함수이므로 직접 호출
+                        val credentialManager = CredentialManager.create(context)
+                        credentialManager.clearCredentialState(ClearCredentialStateRequest())
                     }
-                } else {
-                    val credentialManager = CredentialManager.create(context)
-                    credentialManager.clearCredentialState(ClearCredentialStateRequest())
                 }
-                // 3. Repository를 통해 로컬 토큰 삭제
-                authRepository.clearTokens()
-            }.onSuccess {
-                sendSideEffect(WithdrawalSideEffect.NavigateToLogin)
-            }.onFailure { throwable ->
-                updateState { it.copy(isLoading = false) }
-                sendSideEffect(WithdrawalSideEffect.ShowSnackbar(throwable.message ?: "회원 탈퇴 실패"))
             }
+
+            // 3. 성공/실패 여부와 관계없이 항상 로컬 토큰을 삭제하고 로그인 화면으로 이동
+            authRepository.clearTokens()
+            sendSideEffect(WithdrawalSideEffect.NavigateToLogin)
         }
     }
 }
