@@ -49,10 +49,11 @@ class WithdrawalViewModel @Inject constructor(
     }
 
     private fun withdraw(context: Context) {
-        val socialAccount = currentState.userProfile?.socialAccount ?: run {
-            sendSideEffect(WithdrawalSideEffect.ShowSnackbar("사용자 정보를 가져올 수 없습니다."))
-            return
-        }
+        val socialAccount =
+            currentState.userProfile?.socialAccount ?: run {
+                sendSideEffect(WithdrawalSideEffect.ShowSnackbar("사용자 정보를 가져올 수 없습니다."))
+                return
+            }
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
 
