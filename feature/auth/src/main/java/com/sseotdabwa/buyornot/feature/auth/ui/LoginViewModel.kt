@@ -72,7 +72,7 @@ class LoginViewModel @Inject constructor(
                 updateState { it.copy(isLoading = false) }
             } catch (e: Exception) {
                 Log.e(TAG, "Google 로그인 실패", e)
-                handleGoogleLoginError(e.message ?: "알 수 없는 오류가 발생했습니다.")
+                handleGoogleLoginError("알 수 없는 오류가 발생했습니다.")
             }
         }
     }
