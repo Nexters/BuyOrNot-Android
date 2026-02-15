@@ -11,6 +11,7 @@ import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -84,7 +85,11 @@ class AccountSettingViewModel @Inject constructor(
             }
 
             // 2. (가장 중요) 어떤 경우든 로컬 토큰은 반드시 삭제
-            authRepository.clearTokens()
+            withContext(NonCancellable) {
+                runCatchingCancellable {
+                    authRepository.clearTokens()
+                }
+            }
 
             // 3. 로그인 화면으로 이동
             sendSideEffect(AccountSettingSideEffect.NavigateToLogin)
