@@ -32,6 +32,7 @@ class LoginViewModel @Inject constructor(
         when (intent) {
             is LoginIntent.GoogleLogin -> googleLogin(intent.context)
             is LoginIntent.KakaoLogin -> kakaoLogin(intent.context)
+            LoginIntent.SkipLogin -> sendSideEffect(LoginSideEffect.NavigateToHome)
         }
     }
 

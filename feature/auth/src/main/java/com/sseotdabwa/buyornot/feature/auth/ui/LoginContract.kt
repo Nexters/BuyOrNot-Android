@@ -14,6 +14,8 @@ sealed interface LoginIntent {
     data class KakaoLogin(
         val context: Context,
     ) : LoginIntent
+
+    data object SkipLogin : LoginIntent
 }
 
 sealed interface LoginSideEffect {
