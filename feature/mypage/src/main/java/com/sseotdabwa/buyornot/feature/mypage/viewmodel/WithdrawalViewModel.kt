@@ -12,11 +12,11 @@ import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.coroutines.suspendCoroutine
 
 @HiltViewModel
 class WithdrawalViewModel @Inject constructor(
@@ -64,7 +64,7 @@ class WithdrawalViewModel @Inject constructor(
 
                     // 2. ViewModel에서 소셜 SDK 연결 해제
                     if (socialAccount == "KAKAO") {
-                        suspendCoroutine { continuation ->
+                        suspendCancellableCoroutine { continuation ->
                             UserApiClient.instance.unlink { error ->
                                 if (error != null) {
                                     continuation.resumeWithException(error)
