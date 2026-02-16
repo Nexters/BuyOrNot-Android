@@ -31,6 +31,8 @@ object BuyOrNotImgs {
     val HomeBanner = ImgsResource(R.drawable.img_home_banner)
 
     val Error = ImgsResource(R.drawable.img_error)
+
+    val NoNotification = ImgsResource(R.drawable.img_no_bell)
 }
 
 /**
