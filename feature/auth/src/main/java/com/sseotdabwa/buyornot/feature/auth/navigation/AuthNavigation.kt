@@ -60,15 +60,13 @@ fun NavGraphBuilder.splashScreen(onNavigateToLogin: () -> Unit) {
  * @param onPrivacyClick 개인정보처리방침 링크 클릭 콜백
  */
 fun NavGraphBuilder.authScreen(
-    onGoogleLoginClick: () -> Unit = {},
-    onKakaoLoginClick: () -> Unit = {},
+    onLoginSuccess: () -> Unit,
     onTermsClick: () -> Unit,
     onPrivacyClick: () -> Unit,
 ) {
     composable(route = AUTH_ROUTE) {
         AuthRoute(
-            onGoogleLoginClick = onGoogleLoginClick,
-            onKakaoLoginClick = onKakaoLoginClick,
+            onLoginSuccess = onLoginSuccess,
             onTermsClick = onTermsClick,
             onPrivacyClick = onPrivacyClick,
         )
@@ -84,6 +82,21 @@ fun NavGraphBuilder.authScreen(
 fun NavHostController.navigateToLogin() {
     navigate(AUTH_ROUTE) {
         popUpTo(SPLASH_ROUTE) {
+            inclusive = true
+        }
+    }
+}
+
+/**
+ * 앱의 어느 화면에서든 로그인 화면으로 이동하는 확장 함수
+ *
+ * popUpTo(graph.id) { inclusive = true }를 사용하여
+ * 현재 네비게이션 스택을 모두 지우고 로그인 화면으로 이동합니다.
+ * 주로 토큰 만료 등 강제 로그아웃이 필요할 때 사용됩니다.
+ */
+fun NavHostController.navigateForceToLogin() {
+    navigate(AUTH_ROUTE) {
+        popUpTo(graph.id) {
             inclusive = true
         }
     }
