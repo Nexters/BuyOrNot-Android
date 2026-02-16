@@ -539,7 +539,10 @@ private fun HomeBannerSection(
     onDismiss: () -> Unit,
     onClick: () -> Unit,
 ) {
-    Column {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Spacer(modifier = Modifier.height(20.dp))
 
         HomeBanner(
@@ -572,7 +575,10 @@ private fun FeedItemCard(
 ) {
     var userVotedOption by remember(feed.id) { mutableStateOf(feed.userVotedOptionIndex) }
 
-    Column {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Spacer(modifier = Modifier.height(20.dp))
 
         FeedCard(
