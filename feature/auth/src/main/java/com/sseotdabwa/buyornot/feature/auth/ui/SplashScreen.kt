@@ -66,6 +66,7 @@ private fun SplashScreen() {
             ) {
                 LottieAnimation(
                     composition = composition,
+                    iterations = Int.MAX_VALUE,
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Icon(
