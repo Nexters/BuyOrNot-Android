@@ -28,4 +28,5 @@ dependencies {
     implementation(libs.androidx.credentials.playservices)
     implementation(libs.kakao.user)
     implementation(libs.googleid)
+    implementation(libs.lottie.compose)
 }
