@@ -1,6 +1,10 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
@@ -23,14 +27,15 @@ fun NotificationDetailScreen(
         topBar = {
             BackTopBar(onBackClick = onBackClick)
         },
-        containerColor = BuyOrNotTheme.colors.gray0
+        containerColor = BuyOrNotTheme.colors.gray0,
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(4.dp)
-                .verticalScroll(rememberScrollState())
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(4.dp)
+                    .verticalScroll(rememberScrollState()),
         ) {
             // 상세 페이지의 메인 콘텐츠 (FeedCard와 동일한 구성)
             FeedCard(
@@ -48,10 +53,9 @@ fun NotificationDetailScreen(
                 maybeVoteCount = 20,
                 totalVoteCount = 100, // 시안의 % 계산을 위한 임의 값
                 onExpandClick = { /* 이미지 확대 */ },
-                onVote = { /* 종료된 투표이므로 동작하지 않음 */ }
+                onVote = { /* 종료된 투표이므로 동작하지 않음 */ },
             )
 
-            // 하단 여백 및 상세 정보가 더 있을 경우 추가
             Spacer(modifier = Modifier.height(20.dp))
         }
     }

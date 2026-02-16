@@ -19,8 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
-import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
-import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
@@ -54,7 +52,7 @@ fun NotificationEmptyView(
         Text(
             text = title,
             style = BuyOrNotTheme.typography.titleT1Bold,
-            color = BuyOrNotTheme.colors.gray800
+            color = BuyOrNotTheme.colors.gray800,
         )
 
         // 서브 설명 문구
@@ -62,7 +60,7 @@ fun NotificationEmptyView(
             modifier = Modifier.padding(top = 6.dp),
             text = description,
             style = BuyOrNotTheme.typography.bodyB5Medium,
-            color = BuyOrNotTheme.colors.gray600
+            color = BuyOrNotTheme.colors.gray600,
         )
     }
 }
@@ -74,10 +72,14 @@ fun NotificationEmptyView(
 @Composable
 private fun NotificationEmptyWithGuidePreview() {
     BuyOrNotTheme {
-        Column(modifier = Modifier.fillMaxSize()
-            .background(
-                color = BuyOrNotTheme.colors.gray0
-            )) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        color = BuyOrNotTheme.colors.gray0,
+                    ),
+        ) {
             BackTopBarWithTitle(title = "알림", onBackClick = {})
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -86,14 +88,14 @@ private fun NotificationEmptyWithGuidePreview() {
                 text = "전체",
                 isSelected = true,
                 onClick = {},
-                modifier = Modifier.padding(horizontal = 20.dp)
+                modifier = Modifier.padding(horizontal = 20.dp),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             NotificationGuideBanner(
                 onActionClick = {},
-                modifier = Modifier.padding(horizontal = 20.dp)
+                modifier = Modifier.padding(horizontal = 20.dp),
             )
 
             Spacer(modifier = Modifier.height(120.dp))
@@ -110,9 +112,11 @@ private fun NotificationEmptyWithGuidePreview() {
 @Composable
 private fun NotificationEmptyWithoutGuidePreview() {
     BuyOrNotTheme {
-        Column(modifier = Modifier
-            .fillMaxSize()
-            .background(color = BuyOrNotTheme.colors.gray0)
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(color = BuyOrNotTheme.colors.gray0),
         ) {
             BackTopBarWithTitle(title = "알림", onBackClick = {})
 
@@ -122,7 +126,7 @@ private fun NotificationEmptyWithoutGuidePreview() {
                 text = "전체",
                 isSelected = true,
                 onClick = {},
-                modifier = Modifier.padding(horizontal = 20.dp)
+                modifier = Modifier.padding(horizontal = 20.dp),
             )
 
             Spacer(modifier = Modifier.height(140.dp))

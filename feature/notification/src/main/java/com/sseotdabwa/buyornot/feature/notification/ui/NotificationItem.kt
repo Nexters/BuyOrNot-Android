@@ -2,7 +2,15 @@ package com.sseotdabwa.buyornot.feature.notification.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,7 +41,7 @@ data class NotificationState(
     val label: String,
     val message: String,
     val time: String,
-    val isRead: Boolean
+    val isRead: Boolean,
 )
 
 /**
@@ -47,31 +55,34 @@ data class NotificationState(
 fun NotificationItem(
     state: NotificationState,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     // 읽음 상태에 따른 배경색 결정
     val backgroundColor = if (state.isRead) BuyOrNotTheme.colors.gray50 else BuyOrNotTheme.colors.gray0
 
-    Column (
-        modifier = modifier
-            .fillMaxWidth()
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth(),
     ) {
         Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .background(backgroundColor)
-                .clickable { onClick() }
-                .padding(horizontal = 20.dp, vertical = 20.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                modifier
+                    .fillMaxWidth()
+                    .background(backgroundColor)
+                    .clickable { onClick() }
+                    .padding(horizontal = 20.dp, vertical = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             // 좌측 이미지
             AsyncImage(
                 model = state.imageUrl,
                 contentDescription = null,
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                contentScale = ContentScale.Crop,
             )
 
             Spacer(modifier = Modifier.width(14.dp))
@@ -79,22 +90,22 @@ fun NotificationItem(
             // 우측 텍스트 영역
             Column(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Center,
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = state.label,
                         style = BuyOrNotTheme.typography.bodyB5Medium,
-                        color = BuyOrNotTheme.colors.gray600
+                        color = BuyOrNotTheme.colors.gray600,
                     )
                     Text(
                         text = state.time,
                         style = BuyOrNotTheme.typography.bodyB6Medium,
-                        color = BuyOrNotTheme.colors.gray600
+                        color = BuyOrNotTheme.colors.gray600,
                     )
                 }
 
@@ -103,18 +114,16 @@ fun NotificationItem(
                 Text(
                     text = state.message,
                     style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                    color = BuyOrNotTheme.colors.gray900
+                    color = BuyOrNotTheme.colors.gray900,
                 )
             }
         }
 
-        //아이템 분리 디바이더 (small)
+        // 아이템 분리 디바이더 (small)
         BuyOrNotDivider(
-            size = BuyOrNotDividerSize.Small
+            size = BuyOrNotDividerSize.Small,
         )
-
     }
-
 }
 
 @Preview(showBackground = true, name = "안 읽은 알림")
@@ -122,15 +131,16 @@ fun NotificationItem(
 private fun UnreadNotiPreview() {
     BuyOrNotTheme {
         NotificationItem(
-            state = NotificationState(
-                id = "1",
-                imageUrl = "https://picsum.photos/200",
-                label = "투표 종료",
-                message = "90% '애매하긴 해!'",
-                time = "3일 전",
-                isRead = false
-            ),
-            onClick = {}
+            state =
+                NotificationState(
+                    id = "1",
+                    imageUrl = "https://picsum.photos/200",
+                    label = "투표 종료",
+                    message = "90% '애매하긴 해!'",
+                    time = "3일 전",
+                    isRead = false,
+                ),
+            onClick = {},
         )
     }
 }
@@ -140,15 +150,16 @@ private fun UnreadNotiPreview() {
 private fun ReadNotiPreview() {
     BuyOrNotTheme {
         NotificationItem(
-            state = NotificationState(
-                id = "2",
-                imageUrl = "https://picsum.photos/200",
-                label = "투표 종료",
-                message = "56% '사! 가즈아!'",
-                time = "3일 전",
-                isRead = true
-            ),
-            onClick = {}
+            state =
+                NotificationState(
+                    id = "2",
+                    imageUrl = "https://picsum.photos/200",
+                    label = "투표 종료",
+                    message = "56% '사! 가즈아!'",
+                    time = "3일 전",
+                    isRead = true,
+                ),
+            onClick = {},
         )
     }
 }

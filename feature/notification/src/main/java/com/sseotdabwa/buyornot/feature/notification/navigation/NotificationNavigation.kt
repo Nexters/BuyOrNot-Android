@@ -20,25 +20,24 @@ fun NavGraphBuilder.notificationScreen(
     composable(route = NOTIFICATION_ROUTE) {
         NotificationScreen(
             onBackClick = onBackClick,
-            onNotificationClick = onNotificationClick
+            onNotificationClick = onNotificationClick,
         )
     }
 }
 
 // 알림 상세 화면
-fun NavGraphBuilder.notificationDetailScreen(
-    onBackClick: () -> Unit,
-) {
+fun NavGraphBuilder.notificationDetailScreen(onBackClick: () -> Unit) {
     composable(
         route = "$NOTIFICATION_DETAIL_ROUTE/{notificationId}",
-        arguments = listOf(
-            navArgument("notificationId") { type = NavType.StringType }
-        )
+        arguments =
+            listOf(
+                navArgument("notificationId") { type = NavType.StringType },
+            ),
     ) { backStackEntry ->
         val notificationId = backStackEntry.arguments?.getString("notificationId") ?: ""
         NotificationDetailScreen(
             notificationId = notificationId,
-            onBackClick = onBackClick
+            onBackClick = onBackClick,
         )
     }
 }

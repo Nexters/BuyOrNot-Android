@@ -13,7 +13,6 @@ import com.sseotdabwa.buyornot.core.ui.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.navigateToTerms
 import com.sseotdabwa.buyornot.core.ui.webViewScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
-import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateForceToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
@@ -79,10 +78,10 @@ fun BuyOrNotNavHost(
             onBackClick = { navController.popBackStack() },
             onNotificationClick = { id ->
                 navController.navigateToNotificationDetail(id) // 전환 발생!
-            }
+            },
         )
         notificationDetailScreen(
-            onBackClick = { navController.popBackStack() }
+            onBackClick = { navController.popBackStack() },
         )
         uploadScreen(
             onNavigateBack = navController::popBackStack,
