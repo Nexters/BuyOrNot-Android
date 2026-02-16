@@ -485,8 +485,12 @@ private fun HomeFeedList(
         }
 
         // 피드 아이템들 (실제 데이터 기반)
-        items(filteredFeeds.size) { index ->
+        items(
+            count = filteredFeeds.size,
+            key = { filteredFeeds[it].id }
+        ) { index ->
             val feed = filteredFeeds[index]
+
             FeedItemCard(
                 feed = feed,
                 onExpandClick = { url -> onIntent(HomeIntent.OnImageExpandClicked(url)) },
