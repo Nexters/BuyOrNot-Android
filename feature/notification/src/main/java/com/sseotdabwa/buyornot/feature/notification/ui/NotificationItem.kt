@@ -50,11 +50,11 @@ fun NotificationItem(
     modifier: Modifier = Modifier
 ) {
     // 읽음 상태에 따른 배경색 결정
-    val backgroundColor = if (state.isRead) BuyOrNotTheme.colors.gray100 else BuyOrNotTheme.colors.gray0
+    val backgroundColor = if (state.isRead) BuyOrNotTheme.colors.gray50 else BuyOrNotTheme.colors.gray0
 
     Column (
         modifier = modifier
-        .fillMaxWidth()
+            .fillMaxWidth()
     ) {
         Row(
             modifier = modifier
