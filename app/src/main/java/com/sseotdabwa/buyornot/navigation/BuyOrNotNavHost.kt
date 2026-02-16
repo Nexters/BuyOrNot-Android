@@ -21,6 +21,9 @@ import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
+import com.sseotdabwa.buyornot.feature.notification.navigation.NOTIFICATION_ROUTE
+import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotificationDetail
+import com.sseotdabwa.buyornot.feature.notification.navigation.notificationDetailScreen
 import com.sseotdabwa.buyornot.feature.notification.navigation.notificationScreen
 import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
 
@@ -48,7 +51,7 @@ fun BuyOrNotNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = SPLASH_ROUTE,
+        startDestination = NOTIFICATION_ROUTE,
         modifier = modifier,
     ) {
         splashScreen(
@@ -72,7 +75,15 @@ fun BuyOrNotNavHost(
         )
 
         homeScreen()
-        notificationScreen()
+        notificationScreen(
+            onBackClick = { navController.popBackStack() },
+            onNotificationClick = { id ->
+                navController.navigateToNotificationDetail(id) // 전환 발생!
+            }
+        )
+        notificationDetailScreen(
+            onBackClick = { navController.popBackStack() }
+        )
         uploadScreen(
             onNavigateBack = navController::popBackStack,
         )
