@@ -620,6 +620,7 @@ private fun FeedItemCard(
 
 /**
  * HomeUiState를 위한 Saver (화면 회전 시 상태 보존)
+ * TODO: ViewModel 전환 시 feeds 복원 로직 포함 필요
  */
 private fun homeUiStateSaver() =
     androidx.compose.runtime.saveable.Saver<HomeUiState, Map<String, Any>>(
