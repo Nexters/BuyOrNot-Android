@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,7 +33,8 @@ fun NotificationGuideBanner(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(BuyOrNotTheme.colors.gray50)
+            .background(BuyOrNotTheme.colors.gray0)
+            .border(color = BuyOrNotTheme.colors.gray200, width = 1.dp, shape = RoundedCornerShape(16.dp))
             .padding(horizontal = 18.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
