@@ -283,7 +283,7 @@ private fun HomeScreenContent(
     var topBarOffsetHeightPx by remember { mutableStateOf(0f) }
 
     val nestedScrollConnection =
-        remember {
+        remember(topBarHeightPx) {
             object : NestedScrollConnection {
                 override fun onPreScroll(
                     available: Offset,
@@ -487,7 +487,7 @@ private fun HomeFeedList(
         // 피드 아이템들 (실제 데이터 기반)
         items(
             count = filteredFeeds.size,
-            key = { filteredFeeds[it].id }
+            key = { filteredFeeds[it].id },
         ) { index ->
             val feed = filteredFeeds[index]
 
@@ -545,7 +545,7 @@ private fun HomeBannerSection(
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -577,11 +577,11 @@ private fun FeedItemCard(
     onDelete: (String) -> Unit,
     onReport: (String) -> Unit,
 ) {
-    var userVotedOption by remember(feed.id) { mutableStateOf(feed.userVotedOptionIndex) }
+    var userVotedOption by remember(feed.id, feed.userVotedOptionIndex) { mutableStateOf(feed.userVotedOptionIndex) }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -620,7 +620,7 @@ private fun FeedItemCard(
 
 /**
  * HomeUiState를 위한 Saver (화면 회전 시 상태 보존)
- * TODO: ViewModel 전환 시 feeds 복원 로직 포함 필요
+ * To-Do: ViewModel 전환 시 feeds 복원 로직 포함 필요
  */
 private fun homeUiStateSaver() =
     androidx.compose.runtime.saveable.Saver<HomeUiState, Map<String, Any>>(
