@@ -36,6 +36,7 @@ include(":feature:auth")
 include(":feature:home")
 include(":feature:upload")
 include(":feature:mypage")
+include(":feature:notification")
 
 includeBuild("build-logic")
 

@@ -84,6 +84,7 @@ dependencies {
     implementation(projects.feature.home)
     implementation(projects.feature.upload)
     implementation(projects.feature.mypage)
+    implementation(projects.feature.notification)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
