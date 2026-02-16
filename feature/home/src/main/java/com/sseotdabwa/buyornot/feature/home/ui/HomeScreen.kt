@@ -682,7 +682,7 @@ private fun FullScreenImageOverlay(
     }
 }
 
-@Preview(name = "HomeScreen Preview", showBackground = true)
+@Preview(name = "HomeScreen Preview", showBackground = false)
 @Composable
 private fun HomeScreenPreview() {
     BuyOrNotTheme {
