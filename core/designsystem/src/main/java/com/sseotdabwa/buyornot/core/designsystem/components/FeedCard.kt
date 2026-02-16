@@ -216,8 +216,8 @@ fun FeedCard(
                                         Brush.verticalGradient(
                                             colors =
                                                 listOf(
-                                                    Color.Transparent, // 시작점 (위): 투명
-                                                    Color(0xFF191919).copy(alpha = 0.3f), // 끝점 (아래): 흰색
+                                                    Color.Transparent,
+                                                    Color(0xFF191919).copy(alpha = 0.3f),
                                                 ),
                                             endY = size.height,
                                             startY = size.height * 0.64f,
