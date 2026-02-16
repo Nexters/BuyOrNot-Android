@@ -58,7 +58,7 @@ private fun SplashScreen() {
                 .background(BuyOrNotTheme.colors.gray0),
         contentAlignment = Alignment.Center,
     ) {
-        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(BuyOrNotLotties.SplashLoading))
+        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(BuyOrNotLotties.SplashLoading.resId))
 
         if (composition != null) {
             Column(
