@@ -55,15 +55,18 @@ class WithdrawalViewModel @Inject constructor(
                 sendSideEffect(WithdrawalSideEffect.ShowSnackbar("사용자 정보를 가져올 수 없습니다."))
                 return
             }
+
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
 
             withContext(Dispatchers.IO) {
+                // 1. 서버에 회원 탈퇴 요청
                 runCatchingCancellable {
-                    // 1. 서버에 회원 탈퇴 요청
                     userRepository.deleteMyAccount()
+                }
 
-                    // 2. ViewModel에서 소셜 SDK 연결 해제
+                // 2. ViewModel에서 소셜 SDK 연결 해제
+                runCatchingCancellable {
                     if (socialAccount == "KAKAO") {
                         suspendCancellableCoroutine { continuation ->
                             UserApiClient.instance.unlink { error ->
@@ -75,7 +78,6 @@ class WithdrawalViewModel @Inject constructor(
                             }
                         }
                     } else {
-                        // clearCredentialState는 이미 suspend 함수이므로 직접 호출
                         val credentialManager = CredentialManager.create(context)
                         credentialManager.clearCredentialState(ClearCredentialStateRequest())
                     }
