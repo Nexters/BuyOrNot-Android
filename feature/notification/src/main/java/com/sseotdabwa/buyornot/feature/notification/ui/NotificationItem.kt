@@ -67,7 +67,7 @@ fun NotificationItem(
     ) {
         Row(
             modifier =
-                modifier
+                Modifier
                     .fillMaxWidth()
                     .background(backgroundColor)
                     .clickable { onClick() }
