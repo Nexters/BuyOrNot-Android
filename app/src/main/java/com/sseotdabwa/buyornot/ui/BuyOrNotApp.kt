@@ -5,13 +5,17 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
+import com.sseotdabwa.buyornot.core.ui.LocalSnackbarState
+import com.sseotdabwa.buyornot.core.ui.rememberBuyOrNotSnackbarState
 import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.home.navigation.HOME_ROUTE
@@ -32,20 +36,24 @@ import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
 @Composable
 fun BuyOrNotApp(authEventBus: AuthEventBus) {
     val navController = rememberNavController()
+    val snackbarState = rememberBuyOrNotSnackbarState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    Scaffold(
-        containerColor = BuyOrNotTheme.colors.gray0,
-    ) { innerPadding ->
-        BuyOrNotNavHost(
-            navController = navController,
-            authEventBus = authEventBus,
-            modifier =
-                Modifier
-                    .consumeWindowInsets(innerPadding)
-                    .bottomBarPadding(currentDestination, innerPadding),
-        )
+    CompositionLocalProvider(LocalSnackbarState provides snackbarState) {
+        Scaffold(
+            containerColor = BuyOrNotTheme.colors.gray0,
+            snackbarHost = { BuyOrNotSnackBarHost(snackbarState.snackbarHostState) },
+        ) { innerPadding ->
+            BuyOrNotNavHost(
+                navController = navController,
+                authEventBus = authEventBus,
+                modifier =
+                    Modifier
+                        .consumeWindowInsets(innerPadding)
+                        .bottomBarPadding(currentDestination, innerPadding),
+            )
+        }
     }
 }
 
