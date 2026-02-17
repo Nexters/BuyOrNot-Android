@@ -23,11 +23,11 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 /**
- * 에러 발생 시 표시되는 공통 에러 뷰 컴포넌트
+ * 알림이 없을 때 표시되는 빈 상태 뷰 컴포넌트
  *
- * @param modifier Modifier
- * @param message 표시할 에러 메시지
- * @param onRefreshClick 새로고침 버튼 클릭 콜백
+ * @param modifier 컴포넌트에 적용할 Modifier
+ * @param title 메인 타이틀
+ * @param description 서브 설명 문구
  */
 @Composable
 fun NotificationEmptyView(
