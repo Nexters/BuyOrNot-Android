@@ -21,7 +21,6 @@ import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
-import com.sseotdabwa.buyornot.feature.notification.navigation.NOTIFICATION_ROUTE
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotificationDetail
 import com.sseotdabwa.buyornot.feature.notification.navigation.notificationGraph
 import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen

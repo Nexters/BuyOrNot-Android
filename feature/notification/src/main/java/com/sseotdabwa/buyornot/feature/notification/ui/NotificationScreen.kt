@@ -21,12 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
-import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotColorScheme
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 /**
@@ -66,16 +64,17 @@ fun NotificationScreen(
         }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BuyOrNotTheme.colors.gray0),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(BuyOrNotTheme.colors.gray0),
     ) {
         BackTopBarWithTitle(
             title = "알림",
             onBackClick = onBackClick,
         )
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // 1. 필터 칩 영역 (상단 여백 20px)
