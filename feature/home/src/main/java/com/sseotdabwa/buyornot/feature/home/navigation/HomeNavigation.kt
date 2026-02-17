@@ -4,12 +4,13 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import com.sseotdabwa.buyornot.feature.home.ui.HomeScreen
 
 const val HOME_ROUTE = "home"
 
 fun NavGraphBuilder.homeScreen() {
     composable(route = HOME_ROUTE) {
-        // HomeRoute()
+        HomeScreen()
     }
 }
 

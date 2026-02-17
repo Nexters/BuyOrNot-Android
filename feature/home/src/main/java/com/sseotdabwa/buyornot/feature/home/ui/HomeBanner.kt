@@ -114,10 +114,6 @@ fun HomeBanner(
                     .fillMaxWidth()
                     .align(Alignment.TopCenter),
         )
-
-        HomeBannerDivider(
-            modifier = Modifier.fillMaxWidth(),
-        )
     }
 }
 
@@ -220,21 +216,6 @@ private fun HomeBannerActionButton(
             color = BuyOrNotTheme.colors.gray0,
         )
     }
-}
-
-/**
- * 홈 배너 하단의 구분선
- *
- * @param modifier 컴포넌트에 적용할 Modifier
- */
-@Composable
-private fun HomeBannerDivider(modifier: Modifier = Modifier) {
-    Box(
-        modifier =
-            modifier
-                .height(HomeBannerDefaults.DividerHeight)
-                .background(BuyOrNotTheme.colors.gray300),
-    )
 }
 
 @Preview(name = "HomeBanner - Pixel 5", device = "id:pixel_5", showBackground = true)

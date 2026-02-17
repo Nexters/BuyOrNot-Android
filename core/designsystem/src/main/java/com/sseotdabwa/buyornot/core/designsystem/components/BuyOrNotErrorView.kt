@@ -49,7 +49,7 @@ fun BuyOrNotErrorView(
             text = message,
             style = BuyOrNotTheme.typography.titleT1Bold,
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         // 새로고침 버튼
         NeutralButton(
             text = "새로고침",
