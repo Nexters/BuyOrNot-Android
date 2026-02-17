@@ -21,6 +21,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.common)
     implementation(projects.domain)
     implementation(projects.core.designsystem)
     implementation(projects.core.ui)
@@ -28,4 +29,5 @@ dependencies {
     implementation(libs.androidx.credentials.playservices)
     implementation(libs.kakao.user)
     implementation(libs.googleid)
+    implementation(libs.lottie.compose)
 }

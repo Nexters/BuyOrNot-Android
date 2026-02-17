@@ -33,12 +33,15 @@ core = "1.17.0"
 # Image Loading
 coil = "2.7.0"
 
-# Code Quality
-ktlint = "14.0.1"
 navigationCompose = "2.8.2"
 kakaoSdk = "2.23.2"
 androidxCredentials = "1.6.0-rc01"
 googleid = "1.2.0"
+
+lottie = "6.7.1"
+
+# Code Quality
+ktlint = "14.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -109,6 +112,8 @@ androidx-compose-foundation = { group = "androidx.compose.foundation", name = "f
 androidx-compose-ui-unit = { group = "androidx.compose.ui", name = "ui-unit" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
+
+lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

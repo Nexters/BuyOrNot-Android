@@ -1,10 +1,12 @@
 package com.sseotdabwa.buyornot.core.network.authenticator
 
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.datastore.UserPreferencesDataSource
 import com.sseotdabwa.buyornot.core.network.AuthEvent
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.core.network.api.AuthApiService
 import com.sseotdabwa.buyornot.core.network.dto.request.RefreshRequest
+import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -74,14 +76,9 @@ class TokenAuthenticator @Inject constructor(
                     return@runBlocking null
                 }
 
-                // 토큰 재발급 API 호출
-                val newTokensResult =
-                    runCatching {
-                        authApiService.refreshToken(RefreshRequest(refreshToken))
-                    }
-
-                if (newTokensResult.isSuccess) {
-                    val newTokens = newTokensResult.getOrThrow().data
+                // 토큰 재발급 API 호출 및 처리
+                runCatchingCancellable {
+                    val newTokens = authApiService.refreshToken(RefreshRequest(refreshToken)).getOrThrow()
                     userPreferencesDataSource.updateTokens(
                         accessToken = newTokens.accessToken,
                         refreshToken = newTokens.refreshToken,
@@ -91,7 +88,7 @@ class TokenAuthenticator @Inject constructor(
                         .newBuilder()
                         .header("Authorization", "Bearer ${newTokens.accessToken}")
                         .build()
-                } else {
+                }.getOrElse {
                     userPreferencesDataSource.clearTokens()
                     authEventBus.emit(AuthEvent.FORCE_LOGOUT)
                     null

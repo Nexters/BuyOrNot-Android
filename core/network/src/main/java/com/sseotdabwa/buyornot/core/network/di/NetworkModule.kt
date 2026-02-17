@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.core.network.di
 import com.sseotdabwa.buyornot.core.datastore.UserPreferencesDataSource
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.core.network.api.AuthApiService
+import com.sseotdabwa.buyornot.core.network.api.UserApiService
 import com.sseotdabwa.buyornot.core.network.authenticator.TokenAuthenticator
 import com.sseotdabwa.buyornot.core.network.interceptor.AuthInterceptor
 import dagger.Module
@@ -76,6 +77,20 @@ object NetworkModule {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(AuthApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideUserApiService(
+        @Named("AuthClient") okHttpClient: OkHttpClient,
+        json: Json,
+    ): UserApiService =
+        Retrofit
+            .Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(UserApiService::class.java)
 
     @Provides
     @Singleton
