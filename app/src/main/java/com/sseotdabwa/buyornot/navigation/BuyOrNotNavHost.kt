@@ -5,22 +5,20 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.navOptions
 import com.sseotdabwa.buyornot.BuildConfig
 import com.sseotdabwa.buyornot.core.network.AuthEvent
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.core.ui.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.navigateToTerms
 import com.sseotdabwa.buyornot.core.ui.webViewScreen
-import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateForceToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
-import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
+import com.sseotdabwa.buyornot.feature.mypage.navigation.navigateToMyPage
 import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
 
 /**
@@ -56,15 +54,7 @@ fun BuyOrNotNavHost(
 
         authScreen(
             onLoginSuccess = {
-                navController.navigateToHome(
-                    navOptions =
-                        navOptions {
-                            popUpTo(AUTH_ROUTE) {
-                                inclusive = true
-                            }
-                            launchSingleTop = true
-                        },
-                )
+                navController.navigateToMyPage()
             },
             onTermsClick = navController::navigateToTerms,
             onPrivacyClick = navController::navigateToPrivacyPolicy,
@@ -77,6 +67,7 @@ fun BuyOrNotNavHost(
         myPageGraph(
             navController = navController,
             versionName = BuildConfig.VERSION_NAME,
+            onNavigateToLogin = navController::navigateForceToLogin,
         )
         webViewScreen(
             onBackClick = navController::popBackStack,

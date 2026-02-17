@@ -13,18 +13,34 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.feature.mypage.components.SettingItem
+import com.sseotdabwa.buyornot.feature.mypage.viewmodel.MyPageSideEffect
+import com.sseotdabwa.buyornot.feature.mypage.viewmodel.MyPageUiState
+import com.sseotdabwa.buyornot.feature.mypage.viewmodel.MyPageViewModel
 
 @Composable
 fun MyPageRoute(
@@ -32,22 +48,55 @@ fun MyPageRoute(
     onBackClick: () -> Unit,
     onAccountSettingClick: () -> Unit,
     onPolicyClick: () -> Unit,
+    onFeedbackClick: () -> Unit,
+    viewModel: MyPageViewModel = hiltViewModel(),
 ) {
-    MyPageScreen(
-        versionName = versionName,
-        onBackClick = onBackClick,
-        onAccountSettingClick = onAccountSettingClick,
-        onPolicyClick = onPolicyClick,
-    )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { sideEffect ->
+            when (sideEffect) {
+                is MyPageSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(sideEffect.message)
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        containerColor = BuyOrNotTheme.colors.gray0,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+    ) { padding ->
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+        MyPageScreen(
+            modifier = Modifier.padding(padding),
+            versionName = versionName,
+            onBackClick = onBackClick,
+            onAccountSettingClick = onAccountSettingClick,
+            onPolicyClick = onPolicyClick,
+            onFeedbackClick = onFeedbackClick,
+            uiState = uiState,
+        )
+    }
 }
 
 @Composable
 fun MyPageScreen(
     modifier: Modifier = Modifier,
     versionName: String,
+    uiState: MyPageUiState,
     onBackClick: () -> Unit = {},
     onAccountSettingClick: () -> Unit = {},
     onPolicyClick: () -> Unit = {},
+    onFeedbackClick: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         BackTopBar(onBackClick = onBackClick)
@@ -66,7 +115,7 @@ fun MyPageScreen(
                         .padding(top = 10.dp, bottom = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
+                AsyncImage(
                     modifier =
                         Modifier
                             .background(
@@ -74,12 +123,20 @@ fun MyPageScreen(
                                 shape = CircleShape,
                             ).size(42.dp)
                             .clip(CircleShape),
+                    model =
+                        ImageRequest
+                            .Builder(LocalContext.current)
+                            .data(uiState.userProfile?.profileImage)
+                            .crossfade(true)
+                            .build(),
+                    contentDescription = "UserProfileImage",
+                    contentScale = ContentScale.Crop,
                 )
 
                 Spacer(modifier = Modifier.width(10.dp))
 
                 Text(
-                    text = "참새방앗간12456",
+                    text = uiState.userProfile?.nickname ?: "...",
                     style = BuyOrNotTheme.typography.subTitleS1SemiBold,
                     color = BuyOrNotTheme.colors.gray900,
                 )
@@ -97,7 +154,7 @@ fun MyPageScreen(
             ) {
                 SettingItem(title = "계정 설정") { onAccountSettingClick() }
                 SettingItem(title = "약관 및 정책") { onPolicyClick() }
-                SettingItem(title = "의견 남기기") { /* TODO : 구글 폼 열기 */ }
+                SettingItem(title = "의견 남기기") { onFeedbackClick() }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -138,6 +195,18 @@ fun MyPageScreenPreview() {
                 onBackClick = {},
                 onAccountSettingClick = {},
                 onPolicyClick = {},
+                onFeedbackClick = {},
+                uiState =
+                    MyPageUiState(
+                        userProfile =
+                            UserProfile(
+                                id = 0,
+                                nickname = "서따봐",
+                                profileImage = "",
+                                socialAccount = "KAKAO",
+                                email = "buyornot@gmail.com",
+                            ),
+                    ),
             )
         }
     }

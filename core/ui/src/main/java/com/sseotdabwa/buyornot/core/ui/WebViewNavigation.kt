@@ -12,6 +12,7 @@ private const val WEBVIEW_ROUTE = "webview"
 
 internal const val TERMS_URL = "https://littlemoom.notion.site/buy-or-not-service-term?pvs=143"
 internal const val PRIVACY_URL = "https://littlemoom.notion.site/buy-or-not-privacy-term?pvs=143"
+internal const val FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLScG0GStvzog1HVZjAP9OpHl85azcez2OdAr7YwrI7rvCqInsg/viewform"
 
 private fun NavController.navigateToWebView(
     title: String,
@@ -27,6 +28,10 @@ fun NavController.navigateToTerms() {
 
 fun NavController.navigateToPrivacyPolicy() {
     navigateToWebView("개인정보처리방침", PRIVACY_URL)
+}
+
+fun NavController.navigateToFeedBack() {
+    navigateToWebView("의견 남기기", FEEDBACK_URL)
 }
 
 fun NavGraphBuilder.webViewScreen(onBackClick: () -> Unit) {
