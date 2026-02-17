@@ -61,14 +61,10 @@ fun WithdrawalRoute(
         }
     }
 
-    if (uiState.isLoading) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
-        }
-    } else {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
         WithdrawalScreen(
             onBackClick = onBackClick,
             onWithdrawalClick = {
@@ -76,6 +72,9 @@ fun WithdrawalRoute(
             },
             uiState = uiState,
         )
+        if (uiState.isLoading) {
+            CircularProgressIndicator()
+        }
     }
 }
 
