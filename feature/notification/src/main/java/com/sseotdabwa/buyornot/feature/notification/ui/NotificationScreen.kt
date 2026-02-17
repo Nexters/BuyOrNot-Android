@@ -1,7 +1,9 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,12 +21,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
-import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
-import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
+import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotColorScheme
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 /**
@@ -64,20 +65,17 @@ fun NotificationScreen(
             )
         }
 
-    Scaffold(
-        topBar = {
-            BackTopBarWithTitle(
-                title = "알림",
-                onBackClick = onBackClick,
-            )
-        },
-        containerColor = BuyOrNotTheme.colors.gray0,
-    ) { innerPadding ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BuyOrNotTheme.colors.gray0),
+    ) {
+        BackTopBarWithTitle(
+            title = "알림",
+            onBackClick = onBackClick,
+        )
         LazyColumn(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             // 1. 필터 칩 영역 (상단 여백 20px)

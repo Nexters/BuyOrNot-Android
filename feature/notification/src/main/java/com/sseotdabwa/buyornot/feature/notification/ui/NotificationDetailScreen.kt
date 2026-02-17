@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -23,17 +23,16 @@ fun NotificationDetailScreen(
 ) {
     // TODO: ViewModel을 통해 notificationId에 해당하는 투표 상세 데이터를 불러와야 함
 
-    Scaffold(
-        topBar = {
-            BackTopBar(onBackClick = onBackClick)
-        },
-        containerColor = BuyOrNotTheme.colors.gray0,
-    ) { innerPadding ->
+    Column(
+        modifier = Modifier.fillMaxSize()
+            .background(BuyOrNotTheme.colors.gray0),
+    ) {
+        BackTopBar(onBackClick = onBackClick)
+
         Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
                     .padding(4.dp)
                     .verticalScroll(rememberScrollState()),
         ) {
