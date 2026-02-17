@@ -1,7 +1,7 @@
 package com.sseotdabwa.buyornot.core.data.repository
 
 import com.sseotdabwa.buyornot.core.network.api.UserApiService
-import com.sseotdabwa.buyornot.core.network.dto.response.ProfileResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.User
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import javax.inject.Inject
@@ -24,7 +24,7 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun ProfileResponse.toDomain(): UserProfile =
+    private fun User.toDomain(): UserProfile =
         UserProfile(
             id = id,
             nickname = nickname,
