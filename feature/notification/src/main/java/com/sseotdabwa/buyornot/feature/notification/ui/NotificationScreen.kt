@@ -104,8 +104,6 @@ fun NotificationScreen(
                     state = notification,
                     onClick = { onNotificationClick(notification.id) },
                 )
-                // 아이템 간 구분선 (Gray 100 배경과 맞물림)
-                BuyOrNotDivider(size = BuyOrNotDividerSize.Small)
             }
 
             // 4. 리스트 푸터 (30일 전 알림 문구)
