@@ -12,10 +12,9 @@ import com.sseotdabwa.buyornot.feature.notification.ui.NotificationScreen
 const val NOTIFICATION_ROUTE = "notification"
 const val NOTIFICATION_DETAIL_ROUTE = "notification_detail"
 
-// 알림 목록 화면
-fun NavGraphBuilder.notificationScreen(
+fun NavGraphBuilder.notificationGraph(
     onBackClick: () -> Unit,
-    onNotificationClick: (String) -> Unit, // 2. 클릭 액션 추가
+    onNotificationClick: (String) -> Unit,
 ) {
     composable(route = NOTIFICATION_ROUTE) {
         NotificationScreen(
@@ -23,10 +22,7 @@ fun NavGraphBuilder.notificationScreen(
             onNotificationClick = onNotificationClick,
         )
     }
-}
 
-// 알림 상세 화면
-fun NavGraphBuilder.notificationDetailScreen(onBackClick: () -> Unit) {
     composable(
         route = "$NOTIFICATION_DETAIL_ROUTE/{notificationId}",
         arguments =
