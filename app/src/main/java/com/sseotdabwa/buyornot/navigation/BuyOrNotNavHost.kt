@@ -13,6 +13,7 @@ import com.sseotdabwa.buyornot.core.ui.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.navigateToTerms
 import com.sseotdabwa.buyornot.core.ui.webViewScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
+import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateForceToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
@@ -50,7 +51,7 @@ fun BuyOrNotNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = NOTIFICATION_ROUTE,
+        startDestination = SPLASH_ROUTE,
         modifier = modifier,
     ) {
         splashScreen(
