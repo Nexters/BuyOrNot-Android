@@ -2,8 +2,10 @@ package com.sseotdabwa.buyornot.feature.mypage.navigation
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.sseotdabwa.buyornot.core.ui.navigateToFeedBack
 import com.sseotdabwa.buyornot.core.ui.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.navigateToTerms
 import com.sseotdabwa.buyornot.feature.mypage.ui.AccountSettingRoute
@@ -25,6 +27,10 @@ sealed class MyPageScreens(
     object Withdrawal : MyPageScreens("withdrawal")
 }
 
+fun NavController.navigateToMyPage() {
+    this.navigate(MyPageScreens.Graph.route)
+}
+
 fun NavController.navigateToAccountSetting() {
     this.navigate(MyPageScreens.AccountSetting.route)
 }
@@ -38,8 +44,9 @@ fun NavController.navigateToWithdrawal() {
 }
 
 fun NavGraphBuilder.myPageGraph(
-    navController: NavController,
+    navController: NavHostController,
     versionName: String,
+    onNavigateToLogin: () -> Unit,
 ) {
     navigation(
         startDestination = MyPageScreens.Main.route,
@@ -51,13 +58,15 @@ fun NavGraphBuilder.myPageGraph(
                 onBackClick = navController::popBackStack,
                 onAccountSettingClick = navController::navigateToAccountSetting,
                 onPolicyClick = navController::navigateToPolicy,
+                onFeedbackClick = navController::navigateToFeedBack,
             )
         }
 
         composable(MyPageScreens.AccountSetting.route) {
             AccountSettingRoute(
                 onBackClick = navController::popBackStack,
-                onWithdrawalClick = navController::navigateToWithdrawal,
+                onNavigateToLogin = onNavigateToLogin,
+                onNavigateToWithdrawal = navController::navigateToWithdrawal,
             )
         }
 
@@ -72,6 +81,7 @@ fun NavGraphBuilder.myPageGraph(
         composable(MyPageScreens.Withdrawal.route) {
             WithdrawalRoute(
                 onBackClick = navController::popBackStack,
+                onNavigateToLogin = onNavigateToLogin,
             )
         }
     }

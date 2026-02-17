@@ -13,6 +13,7 @@ import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.common.model.ClientError
 import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.feature.auth.R
@@ -85,13 +86,13 @@ class LoginViewModel @Inject constructor(
 
     private fun processGoogleLogin(idToken: String) {
         viewModelScope.launch {
-            authRepository
-                .googleLogin(idToken)
-                .onSuccess {
-                    sendSideEffect(LoginSideEffect.NavigateToHome)
-                }.onFailure {
-                    sendSideEffect(LoginSideEffect.ShowSnackbar(it.message ?: "구글 로그인에 실패했습니다."))
-                }
+            runCatchingCancellable {
+                authRepository.googleLogin(idToken)
+            }.onSuccess {
+                sendSideEffect(LoginSideEffect.NavigateToHome)
+            }.onFailure {
+                sendSideEffect(LoginSideEffect.ShowSnackbar(it.message ?: "구글 로그인에 실패했습니다."))
+            }
             updateState { it.copy(isLoading = false) }
         }
     }
@@ -140,13 +141,13 @@ class LoginViewModel @Inject constructor(
 
     private fun processKakaoLogin(accessToken: String) {
         viewModelScope.launch {
-            authRepository
-                .kakaoLogin(accessToken)
-                .onSuccess {
-                    sendSideEffect(LoginSideEffect.NavigateToHome)
-                }.onFailure {
-                    sendSideEffect(LoginSideEffect.ShowSnackbar(it.message ?: "카카오 로그인에 실패했습니다."))
-                }
+            runCatchingCancellable {
+                authRepository.kakaoLogin(accessToken)
+            }.onSuccess {
+                sendSideEffect(LoginSideEffect.NavigateToHome)
+            }.onFailure {
+                sendSideEffect(LoginSideEffect.ShowSnackbar(it.message ?: "카카오 로그인에 실패했습니다."))
+            }
             updateState { it.copy(isLoading = false) }
         }
     }
