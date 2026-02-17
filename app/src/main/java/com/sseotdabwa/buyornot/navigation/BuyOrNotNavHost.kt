@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import com.sseotdabwa.buyornot.BuildConfig
 import com.sseotdabwa.buyornot.core.network.AuthEvent
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToTerms
 import com.sseotdabwa.buyornot.core.ui.webview.webViewScreen
@@ -34,11 +35,16 @@ fun BuyOrNotNavHost(
     authEventBus: AuthEventBus,
     modifier: Modifier = Modifier,
 ) {
+    val snackbarState = LocalSnackbarState.current
+
     // 강제 로그아웃 이벤트 처리
     LaunchedEffect(authEventBus) {
         authEventBus.events.collect { event ->
             if (event == AuthEvent.FORCE_LOGOUT) {
                 navController.navigateForceToLogin()
+                snackbarState.show(
+                    message = "원활한 서비스 이용을 위해 로그인이 필요합니다.",
+                )
             }
         }
     }
