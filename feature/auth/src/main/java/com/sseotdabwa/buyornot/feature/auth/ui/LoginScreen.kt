@@ -43,7 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
-import com.sseotdabwa.buyornot.core.ui.LocalSnackbarState
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 
 @Composable
 fun AuthRoute(

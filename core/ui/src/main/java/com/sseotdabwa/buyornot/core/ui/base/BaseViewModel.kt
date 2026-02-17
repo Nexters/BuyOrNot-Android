@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.core.ui
+package com.sseotdabwa.buyornot.core.ui.base
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -92,7 +92,7 @@ abstract class BaseViewModel<S, I, E>(
     private val _uiState = MutableStateFlow(initialState)
     val uiState: StateFlow<S> = _uiState.asStateFlow()
 
-    private val _sideEffect = Channel<E>(Channel.BUFFERED)
+    private val _sideEffect = Channel<E>(Channel.Factory.BUFFERED)
     val sideEffect = _sideEffect.receiveAsFlow()
 
     abstract fun handleIntent(intent: I)

@@ -5,9 +5,9 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.sseotdabwa.buyornot.core.ui.navigateToFeedBack
-import com.sseotdabwa.buyornot.core.ui.navigateToPrivacyPolicy
-import com.sseotdabwa.buyornot.core.ui.navigateToTerms
+import com.sseotdabwa.buyornot.core.ui.webview.navigateToFeedBack
+import com.sseotdabwa.buyornot.core.ui.webview.navigateToPrivacyPolicy
+import com.sseotdabwa.buyornot.core.ui.webview.navigateToTerms
 import com.sseotdabwa.buyornot.feature.mypage.ui.AccountSettingRoute
 import com.sseotdabwa.buyornot.feature.mypage.ui.MyPageRoute
 import com.sseotdabwa.buyornot.feature.mypage.ui.PolicyRoute

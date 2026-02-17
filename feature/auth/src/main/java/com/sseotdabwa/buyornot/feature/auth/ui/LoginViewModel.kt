@@ -14,7 +14,7 @@ import com.kakao.sdk.common.model.ClientError
 import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
-import com.sseotdabwa.buyornot.core.ui.BaseViewModel
+import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.feature.auth.R
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -14,8 +14,8 @@ import androidx.navigation.compose.rememberNavController
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
-import com.sseotdabwa.buyornot.core.ui.LocalSnackbarState
-import com.sseotdabwa.buyornot.core.ui.rememberBuyOrNotSnackbarState
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
+import com.sseotdabwa.buyornot.core.ui.snackbar.rememberBuyOrNotSnackbarState
 import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.home.navigation.HOME_ROUTE

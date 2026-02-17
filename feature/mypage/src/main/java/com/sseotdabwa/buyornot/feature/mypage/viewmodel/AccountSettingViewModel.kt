@@ -6,7 +6,7 @@ import androidx.credentials.CredentialManager
 import androidx.lifecycle.viewModelScope
 import com.kakao.sdk.user.UserApiClient
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
-import com.sseotdabwa.buyornot.core.ui.BaseViewModel
+import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

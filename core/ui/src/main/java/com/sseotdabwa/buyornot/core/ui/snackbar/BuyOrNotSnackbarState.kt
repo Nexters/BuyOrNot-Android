@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.core.ui
+package com.sseotdabwa.buyornot.core.ui.snackbar
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable

@@ -2,7 +2,7 @@ package com.sseotdabwa.buyornot.feature.mypage.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
-import com.sseotdabwa.buyornot.core.ui.BaseViewModel
+import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch

@@ -30,7 +30,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotConfirmDialo
 import com.sseotdabwa.buyornot.core.designsystem.components.PrimaryButton
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
-import com.sseotdabwa.buyornot.core.ui.LocalSnackbarState
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.WithdrawalIntent
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.WithdrawalSideEffect
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.WithdrawalUiState

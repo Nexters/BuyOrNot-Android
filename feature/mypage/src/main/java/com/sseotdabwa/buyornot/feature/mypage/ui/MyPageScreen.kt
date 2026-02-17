@@ -33,7 +33,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
-import com.sseotdabwa.buyornot.core.ui.LocalSnackbarState
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.feature.mypage.components.SettingItem
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.MyPageSideEffect
