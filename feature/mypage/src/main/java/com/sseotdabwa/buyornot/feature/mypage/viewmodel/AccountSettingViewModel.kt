@@ -61,7 +61,12 @@ class AccountSettingViewModel @Inject constructor(
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
 
-            // 1. 소셜 로그아웃 시도 (백그라운드에서, 실패해도 괜찮음)
+            // 1. 서버 로그아웃
+            runCatchingCancellable {
+                authRepository.logout()
+            }
+
+            // 2. 소셜 로그아웃 시도 (백그라운드에서, 실패해도 괜찮음)
             withContext(Dispatchers.IO) {
                 runCatchingCancellable {
                     if (socialAccount == "KAKAO") {
@@ -84,14 +89,14 @@ class AccountSettingViewModel @Inject constructor(
                 // 소셜 로그아웃 실패 여부와 관계없이 로컬 로그아웃은 진행되어야 함.
             }
 
-            // 2. (가장 중요) 어떤 경우든 로컬 토큰은 반드시 삭제
+            // 3. (가장 중요) 어떤 경우든 로컬 토큰은 반드시 삭제
             withContext(NonCancellable) {
                 runCatchingCancellable {
                     authRepository.clearTokens()
                 }
             }
 
-            // 3. 로그인 화면으로 이동
+            // 4. 로그인 화면으로 이동
             sendSideEffect(AccountSettingSideEffect.NavigateToLogin)
         }
     }

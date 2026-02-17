@@ -5,5 +5,7 @@ interface AuthRepository {
 
     suspend fun kakaoLogin(accessToken: String): Result<Unit>
 
+    suspend fun logout(): Result<Unit>
+
     suspend fun clearTokens()
 }

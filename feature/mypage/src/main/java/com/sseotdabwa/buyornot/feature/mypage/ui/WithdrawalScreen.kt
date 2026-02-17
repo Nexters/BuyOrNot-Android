@@ -60,6 +60,7 @@ fun WithdrawalRoute(
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = BuyOrNotTheme.colors.gray0,
     ) { padding ->
         if (uiState.isLoading) {
             Box(
