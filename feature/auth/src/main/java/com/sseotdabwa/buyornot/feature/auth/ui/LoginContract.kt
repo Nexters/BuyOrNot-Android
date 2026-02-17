@@ -1,6 +1,8 @@
 package com.sseotdabwa.buyornot.feature.auth.ui
 
 import android.content.Context
+import com.sseotdabwa.buyornot.core.designsystem.components.SnackBarIconTint
+import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 
 data class LoginUiState(
     val isLoading: Boolean = false,
@@ -23,5 +25,7 @@ sealed interface LoginSideEffect {
 
     data class ShowSnackbar(
         val message: String,
+        val icon: IconResource? = null,
+        val iconTint: SnackBarIconTint = SnackBarIconTint.Success,
     ) : LoginSideEffect
 }

@@ -18,15 +18,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,11 +43,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
-import kotlinx.coroutines.launch
+import com.sseotdabwa.buyornot.core.ui.LocalSnackbarState
 
-/**
- * Auth 화면의 네비게이션 진입점
- */
 @Composable
 fun AuthRoute(
     onLoginSuccess: () -> Unit,
@@ -61,8 +53,7 @@ fun AuthRoute(
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
+    val snackbarState = LocalSnackbarState.current
     val context = LocalContext.current
 
     // SideEffect 처리
@@ -71,31 +62,30 @@ fun AuthRoute(
             when (it) {
                 is LoginSideEffect.NavigateToHome -> onLoginSuccess()
                 is LoginSideEffect.ShowSnackbar -> {
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar(it.message)
-                    }
+                    snackbarState.show(
+                        message = it.message,
+                        icon = it.icon,
+                        iconTint = it.iconTint,
+                    )
                 }
             }
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            LoginScreen(
-                modifier = Modifier.padding(padding),
-                isLoading = uiState.isLoading,
-                onGoogleLoginClick = { viewModel.handleIntent(LoginIntent.GoogleLogin(context)) },
-                onKakaoLoginClick = { viewModel.handleIntent(LoginIntent.KakaoLogin(context)) },
-                onGuestStartClick = { viewModel.handleIntent(LoginIntent.SkipLogin) },
-                onTermsClick = onTermsClick,
-                onPrivacyClick = onPrivacyClick,
-            )
-            if (uiState.isLoading) {
-                CircularProgressIndicator()
-            }
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        LoginScreen(
+            isLoading = uiState.isLoading,
+            onGoogleLoginClick = { viewModel.handleIntent(LoginIntent.GoogleLogin(context)) },
+            onKakaoLoginClick = { viewModel.handleIntent(LoginIntent.KakaoLogin(context)) },
+            onGuestStartClick = { viewModel.handleIntent(LoginIntent.SkipLogin) },
+            onTermsClick = onTermsClick,
+            onPrivacyClick = onPrivacyClick,
+        )
+        if (uiState.isLoading) {
+            CircularProgressIndicator()
         }
     }
 }
@@ -105,7 +95,6 @@ fun AuthRoute(
  */
 @Composable
 private fun LoginScreen(
-    modifier: Modifier = Modifier,
     isLoading: Boolean,
     onGoogleLoginClick: () -> Unit,
     onKakaoLoginClick: () -> Unit,
@@ -115,7 +104,7 @@ private fun LoginScreen(
 ) {
     Column(
         modifier =
-            modifier
+            Modifier
                 .fillMaxSize()
                 .background(BuyOrNotTheme.colors.gray0),
     ) {
