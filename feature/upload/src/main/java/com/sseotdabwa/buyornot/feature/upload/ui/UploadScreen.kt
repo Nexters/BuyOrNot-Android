@@ -30,10 +30,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
@@ -62,6 +63,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
@@ -72,50 +75,50 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.shape.BubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
+import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import java.text.DecimalFormat
 
 @Composable
 fun UploadScreen(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
+    viewModel: UploadViewModel = hiltViewModel(),
 ) {
-    var priceRaw by remember { mutableStateOf("") }
-    var priceFieldValue by remember { mutableStateOf(TextFieldValue("")) }
-    var content by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarState = LocalSnackbarState.current
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { sideEffect ->
+            when (sideEffect) {
+                is UploadSideEffect.ShowSnackbar -> {
+                    snackbarState.show(sideEffect.message)
+                }
+
+                is UploadSideEffect.NavigateBack -> onNavigateBack()
+            }
+        }
+    }
+
     var showCategorySheet by remember { mutableStateOf(false) }
     var showExitDialog by remember { mutableStateOf(false) }
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
-    val categories =
-        remember {
-            listOf(
-                "명품 ∙ 프리미엄",
-                "패션 ∙ 잡화",
-                "화장품 ∙ 뷰티",
-                "트렌드 ∙ 가성비템",
-                "음식",
-                "전자기기",
-                "여행 쇼핑템",
-                "헬스 ∙ 운동용품",
-                "도서",
-                "기타",
-            )
-        }
+    val categories = remember { FeedCategory.entries }
     val decimalFormat = remember { DecimalFormat("#,###") }
     val scrollState = rememberScrollState()
 
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val galleryLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri: Uri? ->
-            selectedImageUri = uri
+            viewModel.handleIntent(UploadIntent.SelectImage(uri))
         }
 
     val isSubmitEnabled by remember {
         derivedStateOf {
-            selectedCategory != null &&
-                priceRaw.isNotEmpty() &&
-                selectedImageUri != null
+            uiState.category != null &&
+                uiState.price.isNotEmpty() &&
+                uiState.selectedImageUri != null
         }
     }
     BackHandler {
@@ -142,7 +145,7 @@ fun UploadScreen(
                     .weight(1f),
         ) {
             CategorySelectorRow(
-                selectedCategory = selectedCategory,
+                selectedCategory = uiState.category?.displayName,
                 onCategoryClick = { showCategorySheet = true },
             )
 
@@ -151,13 +154,14 @@ fun UploadScreen(
                 color = BuyOrNotTheme.colors.gray100,
             )
 
+            var priceFieldValue by remember { mutableStateOf(TextFieldValue("")) }
             PriceInputField(
                 modifier = Modifier.padding(vertical = 18.dp),
                 priceFieldValue = priceFieldValue,
-                priceRaw = priceRaw,
+                priceRaw = uiState.price,
                 decimalFormat = decimalFormat,
                 onPriceChange = { digits, textFieldValue ->
-                    priceRaw = digits
+                    viewModel.handleIntent(UploadIntent.UpdatePrice(digits))
                     priceFieldValue = textFieldValue
                 },
             )
@@ -170,16 +174,16 @@ fun UploadScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             ContentInputField(
-                content = content,
-                onContentChange = { content = it },
+                content = uiState.content,
+                onContentChange = { viewModel.handleIntent(UploadIntent.UpdateContent(it)) },
             )
 
             Spacer(modifier = Modifier.height(10.dp))
 
             ImagePickerRow(
-                selectedImageUri = selectedImageUri,
+                selectedImageUri = uiState.selectedImageUri,
                 onPickImage = { galleryLauncher.launch("image/*") },
-                onRemoveImage = { selectedImageUri = null },
+                onRemoveImage = { viewModel.handleIntent(UploadIntent.SelectImage(null)) },
             )
         }
 
@@ -201,6 +205,7 @@ fun UploadScreen(
                 enabled = isSubmitEnabled,
                 size = ButtonSize.Small,
             ) {
+                viewModel.handleIntent(UploadIntent.Submit(context))
             }
         }
     }
@@ -208,10 +213,13 @@ fun UploadScreen(
     if (showCategorySheet) {
         OptionSheet(
             title = "카테고리 선택",
-            options = categories,
-            selectedOption = selectedCategory,
-            onOptionClick = {
-                selectedCategory = it
+            options = categories.map { it.displayName },
+            selectedOption = uiState.category?.displayName,
+            onOptionClick = { displayName ->
+                val category = categories.find { it.displayName == displayName }
+                if (category != null) {
+                    viewModel.handleIntent(UploadIntent.UpdateCategory(category))
+                }
                 showCategorySheet = false
             },
             onDismissRequest = {
@@ -586,8 +594,6 @@ fun Modifier.customShadow(
 @Composable
 private fun UploadScreenPreview() {
     BuyOrNotTheme {
-        Scaffold {
-            UploadScreen(modifier = Modifier.padding(it))
-        }
+        UploadScreen()
     }
 }
