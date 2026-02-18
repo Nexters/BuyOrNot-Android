@@ -9,13 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -26,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotConfirmDialog
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.feature.mypage.components.SettingItem
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.AccountSettingIntent
@@ -41,7 +39,7 @@ fun AccountSettingRoute(
     viewModel: AccountSettingViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarState = LocalSnackbarState.current
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -49,40 +47,38 @@ fun AccountSettingRoute(
             when (sideEffect) {
                 is AccountSettingSideEffect.NavigateToLogin -> onNavigateToLogin()
                 is AccountSettingSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(sideEffect.message)
+                    snackbarState.show(
+                        message = sideEffect.message,
+                        icon = sideEffect.icon,
+                        iconTint = sideEffect.iconTint,
+                    )
                 }
             }
         }
     }
 
-    Scaffold(
-        containerColor = BuyOrNotTheme.colors.gray0,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-    ) { padding ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            AccountSettingScreen(
-                modifier = Modifier.padding(padding),
-                onBackClick = onBackClick,
-                onLogoutClick = {
-                    viewModel.handleIntent(AccountSettingIntent.Logout(context))
-                },
-                onShowLogoutDialog = {
-                    viewModel.handleIntent(AccountSettingIntent.ShowLogoutDialog)
-                },
-                onDismissLogoutDialog = {
-                    viewModel.handleIntent(AccountSettingIntent.DismissLogoutDialog)
-                },
-                onNavigateToWithdrawal = onNavigateToWithdrawal,
-                uiState = uiState,
-            )
+    if (uiState.isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
         }
+    } else {
+        AccountSettingScreen(
+            onBackClick = onBackClick,
+            onLogoutClick = {
+                viewModel.handleIntent(AccountSettingIntent.Logout(context))
+            },
+            onShowLogoutDialog = {
+                viewModel.handleIntent(AccountSettingIntent.ShowLogoutDialog)
+            },
+            onDismissLogoutDialog = {
+                viewModel.handleIntent(AccountSettingIntent.DismissLogoutDialog)
+            },
+            onNavigateToWithdrawal = onNavigateToWithdrawal,
+            uiState = uiState,
+        )
     }
 }
 

@@ -16,13 +16,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,6 +33,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.feature.mypage.components.SettingItem
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.MyPageSideEffect
@@ -52,32 +50,31 @@ fun MyPageRoute(
     viewModel: MyPageViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarState = LocalSnackbarState.current
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { sideEffect ->
             when (sideEffect) {
                 is MyPageSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(sideEffect.message)
+                    snackbarState.show(
+                        message = sideEffect.message,
+                        icon = sideEffect.icon,
+                        iconTint = sideEffect.iconTint,
+                    )
                 }
             }
         }
     }
 
-    Scaffold(
-        containerColor = BuyOrNotTheme.colors.gray0,
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-    ) { padding ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
+    if (uiState.isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
         }
+    } else {
         MyPageScreen(
-            modifier = Modifier.padding(padding),
             versionName = versionName,
             onBackClick = onBackClick,
             onAccountSettingClick = onAccountSettingClick,

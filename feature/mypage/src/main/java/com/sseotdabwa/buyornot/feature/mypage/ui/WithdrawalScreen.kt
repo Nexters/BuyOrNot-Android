@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +30,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotConfirmDialo
 import com.sseotdabwa.buyornot.core.designsystem.components.PrimaryButton
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.WithdrawalIntent
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.WithdrawalSideEffect
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.WithdrawalUiState
@@ -44,7 +43,7 @@ fun WithdrawalRoute(
     viewModel: WithdrawalViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarState = LocalSnackbarState.current
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -52,32 +51,30 @@ fun WithdrawalRoute(
             when (sideEffect) {
                 is WithdrawalSideEffect.NavigateToLogin -> onNavigateToLogin()
                 is WithdrawalSideEffect.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(sideEffect.message)
+                    snackbarState.show(
+                        message = sideEffect.message,
+                        icon = sideEffect.icon,
+                        iconTint = sideEffect.iconTint,
+                    )
                 }
             }
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        containerColor = BuyOrNotTheme.colors.gray0,
-    ) { padding ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-        }
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
         WithdrawalScreen(
-            modifier = Modifier.padding(padding),
             onBackClick = onBackClick,
             onWithdrawalClick = {
                 viewModel.handleIntent(WithdrawalIntent.Withdraw(context))
             },
             uiState = uiState,
         )
+        if (uiState.isLoading) {
+            CircularProgressIndicator()
+        }
     }
 }
 
