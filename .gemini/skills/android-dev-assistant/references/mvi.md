@@ -6,7 +6,7 @@ The project uses a strict MVI (Model-View-Intent) architecture based on `core:ui
 
 - **UiState (S)**: A `data class` representing the single source of truth for the UI state.
 - **Intent (I)**: A `sealed interface` representing user actions or events that trigger logic.
-- **SideEffect (E)**: A `sealed interface` for one-time events like Navigation, Snackerbar, or Toast.
+- **SideEffect (E)**: A `sealed interface` for one-time events like Navigation, Snackbar, or Toast.
 
 ## 2. Contract Definition (`Contract.kt`)
 
@@ -38,7 +38,7 @@ sealed interface MySideEffect {
 
 ```kotlin
 @HiltViewModel
-class MyViewModel @Inject constructor() : 
+class MyViewModel @Inject constructor() :
     BaseViewModel<MyUiState, MyIntent, MySideEffect>(MyUiState()) {
 
     override fun handleIntent(intent: MyIntent) {
@@ -68,7 +68,7 @@ fun MyRoute(viewModel: MyViewModel = hiltViewModel()) {
             }
         }
     }
-    
+
     MyScreen(uiState = uiState, onIntent = viewModel::handleIntent)
 }
 ```

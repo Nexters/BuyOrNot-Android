@@ -1,6 +1,6 @@
 ---
 name: android-dev-assistant
-description: Code review and preview generation for BuyOrNot-Android project. Use when reviewing pull requests, generating Compose previews, or ensuring architectural compliance with modularization and tech stack (Hilt, Compose 2.3.0, Kotlin 2.3.0).
+description: Code review and preview generation for BuyOrNot-Android project. Use when reviewing pull requests, generating Compose previews, or ensuring architectural compliance with modularization and tech stack (Hilt, Kotlin 2.3.0).
 ---
 
 # Android Dev Assistant
@@ -24,19 +24,30 @@ Use this skill when performing a code review to ensure adherence to project stan
 - **State Hoisting**: Check for proper state management in Composables.
 - **ktlint**: Verify code matches `ktlint` standards (v14.0.1).
 
+## Task Category 2: Preview Generation
+
+Use this skill to generate or improve `@Preview` functions for Compose components.
+
+### Generation Guidelines
+- **Theme Wrapper**: Always wrap previews in `BuyOrNotTheme`.
+- **Surface**: Use `Surface` with `BuyOrNotTheme.colors.background` for correct background rendering.
+- **Variants**: Include both Light and Dark mode previews.
+- **Reference**: See [compose.md](references/compose.md) for detailed patterns and templates.
+
+### Example Request
+"Generate a Compose preview for the `ProductCard` component in `feature:home`. Include Dark Mode and use sample data."
+
 ## Task Category 3: MVI Architecture
 
 Use this skill to ensure the ViewModel follows the project's MVI pattern.
 
 ### MVI Guidelines
-- **BaseViewModel**: Ensure ViewModel inherits from `BaseViewModel<S, I, E>`.
+- **BaseViewModel**: Ensure ViewModel inherits from `BaseViewModel<S, I, E>` in `core.ui.base`.
 - **Intent-Driven**: Logic must be triggered via `handleIntent(I)`.
 - **Contract.kt**: Check if `UiState`, `Intent`, and `SideEffect` are correctly defined.
 - **SideEffect**: Use `sendSideEffect(E)` for navigation, snackbars, and one-time events.
 - **Reference**: See [mvi.md](references/mvi.md) for architecture rules.
 
-## Task Category 4: Preview Generation
-...
 ## References
 - **[Modularization and Tech Stack](references/modularization.md)**: Detailed project structure and dependency list.
 - **[Compose and Preview Guidelines](references/compose.md)**: UI best practices and preview templates.
