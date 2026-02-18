@@ -47,30 +47,24 @@ class UploadViewModel @Inject constructor(
     private fun submitFeed(context: Context) {
         val uri = currentState.selectedImageUri ?: return
         val category = currentState.category ?: return
-        val price = currentState.price.toIntOrNull() ?: 0
+        val price = currentState.price.toIntOrNull() ?: return
         val content = currentState.content
 
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
 
             runCatchingCancellable {
-                // 0. Get image dimensions
                 val (width, height) = getImageDimensions(context, uri)
 
-                // 1. Get file name and content type
                 val contentType = context.contentResolver.getType(uri) ?: "image/jpeg"
                 val fileName = getFileName(context, uri) ?: "upload_image.jpg"
 
-                // 2. Get Presigned URL
                 val uploadInfo = feedRepository.getPresignedUrl(fileName, contentType)
 
-                // 3. Upload to S3
                 val inputStream = context.contentResolver.openInputStream(uri)
-                val bytes = inputStream?.readBytes() ?: throw Exception("파일을 읽을 수 없습니다.")
-                inputStream.close()
+                val bytes = inputStream?.use { it.readBytes() } ?: throw Exception("파일을 읽을 수 없습니다.")
                 feedRepository.uploadImage(uploadInfo.uploadUrl, bytes, contentType)
 
-                // 4. Create Feed
                 feedRepository.createFeed(
                     category = category,
                     price = price,
@@ -84,7 +78,7 @@ class UploadViewModel @Inject constructor(
                 sendSideEffect(UploadSideEffect.NavigateBack)
             }.onFailure { throwable ->
                 updateState { it.copy(isLoading = false) }
-                sendSideEffect(UploadSideEffect.ShowSnackbar(throwable.message ?: "업로드에 실패했습니다."))
+                sendSideEffect(UploadSideEffect.ShowSnackbar("업로드에 실패했습니다."))
             }
         }
     }
