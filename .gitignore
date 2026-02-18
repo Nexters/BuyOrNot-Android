@@ -79,3 +79,8 @@ lint/tmp/
 
 # macOS
 .DS_Store
+
+# Gemini CLI
+@gemini-skills/
+.gemini/logs/
+.gemini/cache/
