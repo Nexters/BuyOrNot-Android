@@ -11,10 +11,16 @@ class AuthInterceptor @Inject constructor(
     private val userPreferencesDataSource: UserPreferencesDataSource,
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
+        val originalRequest = chain.request()
+
+        // "No-Authentication" 헤더가 있으면 토큰을 추가하지 않음
+        if (originalRequest.header("No-Authentication") == "true") {
+            return chain.proceed(originalRequest.newBuilder().removeHeader("No-Authentication").build())
+        }
+
         val accessToken = runBlocking { userPreferencesDataSource.accessToken.first() }
         val request =
-            chain
-                .request()
+            originalRequest
                 .newBuilder()
                 .apply {
                     if (accessToken.isNotEmpty()) {
