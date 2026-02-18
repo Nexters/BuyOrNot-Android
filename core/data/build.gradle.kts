@@ -13,6 +13,8 @@ dependencies {
     implementation(projects.core.common)
     implementation(projects.core.network)
     implementation(projects.core.datastore)
+    implementation(libs.retrofit)
+    implementation(libs.okhttp)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 

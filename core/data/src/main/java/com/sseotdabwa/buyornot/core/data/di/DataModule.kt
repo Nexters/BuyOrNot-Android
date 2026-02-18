@@ -1,8 +1,10 @@
 package com.sseotdabwa.buyornot.core.data.di
 
 import com.sseotdabwa.buyornot.core.data.repository.AuthRepositoryImpl
+import com.sseotdabwa.buyornot.core.data.repository.FeedRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.UserRepositoryImpl
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
+import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -17,4 +19,7 @@ internal abstract class DataModule {
 
     @Binds
     abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
+
+    @Binds
+    abstract fun bindFeedRepository(impl: FeedRepositoryImpl): FeedRepository
 }

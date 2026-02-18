@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.core.network.di
 import com.sseotdabwa.buyornot.core.datastore.UserPreferencesDataSource
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.core.network.api.AuthApiService
+import com.sseotdabwa.buyornot.core.network.api.FeedApiService
 import com.sseotdabwa.buyornot.core.network.api.UserApiService
 import com.sseotdabwa.buyornot.core.network.authenticator.TokenAuthenticator
 import com.sseotdabwa.buyornot.core.network.interceptor.AuthInterceptor
@@ -91,6 +92,20 @@ object NetworkModule {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(UserApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideFeedApiService(
+        @Named("AuthClient") okHttpClient: OkHttpClient,
+        json: Json,
+    ): FeedApiService =
+        Retrofit
+            .Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(FeedApiService::class.java)
 
     @Provides
     @Singleton
