@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
@@ -19,11 +18,29 @@ class UploadViewModel @Inject constructor(
 ) : BaseViewModel<UploadUiState, UploadIntent, UploadSideEffect>(UploadUiState()) {
     override fun handleIntent(intent: UploadIntent) {
         when (intent) {
-            is UploadIntent.UpdateCategory -> updateState { it.copy(category = intent.category) }
-            is UploadIntent.UpdatePrice -> updateState { it.copy(price = intent.price) }
-            is UploadIntent.UpdateContent -> updateState { it.copy(content = intent.content) }
+            is UploadIntent.UpdateCategory ->
+                updateState {
+                    it.copy(category = intent.category, showCategorySheet = false)
+                }
+            is UploadIntent.UpdatePrice ->
+                updateState {
+                    it.copy(price = intent.digits, priceFieldValue = intent.textFieldValue)
+                }
+            is UploadIntent.UpdateContent -> {
+                if (intent.content.length <= 100) {
+                    updateState { it.copy(content = intent.content) }
+                }
+            }
             is UploadIntent.SelectImage -> updateState { it.copy(selectedImageUri = intent.uri) }
             is UploadIntent.Submit -> submitFeed(intent.context)
+            is UploadIntent.UpdateCategorySheetVisibility ->
+                updateState {
+                    it.copy(showCategorySheet = intent.isVisible)
+                }
+            is UploadIntent.UpdateExitDialogVisibility ->
+                updateState {
+                    it.copy(showExitDialog = intent.isVisible)
+                }
         }
     }
 
@@ -67,8 +84,7 @@ class UploadViewModel @Inject constructor(
                 sendSideEffect(UploadSideEffect.NavigateBack)
             }.onFailure { throwable ->
                 updateState { it.copy(isLoading = false) }
-                Log.d("UploadViewModel", "${throwable.message} ${throwable.cause}")
-                sendSideEffect(UploadSideEffect.ShowSnackbar("업로드에 실패했습니다."))
+                sendSideEffect(UploadSideEffect.ShowSnackbar(throwable.message ?: "업로드에 실패했습니다."))
             }
         }
     }

@@ -36,9 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,7 +74,6 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.shape.BubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
-import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import java.text.DecimalFormat
 
 @Composable
@@ -101,9 +98,6 @@ fun UploadScreen(
         }
     }
 
-    var showCategorySheet by remember { mutableStateOf(false) }
-    var showExitDialog by remember { mutableStateOf(false) }
-    val categories = remember { FeedCategory.entries }
     val decimalFormat = remember { DecimalFormat("#,###") }
     val scrollState = rememberScrollState()
 
@@ -121,8 +115,9 @@ fun UploadScreen(
                 uiState.selectedImageUri != null
         }
     }
+
     BackHandler {
-        if (!showExitDialog) showExitDialog = true
+        if (!uiState.showExitDialog) viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
     }
 
     Column(
@@ -134,7 +129,7 @@ fun UploadScreen(
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
         BackTopBar {
-            showExitDialog = true
+            viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
         }
 
         Column(
@@ -146,7 +141,7 @@ fun UploadScreen(
         ) {
             CategorySelectorRow(
                 selectedCategory = uiState.category?.displayName,
-                onCategoryClick = { showCategorySheet = true },
+                onCategoryClick = { viewModel.handleIntent(UploadIntent.UpdateCategorySheetVisibility(true)) },
             )
 
             HorizontalDivider(
@@ -154,15 +149,13 @@ fun UploadScreen(
                 color = BuyOrNotTheme.colors.gray100,
             )
 
-            var priceFieldValue by remember { mutableStateOf(TextFieldValue("")) }
             PriceInputField(
                 modifier = Modifier.padding(vertical = 18.dp),
-                priceFieldValue = priceFieldValue,
+                priceFieldValue = uiState.priceFieldValue,
                 priceRaw = uiState.price,
                 decimalFormat = decimalFormat,
                 onPriceChange = { digits, textFieldValue ->
-                    viewModel.handleIntent(UploadIntent.UpdatePrice(digits))
-                    priceFieldValue = textFieldValue
+                    viewModel.handleIntent(UploadIntent.UpdatePrice(digits, textFieldValue))
                 },
             )
 
@@ -210,36 +203,35 @@ fun UploadScreen(
         }
     }
 
-    if (showCategorySheet) {
+    if (uiState.showCategorySheet) {
         OptionSheet(
             title = "카테고리 선택",
-            options = categories.map { it.displayName },
+            options = uiState.categories.map { it.displayName },
             selectedOption = uiState.category?.displayName,
             onOptionClick = { displayName ->
-                val category = categories.find { it.displayName == displayName }
+                val category = uiState.categories.find { it.displayName == displayName }
                 if (category != null) {
                     viewModel.handleIntent(UploadIntent.UpdateCategory(category))
                 }
-                showCategorySheet = false
             },
             onDismissRequest = {
-                showCategorySheet = false
+                viewModel.handleIntent(UploadIntent.UpdateCategorySheetVisibility(false))
             },
         )
     }
 
-    if (showExitDialog) {
+    if (uiState.showExitDialog) {
         BuyOrNotAlertDialog(
-            onDismissRequest = { showExitDialog = false },
+            onDismissRequest = { viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(false)) },
             title = "다음에 등록할까요?",
             subText = "지금까지 쓴 내용은 저장되지 않아요.",
             confirmText = "유지하기",
             dismissText = "나가기",
             onConfirm = {
-                showExitDialog = false
+                viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(false))
             },
             onDismiss = {
-                showExitDialog = false
+                viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(false))
                 onNavigateBack()
             },
         )

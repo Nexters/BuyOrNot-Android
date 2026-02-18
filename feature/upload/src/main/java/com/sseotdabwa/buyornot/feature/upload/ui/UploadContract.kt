@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.feature.upload.ui
 
 import android.content.Context
 import android.net.Uri
+import androidx.compose.ui.text.input.TextFieldValue
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 
 data class UploadUiState(
@@ -9,7 +10,11 @@ data class UploadUiState(
     val selectedImageUri: Uri? = null,
     val category: FeedCategory? = null,
     val price: String = "",
+    val priceFieldValue: TextFieldValue = TextFieldValue(""),
     val content: String = "",
+    val showCategorySheet: Boolean = false,
+    val showExitDialog: Boolean = false,
+    val categories: List<FeedCategory> = FeedCategory.entries,
 )
 
 sealed interface UploadIntent {
@@ -18,7 +23,8 @@ sealed interface UploadIntent {
     ) : UploadIntent
 
     data class UpdatePrice(
-        val price: String,
+        val digits: String,
+        val textFieldValue: TextFieldValue,
     ) : UploadIntent
 
     data class UpdateContent(
@@ -31,7 +37,15 @@ sealed interface UploadIntent {
 
     data class Submit(
         val context: Context,
-    ) : UploadIntent // Context 전달
+    ) : UploadIntent
+
+    data class UpdateCategorySheetVisibility(
+        val isVisible: Boolean,
+    ) : UploadIntent
+
+    data class UpdateExitDialogVisibility(
+        val isVisible: Boolean,
+    ) : UploadIntent
 }
 
 sealed interface UploadSideEffect {
