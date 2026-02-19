@@ -28,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +42,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
@@ -53,6 +54,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTabRow
 import com.sseotdabwa.buyornot.core.designsystem.components.ExpandableFloatingActionButton
 import com.sseotdabwa.buyornot.core.designsystem.components.FabOption
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCard
+import com.sseotdabwa.buyornot.core.designsystem.components.GuestTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.HomeTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.components.showBuyOrNotSnackBar
