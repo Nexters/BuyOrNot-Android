@@ -15,17 +15,24 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.permission.hasNotificationPermission
+import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
 
 /**
  * 알림 화면의 탭/필터 정의
@@ -43,8 +50,30 @@ fun NotificationScreen(
     onBackClick: () -> Unit,
     onNotificationClick: (String) -> Unit,
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
     // [State] MVI 패턴 적용 시 ViewModel에서 관리
     var selectedFilter by remember { mutableStateOf(NotificationFilter.ALL) }
+    var hasNotificationPermission by remember { mutableStateOf(context.hasNotificationPermission()) }
+
+    // 알림 권한 요청
+    val (_, requestPermission) = rememberNotificationPermission { granted ->
+        hasNotificationPermission = granted
+    }
+
+    // 앱이 다시 포그라운드로 올 때 권한 상태 재확인
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasNotificationPermission = context.hasNotificationPermission()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // 더미 데이터 (디자인 가이드 반영)
     val notifications =
@@ -86,13 +115,17 @@ fun NotificationScreen(
                 Spacer(modifier = Modifier.height(16.dp)) // 칩과 배너 사이 16px
             }
 
-            // 2. 알림 설정 가이드 배너
-            item {
-                NotificationGuideBanner(
-                    onActionClick = { /* 알림 권한 요청 로직 */ },
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                )
-                Spacer(modifier = Modifier.height(10.dp))
+            // 2. 알림 설정 가이드 배너 (권한 없을 때만 표시)
+            if (!hasNotificationPermission) {
+                item {
+                    NotificationGuideBanner(
+                        onActionClick = {
+                            requestPermission()
+                        },
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
             }
 
             // 3. 알림 리스트 아이템
