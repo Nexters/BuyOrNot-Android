@@ -8,9 +8,17 @@ import com.sseotdabwa.buyornot.feature.home.ui.HomeScreen
 
 const val HOME_ROUTE = "home"
 
-fun NavGraphBuilder.homeScreen() {
+fun NavGraphBuilder.homeScreen(
+    onLoginClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+) {
     composable(route = HOME_ROUTE) {
-        HomeScreen()
+        HomeScreen(
+            onLoginClick = onLoginClick,
+            onNotificationClick = onNotificationClick,
+            onProfileClick = onProfileClick,
+        )
     }
 }
 

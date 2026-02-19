@@ -57,6 +57,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.HomeTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.components.showBuyOrNotSnackBar
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
+import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import kotlinx.coroutines.launch
@@ -160,9 +161,21 @@ internal sealed interface HomeIntent {
 /**
  * 홈 화면 루트 컴포저블
  * TODO: ViewModel을 통한 상태 관리로 전환 필요
+ *
+ * @param onLoginClick 비회원일 때 로그인 버튼 클릭 콜백
+ * @param onNotificationClick 알림 아이콘 클릭 콜백
+ * @param onProfileClick 프로필 아이콘 클릭 콜백
+ * @param viewModel HomeViewModel (Hilt 주입)
  */
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onLoginClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    viewModel: HomeViewModel = hiltViewModel(),
+) {
+    val userType by viewModel.userType.collectAsStateWithLifecycle(initialValue = UserType.GUEST)
+
     // TODO: 실제로는 ViewModel에서 가져올 데이터 (임시 더미 데이터)
     val dummyFeeds =
         remember {
@@ -188,7 +201,7 @@ fun HomeScreen() {
         }
 
     // TODO: ViewModel에서 가져올 상태 (현재는 임시로 remember 사용)
-    var uiState by rememberSaveable(stateSaver = homeUiStateSaver()) {
+    var uiState by remember {
         mutableStateOf(HomeUiState(feeds = dummyFeeds))
     }
 
@@ -203,6 +216,10 @@ fun HomeScreen() {
         snackbarHostState = snackbarHostState,
         isFabExpanded = isFabExpanded,
         expandedImageUrl = expandedImageUrl,
+        userType = userType,
+        onLoginClick = onLoginClick,
+        onNotificationClick = onNotificationClick,
+        onProfileClick = onProfileClick,
         onIntent = { intent ->
             // TODO: ViewModel Intent 처리로 전환
             when (intent) {
@@ -222,10 +239,10 @@ fun HomeScreen() {
                     // TODO: ViewModel에서 처리
                 }
                 is HomeIntent.OnNotificationClicked -> {
-                    // TODO: 알림 화면으로 이동
+                    onNotificationClick()
                 }
                 is HomeIntent.OnProfileClicked -> {
-                    // TODO: 프로필 화면으로 이동
+                    onProfileClick()
                 }
                 is HomeIntent.OnCreateVoteClicked -> {
                     // TODO: 투표 생성 화면으로 이동
@@ -267,6 +284,10 @@ private fun HomeScreenContent(
     uiState: HomeUiState,
     isFabExpanded: Boolean,
     expandedImageUrl: String?,
+    userType: UserType,
+    onLoginClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onIntent: (HomeIntent) -> Unit,
     onFabExpandedChange: (Boolean) -> Unit,
     onImageDismiss: () -> Unit,
@@ -335,10 +356,21 @@ private fun HomeScreenContent(
                     .offset { IntOffset(x = 0, y = topBarOffsetHeightPx.roundToInt()) }
                     .background(BuyOrNotTheme.colors.gray0),
         ) {
-            HomeTopBar(
-                onNotificationClick = { onIntent(HomeIntent.OnNotificationClicked) },
-                onProfileClick = { onIntent(HomeIntent.OnProfileClicked) },
-            )
+            // 사용자 타입에 따라 TopBar 분기
+            when (userType) {
+                UserType.GUEST -> {
+                    GuestTopBar(
+                        onLoginClick = onLoginClick,
+                    )
+                }
+                UserType.SOCIAL -> {
+                    HomeTopBar(
+                        onNotificationClick = { onIntent(HomeIntent.OnNotificationClicked) },
+                        onProfileClick = { onIntent(HomeIntent.OnProfileClicked) },
+                    )
+                }
+            }
+
             HomeTabSection(
                 selectedTab = uiState.selectedTab,
                 onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
