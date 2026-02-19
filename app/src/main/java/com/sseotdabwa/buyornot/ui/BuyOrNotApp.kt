@@ -1,11 +1,13 @@
 package com.sseotdabwa.buyornot.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination
@@ -14,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
+import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.core.ui.snackbar.rememberBuyOrNotSnackbarState
 import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
@@ -32,13 +35,32 @@ import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
  *
  * 일반 화면이면 → 아무 것도 하지 않아도 자동으로 패딩 적용
  *
+ * @param authEventBus 인증 관련 이벤트 버스
+ * @param onBackPressed 홈 화면에서 뒤로가기 시 앱 종료를 위한 콜백
  */
 @Composable
-fun BuyOrNotApp(authEventBus: AuthEventBus) {
+fun BuyOrNotApp(
+    authEventBus: AuthEventBus,
+    onBackPressed: () -> Unit = {},
+) {
     val navController = rememberNavController()
     val snackbarState = rememberBuyOrNotSnackbarState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+
+    // 홈 화면에서 뒤로가기 시 앱 종료
+    BackHandler(enabled = currentDestination?.route == HOME_ROUTE) {
+        onBackPressed()
+    }
+
+    // 앱 진입 시 알림 권한 자동 요청
+    val (hasNotificationPermission, requestNotificationPermission) = rememberNotificationPermission()
+
+    LaunchedEffect(Unit) {
+        if (!hasNotificationPermission) {
+            requestNotificationPermission()
+        }
+    }
 
     CompositionLocalProvider(LocalSnackbarState provides snackbarState) {
         Scaffold(
@@ -71,7 +93,7 @@ private fun Modifier.bottomBarPadding(
     currentDestination: NavDestination?,
     padding: PaddingValues,
 ): Modifier =
-    if (currentDestination?.route in listOf(SPLASH_ROUTE, AUTH_ROUTE, HOME_ROUTE)) {
+    if (currentDestination?.route in listOf(SPLASH_ROUTE, AUTH_ROUTE)) {
         this
     } else {
         this.padding(padding)

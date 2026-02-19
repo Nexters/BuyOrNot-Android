@@ -20,7 +20,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BuyOrNotTheme {
-                BuyOrNotApp(authEventBus = authEventBus)
+                BuyOrNotApp(
+                    authEventBus = authEventBus,
+                    onBackPressed = { finish() }
+                )
             }
         }
     }
