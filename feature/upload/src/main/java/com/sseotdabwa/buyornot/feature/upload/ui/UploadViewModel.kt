@@ -16,6 +16,10 @@ import javax.inject.Inject
 class UploadViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
 ) : BaseViewModel<UploadUiState, UploadIntent, UploadSideEffect>(UploadUiState()) {
+    companion object {
+        private const val MAX_CONTENT_LENGTH = 100
+    }
+
     override fun handleIntent(intent: UploadIntent) {
         when (intent) {
             is UploadIntent.UpdateCategory ->
@@ -27,7 +31,7 @@ class UploadViewModel @Inject constructor(
                     it.copy(price = intent.digits, priceFieldValue = intent.textFieldValue)
                 }
             is UploadIntent.UpdateContent -> {
-                if (intent.content.length <= 100) {
+                if (intent.content.length <= MAX_CONTENT_LENGTH) {
                     updateState { it.copy(content = intent.content) }
                 }
             }
