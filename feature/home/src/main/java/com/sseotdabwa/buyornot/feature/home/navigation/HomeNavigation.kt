@@ -12,12 +12,14 @@ fun NavGraphBuilder.homeScreen(
     onLoginClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
+    onUploadClick: () -> Unit = {},
 ) {
     composable(route = HOME_ROUTE) {
         HomeScreen(
             onLoginClick = onLoginClick,
             onNotificationClick = onNotificationClick,
             onProfileClick = onProfileClick,
+            onUploadClick = onUploadClick,
         )
     }
 }

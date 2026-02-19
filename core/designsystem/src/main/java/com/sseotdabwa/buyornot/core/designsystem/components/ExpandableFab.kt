@@ -49,6 +49,7 @@ fun ExpandableFloatingActionButton(
     onExpandedChange: (Boolean) -> Unit,
     options: List<FabOption>,
     modifier: Modifier = Modifier,
+    onMainButtonClick: (() -> Unit)? = null,
     mainBackgroundColor: Color = BuyOrNotTheme.colors.gray800,
     mainContentColor: Color = BuyOrNotTheme.colors.gray0,
     menuBackgroundColor: Color = BuyOrNotTheme.colors.gray100,
@@ -81,7 +82,13 @@ fun ExpandableFloatingActionButton(
 
         // 메인 FAB (+ 아이콘)
         FloatingActionButton(
-            onClick = { onExpandedChange(!expanded) },
+            onClick = {
+                if (onMainButtonClick != null) {
+                    onMainButtonClick()
+                } else {
+                    onExpandedChange(!expanded)
+                }
+            },
             shape = CircleShape,
             containerColor = if (expanded) BuyOrNotTheme.colors.gray0 else mainBackgroundColor,
             contentColor = if (expanded) BuyOrNotTheme.colors.gray1000 else mainContentColor,

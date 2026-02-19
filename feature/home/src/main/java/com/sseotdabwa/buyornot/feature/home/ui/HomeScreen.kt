@@ -59,9 +59,9 @@ import com.sseotdabwa.buyornot.core.designsystem.components.HomeTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.components.showBuyOrNotSnackBar
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
-import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.domain.model.UserType
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -167,6 +167,7 @@ internal sealed interface HomeIntent {
  * @param onLoginClick 비회원일 때 로그인 버튼 클릭 콜백
  * @param onNotificationClick 알림 아이콘 클릭 콜백
  * @param onProfileClick 프로필 아이콘 클릭 콜백
+ * @param onUploadClick 업로드 화면으로 이동 콜백
  * @param viewModel HomeViewModel (Hilt 주입)
  */
 @Composable
@@ -174,6 +175,7 @@ fun HomeScreen(
     onLoginClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
+    onUploadClick: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val userType by viewModel.userType.collectAsStateWithLifecycle(initialValue = UserType.GUEST)
@@ -222,6 +224,7 @@ fun HomeScreen(
         onLoginClick = onLoginClick,
         onNotificationClick = onNotificationClick,
         onProfileClick = onProfileClick,
+        onUploadClick = onUploadClick,
         onIntent = { intent ->
             // TODO: ViewModel Intent 처리로 전환
             when (intent) {
@@ -290,6 +293,7 @@ private fun HomeScreenContent(
     onLoginClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
+    onUploadClick: () -> Unit,
     onIntent: (HomeIntent) -> Unit,
     onFabExpandedChange: (Boolean) -> Unit,
     onImageDismiss: () -> Unit,
@@ -333,6 +337,7 @@ private fun HomeScreenContent(
                     expanded = isFabExpanded,
                     onExpandedChange = onFabExpandedChange,
                     onIntent = onIntent,
+                    onUploadClick = onUploadClick,
                 )
             },
             containerColor = BuyOrNotTheme.colors.gray0,
@@ -424,12 +429,14 @@ private fun HomeTabSection(
 
 /**
  * FAB (Floating Action Button) 컴포넌트
+ * 임시로 클릭 시 바로 업로드 화면으로 이동
  */
 @Composable
 private fun HomeFab(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     onIntent: (HomeIntent) -> Unit,
+    onUploadClick: () -> Unit,
 ) {
     val fabOptions =
         listOf(
@@ -449,6 +456,7 @@ private fun HomeFab(
         expanded = expanded,
         onExpandedChange = onExpandedChange,
         options = fabOptions,
+        onMainButtonClick = onUploadClick, // 메인 버튼 클릭 시 바로 업로드 화면으로
     )
 }
 
