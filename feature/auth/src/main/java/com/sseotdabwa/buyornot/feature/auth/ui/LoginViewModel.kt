@@ -7,7 +7,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.viewModelScope
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.common.model.ClientError
@@ -42,9 +42,8 @@ class LoginViewModel @Inject constructor(
             updateState { it.copy(isLoading = true) }
             try {
                 val googleIdOption =
-                    GetGoogleIdOption
-                        .Builder()
-                        .setServerClientId(context.getString(R.string.web_client_id))
+                    GetSignInWithGoogleOption
+                        .Builder(context.getString(R.string.web_client_id))
                         .setNonce(generateSecureRandomNonce())
                         .build()
 
