@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
@@ -30,15 +32,28 @@ const val SPLASH_TIMEOUT_MILLIS = 2300L
  * 스플래시 화면의 네비게이션 진입점
  *
  * 앱 최초 진입 시 표시되는 스플래시 화면입니다.
- * 지정된 시간(2.3초) 후 자동으로 로그인 화면으로 이동합니다.
+ * 지정된 시간(2.3초) 후 자동으로 로그인 상태를 확인하여:
+ * - 로그인 상태(토큰 있음) → 홈 화면으로 이동
+ * - 비로그인 상태 → 로그인 화면으로 이동
  *
- * @param onTimeout 스플래시 타임아웃 후 실행될 콜백 (로그인 화면으로 이동)
+ * @param onNavigateToLogin 로그인 화면으로 이동하는 콜백
+ * @param onNavigateToHome 홈 화면으로 이동하는 콜백
  */
 @Composable
-fun SplashRoute(onTimeout: () -> Unit) {
+fun SplashRoute(
+    onNavigateToLogin: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    viewModel: SplashViewModel = hiltViewModel(),
+) {
+    val hasValidToken by viewModel.hasValidToken.collectAsStateWithLifecycle(initialValue = false)
+
     LaunchedEffect(Unit) {
         delay(SPLASH_TIMEOUT_MILLIS)
-        onTimeout()
+        if (hasValidToken) {
+            onNavigateToHome()
+        } else {
+            onNavigateToLogin()
+        }
     }
 
     SplashScreen()
