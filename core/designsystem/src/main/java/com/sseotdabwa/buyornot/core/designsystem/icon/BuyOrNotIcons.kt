@@ -48,6 +48,8 @@ object BuyOrNotIcons {
     val Notification = IconResource(R.drawable.ic_notification)
     val NotificationFilled = IconResource(R.drawable.ic_notification_filled)
 
+    val NoVote = IconResource(R.drawable.ic_no_vote)
+
     val Won = IconResource(R.drawable.ic_won)
 }
 

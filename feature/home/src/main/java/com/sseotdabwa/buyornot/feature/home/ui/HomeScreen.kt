@@ -16,10 +16,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -35,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,10 +42,10 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTab
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTabRow
@@ -185,7 +182,6 @@ private fun HomeScreenContent(
             },
             containerColor = BuyOrNotTheme.colors.gray0,
         ) { innerPadding ->
-
             HomeFeedList(
                 uiState = uiState,
                 onIntent = onIntent,
@@ -399,63 +395,78 @@ private fun HomeFeedList(
             HomeTab.REVIEW -> uiState.feeds.filter { it.isOwner } // 내 투표만
         }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = headerPadding, bottom = 60.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        // 필터 칩
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            FilterChipRow(
-                selectedFilter = uiState.selectedFilter,
-                onFilterSelected = { onIntent(HomeIntent.OnFilterSelected(it)) },
-            )
+    if (filteredFeeds.isEmpty()) {
+        Column {
+            Spacer(modifier = Modifier.height(headerPadding + 140.dp))
+            HomeFeedEmptyView()
         }
-
-        // 배너 (투표 피드 탭에만 표시)
-        if (uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
+    } else {
+        LazyColumn(
+            modifier = modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = headerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            // 필터 칩
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-
-                HomeBanner(
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                    onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
-                    onClick = { },
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                BuyOrNotDivider(
-                    size = BuyOrNotDividerSize.Small,
-                    modifier = Modifier.padding(horizontal = 20.dp),
+                FilterChipRow(
+                    selectedFilter = uiState.selectedFilter,
+                    onFilterSelected = { onIntent(HomeIntent.OnFilterSelected(it)) },
                 )
             }
-        } else {
+
+            // 배너 (투표 피드 탭에만 표시)
+            if (uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    HomeBanner(
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
+                        onClick = { },
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    BuyOrNotDivider(
+                        size = BuyOrNotDividerSize.Small,
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                    )
+                }
+            } else {
+                item {
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
+
+            // 피드 아이템들 (실제 데이터 기반)
+            items(
+                count = filteredFeeds.size,
+                key = { filteredFeeds[it].id },
+            ) { index ->
+                val feed = filteredFeeds[index]
+
+                FeedItemCard(
+                    feed = feed,
+                    modifier =
+                        Modifier
+                            .padding(20.dp)
+                            .animateItem(),
+                    onVote = { feedId, optionIndex ->
+                        onIntent(HomeIntent.OnVoteClicked(feedId, optionIndex))
+                    },
+                    onDelete = { feedId ->
+                        onIntent(HomeIntent.OnDeleteClicked(feedId))
+                    },
+                    onReport = { feedId ->
+                        onIntent(HomeIntent.OnReportClicked(feedId))
+                    },
+                )
+            }
+
             item {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(60.dp))
             }
-        }
-
-        // 피드 아이템들 (실제 데이터 기반)
-        items(
-            count = filteredFeeds.size,
-            key = { filteredFeeds[it].id },
-        ) { index ->
-            val feed = filteredFeeds[index]
-
-            FeedItemCard(
-                feed = feed,
-                onVote = { feedId, optionIndex ->
-                    onIntent(HomeIntent.OnVoteClicked(feedId, optionIndex))
-                },
-                onDelete = { feedId ->
-                    onIntent(HomeIntent.OnDeleteClicked(feedId))
-                },
-                onReport = { feedId ->
-                    onIntent(HomeIntent.OnReportClicked(feedId))
-                },
-            )
         }
     }
 }
@@ -490,6 +501,7 @@ private fun FilterChipRow(
 @Composable
 private fun FeedItemCard(
     feed: FeedItem,
+    modifier: Modifier = Modifier,
     onVote: (String, Int) -> Unit,
     onDelete: (String) -> Unit,
     onReport: (String) -> Unit,
@@ -498,7 +510,7 @@ private fun FeedItemCard(
 
     Column {
         FeedCard(
-            modifier = Modifier.padding(20.dp),
+            modifier = modifier,
             profileImageUrl = feed.profileImageUrl,
             nickname = feed.nickname,
             category = feed.category,
@@ -528,46 +540,14 @@ private fun FeedItemCard(
     }
 }
 
-/**
- * 피드 이미지 확대 오버레이 컴포넌트
- */
 @Composable
-private fun FullScreenImageOverlay(
-    imageUrl: String,
-    onDismiss: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .clickable { onDismiss() },
-    ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = "Expanded Image",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit,
-        )
-
-        // 상단 닫기 버튼
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = 10.dp, top = 10.dp)
-                    .size(40.dp)
-                    .clickable { onDismiss() },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = BuyOrNotIcons.Close.asImageVector(),
-                contentDescription = "Close",
-                tint = Color.White,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-    }
+fun HomeFeedEmptyView(modifier: Modifier = Modifier) {
+    BuyOrNotEmptyView(
+        modifier = modifier,
+        title = "아직 올린 투표가 없어요",
+        description = "고민되는 상품의 투표를 올려보세요!",
+        image = BuyOrNotIcons.NoVote.resId,
+    )
 }
 
 @Preview(name = "HomeScreen Preview", showBackground = false)
