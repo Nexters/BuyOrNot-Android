@@ -3,15 +3,17 @@ package com.sseotdabwa.buyornot.feature.home.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -19,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.shadow.Shadow
@@ -96,8 +97,7 @@ fun HomeBanner(
                     width = 1.dp,
                     color = BuyOrNotTheme.colors.gray300,
                     shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius),
-                ).clickable { onClick() }
-                .padding(
+                ).padding(
                     start = HomeBannerDefaults.BannerPaddingStart,
                     end = HomeBannerDefaults.BannerPaddingEnd,
                     bottom = HomeBannerDefaults.BannerPaddingBottom,
@@ -160,7 +160,7 @@ private fun HomeBannerContent(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         HomeBannerImage()
-        HomeBannerActionButton(text = "고민되는 소비가 있나요?")
+        HomeBannerActionButton(text = "고민되는 소비가 있나요?", onClick = { })
     }
 }
 
@@ -190,8 +190,17 @@ private fun HomeBannerImage() {
 private fun HomeBannerActionButton(
     text: String,
     modifier: Modifier = Modifier,
+    onClick: () -> Unit,
 ) {
-    Box(
+    Button(
+        onClick = onClick,
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = Color.Transparent,
+                contentColor = BuyOrNotTheme.colors.gray0,
+            ),
+        shape = RoundedCornerShape(HomeBannerDefaults.ActionButtonCornerRadius),
+        contentPadding = PaddingValues(0.dp),
         modifier =
             modifier
                 .fillMaxWidth()
@@ -208,7 +217,6 @@ private fun HomeBannerActionButton(
                         ),
                     shape = RoundedCornerShape(HomeBannerDefaults.ActionButtonCornerRadius),
                 ),
-        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,

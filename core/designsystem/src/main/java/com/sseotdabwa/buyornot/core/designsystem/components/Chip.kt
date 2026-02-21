@@ -7,9 +7,12 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BuyOrNotChip(
     text: String,
@@ -61,22 +65,24 @@ fun BuyOrNotChip(
             BuyOrNotTheme.typography.bodyB5Medium
         }
 
-    Surface(
-        modifier = modifier,
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        color = backgroundColor,
-        contentColor = contentColor,
-        interactionSource = interactionSource,
-    ) {
-        Box(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            contentAlignment = Alignment.Center,
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+        Surface(
+            modifier = modifier,
+            onClick = onClick,
+            shape = RoundedCornerShape(12.dp),
+            color = backgroundColor,
+            contentColor = contentColor,
+            interactionSource = interactionSource,
         ) {
-            Text(
-                text = text,
-                style = textStyle,
-            )
+            Box(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = text,
+                    style = textStyle,
+                )
+            }
         }
     }
 }

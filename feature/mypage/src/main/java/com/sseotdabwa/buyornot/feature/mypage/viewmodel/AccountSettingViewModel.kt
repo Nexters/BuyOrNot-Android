@@ -95,6 +95,7 @@ class AccountSettingViewModel @Inject constructor(
             }
 
             // 3. 로그인 화면으로 이동
+            updateState { it.copy(isLogoutDialogVisible = false) }
             sendSideEffect(AccountSettingSideEffect.NavigateToLogin)
         }
     }

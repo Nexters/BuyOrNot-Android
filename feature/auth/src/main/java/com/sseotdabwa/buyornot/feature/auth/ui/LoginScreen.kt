@@ -152,7 +152,7 @@ private fun LoginInteractionSection(
         Spacer(modifier = Modifier.height(28.dp))
 
         Text(
-            text = "현명한 소비를 위한\n합리적인 비교 방법",
+            text = "현명한 소비를 위한\n집단지성 비교 방법",
             style = BuyOrNotTheme.typography.headingH1SemiBold,
             color = BuyOrNotTheme.colors.gray900,
             textAlign = TextAlign.Center,

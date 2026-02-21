@@ -32,6 +32,8 @@ class WithdrawalViewModel @Inject constructor(
         when (intent) {
             is WithdrawalIntent.FetchProfile -> fetchProfile()
             is WithdrawalIntent.Withdraw -> withdraw(intent.context)
+            is WithdrawalIntent.ShowWithdrawalDialog -> updateState { it.copy(isWithdrawalDialogVisible = true) }
+            is WithdrawalIntent.DismissWithdrawalDialog -> updateState { it.copy(isWithdrawalDialogVisible = false) }
         }
     }
 
@@ -91,6 +93,7 @@ class WithdrawalViewModel @Inject constructor(
                 }
             }
 
+            updateState { it.copy(isWithdrawalDialogVisible = false) }
             sendSideEffect(WithdrawalSideEffect.NavigateToLogin)
         }
     }

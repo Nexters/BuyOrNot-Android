@@ -83,9 +83,7 @@ fun FeedCard(
     var showMenu by remember { mutableStateOf(false) }
     var showFullScreen by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = modifier.padding(16.dp),
-    ) {
+    Column(modifier = modifier) {
         val isInPreviewMode = LocalInspectionMode.current
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -136,8 +134,8 @@ fun FeedCard(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = createdAt,
-                        style = BuyOrNotTheme.typography.captionC1Regular,
-                        color = BuyOrNotTheme.colors.gray400,
+                        style = BuyOrNotTheme.typography.bodyB7Medium,
+                        color = BuyOrNotTheme.colors.gray600,
                     )
                 }
             }
@@ -174,10 +172,11 @@ fun FeedCard(
                         color = BuyOrNotTheme.colors.gray100,
                         shape = RoundedCornerShape(16.dp),
                     ).clip(RoundedCornerShape(16.dp))
-                    .padding(14.dp),
+                    .padding(16.dp),
         ) {
             Text(
                 text = content,
+                modifier = Modifier.padding(horizontal = 4.dp),
                 style = BuyOrNotTheme.typography.bodyB4Medium,
                 color = BuyOrNotTheme.colors.gray900,
             )
@@ -252,7 +251,7 @@ fun FeedCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // 5. 투표 영역 (VoteOption 또는 VoteProgressItem)
             // 사용자가 투표했거나 투표가 종료되었으면 결과 표시
@@ -332,8 +331,9 @@ fun FeedCard(
                     }
                 Text(
                     text = stringResource(R.string.feed_card_vote_count_format, totalVoteCount, statusText),
-                    style = BuyOrNotTheme.typography.captionC1Regular,
-                    color = BuyOrNotTheme.colors.gray400,
+                    modifier = Modifier.padding(start = 6.dp),
+                    style = BuyOrNotTheme.typography.bodyB7Medium,
+                    color = BuyOrNotTheme.colors.gray600,
                 )
             }
         }

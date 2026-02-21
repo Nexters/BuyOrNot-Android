@@ -14,9 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -83,10 +80,10 @@ fun WithdrawalScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     onWithdrawalClick: () -> Unit,
+    onShowWithdrawalDialog: () -> Unit = {},
+    onDismissWithdrawalDialog: () -> Unit = {},
     uiState: WithdrawalUiState,
 ) {
-    var isWithdrawalDialogVisible by remember { mutableStateOf(false) }
-
     Column(modifier = modifier) {
         BackTopBarWithTitle(
             title = "회원탈퇴",
@@ -130,21 +127,21 @@ fun WithdrawalScreen(
                 "탈퇴하기",
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                isWithdrawalDialogVisible = true
+                onShowWithdrawalDialog()
             }
         }
     }
 
-    if (isWithdrawalDialogVisible) {
+    if (uiState.isWithdrawalDialogVisible) {
         BuyOrNotConfirmDialog(
-            onDismissRequest = { isWithdrawalDialogVisible = false },
+            onDismissRequest = onDismissWithdrawalDialog,
             title = "정말 탈퇴하시겠어요?",
             confirmText = "유지하기",
             dismissText = "탈퇴하기",
-            onConfirm = { isWithdrawalDialogVisible = false },
+            onConfirm = onDismissWithdrawalDialog,
             onDismiss = {
                 onWithdrawalClick()
-                isWithdrawalDialogVisible = false
+                onDismissWithdrawalDialog()
             },
         )
     }

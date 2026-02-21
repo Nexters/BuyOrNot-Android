@@ -3,7 +3,6 @@ package com.sseotdabwa.buyornot.feature.notification.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -78,14 +77,6 @@ fun NotificationGuideBanner(
 @Composable
 private fun NotificationGuideBannerPreview() {
     BuyOrNotTheme {
-        Box(
-            modifier =
-                Modifier
-                    .background(
-                        color = BuyOrNotTheme.colors.gray700,
-                    ).padding(20.dp),
-        ) {
-            NotificationGuideBanner(onActionClick = {})
-        }
+        NotificationGuideBanner(onActionClick = {})
     }
 }
