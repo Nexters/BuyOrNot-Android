@@ -221,6 +221,7 @@ class HomeViewModel @Inject constructor(
                 // 현재 선택된 필터에 맞춰 UI 상태 업데이트
                 applyFiltering()
             } catch (e: Exception) {
+                cachedFeeds = emptyList()
                 updateState { it.copy(isLoading = false, hasError = true) }
             }
         }
