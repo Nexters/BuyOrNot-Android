@@ -3,7 +3,9 @@ package com.sseotdabwa.buyornot.feature.home.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.sseotdabwa.buyornot.feature.home.ui.HomeScreen
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
 
@@ -18,6 +20,13 @@ fun NavGraphBuilder.homeScreen(
 ) {
     composable(
         route = HOME_ROUTE_WITH_TAB,
+        arguments =
+            listOf(
+                navArgument("tab") {
+                    type = NavType.StringType
+                    nullable = true
+                },
+            ),
     ) { backStackEntry ->
         val tabName = backStackEntry.arguments?.getString("tab")
         val initialTab =
