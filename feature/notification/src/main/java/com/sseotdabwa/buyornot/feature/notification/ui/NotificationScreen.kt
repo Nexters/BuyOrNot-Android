@@ -37,6 +37,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotErrorView
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.permission.hasNotificationPermission
@@ -173,7 +174,25 @@ fun NotificationScreen(
                 }
             }
 
-            if (uiState.notifications.isEmpty()) {
+            if (uiState.isError) {
+                item {
+                    Column {
+                        Spacer(
+                            modifier =
+                                Modifier.height(
+                                    if (!uiState.hasNotificationPermission) {
+                                        140.dp
+                                    } else {
+                                        120.dp
+                                    },
+                                ),
+                        )
+                        BuyOrNotErrorView {
+                            viewModel.handleIntent(NotificationIntent.OnRefreshNotifications)
+                        }
+                    }
+                }
+            } else if (uiState.notifications.isEmpty()) {
                 item {
                     Column {
                         Spacer(

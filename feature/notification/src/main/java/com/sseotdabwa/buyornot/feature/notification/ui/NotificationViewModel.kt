@@ -51,6 +51,7 @@ class NotificationViewModel @Inject constructor(
             is NotificationIntent.OnPermissionGranted -> handlePermissionGranted()
             is NotificationIntent.OnPermissionDenied -> handlePermissionDenied()
             is NotificationIntent.OnNotificationClick -> handleNotificationClick(intent.notificationId)
+            is NotificationIntent.OnRefreshNotifications -> loadNotifications()
         }
     }
 
@@ -145,14 +146,14 @@ class NotificationViewModel @Inject constructor(
                             isRead = it.isRead,
                         )
                     }
-                updateState { it.copy(notifications = notificationItems) }
+                updateState {
+                    it.copy(
+                        notifications = notificationItems,
+                        isError = false,
+                    )
+                }
             }.onFailure {
-                sendSideEffect(
-                    NotificationSideEffect.ShowSnackbar(
-                        message = "알림 목록을 불러오는데 실패했습니다.",
-                    ),
-                )
-                updateState { it.copy(notifications = emptyList()) }
+                updateState { it.copy(isError = true) }
             }
         }
     }
