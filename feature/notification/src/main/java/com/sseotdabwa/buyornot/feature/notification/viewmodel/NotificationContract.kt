@@ -23,6 +23,7 @@ data class NotificationItem(
  */
 @Immutable
 data class NotificationUiState(
+    val isError: Boolean = false,
     val selectedFilter: NotificationFilter = NotificationFilter.ALL,
     val hasNotificationPermission: Boolean = false,
     val hasRequestedPermission: Boolean = false,
@@ -46,6 +47,8 @@ sealed interface NotificationIntent {
     data class OnNotificationClick(
         val notificationId: String,
     ) : NotificationIntent
+
+    data object OnRefreshNotifications : NotificationIntent
 }
 
 /**
