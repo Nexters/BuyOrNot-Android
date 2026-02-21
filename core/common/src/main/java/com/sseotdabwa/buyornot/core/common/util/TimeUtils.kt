@@ -2,8 +2,10 @@ package com.sseotdabwa.buyornot.core.common.util
 
 import java.time.Duration
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 object TimeUtils {
     /**
@@ -18,7 +20,15 @@ object TimeUtils {
         now: LocalDateTime = LocalDateTime.now(ZoneId.of("UTC")),
     ): String {
         // ZonedDateTime으로 파싱하여 시스템 기본 시간대로 변환
-        val dateTime = LocalDateTime.parse(isoString, DateTimeFormatter.ISO_DATE_TIME)
+        val dateTime =
+            try {
+                OffsetDateTime
+                    .parse(isoString, DateTimeFormatter.ISO_DATE_TIME)
+                    .withOffsetSameInstant(java.time.ZoneOffset.UTC)
+                    .toLocalDateTime()
+            } catch (e: DateTimeParseException) {
+                return isoString
+            }
 
         val duration = Duration.between(dateTime, now)
         val minutes = duration.toMinutes()
