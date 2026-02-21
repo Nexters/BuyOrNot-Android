@@ -34,6 +34,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
+import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.permission.hasNotificationPermission
 import com.sseotdabwa.buyornot.core.ui.permission.openAppSettings
@@ -156,36 +158,56 @@ fun NotificationScreen(
                 }
             }
 
-            // 3. 알림 리스트 아이템
-            items(uiState.notifications) { notification ->
-                NotificationItem(
-                    state =
-                        NotificationState(
-                            id = notification.id,
-                            imageUrl = notification.imageUrl,
-                            label = notification.title,
-                            message = notification.description,
-                            time = notification.time,
-                            isRead = notification.isRead,
-                        ),
-                    onClick = { onNotificationClick(notification.id) },
-                )
+            if (uiState.notifications.isEmpty()) {
+                item {
+                    Column {
+                        Spacer(
+                            modifier =
+                                Modifier.height(
+                                    if (!uiState.hasNotificationPermission) {
+                                        140.dp
+                                    } else {
+                                        120.dp
+                                    },
+                                ),
+                        )
+                        NotificationEmptyView()
+                    }
+                }
+            } else {
+                // 3. 알림 리스트 아이템
+                items(uiState.notifications) { notification ->
+                    NotificationItem(
+                        state =
+                            NotificationState(
+                                id = notification.id,
+                                imageUrl = notification.imageUrl,
+                                label = notification.title,
+                                message = notification.description,
+                                time = notification.time,
+                                isRead = notification.isRead,
+                            ),
+                        onClick = { onNotificationClick(notification.id) },
+                    )
+                }
             }
 
             // 4. 리스트 푸터
-            item {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 20.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "30일 전 알림까지 보여줘요",
-                        style = BuyOrNotTheme.typography.bodyB6Medium,
-                        color = BuyOrNotTheme.colors.gray400,
-                    )
+            if (uiState.notifications.isNotEmpty()) {
+                item {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 20.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "30일 전 알림까지 보여줘요",
+                            style = BuyOrNotTheme.typography.bodyB6Medium,
+                            color = BuyOrNotTheme.colors.gray400,
+                        )
+                    }
                 }
             }
         }
@@ -213,6 +235,16 @@ private fun NotificationFilterRow(
             )
         }
     }
+}
+
+@Composable
+private fun NotificationEmptyView(modifier: Modifier = Modifier) {
+    BuyOrNotEmptyView(
+        modifier = modifier,
+        title = "새로운 알림이 없어요",
+        description = "투표에 참여하고 소식을 받아보세요!",
+        image = BuyOrNotImgs.NoNotification.resId,
+    )
 }
 
 @Preview(showBackground = true)
