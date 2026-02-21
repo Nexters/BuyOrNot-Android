@@ -1,17 +1,9 @@
 package com.sseotdabwa.buyornot.feature.notification.viewmodel
 
 import androidx.compose.runtime.Immutable
-
-/**
- * 알림 화면의 탭/필터 정의
- */
-enum class NotificationFilter(
-    val label: String,
-) {
-    ALL("전체"),
-    MY_VOTE("내가 올린 투표"),
-    PARTICIPATED("참여한 투표"),
-}
+import com.sseotdabwa.buyornot.core.designsystem.components.SnackBarIconTint
+import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+import com.sseotdabwa.buyornot.domain.model.NotificationFilter
 
 /**
  * 알림 아이템 데이터 모델
@@ -50,6 +42,10 @@ sealed interface NotificationIntent {
     data object OnPermissionGranted : NotificationIntent
 
     data object OnPermissionDenied : NotificationIntent
+
+    data class OnNotificationClick(
+        val notificationId: String,
+    ) : NotificationIntent
 }
 
 /**
@@ -59,4 +55,14 @@ sealed interface NotificationSideEffect {
     data object RequestNotificationPermission : NotificationSideEffect
 
     data object OpenAppSettings : NotificationSideEffect
+
+    data class ShowSnackbar(
+        val message: String,
+        val icon: IconResource? = null,
+        val iconTint: SnackBarIconTint = SnackBarIconTint.Success,
+    ) : NotificationSideEffect
+
+    data class NavigateToNotificationDetail(
+        val notificationId: String,
+    ) : NotificationSideEffect
 }
