@@ -51,6 +51,12 @@ fun NotificationScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // 권한 상태 즉시 초기화 (깜빡임 방지)
+    LaunchedEffect(Unit) {
+        val hasPermission = context.hasNotificationPermission()
+        viewModel.initializePermissionState(hasPermission)
+    }
+
     // 알림 권한 요청
     val (_, requestPermission) =
         rememberNotificationPermission { granted ->

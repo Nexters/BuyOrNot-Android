@@ -26,6 +26,14 @@ class NotificationViewModel @Inject constructor(
     }
 
     /**
+     * 권한 상태 초기화 (깜빡임 방지)
+     * Context를 통해 현재 권한 상태를 즉시 설정
+     */
+    fun initializePermissionState(hasPermission: Boolean) {
+        updateState { it.copy(hasNotificationPermission = hasPermission) }
+    }
+
+    /**
      * DataStore에서 권한 요청 이력 로드
      */
     private fun loadPermissionState() {
