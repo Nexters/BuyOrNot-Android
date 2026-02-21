@@ -3,8 +3,10 @@ package com.sseotdabwa.buyornot.core.data.repository
 import com.sseotdabwa.buyornot.core.network.api.FeedApiService
 import com.sseotdabwa.buyornot.core.network.dto.request.FeedRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
+import com.sseotdabwa.buyornot.core.network.dto.request.VoteRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.AuthorDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
+import com.sseotdabwa.buyornot.core.network.dto.response.VoteResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
 import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.Feed
@@ -12,6 +14,7 @@ import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
+import com.sseotdabwa.buyornot.domain.model.VoteResult
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -96,6 +99,32 @@ class FeedRepositoryImpl @Inject constructor(
     override suspend fun reportFeed(feedId: Long) {
         feedApiService.reportFeed(feedId).getOrThrow()
     }
+
+    override suspend fun voteFeed(
+        feedId: Long,
+        choice: VoteChoice,
+    ): VoteResult {
+        val response =
+            feedApiService
+                .voteFeed(
+                    feedId = feedId,
+                    request = VoteRequest(choice = choice.name),
+                ).getOrThrow()
+        return response.toDomain()
+    }
+
+    override suspend fun voteGuestFeed(
+        feedId: Long,
+        choice: VoteChoice,
+    ): VoteResult {
+        val response =
+            feedApiService
+                .voteGuestFeed(
+                    feedId = feedId,
+                    request = VoteRequest(choice = choice.name),
+                ).getOrThrow()
+        return response.toDomain()
+    }
 }
 
 /**
@@ -142,3 +171,11 @@ private fun String.toFeedStatus(): FeedStatus =
         else -> FeedStatus.CLOSED
     }
 
+private fun VoteResponse.toDomain(): VoteResult =
+    VoteResult(
+        feedId = feedId,
+        choice = choice.toVoteChoice() ?: VoteChoice.YES,
+        yesCount = yesCount,
+        noCount = noCount,
+        totalCount = totalCount,
+    )

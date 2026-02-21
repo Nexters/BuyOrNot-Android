@@ -82,17 +82,63 @@ class HomeViewModel @Inject constructor(
         feedId: String,
         optionIndex: Int,
     ) {
-        // TODO: 서버 연동 시 실제 투표 로직 구현
         viewModelScope.launch {
-            val updatedFeeds =
-                uiState.value.feeds.map { feed ->
-                    if (feed.id == feedId) {
-                        feed.copy(userVotedOptionIndex = optionIndex)
-                    } else {
-                        feed
+            try {
+                // optionIndex: 0 = YES, 1 = NO
+                val choice = if (optionIndex == 0) VoteChoice.YES else VoteChoice.NO
+
+                // 사용자 타입에 따라 회원/비회원 투표 API 호출
+                val voteResult =
+                    when (uiState.value.userType) {
+                        UserType.SOCIAL -> feedRepository.voteFeed(feedId.toLong(), choice)
+                        UserType.GUEST -> feedRepository.voteGuestFeed(feedId.toLong(), choice)
                     }
-                }
-            updateState { it.copy(feeds = updatedFeeds) }
+
+                // UI 업데이트: 투표 결과를 반영
+                val updatedFeeds =
+                    uiState.value.feeds.map { feed ->
+                        if (feed.id == feedId) {
+                            feed.copy(
+                                userVotedOptionIndex = optionIndex,
+                                buyVoteCount = voteResult.yesCount,
+                                maybeVoteCount = voteResult.noCount,
+                                totalVoteCount = voteResult.totalCount,
+                            )
+                        } else {
+                            feed
+                        }
+                    }
+                updateState { it.copy(feeds = updatedFeeds) }
+
+                // 캐시도 업데이트
+                cachedFeeds =
+                    cachedFeeds.map { feed ->
+                        if (feed.id == feedId) {
+                            feed.copy(
+                                userVotedOptionIndex = optionIndex,
+                                buyVoteCount = voteResult.yesCount,
+                                maybeVoteCount = voteResult.noCount,
+                                totalVoteCount = voteResult.totalCount,
+                            )
+                        } else {
+                            feed
+                        }
+                    }
+            } catch (e: Exception) {
+                // 에러 발생 시 스낵바로 알림
+                val errorMessage =
+                    when {
+                        e.message?.contains("400") == true -> "이미 투표했거나 마감된 피드입니다."
+                        e.message?.contains("404") == true -> "피드를 찾을 수 없습니다."
+                        else -> "투표에 실패했습니다."
+                    }
+                sendSideEffect(
+                    HomeSideEffect.ShowSnackbar(
+                        message = errorMessage,
+                        icon = null,
+                    ),
+                )
+            }
         }
     }
 

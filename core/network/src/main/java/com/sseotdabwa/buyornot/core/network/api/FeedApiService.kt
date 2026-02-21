@@ -2,11 +2,13 @@ package com.sseotdabwa.buyornot.core.network.api
 
 import com.sseotdabwa.buyornot.core.network.dto.request.FeedRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
+import com.sseotdabwa.buyornot.core.network.dto.request.VoteRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.PresignedUrlResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.VoteResponse
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -83,4 +85,28 @@ interface FeedApiService {
     suspend fun reportFeed(
         @Path("feedId") feedId: Long,
     ): BaseResponse<Unit>
+
+    /**
+     * 회원 투표
+     *
+     * @param feedId 투표할 피드 ID
+     * @param request 투표 선택 (YES or NO)
+     */
+    @POST("/api/v1/feeds/{feedId}/votes")
+    suspend fun voteFeed(
+        @Path("feedId") feedId: Long,
+        @Body request: VoteRequest,
+    ): BaseResponse<VoteResponse>
+
+    /**
+     * 비회원 투표
+     *
+     * @param feedId 투표할 피드 ID
+     * @param request 투표 선택 (YES or NO)
+     */
+    @POST("/api/v1/feeds/{feedId}/votes/guest")
+    suspend fun voteGuestFeed(
+        @Path("feedId") feedId: Long,
+        @Body request: VoteRequest,
+    ): BaseResponse<VoteResponse>
 }

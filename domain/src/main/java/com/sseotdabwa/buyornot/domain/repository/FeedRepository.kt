@@ -3,6 +3,8 @@ package com.sseotdabwa.buyornot.domain.repository
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
+import com.sseotdabwa.buyornot.domain.model.VoteChoice
+import com.sseotdabwa.buyornot.domain.model.VoteResult
 
 interface FeedRepository {
     /**
@@ -59,4 +61,28 @@ interface FeedRepository {
      * @param feedId 신고할 피드 ID
      */
     suspend fun reportFeed(feedId: Long)
+
+    /**
+     * 회원 투표
+     *
+     * @param feedId 투표할 피드 ID
+     * @param choice 투표 선택 (YES or NO)
+     * @return 투표 결과
+     */
+    suspend fun voteFeed(
+        feedId: Long,
+        choice: VoteChoice,
+    ): VoteResult
+
+    /**
+     * 비회원 투표
+     *
+     * @param feedId 투표할 피드 ID
+     * @param choice 투표 선택 (YES or NO)
+     * @return 투표 결과
+     */
+    suspend fun voteGuestFeed(
+        feedId: Long,
+        choice: VoteChoice,
+    ): VoteResult
 }
