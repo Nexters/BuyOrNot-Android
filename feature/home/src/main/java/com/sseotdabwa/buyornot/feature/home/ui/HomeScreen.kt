@@ -91,7 +91,6 @@ fun HomeScreen(
 
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
     var isFabExpanded by remember { mutableStateOf(false) }
-    var expandedImageUrl by remember { mutableStateOf<String?>(null) }
 
     // SideEffect 처리
     LaunchedEffect(Unit) {
@@ -115,15 +114,12 @@ fun HomeScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         isFabExpanded = isFabExpanded,
-        expandedImageUrl = expandedImageUrl,
         onLoginClick = onLoginClick,
         onNotificationClick = onNotificationClick,
         onProfileClick = onProfileClick,
         onUploadClick = onUploadClick,
         onIntent = viewModel::handleIntent,
-        onImageExpand = { expandedImageUrl = it },
         onFabExpandedChange = { isFabExpanded = it },
-        onImageDismiss = { expandedImageUrl = null },
     )
 }
 
@@ -134,15 +130,12 @@ fun HomeScreen(
 private fun HomeScreenContent(
     uiState: HomeUiState,
     isFabExpanded: Boolean,
-    expandedImageUrl: String?,
     onLoginClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
     onUploadClick: () -> Unit,
     onIntent: (HomeIntent) -> Unit,
-    onImageExpand: (String) -> Unit,
     onFabExpandedChange: (Boolean) -> Unit,
-    onImageDismiss: () -> Unit,
     snackbarHostState: SnackbarHostState,
 ) {
     val density = LocalDensity.current
@@ -191,11 +184,9 @@ private fun HomeScreenContent(
             HomeFeedList(
                 uiState = uiState,
                 onIntent = onIntent,
-                onImageExpand = onImageExpand,
                 headerPadding = totalHeaderHeight + innerPadding.calculateTopPadding(),
             )
 
-            // FAB 확장 시 배경 딤 처리
             FabDimOverlay(
                 visible = isFabExpanded,
                 onDismiss = { onFabExpandedChange(false) },
@@ -209,7 +200,6 @@ private fun HomeScreenContent(
                     .offset { IntOffset(x = 0, y = topBarOffsetHeightPx.roundToInt()) }
                     .background(BuyOrNotTheme.colors.gray0),
         ) {
-            // UiState에서 userType을 가져와 TopBar 분기 (깜빡임 방지)
             when (uiState.userType) {
                 UserType.GUEST -> {
                     GuestTopBar(
@@ -227,14 +217,6 @@ private fun HomeScreenContent(
             HomeTabSection(
                 selectedTab = uiState.selectedTab,
                 onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
-            )
-        }
-
-        // 이미지 확대 레이어 (최상단)
-        expandedImageUrl?.let { url ->
-            FullScreenImageOverlay(
-                imageUrl = url,
-                onDismiss = onImageDismiss,
             )
         }
     }
@@ -338,7 +320,6 @@ private fun FabDimOverlay(
 private fun HomeFeedList(
     uiState: HomeUiState,
     onIntent: (HomeIntent) -> Unit,
-    onImageExpand: (String) -> Unit,
     headerPadding: Dp,
     modifier: Modifier = Modifier,
 ) {
@@ -381,7 +362,6 @@ private fun HomeFeedList(
 
             FeedItemCard(
                 feed = feed,
-                onExpandClick = onImageExpand,
                 onVote = { feedId, optionIndex ->
                     onIntent(HomeIntent.OnVoteClicked(feedId, optionIndex))
                 },
@@ -449,8 +429,6 @@ private fun HomeBannerSection(
             size = BuyOrNotDividerSize.Small,
             modifier = Modifier.padding(horizontal = 20.dp),
         )
-
-        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
@@ -460,7 +438,6 @@ private fun HomeBannerSection(
 @Composable
 private fun FeedItemCard(
     feed: FeedItem,
-    onExpandClick: (String) -> Unit,
     onVote: (String, Int) -> Unit,
     onDelete: (String) -> Unit,
     onReport: (String) -> Unit,
@@ -488,7 +465,6 @@ private fun FeedItemCard(
             maybeVoteCount = feed.maybeVoteCount,
             totalVoteCount = feed.totalVoteCount,
             isOwner = feed.isOwner,
-            onExpandClick = onExpandClick,
             onVote = { option ->
                 userVotedOption = option
                 onVote(feed.id, option)
