@@ -71,7 +71,7 @@ fun NotificationItem(
                     .fillMaxWidth()
                     .background(backgroundColor)
                     .clickable { onClick() }
-                    .padding(horizontal = 20.dp, vertical = 20.dp),
+                    .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // 좌측 이미지

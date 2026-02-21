@@ -112,6 +112,7 @@ fun NotificationScreen(
         ) {
             // 1. 필터 칩 영역
             item {
+                Spacer(modifier = Modifier.height(20.dp))
                 NotificationFilterRow(
                     selectedFilter = uiState.selectedFilter,
                     onFilterSelected = { filter ->
@@ -151,7 +152,7 @@ fun NotificationScreen(
                         },
                         modifier = Modifier.padding(horizontal = 20.dp),
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
 
@@ -200,10 +201,7 @@ private fun NotificationFilterRow(
     onFilterSelected: (com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationFilter) -> Unit,
 ) {
     LazyRow(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(top = 20.dp),
+        modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
