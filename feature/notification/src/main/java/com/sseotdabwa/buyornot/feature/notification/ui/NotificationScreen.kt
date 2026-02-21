@@ -34,6 +34,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -189,7 +191,10 @@ fun NotificationScreen(
                 }
             } else {
                 // 3. 알림 리스트 아이템
-                items(uiState.notifications) { notification ->
+                items(
+                    uiState.notifications,
+                    key = { it.id },
+                ) { notification ->
                     NotificationItem(
                         state =
                             NotificationState(
@@ -204,6 +209,12 @@ fun NotificationScreen(
                             viewModel.handleIntent(NotificationIntent.OnNotificationClick(notification.id))
                         },
                     )
+
+                    if (notification != uiState.notifications.last()) {
+                        BuyOrNotDivider(
+                            size = BuyOrNotDividerSize.Small,
+                        )
+                    }
                 }
             }
 
