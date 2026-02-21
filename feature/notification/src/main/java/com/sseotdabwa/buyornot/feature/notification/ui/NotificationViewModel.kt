@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
 import androidx.lifecycle.viewModelScope
+import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.NotificationFilter
@@ -140,11 +141,18 @@ class NotificationViewModel @Inject constructor(
                             imageUrl = it.viewUrl,
                             title = it.title,
                             description = it.body,
-                            time = it.voteClosedAt,
+                            time = TimeUtils.formatRelativeTime(it.voteClosedAt),
                             isRead = it.isRead,
                         )
                     }
                 updateState { it.copy(notifications = notificationItems) }
+            }.onFailure {
+                sendSideEffect(
+                    NotificationSideEffect.ShowSnackbar(
+                        message = "알림 목록을 불러오는데 실패했습니다.",
+                    ),
+                )
+                updateState { it.copy(notifications = emptyList()) }
             }
         }
     }
