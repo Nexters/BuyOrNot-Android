@@ -173,13 +173,21 @@ private fun HomeScreenContent(
     // TopBar 오프셋 상태 (0 = 보임, -topBarHeightPx = 숨김)
     var topBarOffsetHeightPx by remember { mutableStateOf(0f) }
 
+    // 스크롤 가능한 콘텐츠가 있는지 확인 (피드가 있을 때만 스크롤 활성화)
+    val hasScrollableContent = uiState.feeds.isNotEmpty()
+
     val nestedScrollConnection =
-        remember(topBarHeightPx) {
+        remember(topBarHeightPx, hasScrollableContent) {
             object : NestedScrollConnection {
                 override fun onPreScroll(
                     available: Offset,
                     source: NestedScrollSource,
                 ): Offset {
+                    // 스크롤 가능한 콘텐츠가 없으면 스크롤 연결 비활성화
+                    if (!hasScrollableContent) {
+                        return Offset.Zero
+                    }
+
                     val delta = available.y
                     val newOffset = topBarOffsetHeightPx + delta
                     topBarOffsetHeightPx = newOffset.coerceIn(-topBarHeightPx, 0f)
@@ -188,8 +196,13 @@ private fun HomeScreenContent(
             }
         }
 
-    LaunchedEffect(topBarHeightPx) {
-        topBarOffsetHeightPx = topBarOffsetHeightPx.coerceIn(-topBarHeightPx, 0f)
+    // 콘텐츠 상태가 변경되면 오프셋 리셋
+    LaunchedEffect(topBarHeightPx, hasScrollableContent) {
+        if (!hasScrollableContent) {
+            topBarOffsetHeightPx = 0f
+        } else {
+            topBarOffsetHeightPx = topBarOffsetHeightPx.coerceIn(-topBarHeightPx, 0f)
+        }
     }
 
     Box(
