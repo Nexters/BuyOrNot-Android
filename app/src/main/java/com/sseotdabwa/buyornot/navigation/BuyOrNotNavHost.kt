@@ -87,18 +87,10 @@ fun BuyOrNotNavHost(
         )
 
         homeScreen(
-            onLoginClick = {
-                navController.navigateForceToLogin()
-            },
-            onNotificationClick = {
-                navController.navigateToNotification()
-            },
-            onProfileClick = {
-                navController.navigateToMyPage()
-            },
-            onUploadClick = {
-                navController.navigateToUpload()
-            },
+            onLoginClick = navController::navigateForceToLogin,
+            onNotificationClick = navController::navigateToNotification,
+            onProfileClick = navController::navigateToMyPage,
+            onUploadClick = navController::navigateToUpload,
         )
         notificationGraph(
             onBackClick = navController::popBackStack,

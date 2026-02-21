@@ -1,0 +1,113 @@
+package com.sseotdabwa.buyornot.feature.home.viewmodel
+
+import androidx.compose.runtime.Immutable
+import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
+import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+
+/**
+ * 홈 화면의 탭 정의
+ */
+enum class HomeTab { FEED, REVIEW }
+
+/**
+ * 필터 칩의 종류
+ */
+enum class FilterChip(
+    val label: String,
+) {
+    ALL("전체"),
+    IN_PROGRESS("진행중 투표"),
+    ENDED("마감된 투표"),
+}
+
+/**
+ * 피드 아이템 데이터 모델
+ */
+@Immutable
+data class FeedItem(
+    val id: String,
+    val profileImageUrl: String,
+    val nickname: String,
+    val category: String,
+    val createdAt: String,
+    val content: String,
+    val productImageUrl: String,
+    val price: String,
+    val imageAspectRatio: ImageAspectRatio,
+    val isVoteEnded: Boolean,
+    val userVotedOptionIndex: Int?,
+    val buyVoteCount: Int,
+    val maybeVoteCount: Int,
+    val totalVoteCount: Int,
+    val isOwner: Boolean = false,
+)
+
+/**
+ * 홈 화면의 UI 상태 (MVI State)
+ *
+ * @property userType 현재 사용자 타입 (GUEST/SOCIAL)
+ * @property selectedTab 현재 선택된 탭
+ * @property selectedFilter 현재 선택된 필터 칩
+ * @property isBannerVisible 배너 표시 여부
+ * @property feeds 피드 목록
+ * @property isLoading 로딩 상태
+ */
+@Immutable
+data class HomeUiState(
+    val userType: com.sseotdabwa.buyornot.domain.model.UserType = com.sseotdabwa.buyornot.domain.model.UserType.GUEST,
+    val selectedTab: HomeTab = HomeTab.FEED,
+    val selectedFilter: FilterChip = FilterChip.ALL,
+    val isBannerVisible: Boolean = true,
+    val feeds: List<FeedItem> = emptyList(),
+    val isLoading: Boolean = false,
+)
+
+/**
+ * 홈 화면에서 발생하는 사용자 액션 (MVI Intent)
+ */
+sealed interface HomeIntent {
+    data class OnTabSelected(
+        val tab: HomeTab,
+    ) : HomeIntent
+
+    data class OnFilterSelected(
+        val filter: FilterChip,
+    ) : HomeIntent
+
+    data object OnBannerDismissed : HomeIntent
+
+    data class OnVoteClicked(
+        val feedId: String,
+        val optionIndex: Int,
+    ) : HomeIntent
+
+    data class OnDeleteClicked(
+        val feedId: String,
+    ) : HomeIntent
+
+    data class OnReportClicked(
+        val feedId: String,
+    ) : HomeIntent
+
+    data object LoadFeeds : HomeIntent
+}
+
+/**
+ * 홈 화면의 일회성 이벤트 (MVI SideEffect)
+ */
+sealed interface HomeSideEffect {
+    data class ShowSnackbar(
+        val message: String,
+        val icon: IconResource? = null,
+    ) : HomeSideEffect
+
+    data object NavigateToNotification : HomeSideEffect
+
+    data object NavigateToProfile : HomeSideEffect
+
+    data object NavigateToUpload : HomeSideEffect
+}
+
+
+
+
