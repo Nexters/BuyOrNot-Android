@@ -80,7 +80,7 @@ fun WithdrawalScreen(
     modifier: Modifier = Modifier,
     onBackClick: () -> Unit,
     onWithdrawalClick: () -> Unit,
-    onsShowWithdrawalDialog: () -> Unit = {},
+    onShowWithdrawalDialog: () -> Unit = {},
     onDismissWithdrawalDialog: () -> Unit = {},
     uiState: WithdrawalUiState,
 ) {
@@ -127,7 +127,7 @@ fun WithdrawalScreen(
                 "탈퇴하기",
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                onsShowWithdrawalDialog()
+                onShowWithdrawalDialog()
             }
         }
     }

@@ -93,7 +93,7 @@ class WithdrawalViewModel @Inject constructor(
                 }
             }
 
-            updateState { it.copy() }
+            updateState { it.copy(isWithdrawalDialogVisible = false) }
             sendSideEffect(WithdrawalSideEffect.NavigateToLogin)
         }
     }
