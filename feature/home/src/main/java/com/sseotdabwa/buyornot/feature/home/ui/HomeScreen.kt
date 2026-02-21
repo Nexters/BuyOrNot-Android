@@ -138,7 +138,6 @@ private fun HomeScreenContent(
     uiState: HomeUiState,
     isFabExpanded: Boolean,
     expandedImageUrl: String?,
-    userType: UserType,
     onLoginClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
@@ -213,8 +212,8 @@ private fun HomeScreenContent(
                     .offset { IntOffset(x = 0, y = topBarOffsetHeightPx.roundToInt()) }
                     .background(BuyOrNotTheme.colors.gray0),
         ) {
-            // 사용자 타입에 따라 TopBar 분기
-            when (userType) {
+            // UiState에서 userType을 가져와 TopBar 분기 (깜빡임 방지)
+            when (uiState.userType) {
                 UserType.GUEST -> {
                     GuestTopBar(
                         onLoginClick = onLoginClick,

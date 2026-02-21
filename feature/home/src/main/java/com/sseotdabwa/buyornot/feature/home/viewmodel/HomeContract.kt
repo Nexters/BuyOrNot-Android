@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.home.viewmodel
 import androidx.compose.runtime.Immutable
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+import com.sseotdabwa.buyornot.domain.model.UserType
 
 /**
  * 홈 화면의 탭 정의
@@ -54,7 +55,7 @@ data class FeedItem(
  */
 @Immutable
 data class HomeUiState(
-    val userType: com.sseotdabwa.buyornot.domain.model.UserType = com.sseotdabwa.buyornot.domain.model.UserType.GUEST,
+    val userType: UserType = UserType.GUEST,
     val selectedTab: HomeTab = HomeTab.FEED,
     val selectedFilter: FilterChip = FilterChip.ALL,
     val isBannerVisible: Boolean = true,
