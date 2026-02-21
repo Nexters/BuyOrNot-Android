@@ -35,11 +35,39 @@ class HomeViewModel @Inject constructor(
 ) : BaseViewModel<HomeUiState, HomeIntent, HomeSideEffect>(HomeUiState()) {
     private var cachedFeeds: List<FeedItem> = emptyList()
     private var currentUserId: Long? = null
+    private var isUserIdLoaded = false // ID 로드 완료 여부 추적
 
     init {
         observeUserType()
-        loadCurrentUserId()
-        loadFeeds()
+        loadInitialData()
+    }
+
+    /**
+     * 초기 데이터 로드: 사용자 ID를 먼저 로드한 후 피드 로드
+     * 경쟁 조건을 방지하기 위해 순차적으로 실행
+     */
+    private fun loadInitialData() {
+        viewModelScope.launch {
+            // 먼저 사용자 ID를 동기적으로 로드
+            loadCurrentUserIdSuspend()
+            isUserIdLoaded = true
+            // 사용자 ID 로드 완료 후 피드 로드
+            loadFeeds()
+        }
+    }
+
+    /**
+     * suspend 함수로 사용자 ID를 동기적으로 로드
+     */
+    private suspend fun loadCurrentUserIdSuspend() {
+        try {
+            if (uiState.value.userType == UserType.SOCIAL) {
+                val profile = userRepository.getMyProfile()
+                currentUserId = profile.id
+            }
+        } catch (e: Exception) {
+            currentUserId = null
+        }
     }
 
     private fun observeUserType() {
@@ -51,27 +79,29 @@ class HomeViewModel @Inject constructor(
                     initialValue = UserType.GUEST,
                 ).collect { userType ->
                     updateState { it.copy(userType = userType) }
-                    // 사용자 타입이 변경되면 userId도 다시 로드
+                    // 사용자 타입이 변경되면 userId를 다시 로드하고 피드도 갱신
                     if (userType == UserType.SOCIAL) {
-                        loadCurrentUserId()
+                        loadUserIdAndRefreshFeeds()
                     } else {
                         currentUserId = null
+                        isUserIdLoaded = true
+                        // 로그아웃 시에도 피드 갱신 (isOwner를 false로)
+                        loadFeeds()
                     }
                 }
         }
     }
 
-    private fun loadCurrentUserId() {
+    /**
+     * 사용자 ID를 로드하고 피드를 갱신
+     * 로그인 후 자신의 피드에 대한 isOwner를 올바르게 설정
+     */
+    private fun loadUserIdAndRefreshFeeds() {
         viewModelScope.launch {
-            try {
-                if (uiState.value.userType == UserType.SOCIAL) {
-                    val profile = userRepository.getMyProfile()
-                    currentUserId = profile.id
-                }
-            } catch (e: Exception) {
-                // 프로필 로드 실패 시 null 유지
-                currentUserId = null
-            }
+            loadCurrentUserIdSuspend()
+            isUserIdLoaded = true
+            // 사용자 ID 로드 완료 후 피드 갱신
+            loadFeeds()
         }
     }
 
@@ -88,13 +118,13 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun handleTabSelection(tab: HomeTab) {
-        // updateState { it.copy(selectedTab = tab, feeds = emptyList(), hasError = false, isLoading = true) }
-        updateState { it.copy(selectedTab = tab, isLoading = true) }
-        loadFeeds()
+        updateState { it.copy(selectedTab = tab, isLoading = true, hasError = false) }
+        // 탭이 변경되므로 loadFeeds에 명시적으로 탭을 전달
+        loadFeeds(tab)
     }
 
     private fun handleFilterSelection(filter: FilterChip) {
-        updateState { it.copy(selectedFilter = filter) }
+        updateState { it.copy(selectedFilter = filter, hasError = false) }
         applyFiltering()
     }
 
@@ -224,20 +254,27 @@ class HomeViewModel @Inject constructor(
 
     /**
      * 피드 데이터 로드 (API 연동)
+     * @param tab 로드할 탭 (null이면 현재 선택된 탭 사용)
      */
-    private fun loadFeeds() {
+    private fun loadFeeds(tab: HomeTab? = null) {
         viewModelScope.launch {
             updateState { it.copy(isLoading = true, hasError = false) }
             try {
-                val currentTab = uiState.value.selectedTab
+                // ID가 아직 로드되지 않았으면 먼저 로드
+                if (!isUserIdLoaded && uiState.value.userType == UserType.SOCIAL) {
+                    loadCurrentUserIdSuspend()
+                    isUserIdLoaded = true
+                }
+
+                val currentTab = tab ?: uiState.value.selectedTab
                 // 필터 없이 해당 탭의 전체 데이터를 가져옴
                 val feeds =
                     when (currentTab) {
                         HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null) // 전체 가져오기
-                        HomeTab.REVIEW -> feedRepository.getMyFeeds()
+                        HomeTab.REVIEW -> feedRepository.getMyFeeds(feedStatus = null) // 내 피드 전체 가져오기
                     }
 
-                // 원본 데이터를 캐시에 저장
+                // 원�� 데이터를 캐시에 저장
                 // 각 피드의 작성자 ID와 현재 사용자 ID를 비교하여 isOwner 설정
                 cachedFeeds =
                     feeds.map { feed ->
@@ -246,25 +283,38 @@ class HomeViewModel @Inject constructor(
                     }
 
                 // 현재 선택된 필터에 맞춰 UI 상태 업데이트
-                applyFiltering()
+                // 탭 파라미터를 전달하여 즉시 반영되도록 함
+                applyFiltering(currentTab)
             } catch (e: Exception) {
-                cachedFeeds = emptyList()
                 updateState { it.copy(isLoading = false, hasError = true) }
             }
         }
     }
 
-    private fun applyFiltering() {
+    /**
+     * 피드 필터링 적용
+     * @param tab 필터링할 탭 (null이면 현재 선택된 탭 사용)
+     */
+    private fun applyFiltering(tab: HomeTab? = null) {
         val currentFilter = uiState.value.selectedFilter
+        val currentTab = tab ?: uiState.value.selectedTab
 
-        val filteredList =
+        // 1단계: 필터 칩에 따라 필터링
+        val chipFilteredList =
             when (currentFilter) {
                 FilterChip.ALL -> cachedFeeds
                 FilterChip.IN_PROGRESS -> cachedFeeds.filter { !it.isVoteEnded }
                 FilterChip.ENDED -> cachedFeeds.filter { it.isVoteEnded }
             }
 
-        updateState { it.copy(feeds = filteredList, isLoading = false) }
+        // 2단계: 탭에 따라 추가 필터링
+        val finalFilteredList =
+            when (currentTab) {
+                HomeTab.FEED -> chipFilteredList // 투표 피드: 모든 피드 표시
+                HomeTab.REVIEW -> chipFilteredList.filter { it.isOwner } // 내 투표: 본인 피드만 표시
+            }
+
+        updateState { it.copy(feeds = finalFilteredList, isLoading = false, hasError = false) }
     }
 
     /**

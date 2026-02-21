@@ -430,6 +430,7 @@ private fun HomeFeedList(
     headerPadding: Dp,
     modifier: Modifier = Modifier,
 ) {
+    // ViewModel에서 이미 탭과 필터에 따라 필터링된 피드를 제공
     val filteredFeeds = uiState.feeds
 
     LazyColumn(

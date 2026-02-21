@@ -4,7 +4,6 @@ import com.sseotdabwa.buyornot.core.network.dto.request.FeedRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.VoteRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
-import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.PresignedUrlResponse
@@ -38,11 +37,18 @@ interface FeedApiService {
     ): BaseResponse<FeedListResponse>
 
     /**
-     * 내가 작성한 피드 목록 조회
-     * 응답이 List로 직접 옴 (페이징 없음)
+     * 내가 작성한 피드 목록 조회 (페이지네이션)
+     *
+     * @param cursor 이전 페이지 마지막 feedId (첫 페이지는 생략)
+     * @param size 페이지 크기 (기본값 20, 최대 50)
+     * @param feedStatus 피드 상태 필터 (OPEN, CLOSED / 미지정 시 전체)
      */
     @GET("/api/v1/users/me/feeds")
-    suspend fun getMyFeeds(): BaseResponse<List<FeedItemDto>>
+    suspend fun getMyFeeds(
+        @Query("cursor") cursor: Long? = null,
+        @Query("size") size: Int = 20,
+        @Query("feedStatus") feedStatus: String? = null,
+    ): BaseResponse<FeedListResponse>
 
     @POST("/api/v1/uploads/presigned-put")
     suspend fun getPresignedUrl(

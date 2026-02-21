@@ -34,10 +34,16 @@ class FeedRepositoryImpl @Inject constructor(
             .content
             .map { it.toDomain() }
 
-    override suspend fun getMyFeeds(): List<Feed> {
-        val feedList: List<FeedItemDto> = feedApiService.getMyFeeds().getOrThrow()
-        return feedList.map { it.toDomain() }
-    }
+    override suspend fun getMyFeeds(
+        cursor: Long?,
+        size: Int,
+        feedStatus: String?,
+    ): List<Feed> =
+        feedApiService
+            .getMyFeeds(cursor, size, feedStatus)
+            .getOrThrow()
+            .content
+            .map { it.toDomain() }
 
     override suspend fun getPresignedUrl(
         fileName: String,

@@ -22,11 +22,18 @@ interface FeedRepository {
     ): List<Feed>
 
     /**
-     * 내가 작성한 피드 목록 조회
+     * 내가 작성한 피드 목록 조회 (페이지네이션)
      *
+     * @param cursor 이전 페이지 마지막 feedId (첫 페이지는 생략)
+     * @param size 페이지 크기 (기본값 20)
+     * @param feedStatus 피드 상태 필터 (OPEN, CLOSED / null이면 전체)
      * @return 내가 작성한 피드 목록
      */
-    suspend fun getMyFeeds(): List<Feed>
+    suspend fun getMyFeeds(
+        cursor: Long? = null,
+        size: Int = 20,
+        feedStatus: String? = null,
+    ): List<Feed>
 
     suspend fun getPresignedUrl(
         fileName: String,
