@@ -342,11 +342,11 @@ fun FeedCard(
     if (showFullScreen) {
         Popup(
             onDismissRequest = { showFullScreen = false },
-            properties = PopupProperties(focusable = true, excludeFromSystemGesture = false)
+            properties = PopupProperties(focusable = true, excludeFromSystemGesture = false),
         ) {
             FullScreenImageOverlay(
                 imageUrl = productImageUrl,
-                onDismiss = { showFullScreen = false }
+                onDismiss = { showFullScreen = false },
             )
         }
     }
@@ -361,10 +361,11 @@ private fun FullScreenImageOverlay(
     onDismiss: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .clickable { onDismiss() },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .clickable { onDismiss() },
     ) {
         AsyncImage(
             model = imageUrl,
@@ -374,11 +375,12 @@ private fun FullScreenImageOverlay(
         )
 
         Box(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(start = 10.dp, top = 10.dp)
-                .size(40.dp)
-                .clickable { onDismiss() },
+            modifier =
+                Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 10.dp, top = 10.dp)
+                    .size(40.dp)
+                    .clickable { onDismiss() },
             contentAlignment = Alignment.Center,
         ) {
             Icon(

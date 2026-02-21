@@ -219,7 +219,6 @@ private fun HomeScreenContent(
                 onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
             )
         }
-
     }
 }
 
