@@ -19,6 +19,8 @@ import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
+import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHomeWithTab
+import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
 import com.sseotdabwa.buyornot.feature.mypage.navigation.navigateToMyPage
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotification
@@ -98,6 +100,19 @@ fun BuyOrNotNavHost(
         )
         uploadScreen(
             onNavigateBack = navController::popBackStack,
+            onNavigateToHomeReview = {
+                navController.navigateToHomeWithTab(
+                    tab = HomeTab.REVIEW,
+                    navOptions =
+                        androidx.navigation.navOptions {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = false
+                            }
+                            launchSingleTop = true
+                            restoreState = false
+                        },
+                )
+            },
         )
         myPageGraph(
             navController = navController,

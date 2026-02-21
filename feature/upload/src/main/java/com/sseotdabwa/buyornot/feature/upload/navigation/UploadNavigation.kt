@@ -12,8 +12,14 @@ fun NavController.navigateToUpload(navOptions: NavOptions? = null) {
     navigate(UPLOAD_ROUTE, navOptions)
 }
 
-fun NavGraphBuilder.uploadScreen(onNavigateBack: () -> Unit = {}) {
+fun NavGraphBuilder.uploadScreen(
+    onNavigateBack: () -> Unit = {},
+    onNavigateToHomeReview: () -> Unit = {},
+) {
     composable(route = UPLOAD_ROUTE) {
-        UploadScreen(onNavigateBack = onNavigateBack)
+        UploadScreen(
+            onNavigateBack = onNavigateBack,
+            onNavigateToHomeReview = onNavigateToHomeReview,
+        )
     }
 }

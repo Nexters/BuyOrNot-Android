@@ -79,7 +79,7 @@ class UploadViewModel @Inject constructor(
                 )
             }.onSuccess {
                 updateState { it.copy(isLoading = false) }
-                sendSideEffect(UploadSideEffect.NavigateBack)
+                sendSideEffect(UploadSideEffect.NavigateToHomeReview)
             }.onFailure { throwable ->
                 updateState { it.copy(isLoading = false) }
                 sendSideEffect(UploadSideEffect.ShowSnackbar("업로드에 실패했습니다."))

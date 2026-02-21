@@ -77,6 +77,7 @@ import kotlin.math.roundToInt
  * @param onNotificationClick 알림 아이콘 클릭 콜백
  * @param onProfileClick 프로필 아이콘 클릭 콜백
  * @param onUploadClick 업로드 화면으로 이동 콜백
+ * @param initialTab 초기 선택 탭 (기본값: FEED)
  * @param viewModel HomeViewModel (Hilt 주입)
  */
 @Composable
@@ -85,6 +86,7 @@ fun HomeScreen(
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
+    initialTab: HomeTab = HomeTab.FEED,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -94,6 +96,13 @@ fun HomeScreen(
     var isFabExpanded by remember { mutableStateOf(false) }
 
     var isTimeOut by remember { mutableStateOf(false) }
+
+    // 초기 탭 설정
+    LaunchedEffect(initialTab) {
+        if (uiState.selectedTab != initialTab) {
+            viewModel.handleIntent(HomeIntent.OnTabSelected(initialTab))
+        }
+    }
 
     LaunchedEffect(uiState.isLoading, uiState.feeds.isEmpty()) {
         if (uiState.isLoading && uiState.feeds.isEmpty()) {
