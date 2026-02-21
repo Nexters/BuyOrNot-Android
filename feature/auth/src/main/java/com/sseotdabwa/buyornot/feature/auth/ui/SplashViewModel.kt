@@ -1,12 +1,13 @@
 package com.sseotdabwa.buyornot.feature.auth.ui
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.messaging.FirebaseMessaging
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
-import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashIntent
-import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashSideEffect
-import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashUiState
+import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -23,14 +24,41 @@ private const val SPLASH_TIMEOUT_MILLIS = 2300L
  */
 @HiltViewModel
 class SplashViewModel @Inject constructor(
+    private val userRepository: UserRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
 ) : BaseViewModel<SplashUiState, SplashIntent, SplashSideEffect>(SplashUiState()) {
     init {
         checkTokenAndNavigate()
+        updateFcmToken()
     }
 
     override fun handleIntent(intent: SplashIntent) {
         // 스플래시 화면은 사용자 액션이 없으므로 비어있음
+    }
+
+    /**
+     * FCM 토큰을 가져와 서버에 업데이트합니다.
+     */
+    private fun updateFcmToken() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("FCM", "Fetching FCM registration token failed", task.exception)
+                return@addOnCompleteListener
+            }
+
+            val token = task.result ?: return@addOnCompleteListener
+            viewModelScope.launch {
+                runCatchingCancellable {
+                    userRepository.updateFcmToken(token)
+                }.onSuccess {
+                    Log.d("FCM", "FCM Token successfully updated to server.")
+                }.onFailure { e ->
+                    if (e !is CancellationException) {
+                        Log.e("FCM", "Failed to update FCM token to server", e)
+                    }
+                }
+            }
+        }
     }
 
     /**

@@ -30,4 +30,7 @@ dependencies {
     implementation(libs.kakao.user)
     implementation(libs.googleid)
     implementation(libs.lottie.compose)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 }

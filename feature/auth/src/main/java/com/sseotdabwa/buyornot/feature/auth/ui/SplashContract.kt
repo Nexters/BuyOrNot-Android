@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.feature.auth.viewmodel
+package com.sseotdabwa.buyornot.feature.auth.ui
 
 import androidx.compose.runtime.Immutable
 
