@@ -10,4 +10,7 @@ import dagger.hilt.components.SingletonComponent
 internal abstract class DataStoreModule {
     @Binds
     abstract fun bindUserPreferencesDataSource(impl: UserPreferencesDataSourceImpl): UserPreferencesDataSource
+
+    @Binds
+    abstract fun bindAppPreferencesDataSource(impl: AppPreferencesDataSourceImpl): AppPreferencesDataSource
 }

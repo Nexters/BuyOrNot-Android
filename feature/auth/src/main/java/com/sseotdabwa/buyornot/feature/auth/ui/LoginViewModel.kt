@@ -15,7 +15,9 @@ import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
+import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.feature.auth.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -28,12 +30,20 @@ private const val TAG = "LoginViewModel"
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
 ) : BaseViewModel<LoginUiState, LoginIntent, LoginSideEffect>(LoginUiState()) {
     override fun handleIntent(intent: LoginIntent) {
         when (intent) {
             is LoginIntent.GoogleLogin -> googleLogin(intent.context)
             is LoginIntent.KakaoLogin -> kakaoLogin(intent.context)
-            LoginIntent.SkipLogin -> sendSideEffect(LoginSideEffect.NavigateToHome)
+            LoginIntent.SkipLogin -> skipLogin()
+        }
+    }
+
+    private fun skipLogin() {
+        viewModelScope.launch {
+            userPreferencesRepository.updateUserType(UserType.GUEST)
+            sendSideEffect(LoginSideEffect.NavigateToHome)
         }
     }
 

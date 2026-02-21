@@ -22,14 +22,19 @@ const val AUTH_ROUTE = "auth"
  * NavGraphBuilder의 확장 함수 - 스플래시 화면을 네비게이션 그래프에 추가
  *
  * 앱 최초 진입 시 표시되는 스플래시 화면을 등록합니다.
- * 2초 후 자동으로 로그인 화면으로 이동합니다.
+ * 2.3초 후 자동으로 로그인 상태를 확인하여 홈 또는 로그인 화면으로 이동합니다.
  *
- * @param onNavigateToLogin 스플래시 타임아웃 후 로그인 화면으로 이동할 때 실행될 콜백
+ * @param onNavigateToLogin 로그인 화면으로 이동할 때 실행될 콜백
+ * @param onNavigateToHome 홈 화면으로 이동할 때 실행될 콜백
  */
-fun NavGraphBuilder.splashScreen(onNavigateToLogin: () -> Unit) {
+fun NavGraphBuilder.splashScreen(
+    onNavigateToLogin: () -> Unit,
+    onNavigateToHome: () -> Unit,
+) {
     composable(route = SPLASH_ROUTE) {
         SplashRoute(
-            onTimeout = onNavigateToLogin,
+            onNavigateToLogin = onNavigateToLogin,
+            onNavigateToHome = onNavigateToHome,
         )
     }
 }

@@ -18,10 +18,13 @@ import com.sseotdabwa.buyornot.feature.auth.navigation.navigateForceToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
+import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
 import com.sseotdabwa.buyornot.feature.mypage.navigation.navigateToMyPage
+import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotification
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotificationDetail
 import com.sseotdabwa.buyornot.feature.notification.navigation.notificationGraph
+import com.sseotdabwa.buyornot.feature.upload.navigation.navigateToUpload
 import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
 
 /**
@@ -58,17 +61,37 @@ fun BuyOrNotNavHost(
     ) {
         splashScreen(
             onNavigateToLogin = navController::navigateToLogin,
+            onNavigateToHome = {
+                navController.navigateToHome(
+                    navOptions =
+                        androidx.navigation.navOptions {
+                            popUpTo(SPLASH_ROUTE) { inclusive = true }
+                            launchSingleTop = true
+                        },
+                )
+            },
         )
 
         authScreen(
             onLoginSuccess = {
-                navController.navigateToMyPage()
+                navController.navigateToHome(
+                    navOptions =
+                        androidx.navigation.navOptions {
+                            popUpTo(SPLASH_ROUTE) { inclusive = true }
+                            launchSingleTop = true
+                        },
+                )
             },
             onTermsClick = navController::navigateToTerms,
             onPrivacyClick = navController::navigateToPrivacyPolicy,
         )
 
-        homeScreen()
+        homeScreen(
+            onLoginClick = navController::navigateForceToLogin,
+            onNotificationClick = navController::navigateToNotification,
+            onProfileClick = navController::navigateToMyPage,
+            onUploadClick = navController::navigateToUpload,
+        )
         notificationGraph(
             onBackClick = navController::popBackStack,
             onNotificationClick = navController::navigateToNotificationDetail,

@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
@@ -22,23 +23,34 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotLotties
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
-import kotlinx.coroutines.delay
-
-const val SPLASH_TIMEOUT_MILLIS = 2300L
+import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashSideEffect
 
 /**
  * 스플래시 화면의 네비게이션 진입점
  *
  * 앱 최초 진입 시 표시되는 스플래시 화면입니다.
- * 지정된 시간(2.3초) 후 자동으로 로그인 화면으로 이동합니다.
+ * 지정된 시간(2.3초) 후 자동으로 로그인 상태를 확인하여:
+ * - 로그인 상태(토큰 있음) → 홈 화면으로 이동
+ * - 비로그인 상태 → 로그인 화면으로 이동
  *
- * @param onTimeout 스플래시 타임아웃 후 실행될 콜백 (로그인 화면으로 이동)
+ * @param onNavigateToLogin 로그인 화면으로 이동하는 콜백
+ * @param onNavigateToHome 홈 화면으로 이동하는 콜백
+ * @param viewModel SplashViewModel (Hilt 주입)
  */
 @Composable
-fun SplashRoute(onTimeout: () -> Unit) {
+fun SplashRoute(
+    onNavigateToLogin: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    viewModel: SplashViewModel = hiltViewModel(),
+) {
+    // SideEffect 처리 (ViewModel에서 토큰 체크 후 네비게이션 이벤트 방출)
     LaunchedEffect(Unit) {
-        delay(SPLASH_TIMEOUT_MILLIS)
-        onTimeout()
+        viewModel.sideEffect.collect { sideEffect ->
+            when (sideEffect) {
+                is SplashSideEffect.NavigateToHome -> onNavigateToHome()
+                is SplashSideEffect.NavigateToLogin -> onNavigateToLogin()
+            }
+        }
     }
 
     SplashScreen()
