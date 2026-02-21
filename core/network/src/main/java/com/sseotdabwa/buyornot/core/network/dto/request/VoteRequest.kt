@@ -8,4 +8,3 @@ data class VoteRequest(
     @SerialName("choice")
     val choice: String, // "YES" or "NO"
 )
-

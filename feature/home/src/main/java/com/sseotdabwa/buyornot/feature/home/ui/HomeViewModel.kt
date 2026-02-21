@@ -64,7 +64,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun handleTabSelection(tab: HomeTab) {
-        //updateState { it.copy(selectedTab = tab, feeds = emptyList(), hasError = false, isLoading = true) }
+        // updateState { it.copy(selectedTab = tab, feeds = emptyList(), hasError = false, isLoading = true) }
         updateState { it.copy(selectedTab = tab, isLoading = true) }
         loadFeeds()
     }
@@ -183,10 +183,11 @@ class HomeViewModel @Inject constructor(
                 )
             } catch (e: Exception) {
                 // 400 에러 (본인 피드 또는 이미 신고된 피드)에 대한 처리
-                val errorMessage = when {
-                    e.message?.contains("400") == true -> "이미 신고한 피드이거나 본인의 피드입니다."
-                    else -> "신고에 실패했습니다."
-                }
+                val errorMessage =
+                    when {
+                        e.message?.contains("400") == true -> "이미 신고한 피드이거나 본인의 피드입니다."
+                        else -> "신고에 실패했습니다."
+                    }
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = errorMessage,
@@ -206,10 +207,11 @@ class HomeViewModel @Inject constructor(
             try {
                 val currentTab = uiState.value.selectedTab
                 // 필터 없이 해당 탭의 전체 데이터를 가져옴
-                val feeds = when (currentTab) {
-                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null) // 전체 가져오기
-                    HomeTab.REVIEW -> feedRepository.getMyFeeds()
-                }
+                val feeds =
+                    when (currentTab) {
+                        HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null) // 전체 가져오기
+                        HomeTab.REVIEW -> feedRepository.getMyFeeds()
+                    }
 
                 // 원본 데이터를 캐시에 저장
                 // REVIEW 탭일 때는 모든 피드가 본인 피드이므로 isOwner = true
@@ -227,11 +229,12 @@ class HomeViewModel @Inject constructor(
     private fun applyFiltering() {
         val currentFilter = uiState.value.selectedFilter
 
-        val filteredList = when (currentFilter) {
-            FilterChip.ALL -> cachedFeeds
-            FilterChip.IN_PROGRESS -> cachedFeeds.filter { !it.isVoteEnded }
-            FilterChip.ENDED -> cachedFeeds.filter { it.isVoteEnded }
-        }
+        val filteredList =
+            when (currentFilter) {
+                FilterChip.ALL -> cachedFeeds
+                FilterChip.IN_PROGRESS -> cachedFeeds.filter { !it.isVoteEnded }
+                FilterChip.ENDED -> cachedFeeds.filter { it.isVoteEnded }
+            }
 
         updateState { it.copy(feeds = filteredList, isLoading = false) }
     }
@@ -273,4 +276,3 @@ class HomeViewModel @Inject constructor(
         )
     }
 }
-

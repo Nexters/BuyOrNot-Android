@@ -46,5 +46,3 @@ enum class FeedStatus {
     OPEN,
     CLOSED,
 }
-
-

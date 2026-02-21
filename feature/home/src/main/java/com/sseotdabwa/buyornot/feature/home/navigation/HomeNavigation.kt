@@ -20,10 +20,11 @@ fun NavGraphBuilder.homeScreen(
         route = HOME_ROUTE_WITH_TAB,
     ) { backStackEntry ->
         val tabName = backStackEntry.arguments?.getString("tab")
-        val initialTab = when (tabName) {
-            "REVIEW" -> HomeTab.REVIEW
-            else -> HomeTab.FEED
-        }
+        val initialTab =
+            when (tabName) {
+                "REVIEW" -> HomeTab.REVIEW
+                else -> HomeTab.FEED
+            }
 
         HomeScreen(
             onLoginClick = onLoginClick,
@@ -45,4 +46,3 @@ fun NavHostController.navigateToHomeWithTab(
 ) {
     this.navigate("home?tab=${tab.name}", navOptions)
 }
-

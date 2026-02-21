@@ -10,4 +10,3 @@ data class VoteResult(
     val noCount: Int,
     val totalCount: Int,
 )
-

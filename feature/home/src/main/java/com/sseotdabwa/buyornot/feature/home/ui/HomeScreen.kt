@@ -505,7 +505,6 @@ private fun HomeFeedList(
     }
 }
 
-
 /**
  * 필터 칩 행 컴포넌트
  */

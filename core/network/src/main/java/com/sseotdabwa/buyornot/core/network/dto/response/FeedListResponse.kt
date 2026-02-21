@@ -54,4 +54,3 @@ data class AuthorDto(
     @SerialName("profileImage")
     val profileImage: String?,
 )
-

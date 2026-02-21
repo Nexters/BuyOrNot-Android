@@ -16,4 +16,3 @@ data class VoteResponse(
     @SerialName("totalCount")
     val totalCount: Int,
 )
-
