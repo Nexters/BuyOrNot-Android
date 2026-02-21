@@ -10,6 +10,7 @@ import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
+import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import com.sseotdabwa.buyornot.feature.home.viewmodel.FeedItem
 import com.sseotdabwa.buyornot.feature.home.viewmodel.FilterChip
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeIntent
@@ -30,11 +31,14 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val feedRepository: FeedRepository,
+    private val userRepository: UserRepository,
 ) : BaseViewModel<HomeUiState, HomeIntent, HomeSideEffect>(HomeUiState()) {
     private var cachedFeeds: List<FeedItem> = emptyList()
+    private var currentUserId: Long? = null
 
     init {
         observeUserType()
+        loadCurrentUserId()
         loadFeeds()
     }
 
@@ -47,7 +51,27 @@ class HomeViewModel @Inject constructor(
                     initialValue = UserType.GUEST,
                 ).collect { userType ->
                     updateState { it.copy(userType = userType) }
+                    // 사용자 타입이 변경되면 userId도 다시 로드
+                    if (userType == UserType.SOCIAL) {
+                        loadCurrentUserId()
+                    } else {
+                        currentUserId = null
+                    }
                 }
+        }
+    }
+
+    private fun loadCurrentUserId() {
+        viewModelScope.launch {
+            try {
+                if (uiState.value.userType == UserType.SOCIAL) {
+                    val profile = userRepository.getMyProfile()
+                    currentUserId = profile.id
+                }
+            } catch (e: Exception) {
+                // 프로필 로드 실패 시 null 유지
+                currentUserId = null
+            }
         }
     }
 
@@ -214,9 +238,11 @@ class HomeViewModel @Inject constructor(
                     }
 
                 // 원본 데이터를 캐시에 저장
-                // REVIEW 탭일 때는 모든 피드가 본인 피드이므로 isOwner = true
-                val isMyFeed = currentTab == HomeTab.REVIEW
-                cachedFeeds = feeds.map { it.toFeedItem(isMyFeed) }
+                // 각 피드의 작성자 ID와 현재 사용자 ID를 비교하여 isOwner 설정
+                cachedFeeds = feeds.map { feed ->
+                    val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                    feed.toFeedItem(isOwner)
+                }
 
                 // 현재 선택된 필터에 맞춰 UI 상태 업데이트
                 applyFiltering()
