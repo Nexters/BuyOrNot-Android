@@ -8,6 +8,7 @@ import com.sseotdabwa.buyornot.domain.model.UserProfile
 data class WithdrawalUiState(
     val isLoading: Boolean = false,
     val userProfile: UserProfile? = null,
+    val isWithdrawalDialogVisible: Boolean = false,
 )
 
 sealed interface WithdrawalIntent {
@@ -16,6 +17,10 @@ sealed interface WithdrawalIntent {
     data class Withdraw(
         val context: Context,
     ) : WithdrawalIntent
+
+    data object ShowWithdrawalDialog : WithdrawalIntent
+
+    data object DismissWithdrawalDialog : WithdrawalIntent
 }
 
 sealed interface WithdrawalSideEffect {
