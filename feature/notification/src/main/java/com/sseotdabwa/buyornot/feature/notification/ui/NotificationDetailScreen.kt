@@ -41,7 +41,7 @@ fun NotificationDetailScreen(
         BackTopBar(onBackClick = onBackClick)
         // 상세 페이지의 메인 콘텐츠 (FeedCard와 동일한 구성)
         FeedCard(
-            modifier = Modifier.padding(4.dp),
+            modifier = Modifier.padding(20.dp),
             profileImageUrl = "https://picsum.photos/seed/user/200/200",
             nickname = "참새방앗간12456",
             category = "업무 · 공부 생산성",
