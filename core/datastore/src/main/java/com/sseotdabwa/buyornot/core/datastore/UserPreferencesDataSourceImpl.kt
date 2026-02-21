@@ -86,6 +86,7 @@ class UserPreferencesDataSourceImpl
             context.userPreferencesDataStore.edit { prefs ->
                 prefs.remove(Keys.ACCESS_TOKEN)
                 prefs.remove(Keys.REFRESH_TOKEN)
+                prefs[Keys.USER_TYPE] = UserType.GUEST.name
             }
         }
     }
