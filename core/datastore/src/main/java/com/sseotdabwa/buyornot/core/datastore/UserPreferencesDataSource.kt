@@ -25,6 +25,3 @@ interface UserPreferencesDataSource {
 
     suspend fun clearTokens()
 }
-
-
-

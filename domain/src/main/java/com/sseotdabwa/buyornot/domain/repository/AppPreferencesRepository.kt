@@ -18,4 +18,3 @@ interface AppPreferencesRepository {
      */
     suspend fun updateNotificationPermissionRequested(requested: Boolean)
 }
-

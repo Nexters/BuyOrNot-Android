@@ -23,4 +23,3 @@ interface AppPreferencesDataSource {
      */
     suspend fun updateNotificationPermissionRequested(requested: Boolean)
 }
-

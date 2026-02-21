@@ -41,9 +41,14 @@ data class NotificationUiState(
  * 알림 화면에서 발생하는 사용자 액션 (MVI Intent)
  */
 sealed interface NotificationIntent {
-    data class OnFilterSelected(val filter: NotificationFilter) : NotificationIntent
+    data class OnFilterSelected(
+        val filter: NotificationFilter,
+    ) : NotificationIntent
+
     data object OnPermissionRequested : NotificationIntent
+
     data object OnPermissionGranted : NotificationIntent
+
     data object OnPermissionDenied : NotificationIntent
 }
 
@@ -52,6 +57,6 @@ sealed interface NotificationIntent {
  */
 sealed interface NotificationSideEffect {
     data object RequestNotificationPermission : NotificationSideEffect
+
     data object OpenAppSettings : NotificationSideEffect
 }
-

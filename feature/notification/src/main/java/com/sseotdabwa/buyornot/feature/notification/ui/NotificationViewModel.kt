@@ -20,7 +20,6 @@ import javax.inject.Inject
 class NotificationViewModel @Inject constructor(
     private val appPreferencesRepository: AppPreferencesRepository,
 ) : BaseViewModel<NotificationUiState, NotificationIntent, NotificationSideEffect>(NotificationUiState()) {
-
     init {
         loadPermissionState()
         loadDummyNotifications()
@@ -104,29 +103,30 @@ class NotificationViewModel @Inject constructor(
      * 더미 알림 데이터 로드 (임시)
      */
     private fun loadDummyNotifications() {
-        val dummyNotifications = List(10) { index ->
-            NotificationItem(
-                id = "${index + 1}",
-                imageUrl = "https://picsum.photos/20${index}",
-                title = "투표 종료",
-                description = when (index % 5) {
-                    0 -> "78% '애매하긴 해!'"
-                    1 -> "56% '사! 가즈아!'"
-                    2 -> "90% '애매하긴 해!'"
-                    3 -> "무승부! 2차전 가보자고!"
-                    else -> "결과를 확인해보세요"
-                },
-                time = when {
-                    index < 1 -> "${index + 6}시간 전"
-                    index < 3 -> "${index}일 전"
-                    index < 6 -> "${index - 2}일 전"
-                    else -> "${(index - 5) / 7 + 1}주 전"
-                },
-                isRead = index > 1,
-            )
-        }
+        val dummyNotifications =
+            List(10) { index ->
+                NotificationItem(
+                    id = "${index + 1}",
+                    imageUrl = "https://picsum.photos/20$index",
+                    title = "투표 종료",
+                    description =
+                        when (index % 5) {
+                            0 -> "78% '애매하긴 해!'"
+                            1 -> "56% '사! 가즈아!'"
+                            2 -> "90% '애매하긴 해!'"
+                            3 -> "무승부! 2차전 가보자고!"
+                            else -> "결과를 확인해보세요"
+                        },
+                    time =
+                        when {
+                            index < 1 -> "${index + 6}시간 전"
+                            index < 3 -> "${index}일 전"
+                            index < 6 -> "${index - 2}일 전"
+                            else -> "${(index - 5) / 7 + 1}주 전"
+                        },
+                    isRead = index > 1,
+                )
+            }
         updateState { it.copy(notifications = dummyNotifications) }
     }
 }
-
-

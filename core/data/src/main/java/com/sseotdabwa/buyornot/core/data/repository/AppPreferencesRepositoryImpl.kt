@@ -19,4 +19,3 @@ class AppPreferencesRepositoryImpl @Inject constructor(
         appPreferencesDataSource.updateNotificationPermissionRequested(requested)
     }
 }
-

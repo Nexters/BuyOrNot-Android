@@ -153,14 +153,15 @@ fun NotificationScreen(
             // 3. 알림 리스트 아이템
             items(uiState.notifications) { notification ->
                 NotificationItem(
-                    state = NotificationState(
-                        id = notification.id,
-                        imageUrl = notification.imageUrl,
-                        label = notification.title,
-                        message = notification.description,
-                        time = notification.time,
-                        isRead = notification.isRead,
-                    ),
+                    state =
+                        NotificationState(
+                            id = notification.id,
+                            imageUrl = notification.imageUrl,
+                            label = notification.title,
+                            message = notification.description,
+                            time = notification.time,
+                            isRead = notification.isRead,
+                        ),
                     onClick = { onNotificationClick(notification.id) },
                 )
             }
