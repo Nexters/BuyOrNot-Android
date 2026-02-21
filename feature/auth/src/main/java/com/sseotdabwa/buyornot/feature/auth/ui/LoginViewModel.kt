@@ -9,6 +9,7 @@ import androidx.credentials.exceptions.NoCredentialException
 import androidx.lifecycle.viewModelScope
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.messaging.FirebaseMessaging
 import com.kakao.sdk.auth.model.OAuthToken
 import com.kakao.sdk.common.model.ClientError
 import com.kakao.sdk.common.model.ClientErrorCause
@@ -18,18 +19,21 @@ import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
+import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import com.sseotdabwa.buyornot.feature.auth.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.security.SecureRandom
 import java.util.Base64
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "LoginViewModel"
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
+    private val userRepository: UserRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
 ) : BaseViewModel<LoginUiState, LoginIntent, LoginSideEffect>(LoginUiState()) {
     override fun handleIntent(intent: LoginIntent) {
@@ -98,6 +102,7 @@ class LoginViewModel @Inject constructor(
             runCatchingCancellable {
                 authRepository.googleLogin(idToken)
             }.onSuccess {
+                updateFcmToken()
                 sendSideEffect(LoginSideEffect.NavigateToHome)
             }.onFailure {
                 sendSideEffect(LoginSideEffect.ShowSnackbar(it.message ?: "구글 로그인에 실패했습니다."))
@@ -153,11 +158,37 @@ class LoginViewModel @Inject constructor(
             runCatchingCancellable {
                 authRepository.kakaoLogin(accessToken)
             }.onSuccess {
+                updateFcmToken()
                 sendSideEffect(LoginSideEffect.NavigateToHome)
             }.onFailure {
                 sendSideEffect(LoginSideEffect.ShowSnackbar(it.message ?: "카카오 로그인에 실패했습니다."))
             }
             updateState { it.copy(isLoading = false) }
+        }
+    }
+
+    /**
+     * FCM 토큰을 가져와 서버에 업데이트합니다.
+     */
+    private fun updateFcmToken() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("FCM", "Fetching FCM registration token failed", task.exception)
+                return@addOnCompleteListener
+            }
+
+            val token = task.result ?: return@addOnCompleteListener
+            viewModelScope.launch {
+                runCatchingCancellable {
+                    userRepository.updateFcmToken(token)
+                }.onSuccess {
+                    Log.d("FCM", "FCM Token successfully updated to server.")
+                }.onFailure { e ->
+                    if (e !is CancellationException) {
+                        Log.e("FCM", "Failed to update FCM token to server", e)
+                    }
+                }
+            }
         }
     }
 
