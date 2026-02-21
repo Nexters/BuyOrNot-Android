@@ -8,6 +8,11 @@ enum class UserType {
     SOCIAL, // 소셜 로그인 (구글/카카오)
 }
 
+/**
+ * 사용자 정보
+ *
+ * 사용자 프로필 및 인증 토큰을 관리합니다.
+ */
 data class UserPreferences(
     val displayName: String = "손님",
     val accessToken: String = "",

@@ -1,9 +1,11 @@
 package com.sseotdabwa.buyornot.core.data.di
 
+import com.sseotdabwa.buyornot.core.data.repository.AppPreferencesRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.AuthRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.FeedRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.UserPreferencesRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.UserRepositoryImpl
+import com.sseotdabwa.buyornot.domain.repository.AppPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
@@ -27,4 +29,7 @@ internal abstract class DataModule {
 
     @Binds
     abstract fun bindUserPreferencesRepository(impl: UserPreferencesRepositoryImpl): UserPreferencesRepository
+
+    @Binds
+    abstract fun bindAppPreferencesRepository(impl: AppPreferencesRepositoryImpl): AppPreferencesRepository
 }

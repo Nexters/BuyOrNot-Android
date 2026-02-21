@@ -1,0 +1,21 @@
+package com.sseotdabwa.buyornot.domain.repository
+
+import kotlinx.coroutines.flow.Flow
+
+/**
+ * 앱 전역 설정 및 권한 상태 Repository
+ *
+ * 사용자 정보와 무관한 앱 레벨의 설정을 관리합니다.
+ */
+interface AppPreferencesRepository {
+    /**
+     * 알림 권한 요청 이력을 Flow로 제공
+     */
+    val hasRequestedNotificationPermission: Flow<Boolean>
+
+    /**
+     * 알림 권한 요청 이력 업데이트
+     */
+    suspend fun updateNotificationPermissionRequested(requested: Boolean)
+}
+
