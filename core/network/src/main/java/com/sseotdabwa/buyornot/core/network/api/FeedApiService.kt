@@ -105,6 +105,7 @@ interface FeedApiService {
      * @param request 투표 선택 (YES or NO)
      */
     @POST("/api/v1/feeds/{feedId}/votes/guest")
+    @Headers("No-Authentication: true")
     suspend fun voteGuestFeed(
         @Path("feedId") feedId: Long,
         @Body request: VoteRequest,
