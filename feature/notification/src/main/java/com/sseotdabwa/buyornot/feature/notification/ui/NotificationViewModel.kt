@@ -1,8 +1,12 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
 import androidx.lifecycle.viewModelScope
+import com.sseotdabwa.buyornot.core.common.util.TimeUtils
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.model.NotificationFilter
 import com.sseotdabwa.buyornot.domain.repository.AppPreferencesRepository
+import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationIntent
 import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationItem
 import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationSideEffect
@@ -12,17 +16,14 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 알림 화면을 위한 ViewModel
- * MVI 패턴을 적용하여 NotificationUiState, NotificationIntent, NotificationSideEffect를 관리합니다.
- */
 @HiltViewModel
 class NotificationViewModel @Inject constructor(
     private val appPreferencesRepository: AppPreferencesRepository,
+    private val notificationRepository: NotificationRepository,
 ) : BaseViewModel<NotificationUiState, NotificationIntent, NotificationSideEffect>(NotificationUiState()) {
     init {
         loadPermissionState()
-        loadDummyNotifications()
+        loadNotifications()
     }
 
     /**
@@ -49,11 +50,15 @@ class NotificationViewModel @Inject constructor(
             is NotificationIntent.OnPermissionRequested -> handlePermissionRequest()
             is NotificationIntent.OnPermissionGranted -> handlePermissionGranted()
             is NotificationIntent.OnPermissionDenied -> handlePermissionDenied()
+            is NotificationIntent.OnNotificationClick -> handleNotificationClick(intent.notificationId)
+            is NotificationIntent.OnRefreshNotifications -> loadNotifications()
         }
     }
 
-    private fun handleFilterSelection(filter: com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationFilter) {
+    private fun handleFilterSelection(filter: NotificationFilter) {
+        if (uiState.value.selectedFilter == filter) return
         updateState { it.copy(selectedFilter = filter) }
+        loadNotifications()
     }
 
     private fun handlePermissionRequest() {
@@ -76,6 +81,27 @@ class NotificationViewModel @Inject constructor(
     }
 
     /**
+     * 알림 클릭 처리 (읽음 처리 API 호출)
+     */
+    private fun handleNotificationClick(notificationId: String) {
+        viewModelScope.launch {
+            // 화면 이동 SideEffect 발생
+            sendSideEffect(NotificationSideEffect.NavigateToNotificationDetail(notificationId))
+
+            runCatchingCancellable {
+                notificationRepository.markAsRead(notificationId.toLong())
+            }.onSuccess {
+                // UI 상태 업데이트 (읽음 처리된 상태로 변경)
+                val updatedNotifications =
+                    uiState.value.notifications.map {
+                        if (it.id == notificationId) it.copy(isRead = true) else it
+                    }
+                updateState { it.copy(notifications = updatedNotifications) }
+            }
+        }
+    }
+
+    /**
      * 배너 클릭 시 권한 요청 또는 설정 화면 이동 판단
      */
     fun handleBannerClick(shouldShowRationale: Boolean) {
@@ -95,33 +121,40 @@ class NotificationViewModel @Inject constructor(
     }
 
     /**
-     * 더미 알림 데이터 로드 (임시)
+     * 실제 알림 데이터 로드
      */
-    private fun loadDummyNotifications() {
-        val dummyNotifications =
-            List(10) { index ->
-                NotificationItem(
-                    id = "${index + 1}",
-                    imageUrl = "https://picsum.photos/20$index",
-                    title = "투표 종료",
-                    description =
-                        when (index % 5) {
-                            0 -> "78% '애매하긴 해!'"
-                            1 -> "56% '사! 가즈아!'"
-                            2 -> "90% '애매하긴 해!'"
-                            3 -> "무승부! 2차전 가보자고!"
-                            else -> "결과를 확인해보세요"
-                        },
-                    time =
-                        when {
-                            index < 1 -> "${index + 6}시간 전"
-                            index < 3 -> "${index}일 전"
-                            index < 6 -> "${index - 2}일 전"
-                            else -> "${(index - 5) / 7 + 1}주 전"
-                        },
-                    isRead = index > 1,
-                )
+    private fun loadNotifications() {
+        viewModelScope.launch {
+            val type =
+                when (uiState.value.selectedFilter) {
+                    NotificationFilter.ALL -> null
+                    NotificationFilter.MY_VOTE -> "MY_FEED_CLOSED"
+                    NotificationFilter.PARTICIPATED -> "PARTICIPATED_FEED_CLOSED"
+                }
+
+            runCatchingCancellable {
+                notificationRepository.getNotifications(type)
+            }.onSuccess { notifications ->
+                val notificationItems =
+                    notifications.map {
+                        NotificationItem(
+                            id = it.notificationId.toString(),
+                            imageUrl = it.viewUrl,
+                            title = it.title,
+                            description = it.body,
+                            time = TimeUtils.formatRelativeTime(it.voteClosedAt),
+                            isRead = it.isRead,
+                        )
+                    }
+                updateState {
+                    it.copy(
+                        notifications = notificationItems,
+                        isError = false,
+                    )
+                }
+            }.onFailure {
+                updateState { it.copy(isError = true) }
             }
-        updateState { it.copy(notifications = dummyNotifications) }
+        }
     }
 }

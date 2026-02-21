@@ -34,12 +34,17 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotErrorView
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.permission.hasNotificationPermission
 import com.sseotdabwa.buyornot.core.ui.permission.openAppSettings
 import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
+import com.sseotdabwa.buyornot.domain.model.NotificationFilter
 import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationIntent
 import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationSideEffect
 
@@ -52,6 +57,7 @@ fun NotificationScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarState = LocalSnackbarState.current
 
     // 권한 상태 즉시 초기화 (깜빡임 방지)
     LaunchedEffect(Unit) {
@@ -78,6 +84,16 @@ fun NotificationScreen(
                 }
                 is NotificationSideEffect.OpenAppSettings -> {
                     context.openAppSettings()
+                }
+                is NotificationSideEffect.ShowSnackbar -> {
+                    snackbarState.show(
+                        message = sideEffect.message,
+                        icon = sideEffect.icon,
+                        iconTint = sideEffect.iconTint,
+                    )
+                }
+                is NotificationSideEffect.NavigateToNotificationDetail -> {
+                    onNotificationClick(sideEffect.notificationId)
                 }
             }
         }
@@ -158,7 +174,25 @@ fun NotificationScreen(
                 }
             }
 
-            if (uiState.notifications.isEmpty()) {
+            if (uiState.isError) {
+                item {
+                    Column {
+                        Spacer(
+                            modifier =
+                                Modifier.height(
+                                    if (!uiState.hasNotificationPermission) {
+                                        140.dp
+                                    } else {
+                                        120.dp
+                                    },
+                                ),
+                        )
+                        BuyOrNotErrorView {
+                            viewModel.handleIntent(NotificationIntent.OnRefreshNotifications)
+                        }
+                    }
+                }
+            } else if (uiState.notifications.isEmpty()) {
                 item {
                     Column {
                         Spacer(
@@ -176,7 +210,10 @@ fun NotificationScreen(
                 }
             } else {
                 // 3. 알림 리스트 아이템
-                items(uiState.notifications) { notification ->
+                items(
+                    uiState.notifications,
+                    key = { it.id },
+                ) { notification ->
                     NotificationItem(
                         state =
                             NotificationState(
@@ -187,8 +224,16 @@ fun NotificationScreen(
                                 time = notification.time,
                                 isRead = notification.isRead,
                             ),
-                        onClick = { onNotificationClick(notification.id) },
+                        onClick = {
+                            viewModel.handleIntent(NotificationIntent.OnNotificationClick(notification.id))
+                        },
                     )
+
+                    if (notification != uiState.notifications.last()) {
+                        BuyOrNotDivider(
+                            size = BuyOrNotDividerSize.Small,
+                        )
+                    }
                 }
             }
 
@@ -219,17 +264,25 @@ fun NotificationScreen(
  */
 @Composable
 private fun NotificationFilterRow(
-    selectedFilter: com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationFilter,
-    onFilterSelected: (com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationFilter) -> Unit,
+    selectedFilter: NotificationFilter,
+    onFilterSelected: (NotificationFilter) -> Unit,
 ) {
+    val filters = NotificationFilter.entries
+
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationFilter.entries) { filter ->
+        items(filters) { filter ->
+            val filterText =
+                when (filter) {
+                    NotificationFilter.ALL -> "전체"
+                    NotificationFilter.MY_VOTE -> "내가 올린 투표"
+                    NotificationFilter.PARTICIPATED -> "참여한 투표"
+                }
             BuyOrNotChip(
-                text = filter.label,
+                text = filterText,
                 isSelected = selectedFilter == filter,
                 onClick = { onFilterSelected(filter) },
             )
