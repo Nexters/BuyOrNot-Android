@@ -14,13 +14,12 @@ import javax.inject.Inject
 class SplashViewModel @Inject constructor(
     userPreferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
-
     /**
      * 저장된 토큰이 있는지 확인
      * accessToken이 비어있지 않으면 true
      */
-    val hasValidToken = userPreferencesRepository.userType.map { userType ->
-        userType != com.sseotdabwa.buyornot.domain.model.UserType.GUEST
-    }
+    val hasValidToken =
+        userPreferencesRepository.userType.map { userType ->
+            userType != com.sseotdabwa.buyornot.domain.model.UserType.GUEST
+        }
 }
-

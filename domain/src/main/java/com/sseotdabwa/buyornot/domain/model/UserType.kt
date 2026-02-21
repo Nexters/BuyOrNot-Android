@@ -10,4 +10,3 @@ enum class UserType {
     /** 소셜 로그인 사용자 (구글/카카오) */
     SOCIAL,
 }
-

@@ -20,26 +20,26 @@ import androidx.core.content.ContextCompat
 /**
  * 알림 권한 상태 확인
  */
-fun Context.hasNotificationPermission(): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+fun Context.hasNotificationPermission(): Boolean =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         ContextCompat.checkSelfPermission(
             this,
-            Manifest.permission.POST_NOTIFICATIONS
+            Manifest.permission.POST_NOTIFICATIONS,
         ) == PackageManager.PERMISSION_GRANTED
     } else {
         // Android 13 미만에서는 항상 true
         true
     }
-}
 
 /**
  * 앱 설정 화면으로 이동
  */
 fun Context.openAppSettings() {
-    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-        data = Uri.fromParts("package", packageName, null)
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-    }
+    val intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
     startActivity(intent)
 }
 
@@ -50,29 +50,28 @@ fun Context.openAppSettings() {
  * @return Pair<Boolean, () -> Unit> - (권한 여부, 권한 요청 함수)
  */
 @Composable
-fun rememberNotificationPermission(
-    onPermissionResult: (Boolean) -> Unit = {}
-): Pair<Boolean, () -> Unit> {
+fun rememberNotificationPermission(onPermissionResult: (Boolean) -> Unit = {}): Pair<Boolean, () -> Unit> {
     val context = LocalContext.current
     var hasPermission by remember {
         mutableStateOf(context.hasNotificationPermission())
     }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        hasPermission = isGranted
-        onPermissionResult(isGranted)
-    }
+    val permissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { isGranted ->
+            hasPermission = isGranted
+            onPermissionResult(isGranted)
+        }
 
-    val requestPermission: () -> Unit = remember {
-        {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    val requestPermission: () -> Unit =
+        remember {
+            {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
             }
         }
-    }
 
     return Pair(hasPermission, requestPermission)
 }
-

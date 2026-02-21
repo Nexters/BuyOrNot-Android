@@ -17,4 +17,3 @@ interface UserPreferencesRepository {
      */
     suspend fun updateUserType(userType: UserType)
 }
-

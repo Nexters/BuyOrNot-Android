@@ -15,4 +15,3 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     val userType = userPreferencesRepository.userType
 }
-

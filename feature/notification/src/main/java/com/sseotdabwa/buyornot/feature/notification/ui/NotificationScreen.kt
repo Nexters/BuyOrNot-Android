@@ -58,17 +58,19 @@ fun NotificationScreen(
     var hasNotificationPermission by remember { mutableStateOf(context.hasNotificationPermission()) }
 
     // 알림 권한 요청
-    val (_, requestPermission) = rememberNotificationPermission { granted ->
-        hasNotificationPermission = granted
-    }
+    val (_, requestPermission) =
+        rememberNotificationPermission { granted ->
+            hasNotificationPermission = granted
+        }
 
     // 앱이 다시 포그라운드로 올 때 권한 상태 재확인
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                hasNotificationPermission = context.hasNotificationPermission()
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    hasNotificationPermission = context.hasNotificationPermission()
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)

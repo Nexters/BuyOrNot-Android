@@ -20,20 +20,22 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(
-                scrim = Color.WHITE,
-                darkScrim = Color.WHITE
-            ),
-            navigationBarStyle = SystemBarStyle.light(
-                scrim = Color.TRANSPARENT,
-                darkScrim = Color.TRANSPARENT
-            )
+            statusBarStyle =
+                SystemBarStyle.light(
+                    scrim = Color.WHITE,
+                    darkScrim = Color.WHITE,
+                ),
+            navigationBarStyle =
+                SystemBarStyle.light(
+                    scrim = Color.TRANSPARENT,
+                    darkScrim = Color.TRANSPARENT,
+                ),
         )
         setContent {
             BuyOrNotTheme {
                 BuyOrNotApp(
                     authEventBus = authEventBus,
-                    onBackPressed = { finish() }
+                    onBackPressed = { finish() },
                 )
             }
         }

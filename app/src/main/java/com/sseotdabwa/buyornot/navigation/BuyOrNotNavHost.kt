@@ -23,7 +23,6 @@ import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
 import com.sseotdabwa.buyornot.feature.mypage.navigation.navigateToMyPage
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotification
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotificationDetail
-import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotificationDetail
 import com.sseotdabwa.buyornot.feature.notification.navigation.notificationGraph
 import com.sseotdabwa.buyornot.feature.upload.navigation.navigateToUpload
 import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
@@ -64,10 +63,11 @@ fun BuyOrNotNavHost(
             onNavigateToLogin = navController::navigateToLogin,
             onNavigateToHome = {
                 navController.navigateToHome(
-                    navOptions = androidx.navigation.navOptions {
-                        popUpTo(SPLASH_ROUTE) { inclusive = true }
-                        launchSingleTop = true
-                    }
+                    navOptions =
+                        androidx.navigation.navOptions {
+                            popUpTo(SPLASH_ROUTE) { inclusive = true }
+                            launchSingleTop = true
+                        },
                 )
             },
         )
@@ -75,10 +75,11 @@ fun BuyOrNotNavHost(
         authScreen(
             onLoginSuccess = {
                 navController.navigateToHome(
-                    navOptions = androidx.navigation.navOptions {
-                        popUpTo(SPLASH_ROUTE) { inclusive = true }
-                        launchSingleTop = true
-                    }
+                    navOptions =
+                        androidx.navigation.navOptions {
+                            popUpTo(SPLASH_ROUTE) { inclusive = true }
+                            launchSingleTop = true
+                        },
                 )
             },
             onTermsClick = navController::navigateToTerms,
