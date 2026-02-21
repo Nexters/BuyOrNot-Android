@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ private fun BaseTopBar(
     Box(
         modifier =
             modifier
+                .padding(top = 10.dp)
                 .fillMaxWidth()
                 .height(TopBarDefaults.Height)
                 .background(BuyOrNotTheme.colors.gray0)
@@ -172,8 +174,13 @@ fun GuestTopBar(onLoginClick: () -> Unit) {
                 shape = RoundedCornerShape(10.dp),
                 colors =
                     ButtonDefaults.buttonColors(
-                        containerColor = BuyOrNotTheme.colors.gray100,
+                        containerColor = BuyOrNotTheme.colors.gray0,
                         contentColor = BuyOrNotTheme.colors.gray700,
+                    ),
+                border =
+                    BorderStroke(
+                        width = 1.dp,
+                        color = BuyOrNotTheme.colors.gray300,
                     ),
                 contentPadding =
                     PaddingValues(
