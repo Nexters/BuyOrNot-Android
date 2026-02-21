@@ -174,7 +174,7 @@ private fun String.toFeedStatus(): FeedStatus =
 private fun VoteResponse.toDomain(): VoteResult =
     VoteResult(
         feedId = feedId,
-        choice = choice.toVoteChoice() ?: VoteChoice.YES,
+        choice = choice.toVoteChoice() ?: error("Unexpected vote choice from server: $choice"),
         yesCount = yesCount,
         noCount = noCount,
         totalCount = totalCount,
