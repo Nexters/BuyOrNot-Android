@@ -45,4 +45,18 @@ interface FeedRepository {
         imageWidth: Int,
         imageHeight: Int,
     ): Long
+
+    /**
+     * 피드 삭제
+     *
+     * @param feedId 삭제할 피드 ID
+     */
+    suspend fun deleteFeed(feedId: Long)
+
+    /**
+     * 피드 신고
+     *
+     * @param feedId 신고할 피드 ID
+     */
+    suspend fun reportFeed(feedId: Long)
 }

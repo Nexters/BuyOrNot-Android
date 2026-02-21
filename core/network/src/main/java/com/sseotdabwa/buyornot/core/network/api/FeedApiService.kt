@@ -10,11 +10,13 @@ import com.sseotdabwa.buyornot.core.network.dto.response.PresignedUrlResponse
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Url
 
@@ -61,4 +63,24 @@ interface FeedApiService {
     suspend fun createFeed(
         @Body request: FeedRequest,
     ): BaseResponse<FeedResponse>
+
+    /**
+     * 피드 삭제
+     *
+     * @param feedId 삭제할 피드 ID
+     */
+    @DELETE("/api/v1/feeds/{feedId}")
+    suspend fun deleteFeed(
+        @Path("feedId") feedId: Long,
+    ): BaseResponse<Unit>
+
+    /**
+     * 피드 신고
+     *
+     * @param feedId 신고할 피드 ID
+     */
+    @POST("/api/v1/feeds/{feedId}/report")
+    suspend fun reportFeed(
+        @Path("feedId") feedId: Long,
+    ): BaseResponse<Unit>
 }

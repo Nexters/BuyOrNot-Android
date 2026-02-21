@@ -98,27 +98,56 @@ class HomeViewModel @Inject constructor(
 
     private fun handleDelete(feedId: String) {
         viewModelScope.launch {
-            // TODO: 서버 연동 시 실제 삭제 API 호출
-            val updatedFeeds = uiState.value.feeds.filter { it.id != feedId }
-            updateState { it.copy(feeds = updatedFeeds) }
-            sendSideEffect(
-                HomeSideEffect.ShowSnackbar(
-                    message = "삭제가 완료되었습니다.",
-                    icon = BuyOrNotIcons.CheckCircle,
-                ),
-            )
+            try {
+                feedRepository.deleteFeed(feedId.toLong())
+
+                // UI에서 피드 제거
+                val updatedFeeds = uiState.value.feeds.filter { it.id != feedId }
+                updateState { it.copy(feeds = updatedFeeds) }
+
+                // 캐시에서도 제거
+                cachedFeeds = cachedFeeds.filter { it.id != feedId }
+
+                sendSideEffect(
+                    HomeSideEffect.ShowSnackbar(
+                        message = "삭제가 완료되었습니다.",
+                        icon = BuyOrNotIcons.CheckCircle,
+                    ),
+                )
+            } catch (e: Exception) {
+                sendSideEffect(
+                    HomeSideEffect.ShowSnackbar(
+                        message = "삭제에 실패했습니다.",
+                        icon = null,
+                    ),
+                )
+            }
         }
     }
 
     private fun handleReport(feedId: String) {
         viewModelScope.launch {
-            // TODO: 서버 연동 시 실제 신고 API 호출
-            sendSideEffect(
-                HomeSideEffect.ShowSnackbar(
-                    message = "신고가 완료되었습니다.",
-                    icon = BuyOrNotIcons.CheckCircle,
-                ),
-            )
+            try {
+                feedRepository.reportFeed(feedId.toLong())
+                sendSideEffect(
+                    HomeSideEffect.ShowSnackbar(
+                        message = "신고가 완료되었습니다.",
+                        icon = BuyOrNotIcons.CheckCircle,
+                    ),
+                )
+            } catch (e: Exception) {
+                // 400 에러 (본인 피드 또는 이미 신고된 피드)에 대한 처리
+                val errorMessage = when {
+                    e.message?.contains("400") == true -> "이미 신고한 피드이거나 본인의 피드입니다."
+                    else -> "신고에 실패했습니다."
+                }
+                sendSideEffect(
+                    HomeSideEffect.ShowSnackbar(
+                        message = errorMessage,
+                        icon = null,
+                    ),
+                )
+            }
         }
     }
 

@@ -88,6 +88,14 @@ class FeedRepositoryImpl @Inject constructor(
                 ),
             ).getOrThrow()
             .feedId
+
+    override suspend fun deleteFeed(feedId: Long) {
+        feedApiService.deleteFeed(feedId).getOrThrow()
+    }
+
+    override suspend fun reportFeed(feedId: Long) {
+        feedApiService.reportFeed(feedId).getOrThrow()
+    }
 }
 
 /**
