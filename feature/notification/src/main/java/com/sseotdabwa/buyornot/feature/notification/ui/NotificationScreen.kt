@@ -1,5 +1,8 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
+import android.Manifest
+import android.app.Activity
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +36,9 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.permission.hasNotificationPermission
 import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
+import androidx.core.app.ActivityCompat
+import com.sseotdabwa.buyornot.core.ui.permission.openAppSettings
+
 
 /**
  * 알림 화면의 탭/필터 정의
@@ -57,10 +63,16 @@ fun NotificationScreen(
     var selectedFilter by remember { mutableStateOf(NotificationFilter.ALL) }
     var hasNotificationPermission by remember { mutableStateOf(context.hasNotificationPermission()) }
 
+    // 권한 요청 이력 추적 (영구 거부 판단용)
+    var hasRequestedPermission by remember { mutableStateOf(false) }
+
     // 알림 권한 요청
     val (_, requestPermission) =
         rememberNotificationPermission { granted ->
             hasNotificationPermission = granted
+            if (!granted) {
+                hasRequestedPermission = true
+            }
         }
 
     // 앱이 다시 포그라운드로 올 때 권한 상태 재확인
@@ -122,7 +134,40 @@ fun NotificationScreen(
                 item {
                     NotificationGuideBanner(
                         onActionClick = {
-                            requestPermission()
+                            // Android 13 미만: 알림 권한이 필요 없음 (자동 허용)
+                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                                context.openAppSettings()
+                                return@NotificationGuideBanner
+                            }
+
+                            val activity = context as? Activity
+                            if (activity == null) {
+                                // Activity를 얻을 수 없으면 설정으로 이동
+                                context.openAppSettings()
+                                return@NotificationGuideBanner
+                            }
+
+                            val shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(
+                                activity,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            )
+
+                            when {
+                                // Case 1: 사용자가 1회 거부 후 (설명 다이얼로그 표시 가능)
+                                shouldShowRationale -> {
+                                    requestPermission()
+                                }
+                                // Case 2: 영구 거부 (Don't ask again 선택)
+                                // - shouldShowRationale = false
+                                // - hasRequestedPermission = true (이미 요청한 적 있음)
+                                hasRequestedPermission -> {
+                                    context.openAppSettings()
+                                }
+                                // Case 3: 첫 요청 (아직 한 번도 권한 요청하지 않음)
+                                else -> {
+                                    requestPermission()
+                                }
+                            }
                         },
                         modifier = Modifier.padding(horizontal = 20.dp),
                     )
