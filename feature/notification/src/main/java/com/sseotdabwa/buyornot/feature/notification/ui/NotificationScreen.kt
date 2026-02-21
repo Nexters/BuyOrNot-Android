@@ -141,7 +141,6 @@ fun NotificationScreen(
                             // ViewModel에서 권한 요청 이력(DataStore)를 기반으로 판단
                             viewModel.handleBannerClick(
                                 shouldShowRationale = shouldShowRationale,
-                                hasRequestedPermission = uiState.hasRequestedPermission,
                             )
                         },
                         modifier = Modifier.padding(horizontal = 20.dp),

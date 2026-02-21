@@ -70,25 +70,12 @@ class NotificationViewModel @Inject constructor(
     /**
      * 배너 클릭 시 권한 요청 또는 설정 화면 이동 판단
      */
-    fun handleBannerClick(
-        shouldShowRationale: Boolean,
-        hasRequestedPermission: Boolean,
-    ) {
-        viewModelScope.launch {
-            when {
-                // Case 1: 1회 거부 후 (재요청 가능)
-                shouldShowRationale -> {
-                    sendSideEffect(NotificationSideEffect.RequestNotificationPermission)
-                }
-                // Case 2: 영구 거부 (설정으로 이동)
-                hasRequestedPermission -> {
-                    sendSideEffect(NotificationSideEffect.OpenAppSettings)
-                }
-                // Case 3: 첫 요청
-                else -> {
-                    handlePermissionRequest()
-                }
-            }
+    fun handleBannerClick(shouldShowRationale: Boolean) {
+        val hasRequestedPermission = uiState.value.hasRequestedPermission
+        when {
+            shouldShowRationale -> sendSideEffect(NotificationSideEffect.RequestNotificationPermission)
+            hasRequestedPermission -> sendSideEffect(NotificationSideEffect.OpenAppSettings)
+            else -> handlePermissionRequest()
         }
     }
 
