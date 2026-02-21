@@ -19,67 +19,69 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.permission.hasNotificationPermission
 import com.sseotdabwa.buyornot.core.ui.permission.openAppSettings
 import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
-
-/**
- * 알림 화면의 탭/필터 정의
- */
-private enum class NotificationFilter(
-    val label: String,
-) {
-    ALL("전체"),
-    MY_VOTE("내가 올린 투표"),
-    PARTICIPATED("참여한 투표"),
-}
+import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationIntent
+import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationSideEffect
 
 @Composable
 fun NotificationScreen(
     onBackClick: () -> Unit,
     onNotificationClick: (String) -> Unit,
+    viewModel: NotificationViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-
-    // [State] MVI 패턴 적용 시 ViewModel에서 관리
-    var selectedFilter by remember { mutableStateOf(NotificationFilter.ALL) }
-    var hasNotificationPermission by remember { mutableStateOf(context.hasNotificationPermission()) }
-
-    // 권한 요청 이력 추적 (영구 거부 판단용)
-    var hasRequestedPermission by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // 알림 권한 요청
     val (_, requestPermission) =
         rememberNotificationPermission { granted ->
-            hasNotificationPermission = granted
-            if (!granted) {
-                hasRequestedPermission = true
+            if (granted) {
+                viewModel.handleIntent(NotificationIntent.OnPermissionGranted)
+            } else {
+                viewModel.handleIntent(NotificationIntent.OnPermissionDenied)
             }
         }
+
+    // SideEffect 처리
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { sideEffect ->
+            when (sideEffect) {
+                is NotificationSideEffect.RequestNotificationPermission -> {
+                    requestPermission()
+                }
+                is NotificationSideEffect.OpenAppSettings -> {
+                    context.openAppSettings()
+                }
+            }
+        }
+    }
 
     // 앱이 다시 포그라운드로 올 때 권한 상태 재확인
     DisposableEffect(lifecycleOwner) {
         val observer =
             LifecycleEventObserver { _, event ->
                 if (event == Lifecycle.Event.ON_RESUME) {
-                    hasNotificationPermission = context.hasNotificationPermission()
+                    val hasPermission = context.hasNotificationPermission()
+                    viewModel.updatePermissionState(hasPermission)
                 }
             }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -87,23 +89,6 @@ fun NotificationScreen(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
-
-    // 더미 데이터 (디자인 가이드 반영)
-    val notifications =
-        remember {
-            listOf(
-                NotificationState("1", "https://picsum.photos/200", "투표 종료", "78% '애매하긴 해!'", "6시간 전", false),
-                NotificationState("2", "https://picsum.photos/201", "투표 종료", "56% '사! 가즈아!'", "3일 전", true),
-                NotificationState("3", "https://picsum.photos/202", "투표 종료", "90% '애매하긴 해!'", "6일 전", true),
-                NotificationState("4", "https://picsum.photos/203", "투표 종료", "무승부! 2차전 가보자고!", "1주 전", true),
-                NotificationState("5", "https://picsum.photos/204", "투표 종료", "결과를 확인해보세요", "2주 전", true),
-                NotificationState("6", "https://picsum.photos/200", "투표 종료", "78% '애매하긴 해!'", "6시간 전", false),
-                NotificationState("7", "https://picsum.photos/201", "투표 종료", "56% '사! 가즈아!'", "3일 전", true),
-                NotificationState("8", "https://picsum.photos/202", "투표 종료", "90% '애매하긴 해!'", "6일 전", true),
-                NotificationState("9", "https://picsum.photos/203", "투표 종료", "무승부! 2차전 가보자고!", "1주 전", true),
-                NotificationState("10", "https://picsum.photos/204", "투표 종료", "결과를 확인해보세요", "2주 전", true),
-            )
-        }
 
     Column(
         modifier =
@@ -119,21 +104,23 @@ fun NotificationScreen(
             modifier = Modifier.weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // 1. 필터 칩 영역 (상단 여백 20px)
+            // 1. 필터 칩 영역
             item {
                 NotificationFilterRow(
-                    selectedFilter = selectedFilter,
-                    onFilterSelected = { selectedFilter = it },
+                    selectedFilter = uiState.selectedFilter,
+                    onFilterSelected = { filter ->
+                        viewModel.handleIntent(NotificationIntent.OnFilterSelected(filter))
+                    },
                 )
-                Spacer(modifier = Modifier.height(16.dp)) // 칩과 배너 사이 16px
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
             // 2. 알림 설정 가이드 배너 (권한 없을 때만 표시)
-            if (!hasNotificationPermission) {
+            if (!uiState.hasNotificationPermission) {
                 item {
                     NotificationGuideBanner(
                         onActionClick = {
-                            // Android 13 미만: 알림 권한이 필요 없음 (자동 허용)
+                            // Android 13 미만: 설정으로 이동
                             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
                                 context.openAppSettings()
                                 return@NotificationGuideBanner
@@ -141,7 +128,6 @@ fun NotificationScreen(
 
                             val activity = context as? Activity
                             if (activity == null) {
-                                // Activity를 얻을 수 없으면 설정으로 이동
                                 context.openAppSettings()
                                 return@NotificationGuideBanner
                             }
@@ -152,22 +138,11 @@ fun NotificationScreen(
                                     Manifest.permission.POST_NOTIFICATIONS,
                                 )
 
-                            when {
-                                // Case 1: 사용자가 1회 거부 후 (설명 다이얼로그 표시 가능)
-                                shouldShowRationale -> {
-                                    requestPermission()
-                                }
-                                // Case 2: 영구 거부 (Don't ask again 선택)
-                                // - shouldShowRationale = false
-                                // - hasRequestedPermission = true (이미 요청한 적 있음)
-                                hasRequestedPermission -> {
-                                    context.openAppSettings()
-                                }
-                                // Case 3: 첫 요청 (아직 한 번도 권한 요청하지 않음)
-                                else -> {
-                                    requestPermission()
-                                }
-                            }
+                            // ViewModel에서 권한 요청 이력(DataStore)를 기반으로 판단
+                            viewModel.handleBannerClick(
+                                shouldShowRationale = shouldShowRationale,
+                                hasRequestedPermission = uiState.hasRequestedPermission,
+                            )
                         },
                         modifier = Modifier.padding(horizontal = 20.dp),
                     )
@@ -176,14 +151,21 @@ fun NotificationScreen(
             }
 
             // 3. 알림 리스트 아이템
-            items(notifications) { notification ->
+            items(uiState.notifications) { notification ->
                 NotificationItem(
-                    state = notification,
+                    state = NotificationState(
+                        id = notification.id,
+                        imageUrl = notification.imageUrl,
+                        label = notification.title,
+                        message = notification.description,
+                        time = notification.time,
+                        isRead = notification.isRead,
+                    ),
                     onClick = { onNotificationClick(notification.id) },
                 )
             }
 
-            // 4. 리스트 푸터 (30일 전 알림 문구)
+            // 4. 리스트 푸터
             item {
                 Box(
                     modifier =
@@ -208,8 +190,8 @@ fun NotificationScreen(
  */
 @Composable
 private fun NotificationFilterRow(
-    selectedFilter: NotificationFilter,
-    onFilterSelected: (NotificationFilter) -> Unit,
+    selectedFilter: com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationFilter,
+    onFilterSelected: (com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationFilter) -> Unit,
 ) {
     LazyRow(
         modifier =
@@ -219,7 +201,7 @@ private fun NotificationFilterRow(
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(NotificationFilter.entries) { filter ->
+        items(com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationFilter.entries) { filter ->
             BuyOrNotChip(
                 text = filter.label,
                 isSelected = selectedFilter == filter,
