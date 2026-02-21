@@ -37,8 +37,12 @@ class SplashViewModel @Inject constructor(
      */
     private fun checkTokenAndNavigate() {
         viewModelScope.launch {
-            val userType = userPreferencesRepository.userType.first()
-            val hasValidToken = userType != UserType.GUEST
+            val hasValidToken = try {
+                val userType = userPreferencesRepository.userType.first()
+                userType != UserType.GUEST
+            } catch (e: Exception) {
+                false // DataStore 오류 시 비로그인 화면으로 폴백
+            }
 
             delay(SPLASH_TIMEOUT_MILLIS)
 
