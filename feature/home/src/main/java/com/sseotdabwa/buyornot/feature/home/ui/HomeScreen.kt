@@ -408,10 +408,7 @@ private fun HomeFeedList(
     headerPadding: Dp,
     modifier: Modifier = Modifier,
 ) {
-    val filteredFeeds = when (uiState.selectedTab) {
-        HomeTab.FEED -> uiState.feeds
-        HomeTab.REVIEW -> uiState.feeds.filter { it.isOwner }
-    }
+    val filteredFeeds = uiState.feeds
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),

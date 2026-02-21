@@ -31,6 +31,8 @@ class HomeViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val feedRepository: FeedRepository,
 ) : BaseViewModel<HomeUiState, HomeIntent, HomeSideEffect>(HomeUiState()) {
+    private var cachedFeeds: List<FeedItem> = emptyList()
+
     init {
         observeUserType()
         loadFeeds()
@@ -62,13 +64,14 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun handleTabSelection(tab: HomeTab) {
-        updateState { it.copy(selectedTab = tab, feeds = emptyList(), hasError = false, isLoading = true) }
+        //updateState { it.copy(selectedTab = tab, feeds = emptyList(), hasError = false, isLoading = true) }
+        updateState { it.copy(selectedTab = tab, isLoading = true) }
         loadFeeds()
     }
 
     private fun handleFilterSelection(filter: FilterChip) {
-        updateState { it.copy(selectedFilter = filter, feeds = emptyList(), hasError = false, isLoading = true) }
-        loadFeeds()
+        updateState { it.copy(selectedFilter = filter) }
+        applyFiltering()
     }
 
     private fun handleBannerDismiss() {
@@ -126,33 +129,42 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             updateState { it.copy(isLoading = true, hasError = false) }
             try {
-                val feeds =
-                    when (uiState.value.selectedTab) {
-                        HomeTab.FEED -> {
-                            // 필터에 따른 feedStatus 파라미터 설정
-                            val feedStatus =
-                                when (uiState.value.selectedFilter) {
-                                    FilterChip.ALL -> null
-                                    FilterChip.IN_PROGRESS -> "OPEN"
-                                    FilterChip.ENDED -> "CLOSED"
-                                }
-                            feedRepository.getFeedList(feedStatus = feedStatus)
-                        }
-                        HomeTab.REVIEW -> feedRepository.getMyFeeds()
-                    }
+                val currentTab = uiState.value.selectedTab
+                // 필터 없이 해당 탭의 전체 데이터를 가져옴
+                val feeds = when (currentTab) {
+                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null) // 전체 가져오기
+                    HomeTab.REVIEW -> feedRepository.getMyFeeds()
+                }
 
-                val feedItems = feeds.map { it.toFeedItem() }
-                updateState { it.copy(feeds = feedItems, isLoading = false, hasError = false) }
+                // 원본 데이터를 캐시에 저장
+                // REVIEW 탭일 때는 모든 피드가 본인 피드이므로 isOwner = true
+                val isMyFeed = currentTab == HomeTab.REVIEW
+                cachedFeeds = feeds.map { it.toFeedItem(isMyFeed) }
+
+                // 현재 선택된 필터에 맞춰 UI 상태 업데이트
+                applyFiltering()
             } catch (e: Exception) {
                 updateState { it.copy(isLoading = false, hasError = true) }
             }
         }
     }
 
+    private fun applyFiltering() {
+        val currentFilter = uiState.value.selectedFilter
+
+        val filteredList = when (currentFilter) {
+            FilterChip.ALL -> cachedFeeds
+            FilterChip.IN_PROGRESS -> cachedFeeds.filter { !it.isVoteEnded }
+            FilterChip.ENDED -> cachedFeeds.filter { it.isVoteEnded }
+        }
+
+        updateState { it.copy(feeds = filteredList, isLoading = false) }
+    }
+
     /**
      * Domain Feed를 UI FeedItem으로 변환
      */
-    private fun Feed.toFeedItem(): FeedItem {
+    private fun Feed.toFeedItem(isOwner: Boolean = false): FeedItem {
         val aspectRatio =
             if (imageWidth == imageHeight) {
                 ImageAspectRatio.SQUARE
@@ -182,7 +194,7 @@ class HomeViewModel @Inject constructor(
             buyVoteCount = yesCount,
             maybeVoteCount = noCount,
             totalVoteCount = totalCount,
-            isOwner = false, // TODO: 로그인한 사용자 ID와 비교하여 설정
+            isOwner = isOwner,
         )
     }
 }
