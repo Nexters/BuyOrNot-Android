@@ -239,10 +239,11 @@ class HomeViewModel @Inject constructor(
 
                 // 원본 데이터를 캐시에 저장
                 // 각 피드의 작성자 ID와 현재 사용자 ID를 비교하여 isOwner 설정
-                cachedFeeds = feeds.map { feed ->
-                    val isOwner = currentUserId != null && feed.author.userId == currentUserId
-                    feed.toFeedItem(isOwner)
-                }
+                cachedFeeds =
+                    feeds.map { feed ->
+                        val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                        feed.toFeedItem(isOwner)
+                    }
 
                 // 현재 선택된 필터에 맞춰 UI 상태 업데이트
                 applyFiltering()
