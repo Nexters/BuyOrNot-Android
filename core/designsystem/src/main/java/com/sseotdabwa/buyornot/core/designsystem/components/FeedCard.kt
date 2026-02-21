@@ -70,7 +70,7 @@ fun FeedCard(
     buyVoteCount: Int,
     maybeVoteCount: Int,
     totalVoteCount: Int,
-    onExpandClick: (String) -> Unit,
+    onExpandClick: (String) -> Unit = {},
     onVote: (Int) -> Unit, // 투표 옵션 인덱스 (0: 사!, 1: 애매..)
     isOwner: Boolean = false, // 본인 글인지 여부
     onDeleteClick: () -> Unit = {}, // 삭제 클릭 콜백 추가
@@ -79,7 +79,9 @@ fun FeedCard(
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
     val maybePercentage = if (totalVoteCount > 0) (maybeVoteCount * 100 / totalVoteCount) else 0
+
     var showMenu by remember { mutableStateOf(false) }
+    var showFullScreen by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
         val isInPreviewMode = LocalInspectionMode.current
@@ -227,14 +229,11 @@ fun FeedCard(
 
                 // 이미지 확장 버튼 (원본 크기)
                 FullscreenButton(
-                    modifier =
-                        Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(
-                                top = 14.dp,
-                                end = 14.dp,
-                            ),
-                    onClick = { onExpandClick(productImageUrl) },
+                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 14.dp),
+                    onClick = {
+                        showFullScreen = true
+                        onExpandClick(productImageUrl)
+                    },
                 )
 
                 // 가격 태그 (좌측 하단)
@@ -337,6 +336,59 @@ fun FeedCard(
                     color = BuyOrNotTheme.colors.gray600,
                 )
             }
+        }
+    }
+
+    if (showFullScreen) {
+        Popup(
+            onDismissRequest = { showFullScreen = false },
+            properties = PopupProperties(focusable = true, excludeFromSystemGesture = false),
+        ) {
+            FullScreenImageOverlay(
+                imageUrl = productImageUrl,
+                onDismiss = { showFullScreen = false },
+            )
+        }
+    }
+}
+
+/**
+ * 피드 이미지 확대 오버레이 컴포넌트
+ */
+@Composable
+private fun FullScreenImageOverlay(
+    imageUrl: String,
+    onDismiss: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .clickable { onDismiss() },
+    ) {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = "Expanded Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit,
+        )
+
+        Box(
+            modifier =
+                Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 10.dp, top = 10.dp)
+                    .size(40.dp)
+                    .clickable { onDismiss() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = BuyOrNotIcons.Close.asImageVector(),
+                contentDescription = "Close",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }
