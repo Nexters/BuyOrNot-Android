@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -35,10 +36,8 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.permission.hasNotificationPermission
-import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
-import androidx.core.app.ActivityCompat
 import com.sseotdabwa.buyornot.core.ui.permission.openAppSettings
-
+import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
 
 /**
  * 알림 화면의 탭/필터 정의
@@ -147,10 +146,11 @@ fun NotificationScreen(
                                 return@NotificationGuideBanner
                             }
 
-                            val shouldShowRationale = ActivityCompat.shouldShowRequestPermissionRationale(
-                                activity,
-                                Manifest.permission.POST_NOTIFICATIONS
-                            )
+                            val shouldShowRationale =
+                                ActivityCompat.shouldShowRequestPermissionRationale(
+                                    activity,
+                                    Manifest.permission.POST_NOTIFICATIONS,
+                                )
 
                             when {
                                 // Case 1: 사용자가 1회 거부 후 (설명 다이얼로그 표시 가능)

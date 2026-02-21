@@ -108,7 +108,3 @@ sealed interface HomeSideEffect {
 
     data object NavigateToUpload : HomeSideEffect
 }
-
-
-
-

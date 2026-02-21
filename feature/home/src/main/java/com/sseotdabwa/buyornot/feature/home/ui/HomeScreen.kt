@@ -19,11 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,7 +68,6 @@ import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeUiState
 import kotlin.math.roundToInt
 
-
 /**
  * 홈 화면 루트 컴포저블
  * MVI 패턴을 적용하여 ViewModel을 통해 상태를 관리합니다.
@@ -104,7 +101,7 @@ fun HomeScreen(
                     showBuyOrNotSnackBar(
                         snackbarHostState = snackbarHostState,
                         message = sideEffect.message,
-                        iconResource = sideEffect.icon
+                        iconResource = sideEffect.icon,
                     )
                 }
                 is HomeSideEffect.NavigateToNotification -> onNotificationClick()
@@ -508,7 +505,6 @@ private fun FeedItemCard(
         )
     }
 }
-
 
 /**
  * 피드 이미지 확대 오버레이 컴포넌트

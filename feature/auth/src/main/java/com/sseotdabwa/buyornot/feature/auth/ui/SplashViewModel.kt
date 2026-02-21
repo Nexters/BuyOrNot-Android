@@ -24,7 +24,6 @@ private const val SPLASH_TIMEOUT_MILLIS = 2300L
 class SplashViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
 ) : BaseViewModel<SplashUiState, SplashIntent, SplashSideEffect>(SplashUiState()) {
-
     init {
         checkTokenAndNavigate()
     }
