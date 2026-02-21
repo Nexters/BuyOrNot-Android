@@ -445,7 +445,25 @@ private fun HomeFeedList(
                 selectedFilter = uiState.selectedFilter,
                 onFilterSelected = { onIntent(HomeIntent.OnFilterSelected(it)) },
             )
-            Spacer(modifier = Modifier.height(16.dp))
+        }
+        // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
+        if (uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                HomeBanner(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
+                    onClick = { },
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                BuyOrNotDivider(
+                    size = BuyOrNotDividerSize.Small,
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                )
+            }
         }
 
         when {
@@ -455,7 +473,7 @@ private fun HomeFeedList(
                 items(filteredFeeds.size, key = { index -> filteredFeeds[index].id }) { index ->
                     FeedItemCard(
                         feed = filteredFeeds[index],
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp).animateItem(),
+                        modifier = Modifier.padding(20.dp).animateItem(),
                         onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
                         onDelete = { id -> onIntent(HomeIntent.OnDeleteClicked(id)) },
                         onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
