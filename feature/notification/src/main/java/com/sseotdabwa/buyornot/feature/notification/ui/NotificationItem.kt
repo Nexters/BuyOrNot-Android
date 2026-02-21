@@ -21,8 +21,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
-import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 /**
@@ -60,69 +58,58 @@ fun NotificationItem(
     // 읽음 상태에 따른 배경색 결정
     val backgroundColor = if (state.isRead) BuyOrNotTheme.colors.gray50 else BuyOrNotTheme.colors.gray0
 
-    Column(
+    Row(
         modifier =
-            modifier
-                .fillMaxWidth(),
+            Modifier
+                .fillMaxWidth()
+                .background(backgroundColor)
+                .clickable { onClick() }
+                .padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
+        // 좌측 이미지
+        AsyncImage(
+            model = state.imageUrl,
+            contentDescription = null,
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .background(backgroundColor)
-                    .clickable { onClick() }
-                    .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+            contentScale = ContentScale.Crop,
+        )
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        // 우측 텍스트 영역
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
         ) {
-            // 좌측 이미지
-            AsyncImage(
-                model = state.imageUrl,
-                contentDescription = null,
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop,
-            )
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            // 우측 텍스트 영역
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = state.label,
-                        style = BuyOrNotTheme.typography.bodyB5Medium,
-                        color = BuyOrNotTheme.colors.gray600,
-                    )
-                    Text(
-                        text = state.time,
-                        style = BuyOrNotTheme.typography.bodyB6Medium,
-                        color = BuyOrNotTheme.colors.gray600,
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(6.dp))
-
                 Text(
-                    text = state.message,
-                    style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                    color = BuyOrNotTheme.colors.gray900,
+                    text = state.label,
+                    style = BuyOrNotTheme.typography.bodyB5Medium,
+                    color = BuyOrNotTheme.colors.gray600,
+                )
+                Text(
+                    text = state.time,
+                    style = BuyOrNotTheme.typography.bodyB6Medium,
+                    color = BuyOrNotTheme.colors.gray600,
                 )
             }
-        }
 
-        // 아이템 분리 디바이더 (small)
-        BuyOrNotDivider(
-            size = BuyOrNotDividerSize.Small,
-        )
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = state.message,
+                style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+                color = BuyOrNotTheme.colors.gray900,
+            )
+        }
     }
 }
 
