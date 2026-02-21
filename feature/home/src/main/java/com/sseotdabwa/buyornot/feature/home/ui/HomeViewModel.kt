@@ -4,11 +4,17 @@ import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.model.Feed
+import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UserType
+import com.sseotdabwa.buyornot.domain.model.VoteChoice
+import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.feature.home.viewmodel.FeedItem
+import com.sseotdabwa.buyornot.feature.home.viewmodel.FilterChip
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeIntent
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeSideEffect
+import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,10 +29,11 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val feedRepository: FeedRepository,
 ) : BaseViewModel<HomeUiState, HomeIntent, HomeSideEffect>(HomeUiState()) {
     init {
         observeUserType()
-        loadDummyFeeds()
+        loadFeeds()
     }
 
     private fun observeUserType() {
@@ -50,16 +57,18 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.OnVoteClicked -> handleVote(intent.feedId, intent.optionIndex)
             is HomeIntent.OnDeleteClicked -> handleDelete(intent.feedId)
             is HomeIntent.OnReportClicked -> handleReport(intent.feedId)
-            is HomeIntent.LoadFeeds -> loadDummyFeeds()
+            is HomeIntent.LoadFeeds -> loadFeeds()
         }
     }
 
-    private fun handleTabSelection(tab: com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab) {
-        updateState { it.copy(selectedTab = tab) }
+    private fun handleTabSelection(tab: HomeTab) {
+        updateState { it.copy(selectedTab = tab, feeds = emptyList(), hasError = false, isLoading = true) }
+        loadFeeds()
     }
 
-    private fun handleFilterSelection(filter: com.sseotdabwa.buyornot.feature.home.viewmodel.FilterChip) {
-        updateState { it.copy(selectedFilter = filter) }
+    private fun handleFilterSelection(filter: FilterChip) {
+        updateState { it.copy(selectedFilter = filter, feeds = emptyList(), hasError = false, isLoading = true) }
+        loadFeeds()
     }
 
     private fun handleBannerDismiss() {
@@ -100,7 +109,7 @@ class HomeViewModel @Inject constructor(
 
     private fun handleReport(feedId: String) {
         viewModelScope.launch {
-            // TODO: 서버 연동 시 실제 신고 API 호출 (feedId 사용)
+            // TODO: 서버 연동 시 실제 신고 API 호출
             sendSideEffect(
                 HomeSideEffect.ShowSnackbar(
                     message = "신고가 완료되었습니다.",
@@ -111,30 +120,70 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * 더미 피드 데이터 로드 (임시)
-     * TODO: 서버 연동 시 실제 피드 데이터를 가져오는 로직으로 교체
+     * 피드 데이터 로드 (API 연동)
      */
-    private fun loadDummyFeeds() {
-        val dummyFeeds =
-            List(15) { index ->
-                FeedItem(
-                    id = "feed_$index",
-                    profileImageUrl = "https://picsum.photos/seed/p$index/200/200",
-                    nickname = if (index % 3 == 0) "나" else "유저 $index",
-                    category = listOf("의류", "뷰티", "디지털", "식품")[index % 4],
-                    createdAt = "${index + 1}시간 전",
-                    content = "이 제품 살까요 말까요? 고민되네요!",
-                    productImageUrl = "https://picsum.photos/seed/item$index/800/${if (index % 2 == 0) 800 else 1000}",
-                    price = "${(index + 1) * 10000}",
-                    imageAspectRatio = if (index % 2 == 0) ImageAspectRatio.SQUARE else ImageAspectRatio.PORTRAIT,
-                    isVoteEnded = index % 5 == 0,
-                    userVotedOptionIndex = if (index % 3 == 0) index % 2 else null,
-                    buyVoteCount = 40 + index * 5,
-                    maybeVoteCount = 20 + index * 2,
-                    totalVoteCount = 60 + index * 7,
-                    isOwner = index % 3 == 0,
-                )
+    private fun loadFeeds() {
+        viewModelScope.launch {
+            updateState { it.copy(isLoading = true, hasError = false) }
+            try {
+                val feeds =
+                    when (uiState.value.selectedTab) {
+                        HomeTab.FEED -> {
+                            // 필터에 따른 feedStatus 파라미터 설정
+                            val feedStatus =
+                                when (uiState.value.selectedFilter) {
+                                    FilterChip.ALL -> null
+                                    FilterChip.IN_PROGRESS -> "OPEN"
+                                    FilterChip.ENDED -> "CLOSED"
+                                }
+                            feedRepository.getFeedList(feedStatus = feedStatus)
+                        }
+                        HomeTab.REVIEW -> feedRepository.getMyFeeds()
+                    }
+
+                val feedItems = feeds.map { it.toFeedItem() }
+                updateState { it.copy(feeds = feedItems, isLoading = false, hasError = false) }
+            } catch (e: Exception) {
+                updateState { it.copy(isLoading = false, hasError = true) }
             }
-        updateState { it.copy(feeds = dummyFeeds) }
+        }
+    }
+
+    /**
+     * Domain Feed를 UI FeedItem으로 변환
+     */
+    private fun Feed.toFeedItem(): FeedItem {
+        val aspectRatio =
+            if (imageWidth == imageHeight) {
+                ImageAspectRatio.SQUARE
+            } else if (imageHeight > imageWidth) {
+                ImageAspectRatio.PORTRAIT
+            } else {
+                ImageAspectRatio.SQUARE
+            }
+
+        return FeedItem(
+            id = feedId.toString(),
+            profileImageUrl = author.profileImage ?: "",
+            nickname = author.nickname,
+            category = category,
+            createdAt = createdAt,
+            content = content,
+            productImageUrl = viewUrl,
+            price = price.toString(),
+            imageAspectRatio = aspectRatio,
+            isVoteEnded = feedStatus == FeedStatus.CLOSED,
+            userVotedOptionIndex =
+                when (myVoteChoice) {
+                    VoteChoice.YES -> 0
+                    VoteChoice.NO -> 1
+                    null -> null
+                },
+            buyVoteCount = yesCount,
+            maybeVoteCount = noCount,
+            totalVoteCount = totalCount,
+            isOwner = false, // TODO: 로그인한 사용자 ID와 비교하여 설정
+        )
     }
 }
+

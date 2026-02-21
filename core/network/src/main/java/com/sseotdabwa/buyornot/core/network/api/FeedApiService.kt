@@ -3,18 +3,43 @@ package com.sseotdabwa.buyornot.core.network.api
 import com.sseotdabwa.buyornot.core.network.dto.request.FeedRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
+import com.sseotdabwa.buyornot.core.network.dto.response.FeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.PresignedUrlResponse
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.Headers
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Query
 import retrofit2.http.Url
 
 interface FeedApiService {
+    /**
+     * 전체 피드 목록 조회 (페이징)
+     *
+     * @param cursor 이전 페이지 마지막 feedId (첫 페이지는 생략)
+     * @param size 페이지 크기 (기본값 20, 최대 50)
+     * @param feedStatus 피드 상태 필터 (OPEN, CLOSED / 미지정 시 전체)
+     */
+    @GET("/api/v1/feeds")
+    suspend fun getFeedList(
+        @Query("cursor") cursor: Long? = null,
+        @Query("size") size: Int = 20,
+        @Query("feedStatus") feedStatus: String? = null,
+    ): BaseResponse<FeedListResponse>
+
+    /**
+     * 내가 작성한 피드 목록 조회
+     * 응답이 List로 직접 옴 (페이징 없음)
+     */
+    @GET("/api/v1/users/me/feeds")
+    suspend fun getMyFeeds(): BaseResponse<List<FeedItemDto>>
+
     @POST("/api/v1/uploads/presigned-put")
     suspend fun getPresignedUrl(
         @Body request: PresignedUrlRequest,

@@ -52,6 +52,7 @@ data class FeedItem(
  * @property isBannerVisible 배너 표시 여부
  * @property feeds 피드 목록
  * @property isLoading 로딩 상태
+ * @property hasError 에러 발생 여부
  */
 @Immutable
 data class HomeUiState(
@@ -60,7 +61,8 @@ data class HomeUiState(
     val selectedFilter: FilterChip = FilterChip.ALL,
     val isBannerVisible: Boolean = true,
     val feeds: List<FeedItem> = emptyList(),
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
+    val hasError: Boolean = false,
 )
 
 /**

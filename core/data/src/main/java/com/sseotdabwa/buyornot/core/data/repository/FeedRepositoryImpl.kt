@@ -3,9 +3,15 @@ package com.sseotdabwa.buyornot.core.data.repository
 import com.sseotdabwa.buyornot.core.network.api.FeedApiService
 import com.sseotdabwa.buyornot.core.network.dto.request.FeedRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
+import com.sseotdabwa.buyornot.core.network.dto.response.AuthorDto
+import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
+import com.sseotdabwa.buyornot.domain.model.Author
+import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
+import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
+import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -14,6 +20,22 @@ import javax.inject.Inject
 class FeedRepositoryImpl @Inject constructor(
     private val feedApiService: FeedApiService,
 ) : FeedRepository {
+    override suspend fun getFeedList(
+        cursor: Long?,
+        size: Int,
+        feedStatus: String?,
+    ): List<Feed> =
+        feedApiService
+            .getFeedList(cursor, size, feedStatus)
+            .getOrThrow()
+            .content
+            .map { it.toDomain() }
+
+    override suspend fun getMyFeeds(): List<Feed> {
+        val feedList: List<FeedItemDto> = feedApiService.getMyFeeds().getOrThrow()
+        return feedList.map { it.toDomain() }
+    }
+
     override suspend fun getPresignedUrl(
         fileName: String,
         contentType: String,
@@ -39,7 +61,6 @@ class FeedRepositoryImpl @Inject constructor(
         bytes: ByteArray,
         contentType: String,
     ) {
-        // ByteArray를 S3 업로드를 위한 RequestBody로 변환
         val requestBody = bytes.toRequestBody(contentType.toMediaTypeOrNull())
         val response = feedApiService.uploadImage(url, contentType, requestBody)
         if (!response.isSuccessful) {
@@ -68,3 +89,48 @@ class FeedRepositoryImpl @Inject constructor(
             ).getOrThrow()
             .feedId
 }
+
+/**
+ * DTO to Domain Mappers
+ */
+private fun FeedItemDto.toDomain(): Feed =
+    Feed(
+        feedId = feedId,
+        content = content,
+        price = price,
+        category = category,
+        yesCount = yesCount,
+        noCount = noCount,
+        totalCount = totalCount,
+        feedStatus = feedStatus.toFeedStatus(),
+        s3ObjectKey = s3ObjectKey,
+        viewUrl = viewUrl,
+        imageWidth = imageWidth,
+        imageHeight = imageHeight,
+        author = author.toDomain(),
+        createdAt = createdAt,
+        hasVoted = hasVoted,
+        myVoteChoice = myVoteChoice?.toVoteChoice(),
+    )
+
+private fun AuthorDto.toDomain(): Author =
+    Author(
+        userId = userId,
+        nickname = nickname,
+        profileImage = profileImage,
+    )
+
+private fun String.toVoteChoice(): VoteChoice? =
+    when (this) {
+        "YES" -> VoteChoice.YES
+        "NO" -> VoteChoice.NO
+        else -> null
+    }
+
+private fun String.toFeedStatus(): FeedStatus =
+    when (this) {
+        "OPEN" -> FeedStatus.OPEN
+        "CLOSED" -> FeedStatus.CLOSED
+        else -> FeedStatus.CLOSED
+    }
+
