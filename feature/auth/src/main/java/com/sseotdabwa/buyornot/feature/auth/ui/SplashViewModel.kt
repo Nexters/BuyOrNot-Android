@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.coroutines.cancellation.CancellationException
 
 private const val SPLASH_TIMEOUT_MILLIS = 2300L
 
@@ -41,9 +42,11 @@ class SplashViewModel @Inject constructor(
                 try {
                     val userType = userPreferencesRepository.userType.first()
                     userType != UserType.GUEST
+                } catch (e: CancellationException) {
+                   throw e
                 } catch (e: Exception) {
                     false // DataStore 오류 시 비로그인 화면으로 폴백
-                }
+                }   //
 
             delay(SPLASH_TIMEOUT_MILLIS)
 
