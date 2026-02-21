@@ -36,8 +36,10 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -146,11 +148,10 @@ private fun HomeScreenContent(
     snackbarHostState: SnackbarHostState,
 ) {
     val density = LocalDensity.current
-    val topBarHeight = 60.dp
-    val tabHeight = 48.dp
+    var topBarHeightPx by remember { mutableStateOf(0f) }
+    var tabHeightPx by remember { mutableStateOf(0f) }
 
-    val totalHeaderHeight = topBarHeight + tabHeight
-    val topBarHeightPx = with(density) { topBarHeight.toPx() }
+    val totalHeaderHeight = with(density) { (topBarHeightPx + tabHeightPx).toDp() }
 
     // TopBar 오프셋 상태 (0 = 보임, -topBarHeightPx = 숨김)
     var topBarOffsetHeightPx by remember { mutableStateOf(0f) }
@@ -169,6 +170,10 @@ private fun HomeScreenContent(
                 }
             }
         }
+
+    LaunchedEffect(topBarHeightPx) {
+        topBarOffsetHeightPx = topBarOffsetHeightPx.coerceIn(-topBarHeightPx, 0f)
+    }
 
     Box(
         modifier =
@@ -202,33 +207,24 @@ private fun HomeScreenContent(
             )
         }
 
-        Column(
+        HomeHeader(
+            uiState = uiState,
+            onLoginClick = onLoginClick,
+            onNotificationClick = onNotificationClick,
+            onProfileClick = onProfileClick,
+            onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
+            currentTopBarHeightPx = topBarHeightPx,
+            currentTabHeightPx = tabHeightPx,
+            onHeightsMeasured = { topBar, tab ->
+                topBarHeightPx = topBar
+                tabHeightPx = tab
+            },
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .offset { IntOffset(x = 0, y = topBarOffsetHeightPx.roundToInt()) }
                     .background(BuyOrNotTheme.colors.gray0),
-        ) {
-            // UiState에서 userType을 가져와 TopBar 분기 (깜빡임 방지)
-            when (uiState.userType) {
-                UserType.GUEST -> {
-                    GuestTopBar(
-                        onLoginClick = onLoginClick,
-                    )
-                }
-                UserType.SOCIAL -> {
-                    HomeTopBar(
-                        onNotificationClick = onNotificationClick,
-                        onProfileClick = onProfileClick,
-                    )
-                }
-            }
-
-            HomeTabSection(
-                selectedTab = uiState.selectedTab,
-                onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
-            )
-        }
+        )
 
         // 이미지 확대 레이어 (최상단)
         expandedImageUrl?.let { url ->
@@ -236,6 +232,78 @@ private fun HomeScreenContent(
                 imageUrl = url,
                 onDismiss = onImageDismiss,
             )
+        }
+    }
+}
+
+private enum class HomeHeaderSlot {
+    TopBar,
+    Tab,
+}
+
+@Composable
+private fun HomeHeader(
+    uiState: HomeUiState,
+    onLoginClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onProfileClick: () -> Unit,
+    onTabSelected: (HomeTab) -> Unit,
+    currentTopBarHeightPx: Float,
+    currentTabHeightPx: Float,
+    onHeightsMeasured: (Float, Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SubcomposeLayout(modifier = modifier) { constraints ->
+        val width = constraints.maxWidth
+        val childConstraints =
+            if (width == Constraints.Infinity) {
+                constraints
+            } else {
+                Constraints.fixedWidth(width)
+            }
+
+        val topBarPlaceable =
+            subcompose(HomeHeaderSlot.TopBar) {
+                when (uiState.userType) {
+                    UserType.GUEST -> {
+                        GuestTopBar(
+                            onLoginClick = onLoginClick,
+                        )
+                    }
+                    UserType.SOCIAL -> {
+                        HomeTopBar(
+                            onNotificationClick = onNotificationClick,
+                            onProfileClick = onProfileClick,
+                        )
+                    }
+                }
+            }.first().measure(childConstraints)
+
+        val tabPlaceable =
+            subcompose(HomeHeaderSlot.Tab) {
+                HomeTabSection(
+                    selectedTab = uiState.selectedTab,
+                    onTabSelected = onTabSelected,
+                )
+            }.first().measure(childConstraints)
+
+        val newTopBarHeight = topBarPlaceable.height.toFloat()
+        val newTabHeight = tabPlaceable.height.toFloat()
+
+        if (newTopBarHeight != currentTopBarHeightPx || newTabHeight != currentTabHeightPx) {
+            onHeightsMeasured(newTopBarHeight, newTabHeight)
+        }
+
+        val layoutWidth =
+            if (width == Constraints.Infinity) {
+                topBarPlaceable.width.coerceAtLeast(tabPlaceable.width)
+            } else {
+                width
+            }
+
+        layout(width = layoutWidth, height = topBarPlaceable.height + tabPlaceable.height) {
+            topBarPlaceable.place(0, 0)
+            tabPlaceable.place(0, topBarPlaceable.height)
         }
     }
 }
@@ -356,6 +424,7 @@ private fun HomeFeedList(
     ) {
         // 필터 칩
         item {
+            Spacer(modifier = Modifier.height(16.dp))
             FilterChipRow(
                 selectedFilter = uiState.selectedFilter,
                 onFilterSelected = { onIntent(HomeIntent.OnFilterSelected(it)) },
@@ -365,10 +434,24 @@ private fun HomeFeedList(
         // 배너 (투표 피드 탭에만 표시)
         if (uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
             item {
-                HomeBannerSection(
+                Spacer(modifier = Modifier.height(16.dp))
+
+                HomeBanner(
+                    modifier = Modifier.padding(horizontal = 20.dp),
                     onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
-                    onClick = { /* 배너 클릭 시 이벤트 처리 */ },
+                    onClick = { },
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                BuyOrNotDivider(
+                    size = BuyOrNotDividerSize.Small,
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                )
+            }
+        } else {
+            item {
+                Spacer(modifier = Modifier.height(4.dp))
             }
         }
 
@@ -405,10 +488,7 @@ private fun FilterChipRow(
     onFilterSelected: (FilterChip) -> Unit,
 ) {
     LazyRow(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(top = 15.dp),
+        modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -420,37 +500,6 @@ private fun FilterChipRow(
                 onClick = { onFilterSelected(chip) },
             )
         }
-    }
-}
-
-/**
- * 홈 배너 섹션 (배너 + 구분선 + 간격)
- */
-@Composable
-private fun HomeBannerSection(
-    onDismiss: () -> Unit,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(modifier = Modifier.height(20.dp))
-
-        HomeBanner(
-            modifier = Modifier.padding(horizontal = 20.dp),
-            onDismiss = onDismiss,
-            onClick = onClick,
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        BuyOrNotDivider(
-            size = BuyOrNotDividerSize.Small,
-            modifier = Modifier.padding(horizontal = 20.dp),
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
@@ -467,13 +516,9 @@ private fun FeedItemCard(
 ) {
     var userVotedOption by remember(feed.id, feed.userVotedOptionIndex) { mutableStateOf(feed.userVotedOptionIndex) }
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(modifier = Modifier.height(20.dp))
-
+    Column {
         FeedCard(
+            modifier = Modifier.padding(20.dp),
             profileImageUrl = feed.profileImageUrl,
             nickname = feed.nickname,
             category = feed.category,
@@ -496,8 +541,6 @@ private fun FeedItemCard(
             onDeleteClick = { onDelete(feed.id) },
             onReportClick = { onReport(feed.id) },
         )
-
-        Spacer(modifier = Modifier.height(20.dp))
 
         BuyOrNotDivider(
             size = BuyOrNotDividerSize.Small,

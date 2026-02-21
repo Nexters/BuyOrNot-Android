@@ -18,8 +18,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.shadow.Shadow
@@ -96,8 +96,7 @@ fun HomeBanner(
                     width = 1.dp,
                     color = BuyOrNotTheme.colors.gray300,
                     shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius),
-                ).clickable { onClick() }
-                .padding(
+                ).padding(
                     start = HomeBannerDefaults.BannerPaddingStart,
                     end = HomeBannerDefaults.BannerPaddingEnd,
                     bottom = HomeBannerDefaults.BannerPaddingBottom,
@@ -160,7 +159,7 @@ private fun HomeBannerContent(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         HomeBannerImage()
-        HomeBannerActionButton(text = "고민되는 소비가 있나요?")
+        HomeBannerActionButton(text = "고민되는 소비가 있나요?", onClick = { })
     }
 }
 
@@ -190,6 +189,7 @@ private fun HomeBannerImage() {
 private fun HomeBannerActionButton(
     text: String,
     modifier: Modifier = Modifier,
+    onClick: () -> Unit,
 ) {
     Box(
         modifier =
@@ -207,7 +207,11 @@ private fun HomeBannerActionButton(
                             radius = HomeBannerDefaults.ActionButtonGradientRadius,
                         ),
                     shape = RoundedCornerShape(HomeBannerDefaults.ActionButtonCornerRadius),
-                ),
+                ).clip(
+                    RoundedCornerShape(HomeBannerDefaults.ActionButtonCornerRadius),
+                ).clickable {
+                    onClick()
+                },
         contentAlignment = Alignment.Center,
     ) {
         Text(
