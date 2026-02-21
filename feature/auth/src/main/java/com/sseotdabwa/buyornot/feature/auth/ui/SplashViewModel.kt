@@ -1,26 +1,56 @@
 package com.sseotdabwa.buyornot.feature.auth.ui
 
-import androidx.lifecycle.ViewModel
-import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.map
-import javax.inject.Inject
+import androidx.lifecycle.viewModelScope
+import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.UserType
+import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
+import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashIntent
+import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashSideEffect
+import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+private const val SPLASH_TIMEOUT_MILLIS = 2300L
 
 /**
  * 스플래시 화면을 위한 ViewModel
- * 저장된 토큰 확인하여 자동 로그인 여부를 판단
+ *
+ * 토큰 존재 여부를 확인하고, 2.3초 후 자동으로 네비게이션 SideEffect를 방출합니다.
  */
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    userPreferencesRepository: UserPreferencesRepository,
-) : ViewModel() {
+    private val userPreferencesRepository: UserPreferencesRepository,
+) : BaseViewModel<SplashUiState, SplashIntent, SplashSideEffect>(SplashUiState()) {
+
+    init {
+        checkTokenAndNavigate()
+    }
+
+    override fun handleIntent(intent: SplashIntent) {
+        // 스플래시 화면은 사용자 액션이 없으므로 비어있음
+    }
+
     /**
-     * 유효한 사용자 세션이 있는지 확인
-     * 사용자 타입이 GUEST가 아니면 true
+     * 토큰 존재 여부를 확인하고 적절한 화면으로 이동
      */
-    val hasValidToken =
-        userPreferencesRepository.userType.map { userType ->
-            userType != UserType.GUEST
+    private fun checkTokenAndNavigate() {
+        viewModelScope.launch {
+            val userType = userPreferencesRepository.userType.first()
+            val hasValidToken = userType != UserType.GUEST
+
+            delay(SPLASH_TIMEOUT_MILLIS)
+
+            // 토큰 유효성에 따라 SideEffect 방출
+            if (hasValidToken) {
+                sendSideEffect(SplashSideEffect.NavigateToHome)
+            } else {
+                sendSideEffect(SplashSideEffect.NavigateToLogin)
+            }
+
+            updateState { it.copy(isLoading = false) }
         }
+    }
 }

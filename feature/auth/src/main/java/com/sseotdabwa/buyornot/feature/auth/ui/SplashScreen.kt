@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
@@ -24,9 +23,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotLotties
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
-import kotlinx.coroutines.delay
-
-const val SPLASH_TIMEOUT_MILLIS = 2300L
+import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashSideEffect
 
 /**
  * 스플래시 화면의 네비게이션 진입점
@@ -38,6 +35,7 @@ const val SPLASH_TIMEOUT_MILLIS = 2300L
  *
  * @param onNavigateToLogin 로그인 화면으로 이동하는 콜백
  * @param onNavigateToHome 홈 화면으로 이동하는 콜백
+ * @param viewModel SplashViewModel (Hilt 주입)
  */
 @Composable
 fun SplashRoute(
@@ -45,14 +43,13 @@ fun SplashRoute(
     onNavigateToHome: () -> Unit,
     viewModel: SplashViewModel = hiltViewModel(),
 ) {
-    val hasValidToken by viewModel.hasValidToken.collectAsStateWithLifecycle(initialValue = false)
-
+    // SideEffect 처리 (ViewModel에서 토큰 체크 후 네비게이션 이벤트 방출)
     LaunchedEffect(Unit) {
-        delay(SPLASH_TIMEOUT_MILLIS)
-        if (hasValidToken) {
-            onNavigateToHome()
-        } else {
-            onNavigateToLogin()
+        viewModel.sideEffect.collect { sideEffect ->
+            when (sideEffect) {
+                is SplashSideEffect.NavigateToHome -> onNavigateToHome()
+                is SplashSideEffect.NavigateToLogin -> onNavigateToLogin()
+            }
         }
     }
 
