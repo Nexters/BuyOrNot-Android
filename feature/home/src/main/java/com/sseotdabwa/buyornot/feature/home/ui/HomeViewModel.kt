@@ -272,7 +272,7 @@ class HomeViewModel @Inject constructor(
                 val feeds =
                     when (currentTab) {
                         HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null) // 전체 가져오기
-                        HomeTab.REVIEW -> feedRepository.getMyFeeds(feedStatus = null) // 내 피드 전체 가져오기
+                        HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = null) // 내 피드 전체 가져오기
                     }
 
                 // 원�� 데이터를 캐시에 저장
@@ -312,7 +312,7 @@ class HomeViewModel @Inject constructor(
         val finalFilteredList =
             when (currentTab) {
                 HomeTab.FEED -> chipFilteredList // 투표 피드: 모든 피드 표시
-                HomeTab.REVIEW -> chipFilteredList.filter { it.isOwner } // 내 투표: 본인 피드만 표시
+                HomeTab.MY_FEED -> chipFilteredList.filter { it.isOwner } // 내 투표: 본인 피드만 표시
             }
 
         updateState { it.copy(feeds = finalFilteredList, isLoading = false, hasError = false) }

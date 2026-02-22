@@ -350,8 +350,8 @@ private fun HomeTabSection(
             )
             BuyOrNotTab(
                 title = "내 투표",
-                selected = selectedTab == HomeTab.REVIEW,
-                onClick = { onTabSelected(HomeTab.REVIEW) },
+                selected = selectedTab == HomeTab.MY_FEED,
+                onClick = { onTabSelected(HomeTab.MY_FEED) },
             )
         }
 
