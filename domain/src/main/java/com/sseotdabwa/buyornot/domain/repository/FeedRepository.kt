@@ -22,6 +22,14 @@ interface FeedRepository {
     ): List<Feed>
 
     /**
+     * 피드 단건 조회
+     *
+     * @param feedId 조회할 피드 ID
+     * @return 피드 정보
+     */
+    suspend fun getFeed(feedId: Long): Feed
+
+    /**
      * 내가 작성한 피드 목록 조회 (페이지네이션)
      *
      * @param cursor 이전 페이지 마지막 feedId (첫 페이지는 생략)
