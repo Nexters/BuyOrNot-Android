@@ -6,4 +6,6 @@ interface UserRepository {
     suspend fun getMyProfile(): UserProfile
 
     suspend fun deleteMyAccount()
+
+    suspend fun updateFcmToken(fcmToken: String)
 }

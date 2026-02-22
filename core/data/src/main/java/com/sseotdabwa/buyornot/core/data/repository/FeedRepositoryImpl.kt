@@ -34,6 +34,12 @@ class FeedRepositoryImpl @Inject constructor(
             .content
             .map { it.toDomain() }
 
+    override suspend fun getFeed(feedId: Long): Feed =
+        feedApiService
+            .getFeed(feedId)
+            .getOrThrow()
+            .toDomain()
+
     override suspend fun getMyFeeds(
         cursor: Long?,
         size: Int,

@@ -70,7 +70,6 @@ fun FeedCard(
     buyVoteCount: Int,
     maybeVoteCount: Int,
     totalVoteCount: Int,
-    onExpandClick: (String) -> Unit = {},
     onVote: (Int) -> Unit, // 투표 옵션 인덱스 (0: 사!, 1: 애매..)
     isOwner: Boolean = false, // 본인 글인지 여부
     onDeleteClick: () -> Unit = {}, // 삭제 클릭 콜백 추가
@@ -232,7 +231,6 @@ fun FeedCard(
                     modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 14.dp),
                     onClick = {
                         showFullScreen = true
-                        onExpandClick(productImageUrl)
                     },
                 )
 
@@ -552,7 +550,6 @@ private fun FeedCardSquareInteractivePreview() {
             buyVoteCount = 20,
             maybeVoteCount = 10,
             totalVoteCount = 30,
-            onExpandClick = { },
             onVote = { optionIndex ->
                 userVotedOption = optionIndex
             },
@@ -616,7 +613,6 @@ private fun FeedCardPortraitInteractivePreview() {
             buyVoteCount = 45,
             maybeVoteCount = 15,
             totalVoteCount = 60,
-            onExpandClick = { },
             onVote = { optionIndex ->
                 userVotedOption = optionIndex
             },

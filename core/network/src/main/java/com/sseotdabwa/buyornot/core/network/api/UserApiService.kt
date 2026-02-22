@@ -1,9 +1,12 @@
 package com.sseotdabwa.buyornot.core.network.api
 
+import com.sseotdabwa.buyornot.core.network.dto.request.FcmTokenRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.User
+import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 
 interface UserApiService {
     @GET("/api/v1/users/me")
@@ -11,4 +14,9 @@ interface UserApiService {
 
     @DELETE("/api/v1/users/me")
     suspend fun deleteMyAccount(): BaseResponse<Unit>
+
+    @PATCH("/api/v1/users/fcm")
+    suspend fun updateFcmToken(
+        @Body request: FcmTokenRequest,
+    ): BaseResponse<Unit>
 }

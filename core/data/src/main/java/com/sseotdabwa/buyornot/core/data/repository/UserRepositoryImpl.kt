@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.core.data.repository
 
 import com.sseotdabwa.buyornot.core.network.api.UserApiService
+import com.sseotdabwa.buyornot.core.network.dto.request.FcmTokenRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.User
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
 import com.sseotdabwa.buyornot.domain.model.UserProfile
@@ -14,6 +15,10 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun deleteMyAccount() {
         userApiService.deleteMyAccount().getOrThrow()
+    }
+
+    override suspend fun updateFcmToken(fcmToken: String) {
+        userApiService.updateFcmToken(FcmTokenRequest(fcmToken)).getOrThrow()
     }
 
     private fun User.toDomain(): UserProfile =

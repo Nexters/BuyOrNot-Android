@@ -45,13 +45,11 @@ import com.sseotdabwa.buyornot.core.ui.permission.openAppSettings
 import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.domain.model.NotificationFilter
-import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationIntent
-import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationSideEffect
 
 @Composable
-fun NotificationScreen(
+fun NotificationRoute(
     onBackClick: () -> Unit,
-    onNotificationClick: (String) -> Unit,
+    onNotificationClick: (Long, Long) -> Unit,
     viewModel: NotificationViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -93,7 +91,7 @@ fun NotificationScreen(
                     )
                 }
                 is NotificationSideEffect.NavigateToNotificationDetail -> {
-                    onNotificationClick(sideEffect.notificationId)
+                    onNotificationClick(sideEffect.notificationId, sideEffect.feedId)
                 }
             }
         }
@@ -114,9 +112,41 @@ fun NotificationScreen(
         }
     }
 
+    NotificationScreen(
+        uiState = uiState,
+        onBackClick = onBackClick,
+        onIntent = viewModel::handleIntent,
+        onBannerClick = { shouldShowRationale ->
+            // Android 13 미만: 설정으로 이동
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                context.openAppSettings()
+                return@NotificationScreen
+            }
+
+            val activity = context as? Activity
+            if (activity == null) {
+                context.openAppSettings()
+                return@NotificationScreen
+            }
+
+            viewModel.handleBannerClick(shouldShowRationale = shouldShowRationale)
+        },
+    )
+}
+
+@Composable
+fun NotificationScreen(
+    uiState: NotificationUiState,
+    onBackClick: () -> Unit,
+    onIntent: (NotificationIntent) -> Unit,
+    onBannerClick: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+
     Column(
         modifier =
-            Modifier
+            modifier
                 .fillMaxSize()
                 .background(BuyOrNotTheme.colors.gray0),
     ) {
@@ -134,7 +164,7 @@ fun NotificationScreen(
                 NotificationFilterRow(
                     selectedFilter = uiState.selectedFilter,
                     onFilterSelected = { filter ->
-                        viewModel.handleIntent(NotificationIntent.OnFilterSelected(filter))
+                        onIntent(NotificationIntent.OnFilterSelected(filter))
                     },
                 )
                 Spacer(modifier = Modifier.height(16.dp))
@@ -145,28 +175,17 @@ fun NotificationScreen(
                 item {
                     NotificationGuideBanner(
                         onActionClick = {
-                            // Android 13 미만: 설정으로 이동
-                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                                context.openAppSettings()
-                                return@NotificationGuideBanner
-                            }
-
                             val activity = context as? Activity
-                            if (activity == null) {
-                                context.openAppSettings()
-                                return@NotificationGuideBanner
-                            }
-
                             val shouldShowRationale =
-                                ActivityCompat.shouldShowRequestPermissionRationale(
-                                    activity,
-                                    Manifest.permission.POST_NOTIFICATIONS,
-                                )
-
-                            // ViewModel에서 권한 요청 이력(DataStore)를 기반으로 판단
-                            viewModel.handleBannerClick(
-                                shouldShowRationale = shouldShowRationale,
-                            )
+                                if (activity != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    ActivityCompat.shouldShowRequestPermissionRationale(
+                                        activity,
+                                        Manifest.permission.POST_NOTIFICATIONS,
+                                    )
+                                } else {
+                                    false
+                                }
+                            onBannerClick(shouldShowRationale)
                         },
                         modifier = Modifier.padding(horizontal = 20.dp),
                     )
@@ -188,7 +207,7 @@ fun NotificationScreen(
                                 ),
                         )
                         BuyOrNotErrorView {
-                            viewModel.handleIntent(NotificationIntent.OnRefreshNotifications)
+                            onIntent(NotificationIntent.OnRefreshNotifications)
                         }
                     }
                 }
@@ -225,7 +244,7 @@ fun NotificationScreen(
                                 isRead = notification.isRead,
                             ),
                         onClick = {
-                            viewModel.handleIntent(NotificationIntent.OnNotificationClick(notification.id))
+                            onIntent(NotificationIntent.OnNotificationClick(notification.id, notification.feedId))
                         },
                     )
 
@@ -305,8 +324,33 @@ private fun NotificationEmptyView(modifier: Modifier = Modifier) {
 private fun NotificationScreenPreview() {
     BuyOrNotTheme {
         NotificationScreen(
+            uiState =
+                NotificationUiState(
+                    notifications =
+                        listOf(
+                            NotificationItem(
+                                id = 1L,
+                                feedId = 101L,
+                                imageUrl = "https://picsum.photos/200",
+                                title = "투표 종료",
+                                description = "78% '애매하긴 해!'",
+                                time = "2시간 전",
+                                isRead = false,
+                            ),
+                            NotificationItem(
+                                id = 2L,
+                                feedId = 102L,
+                                imageUrl = "https://picsum.photos/201",
+                                title = "투표 종료",
+                                description = "56% '사! 가즈아!'",
+                                time = "3시간 전",
+                                isRead = true,
+                            ),
+                        ),
+                ),
             onBackClick = {},
-            onNotificationClick = {},
+            onIntent = {},
+            onBannerClick = {},
         )
     }
 }

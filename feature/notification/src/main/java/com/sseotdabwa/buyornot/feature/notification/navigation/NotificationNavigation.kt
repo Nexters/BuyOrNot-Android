@@ -6,33 +6,32 @@ import androidx.navigation.NavOptions
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.sseotdabwa.buyornot.feature.notification.ui.NotificationDetailScreen
-import com.sseotdabwa.buyornot.feature.notification.ui.NotificationScreen
+import com.sseotdabwa.buyornot.feature.notification.ui.NotificationDetailRoute
+import com.sseotdabwa.buyornot.feature.notification.ui.NotificationRoute
 
 const val NOTIFICATION_ROUTE = "notification"
 const val NOTIFICATION_DETAIL_ROUTE = "notification_detail"
 
 fun NavGraphBuilder.notificationGraph(
     onBackClick: () -> Unit,
-    onNotificationClick: (String) -> Unit,
+    onNotificationClick: (Long, Long) -> Unit,
 ) {
     composable(route = NOTIFICATION_ROUTE) {
-        NotificationScreen(
+        NotificationRoute(
             onBackClick = onBackClick,
             onNotificationClick = onNotificationClick,
         )
     }
 
     composable(
-        route = "$NOTIFICATION_DETAIL_ROUTE/{notificationId}",
+        route = "$NOTIFICATION_DETAIL_ROUTE/{notificationId}/{feedId}",
         arguments =
             listOf(
-                navArgument("notificationId") { type = NavType.StringType },
+                navArgument("notificationId") { type = NavType.LongType },
+                navArgument("feedId") { type = NavType.LongType },
             ),
-    ) { backStackEntry ->
-        val notificationId = backStackEntry.arguments?.getString("notificationId") ?: ""
-        NotificationDetailScreen(
-            notificationId = notificationId,
+    ) {
+        NotificationDetailRoute(
             onBackClick = onBackClick,
         )
     }
@@ -43,6 +42,9 @@ fun NavHostController.navigateToNotification(navOptions: NavOptions? = null) {
 }
 
 // 상세 화면으로 이동하는 함수
-fun NavHostController.navigateToNotificationDetail(notificationId: String) {
-    this.navigate("$NOTIFICATION_DETAIL_ROUTE/$notificationId")
+fun NavHostController.navigateToNotificationDetail(
+    notificationId: Long,
+    feedId: Long,
+) {
+    this.navigate("$NOTIFICATION_DETAIL_ROUTE/$notificationId/$feedId")
 }

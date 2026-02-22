@@ -4,9 +4,6 @@ import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
-import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashIntent
-import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashSideEffect
-import com.sseotdabwa.buyornot.feature.auth.viewmodel.SplashUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first

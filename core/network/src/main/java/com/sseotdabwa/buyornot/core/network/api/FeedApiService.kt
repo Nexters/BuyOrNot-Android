@@ -4,6 +4,7 @@ import com.sseotdabwa.buyornot.core.network.dto.request.FeedRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.VoteRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.PresignedUrlResponse
@@ -35,6 +36,16 @@ interface FeedApiService {
         @Query("size") size: Int = 20,
         @Query("feedStatus") feedStatus: String? = null,
     ): BaseResponse<FeedListResponse>
+
+    /**
+     * 피드 단건 조회
+     *
+     * @param feedId 조회할 피드 ID
+     */
+    @GET("/api/v1/feeds/{feedId}")
+    suspend fun getFeed(
+        @Path("feedId") feedId: Long,
+    ): BaseResponse<FeedItemDto>
 
     /**
      * 내가 작성한 피드 목록 조회 (페이지네이션)
