@@ -95,24 +95,10 @@ fun HomeScreen(
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
     var isFabExpanded by remember { mutableStateOf(false) }
 
-    var isTimeOut by remember { mutableStateOf(false) }
-
     // 초기 탭 설정
     LaunchedEffect(initialTab) {
         if (uiState.selectedTab != initialTab) {
             viewModel.handleIntent(HomeIntent.OnTabSelected(initialTab))
-        }
-    }
-
-    LaunchedEffect(uiState.isLoading, uiState.feeds.isEmpty()) {
-        if (uiState.isLoading && uiState.feeds.isEmpty()) {
-            // 로딩이 시작되면 타임아웃을 초기화하고 대기합니다.
-            isTimeOut = false
-            kotlinx.coroutines.delay(5000L) // 5초 가이드
-            isTimeOut = true
-        } else {
-            // 로딩이 끝나거나 데이터가 들어오면 타임아웃을 리셋합니다.
-            isTimeOut = false
         }
     }
 
@@ -138,7 +124,6 @@ fun HomeScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         isFabExpanded = isFabExpanded,
-        isTimeOut = isTimeOut,
         onLoginClick = onLoginClick,
         onNotificationClick = onNotificationClick,
         onProfileClick = onProfileClick,
@@ -155,7 +140,6 @@ fun HomeScreen(
 private fun HomeScreenContent(
     uiState: HomeUiState,
     isFabExpanded: Boolean,
-    isTimeOut: Boolean,
     onLoginClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
@@ -225,7 +209,6 @@ private fun HomeScreenContent(
             HomeFeedList(
                 uiState = uiState,
                 onIntent = onIntent,
-                isTimeOut = isTimeOut,
                 headerPadding = totalHeaderHeight + innerPadding.calculateTopPadding(),
                 onUploadClick = onUploadClick,
             )
@@ -426,7 +409,6 @@ private fun FabDimOverlay(
 @Composable
 private fun HomeFeedList(
     uiState: HomeUiState,
-    isTimeOut: Boolean,
     onIntent: (HomeIntent) -> Unit,
     headerPadding: Dp,
     onUploadClick: () -> Unit,
@@ -483,21 +465,9 @@ private fun HomeFeedList(
 
             // 2. 로딩 중인 단계 (로딩이 끝나기 전까지는 Result를 판단하지 않음)
             uiState.isLoading -> {
-                if (isTimeOut) {
-                    // [요청사항] 특정 초(5초) 이상 로딩 중이면 에러 뷰 노출
-                    item {
-                        BuyOrNotErrorView(
-                            modifier = Modifier.padding(top = 80.dp),
-                            message = "연결 시간이 초과되었습니다",
-                            onRefreshClick = { onIntent(HomeIntent.LoadFeeds) },
-                        )
-                    }
-                } else {
-                    // 아직 5초 미만이면 로딩 인디케이터만 노출
-                    item {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
-                        }
+                item {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
                     }
                 }
             }
