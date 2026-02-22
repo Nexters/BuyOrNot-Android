@@ -25,21 +25,20 @@ android {
     val debugBaseUrl = localProperties.getProperty("debug.base.url")
     val releaseBaseUrl = localProperties.getProperty("release.base.url")
 
-    if (debugBaseUrl == null || releaseBaseUrl == null) {
-        val missingProps =
-            listOfNotNull(
-                if (debugBaseUrl == null) "DEBUG_BASE_URL" else null,
-                if (releaseBaseUrl == null) "RELEASE_BASE_URL" else null,
-            )
-        logger.warn("⚠️ Base URL configuration incomplete. Missing properties in local.properties: $missingProps")
-    }
-
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", debugBaseUrl)
+            val url =
+                requireNotNull(debugBaseUrl) {
+                    "local.properties에 'debug.base.url'이 설정되지 않았습니다."
+                }
+            buildConfigField("String", "BASE_URL", "\"$url\"")
         }
         release {
-            buildConfigField("String", "BASE_URL", releaseBaseUrl)
+            val url =
+                requireNotNull(releaseBaseUrl) {
+                    "local.properties에 'release.base.url'이 설정되지 않았습니다."
+                }
+            buildConfigField("String", "BASE_URL", "\"$url\"")
         }
     }
 }
