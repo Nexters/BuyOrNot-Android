@@ -422,7 +422,7 @@ class HomeViewModel @Inject constructor(
             id = feedId.toString(),
             profileImageUrl = author.profileImage ?: "",
             nickname = author.nickname,
-            category = category,
+            category = category.displayName,
             createdAt = TimeUtils.formatRelativeTime(createdAt),
             content = content,
             productImageUrl = viewUrl,

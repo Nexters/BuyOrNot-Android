@@ -151,7 +151,7 @@ private fun FeedItemDto.toDomain(): Feed =
         feedId = feedId,
         content = content,
         price = price,
-        category = category,
+        category = category.toFeedCategory(),
         yesCount = yesCount,
         noCount = noCount,
         totalCount = totalCount,
@@ -165,6 +165,9 @@ private fun FeedItemDto.toDomain(): Feed =
         hasVoted = hasVoted,
         myVoteChoice = myVoteChoice?.toVoteChoice(),
     )
+
+private fun String.toFeedCategory(): FeedCategory =
+    FeedCategory.entries.find { it.name.equals(this, ignoreCase = true) } ?: FeedCategory.ETC
 
 private fun AuthorDto.toDomain(): Author =
     Author(
