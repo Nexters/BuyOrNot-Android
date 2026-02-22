@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -46,6 +47,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotErrorView
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTab
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTabRow
@@ -75,6 +77,7 @@ import kotlin.math.roundToInt
  * @param onNotificationClick 알림 아이콘 클릭 콜백
  * @param onProfileClick 프로필 아이콘 클릭 콜백
  * @param onUploadClick 업로드 화면으로 이동 콜백
+ * @param initialTab 초기 선택 탭 (기본값: FEED)
  * @param viewModel HomeViewModel (Hilt 주입)
  */
 @Composable
@@ -83,6 +86,7 @@ fun HomeScreen(
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
+    initialTab: HomeTab = HomeTab.FEED,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -90,6 +94,27 @@ fun HomeScreen(
 
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
     var isFabExpanded by remember { mutableStateOf(false) }
+
+    var isTimeOut by remember { mutableStateOf(false) }
+
+    // 초기 탭 설정
+    LaunchedEffect(initialTab) {
+        if (uiState.selectedTab != initialTab) {
+            viewModel.handleIntent(HomeIntent.OnTabSelected(initialTab))
+        }
+    }
+
+    LaunchedEffect(uiState.isLoading, uiState.feeds.isEmpty()) {
+        if (uiState.isLoading && uiState.feeds.isEmpty()) {
+            // 로딩이 시작되면 타임아웃을 초기화하고 대기합니다.
+            isTimeOut = false
+            kotlinx.coroutines.delay(5000L) // 5초 가이드
+            isTimeOut = true
+        } else {
+            // 로딩이 끝나거나 데이터가 들어오면 타임아웃을 리셋합니다.
+            isTimeOut = false
+        }
+    }
 
     // SideEffect 처리
     LaunchedEffect(Unit) {
@@ -113,6 +138,7 @@ fun HomeScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         isFabExpanded = isFabExpanded,
+        isTimeOut = isTimeOut,
         onLoginClick = onLoginClick,
         onNotificationClick = onNotificationClick,
         onProfileClick = onProfileClick,
@@ -129,6 +155,7 @@ fun HomeScreen(
 private fun HomeScreenContent(
     uiState: HomeUiState,
     isFabExpanded: Boolean,
+    isTimeOut: Boolean,
     onLoginClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
@@ -146,13 +173,21 @@ private fun HomeScreenContent(
     // TopBar 오프셋 상태 (0 = 보임, -topBarHeightPx = 숨김)
     var topBarOffsetHeightPx by remember { mutableStateOf(0f) }
 
+    // 스크롤 가능한 콘텐츠가 있는지 확인 (피드가 있을 때만 스크롤 활성화)
+    val hasScrollableContent = uiState.feeds.isNotEmpty()
+
     val nestedScrollConnection =
-        remember(topBarHeightPx) {
+        remember(topBarHeightPx, hasScrollableContent) {
             object : NestedScrollConnection {
                 override fun onPreScroll(
                     available: Offset,
                     source: NestedScrollSource,
                 ): Offset {
+                    // 스크롤 가능한 콘텐츠가 없으면 스크롤 연결 비활성화
+                    if (!hasScrollableContent) {
+                        return Offset.Zero
+                    }
+
                     val delta = available.y
                     val newOffset = topBarOffsetHeightPx + delta
                     topBarOffsetHeightPx = newOffset.coerceIn(-topBarHeightPx, 0f)
@@ -161,8 +196,13 @@ private fun HomeScreenContent(
             }
         }
 
-    LaunchedEffect(topBarHeightPx) {
-        topBarOffsetHeightPx = topBarOffsetHeightPx.coerceIn(-topBarHeightPx, 0f)
+    // 콘텐츠 상태가 변경되면 오프셋 리셋
+    LaunchedEffect(topBarHeightPx, hasScrollableContent) {
+        if (!hasScrollableContent) {
+            topBarOffsetHeightPx = 0f
+        } else {
+            topBarOffsetHeightPx = topBarOffsetHeightPx.coerceIn(-topBarHeightPx, 0f)
+        }
     }
 
     Box(
@@ -185,7 +225,9 @@ private fun HomeScreenContent(
             HomeFeedList(
                 uiState = uiState,
                 onIntent = onIntent,
+                isTimeOut = isTimeOut,
                 headerPadding = totalHeaderHeight + innerPadding.calculateTopPadding(),
+                onUploadClick = onUploadClick,
             )
 
             FabDimOverlay(
@@ -308,8 +350,8 @@ private fun HomeTabSection(
             )
             BuyOrNotTab(
                 title = "내 투표",
-                selected = selectedTab == HomeTab.REVIEW,
-                onClick = { onTabSelected(HomeTab.REVIEW) },
+                selected = selectedTab == HomeTab.MY_FEED,
+                onClick = { onTabSelected(HomeTab.MY_FEED) },
             )
         }
 
@@ -384,88 +426,101 @@ private fun FabDimOverlay(
 @Composable
 private fun HomeFeedList(
     uiState: HomeUiState,
+    isTimeOut: Boolean,
     onIntent: (HomeIntent) -> Unit,
     headerPadding: Dp,
+    onUploadClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 탭에 따라 피드 필터링
-    val filteredFeeds =
-        when (uiState.selectedTab) {
-            HomeTab.FEED -> uiState.feeds // 전체 피드
-            HomeTab.REVIEW -> uiState.feeds.filter { it.isOwner } // 내 투표만
-        }
+    // ViewModel에서 이미 탭과 필터에 따라 필터링된 피드를 제공
+    val filteredFeeds = uiState.feeds
 
-    if (filteredFeeds.isEmpty()) {
-        Column {
-            Spacer(modifier = Modifier.height(headerPadding + 140.dp))
-            HomeFeedEmptyView()
-        }
-    } else {
-        LazyColumn(
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = headerPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // 필터 칩
-            item {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(top = headerPadding),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // 공통 필터 칩 영역
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            FilterChipRow(
+                selectedFilter = uiState.selectedFilter,
+                onFilterSelected = { onIntent(HomeIntent.OnFilterSelected(it)) },
+            )
+            // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
+            if (filteredFeeds.isNotEmpty() && uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
                 Spacer(modifier = Modifier.height(16.dp))
-                FilterChipRow(
-                    selectedFilter = uiState.selectedFilter,
-                    onFilterSelected = { onIntent(HomeIntent.OnFilterSelected(it)) },
+
+                HomeBanner(
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                    onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
+                    onClick = onUploadClick,
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                BuyOrNotDivider(
+                    size = BuyOrNotDividerSize.Small,
+                    modifier = Modifier.padding(horizontal = 20.dp),
                 )
             }
+        }
 
-            // 배너 (투표 피드 탭에만 표시)
-            if (uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    HomeBanner(
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                        onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
-                        onClick = { },
+        when {
+            // 1. 데이터가 있으면 로딩 여부와 상관없이 최우선 노출
+            filteredFeeds.isNotEmpty() -> {
+                // 피드 리스트 및 배너 노출 로직 (기존과 동일)
+                items(filteredFeeds.size, key = { index -> filteredFeeds[index].id }) { index ->
+                    FeedItemCard(
+                        feed = filteredFeeds[index],
+                        modifier = Modifier.padding(20.dp).animateItem(),
+                        onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
+                        onDelete = { id -> onIntent(HomeIntent.OnDeleteClicked(id)) },
+                        onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
                     )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    BuyOrNotDivider(
-                        size = BuyOrNotDividerSize.Small,
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                    )
-                }
-            } else {
-                item {
-                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
 
-            // 피드 아이템들 (실제 데이터 기반)
-            items(
-                count = filteredFeeds.size,
-                key = { filteredFeeds[it].id },
-            ) { index ->
-                val feed = filteredFeeds[index]
-
-                FeedItemCard(
-                    feed = feed,
-                    modifier =
-                        Modifier
-                            .padding(20.dp)
-                            .animateItem(),
-                    onVote = { feedId, optionIndex ->
-                        onIntent(HomeIntent.OnVoteClicked(feedId, optionIndex))
-                    },
-                    onDelete = { feedId ->
-                        onIntent(HomeIntent.OnDeleteClicked(feedId))
-                    },
-                    onReport = { feedId ->
-                        onIntent(HomeIntent.OnReportClicked(feedId))
-                    },
-                )
+            // 2. 로딩 중인 단계 (로딩이 끝나기 전까지는 Result를 판단하지 않음)
+            uiState.isLoading -> {
+                if (isTimeOut) {
+                    // [요청사항] 특정 초(5초) 이상 로딩 중이면 에러 뷰 노출
+                    item {
+                        BuyOrNotErrorView(
+                            modifier = Modifier.padding(top = 80.dp),
+                            message = "연결 시간이 초과되었습니다",
+                            onRefreshClick = { onIntent(HomeIntent.LoadFeeds) },
+                        )
+                    }
+                } else {
+                    // 아직 5초 미만이면 로딩 인디케이터만 노출
+                    item {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
+                        }
+                    }
+                }
             }
 
-            item {
-                Spacer(modifier = Modifier.height(60.dp))
+            // 3. 로딩이 끝난 단계 (isLoading == false)
+            uiState.hasError -> {
+                // 통신 실패로 로딩이 끝난 경우
+                item {
+                    BuyOrNotErrorView(
+                        modifier = Modifier.padding(top = 80.dp),
+                        message = "피드를 불러오지 못했어요",
+                        onRefreshClick = { onIntent(HomeIntent.LoadFeeds) },
+                    )
+                }
+            }
+
+            else -> {
+                // [요청사항] 통신은 성공(hasError false)했지만 데이터가 없는 경우
+                item {
+                    HomeFeedEmptyView(
+                        modifier = Modifier.padding(top = 80.dp),
+                    )
+                }
             }
         }
     }

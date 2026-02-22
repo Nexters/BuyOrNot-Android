@@ -80,6 +80,7 @@ import java.text.DecimalFormat
 fun UploadScreen(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
+    onNavigateToHomeReview: () -> Unit = {},
     viewModel: UploadViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -94,6 +95,7 @@ fun UploadScreen(
                 }
 
                 is UploadSideEffect.NavigateBack -> onNavigateBack()
+                is UploadSideEffect.NavigateToHomeReview -> onNavigateToHomeReview()
             }
         }
     }

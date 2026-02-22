@@ -54,4 +54,6 @@ sealed interface UploadSideEffect {
     ) : UploadSideEffect
 
     data object NavigateBack : UploadSideEffect
+
+    data object NavigateToHomeReview : UploadSideEffect
 }
