@@ -138,6 +138,7 @@ class HomeViewModel @Inject constructor(
                 feeds = emptyList(),
                 hasNextPage = false,
                 nextCursor = null,
+                isNextPageLoading = false,
             )
         }
         cachedFeeds = emptyList()
