@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.home.ui
 
 import androidx.lifecycle.viewModelScope
+import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
@@ -335,7 +336,7 @@ class HomeViewModel @Inject constructor(
             profileImageUrl = author.profileImage ?: "",
             nickname = author.nickname,
             category = category,
-            createdAt = createdAt,
+            createdAt = TimeUtils.formatRelativeTime(createdAt),
             content = content,
             productImageUrl = viewUrl,
             price = price.toString(),
