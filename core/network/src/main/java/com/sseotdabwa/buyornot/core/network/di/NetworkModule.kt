@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.core.network.di
 
 import com.sseotdabwa.buyornot.core.datastore.UserPreferencesDataSource
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
+import com.sseotdabwa.buyornot.core.network.BuildConfig
 import com.sseotdabwa.buyornot.core.network.api.AuthApiService
 import com.sseotdabwa.buyornot.core.network.api.FeedApiService
 import com.sseotdabwa.buyornot.core.network.api.NotificationApiService
@@ -24,7 +25,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-    private const val BASE_URL = "https://dev.buy-or-not.com"
+    private const val BASE_URL = BuildConfig.BASE_URL
 
     @Provides
     @Singleton
