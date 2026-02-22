@@ -7,6 +7,10 @@ import kotlinx.serialization.Serializable
 data class FeedListResponse(
     @SerialName("content")
     val content: List<FeedItemDto>,
+    @SerialName("nextCursor")
+    val nextCursor: Long?,
+    @SerialName("hasNext")
+    val hasNext: Boolean,
 )
 
 @Serializable

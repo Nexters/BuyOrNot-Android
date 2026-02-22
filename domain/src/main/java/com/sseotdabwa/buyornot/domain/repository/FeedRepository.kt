@@ -6,6 +6,15 @@ import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
 
+/**
+ * 페이지네이션이 적용된 피드 목록 도메인 모델
+ */
+data class FeedList(
+    val feeds: List<Feed>,
+    val nextCursor: Long?,
+    val hasNext: Boolean,
+)
+
 interface FeedRepository {
     /**
      * 전체 피드 목록 조회
@@ -13,13 +22,13 @@ interface FeedRepository {
      * @param cursor 이전 페이지 마지막 feedId (첫 페이지는 생략)
      * @param size 페이지 크기
      * @param feedStatus 피드 상태 필터 (OPEN, CLOSED / null이면 전체)
-     * @return 피드 목록
+     * @return 피드 목록 및 페이지네이션 정보
      */
     suspend fun getFeedList(
         cursor: Long? = null,
         size: Int = 20,
         feedStatus: String? = null,
-    ): List<Feed>
+    ): FeedList
 
     /**
      * 피드 단건 조회
@@ -35,13 +44,13 @@ interface FeedRepository {
      * @param cursor 이전 페이지 마지막 feedId (첫 페이지는 생략)
      * @param size 페이지 크기 (기본값 20)
      * @param feedStatus 피드 상태 필터 (OPEN, CLOSED / null이면 전체)
-     * @return 내가 작성한 피드 목록
+     * @return 내가 작성한 피드 목록 및 페이지네이션 정보
      */
     suspend fun getMyFeeds(
         cursor: Long? = null,
         size: Int = 20,
         feedStatus: String? = null,
-    ): List<Feed>
+    ): FeedList
 
     suspend fun getPresignedUrl(
         fileName: String,

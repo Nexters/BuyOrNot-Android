@@ -291,8 +291,8 @@ class HomeViewModel @Inject constructor(
                 val currentTab = tab ?: uiState.value.selectedTab
                 // 필터 없이 해당 탭의 전체 데이터를 가져옴
                 when (currentTab) {
-                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null) // 전체 가져오기
-                    HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = null) // 내 피드 전체 가져오기
+                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null).feeds // 전체 가져오기
+                    HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = null).feeds // 내 피드 전체 가져오기
                 }
             }.onSuccess { feeds ->
                 // 원본 데이터를 캐시에 저장

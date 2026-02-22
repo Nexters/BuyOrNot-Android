@@ -6,6 +6,7 @@ import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.VoteRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.AuthorDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
+import com.sseotdabwa.buyornot.core.network.dto.response.FeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.VoteResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
 import com.sseotdabwa.buyornot.domain.model.Author
@@ -15,6 +16,7 @@ import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
+import com.sseotdabwa.buyornot.domain.repository.FeedList
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -27,12 +29,11 @@ class FeedRepositoryImpl @Inject constructor(
         cursor: Long?,
         size: Int,
         feedStatus: String?,
-    ): List<Feed> =
+    ): FeedList =
         feedApiService
             .getFeedList(cursor, size, feedStatus)
             .getOrThrow()
-            .content
-            .map { it.toDomain() }
+            .toDomain()
 
     override suspend fun getFeed(feedId: Long): Feed =
         feedApiService
@@ -44,12 +45,11 @@ class FeedRepositoryImpl @Inject constructor(
         cursor: Long?,
         size: Int,
         feedStatus: String?,
-    ): List<Feed> =
+    ): FeedList =
         feedApiService
             .getMyFeeds(cursor, size, feedStatus)
             .getOrThrow()
-            .content
-            .map { it.toDomain() }
+            .toDomain()
 
     override suspend fun getPresignedUrl(
         fileName: String,
@@ -139,9 +139,13 @@ class FeedRepositoryImpl @Inject constructor(
     }
 }
 
-/**
- * DTO to Domain Mappers
- */
+private fun FeedListResponse.toDomain(): FeedList =
+    FeedList(
+        feeds = content.map { it.toDomain() },
+        nextCursor = nextCursor,
+        hasNext = hasNext,
+    )
+
 private fun FeedItemDto.toDomain(): Feed =
     Feed(
         feedId = feedId,
