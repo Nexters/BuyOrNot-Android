@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
-import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -21,7 +20,6 @@ private const val SPLASH_TIMEOUT_MILLIS = 2300L
  */
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val userRepository: UserRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
 ) : BaseViewModel<SplashUiState, SplashIntent, SplashSideEffect>(SplashUiState()) {
     init {
