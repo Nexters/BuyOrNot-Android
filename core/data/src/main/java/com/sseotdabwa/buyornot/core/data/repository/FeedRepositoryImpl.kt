@@ -162,7 +162,7 @@ private fun FeedItemDto.toDomain(): Feed =
         imageHeight = imageHeight,
         author = author.toDomain(),
         createdAt = createdAt,
-        hasVoted = hasVoted,
+        hasVoted = hasVoted ?: false,
         myVoteChoice = myVoteChoice?.toVoteChoice(),
     )
 

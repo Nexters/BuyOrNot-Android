@@ -44,7 +44,7 @@ data class FeedItemDto(
     @SerialName("createdAt")
     val createdAt: String,
     @SerialName("hasVoted")
-    val hasVoted: Boolean,
+    val hasVoted: Boolean?,
     @SerialName("myVoteChoice")
     val myVoteChoice: String?,
 )
