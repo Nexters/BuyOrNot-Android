@@ -287,6 +287,7 @@ private fun HomeHeader(
         val tabPlaceable =
             subcompose(HomeHeaderSlot.Tab) {
                 HomeTabSection(
+                    userType = uiState.userType,
                     selectedTab = uiState.selectedTab,
                     onTabSelected = onTabSelected,
                 )
@@ -318,13 +319,16 @@ private fun HomeHeader(
  */
 @Composable
 private fun HomeTabSection(
+    userType: UserType,
     selectedTab: HomeTab,
     onTabSelected: (HomeTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val tabs = if (userType == UserType.GUEST) listOf(HomeTab.FEED) else HomeTab.entries.toList()
+
     Column(modifier = modifier) {
         BuyOrNotTabRow(
-            selectedTabIndex = HomeTab.entries.indexOf(selectedTab),
+            selectedTabIndex = tabs.indexOf(selectedTab).coerceAtLeast(0),
             modifier = Modifier.padding(start = 20.dp),
         ) {
             BuyOrNotTab(
@@ -332,11 +336,13 @@ private fun HomeTabSection(
                 selected = selectedTab == HomeTab.FEED,
                 onClick = { onTabSelected(HomeTab.FEED) },
             )
-            BuyOrNotTab(
-                title = "내 투표",
-                selected = selectedTab == HomeTab.MY_FEED,
-                onClick = { onTabSelected(HomeTab.MY_FEED) },
-            )
+            if (userType == UserType.SOCIAL) {
+                BuyOrNotTab(
+                    title = "내 투표",
+                    selected = selectedTab == HomeTab.MY_FEED,
+                    onClick = { onTabSelected(HomeTab.MY_FEED) },
+                )
+            }
         }
 
         BuyOrNotDivider(

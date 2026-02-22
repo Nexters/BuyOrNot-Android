@@ -92,8 +92,9 @@ class HomeViewModel @Inject constructor(
                     } else {
                         currentUserId = null
                         isUserIdLoaded = true
-                        // 로그아웃 시에도 피드 갱신 (isOwner를 false로)
-                        loadFeeds()
+                        // 게스트 전환 시 탭을 무조건 FEED로 변경
+                        updateState { it.copy(selectedTab = HomeTab.FEED) }
+                        loadFeeds(HomeTab.FEED)
                     }
                 }
         }
@@ -126,6 +127,9 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun handleTabSelection(tab: HomeTab) {
+        // 게스트일 때는 내 투표 탭 선택 불가
+        if (uiState.value.userType == UserType.GUEST && tab == HomeTab.MY_FEED) return
+
         updateState {
             it.copy(
                 selectedTab = tab,
