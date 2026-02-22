@@ -45,13 +45,11 @@ import com.sseotdabwa.buyornot.core.ui.permission.openAppSettings
 import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.domain.model.NotificationFilter
-import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationIntent
-import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationSideEffect
 
 @Composable
 fun NotificationScreen(
     onBackClick: () -> Unit,
-    onNotificationClick: (String) -> Unit,
+    onNotificationClick: (Long, Long) -> Unit,
     viewModel: NotificationViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -93,7 +91,7 @@ fun NotificationScreen(
                     )
                 }
                 is NotificationSideEffect.NavigateToNotificationDetail -> {
-                    onNotificationClick(sideEffect.notificationId)
+                    onNotificationClick(sideEffect.notificationId, sideEffect.feedId)
                 }
             }
         }
@@ -225,7 +223,7 @@ fun NotificationScreen(
                                 isRead = notification.isRead,
                             ),
                         onClick = {
-                            viewModel.handleIntent(NotificationIntent.OnNotificationClick(notification.id))
+                            viewModel.handleIntent(NotificationIntent.OnNotificationClick(notification.id, notification.feedId))
                         },
                     )
 

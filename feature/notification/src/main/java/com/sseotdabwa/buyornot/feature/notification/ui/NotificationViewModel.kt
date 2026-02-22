@@ -7,10 +7,6 @@ import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.NotificationFilter
 import com.sseotdabwa.buyornot.domain.repository.AppPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
-import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationIntent
-import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationItem
-import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationSideEffect
-import com.sseotdabwa.buyornot.feature.notification.viewmodel.NotificationUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -50,7 +46,7 @@ class NotificationViewModel @Inject constructor(
             is NotificationIntent.OnPermissionRequested -> handlePermissionRequest()
             is NotificationIntent.OnPermissionGranted -> handlePermissionGranted()
             is NotificationIntent.OnPermissionDenied -> handlePermissionDenied()
-            is NotificationIntent.OnNotificationClick -> handleNotificationClick(intent.notificationId)
+            is NotificationIntent.OnNotificationClick -> handleNotificationClick(intent.notificationId, intent.feedId)
             is NotificationIntent.OnRefreshNotifications -> loadNotifications()
         }
     }
@@ -81,24 +77,20 @@ class NotificationViewModel @Inject constructor(
     }
 
     /**
-     * 알림 클릭 처리 (읽음 처리 API 호출)
+     * 알림 클릭 처리 (로컬 상태 업데이트 및 상세 이동)
      */
-    private fun handleNotificationClick(notificationId: String) {
-        viewModelScope.launch {
-            // 화면 이동 SideEffect 발생
-            sendSideEffect(NotificationSideEffect.NavigateToNotificationDetail(notificationId))
-
-            runCatchingCancellable {
-                notificationRepository.markAsRead(notificationId.toLong())
-            }.onSuccess {
-                // UI 상태 업데이트 (읽음 처리된 상태로 변경)
-                val updatedNotifications =
-                    uiState.value.notifications.map {
-                        if (it.id == notificationId) it.copy(isRead = true) else it
-                    }
-                updateState { it.copy(notifications = updatedNotifications) }
+    private fun handleNotificationClick(
+        notificationId: Long,
+        feedId: Long,
+    ) {
+        val updatedNotifications =
+            uiState.value.notifications.map {
+                if (it.id == notificationId) it.copy(isRead = true) else it
             }
-        }
+        updateState { it.copy(notifications = updatedNotifications) }
+
+        // 화면 이동 SideEffect 발생
+        sendSideEffect(NotificationSideEffect.NavigateToNotificationDetail(notificationId, feedId))
     }
 
     /**
@@ -138,7 +130,8 @@ class NotificationViewModel @Inject constructor(
                 val notificationItems =
                     notifications.map {
                         NotificationItem(
-                            id = it.notificationId.toString(),
+                            id = it.notificationId,
+                            feedId = it.feedId,
                             imageUrl = it.viewUrl,
                             title = it.title,
                             description = it.body,

@@ -34,7 +34,7 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
  * @param isRead: 알림이 읽었는지 여부 (안 읽음: false, 읽음: true)
  */
 data class NotificationState(
-    val id: String,
+    val id: Long,
     val imageUrl: String,
     val label: String,
     val message: String,
@@ -120,7 +120,7 @@ private fun UnreadNotiPreview() {
         NotificationItem(
             state =
                 NotificationState(
-                    id = "1",
+                    id = 1L,
                     imageUrl = "https://picsum.photos/200",
                     label = "투표 종료",
                     message = "90% '애매하긴 해!'",
@@ -139,7 +139,7 @@ private fun ReadNotiPreview() {
         NotificationItem(
             state =
                 NotificationState(
-                    id = "2",
+                    id = 2L,
                     imageUrl = "https://picsum.photos/200",
                     label = "투표 종료",
                     message = "56% '사! 가즈아!'",

@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.feature.notification.viewmodel
+package com.sseotdabwa.buyornot.feature.notification.ui
 
 import androidx.compose.runtime.Immutable
 import com.sseotdabwa.buyornot.core.designsystem.components.SnackBarIconTint
@@ -10,7 +10,8 @@ import com.sseotdabwa.buyornot.domain.model.NotificationFilter
  */
 @Immutable
 data class NotificationItem(
-    val id: String,
+    val id: Long,
+    val feedId: Long,
     val imageUrl: String,
     val title: String,
     val description: String,
@@ -45,7 +46,8 @@ sealed interface NotificationIntent {
     data object OnPermissionDenied : NotificationIntent
 
     data class OnNotificationClick(
-        val notificationId: String,
+        val notificationId: Long,
+        val feedId: Long,
     ) : NotificationIntent
 
     data object OnRefreshNotifications : NotificationIntent
@@ -66,6 +68,7 @@ sealed interface NotificationSideEffect {
     ) : NotificationSideEffect
 
     data class NavigateToNotificationDetail(
-        val notificationId: String,
+        val notificationId: Long,
+        val feedId: Long,
     ) : NotificationSideEffect
 }
