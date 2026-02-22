@@ -109,6 +109,7 @@ fun HomeBanner(
         )
 
         HomeBannerContent(
+            onClick = onClick,
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -151,16 +152,20 @@ private fun HomeBannerCloseButton(
  * 홈 배너의 메인 콘텐츠 영역
  * 배너 이미지와 액션 버튼을 포함
  *
+ * @param onClick 액션 버튼 클릭 시 호출되는 콜백
  * @param modifier 컴포넌트에 적용할 Modifier
  */
 @Composable
-private fun HomeBannerContent(modifier: Modifier = Modifier) {
+private fun HomeBannerContent(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         HomeBannerImage()
-        HomeBannerActionButton(text = "고민되는 소비가 있나요?", onClick = { })
+        HomeBannerActionButton(text = "고민되는 소비가 있나요?", onClick = onClick)
     }
 }
 

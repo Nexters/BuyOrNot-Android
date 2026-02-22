@@ -102,7 +102,7 @@ fun BuyOrNotNavHost(
             onNavigateBack = navController::popBackStack,
             onNavigateToHomeReview = {
                 navController.navigateToHomeWithTab(
-                    tab = HomeTab.REVIEW,
+                    tab = HomeTab.MY_FEED,
                     navOptions =
                         androidx.navigation.navOptions {
                             popUpTo(navController.graph.startDestinationId) {

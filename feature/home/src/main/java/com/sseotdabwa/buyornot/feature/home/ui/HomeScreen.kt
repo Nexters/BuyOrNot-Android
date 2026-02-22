@@ -227,6 +227,7 @@ private fun HomeScreenContent(
                 onIntent = onIntent,
                 isTimeOut = isTimeOut,
                 headerPadding = totalHeaderHeight + innerPadding.calculateTopPadding(),
+                onUploadClick = onUploadClick,
             )
 
             FabDimOverlay(
@@ -349,8 +350,8 @@ private fun HomeTabSection(
             )
             BuyOrNotTab(
                 title = "내 투표",
-                selected = selectedTab == HomeTab.REVIEW,
-                onClick = { onTabSelected(HomeTab.REVIEW) },
+                selected = selectedTab == HomeTab.MY_FEED,
+                onClick = { onTabSelected(HomeTab.MY_FEED) },
             )
         }
 
@@ -428,6 +429,7 @@ private fun HomeFeedList(
     isTimeOut: Boolean,
     onIntent: (HomeIntent) -> Unit,
     headerPadding: Dp,
+    onUploadClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // ViewModel에서 이미 탭과 필터에 따라 필터링된 피드를 제공
@@ -445,16 +447,14 @@ private fun HomeFeedList(
                 selectedFilter = uiState.selectedFilter,
                 onFilterSelected = { onIntent(HomeIntent.OnFilterSelected(it)) },
             )
-        }
-        // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
-        if (uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
-            item {
+            // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
+            if (filteredFeeds.isNotEmpty() && uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 HomeBanner(
                     modifier = Modifier.padding(horizontal = 20.dp),
                     onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
-                    onClick = { },
+                    onClick = onUploadClick,
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -495,7 +495,7 @@ private fun HomeFeedList(
                 } else {
                     // 아직 5초 미만이면 로딩 인디케이터만 노출
                     item {
-                        Box(modifier = Modifier.fillMaxWidth().height(400.dp), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
                         }
                     }
@@ -517,7 +517,9 @@ private fun HomeFeedList(
             else -> {
                 // [요청사항] 통신은 성공(hasError false)했지만 데이터가 없는 경우
                 item {
-                    HomeFeedEmptyView(modifier = Modifier.padding(top = 80.dp))
+                    HomeFeedEmptyView(
+                        modifier = Modifier.padding(top = 80.dp),
+                    )
                 }
             }
         }

@@ -8,7 +8,7 @@ import com.sseotdabwa.buyornot.domain.model.UserType
 /**
  * 홈 화면의 탭 정의
  */
-enum class HomeTab { FEED, REVIEW }
+enum class HomeTab { FEED, MY_FEED }
 
 /**
  * 필터 칩의 종류
