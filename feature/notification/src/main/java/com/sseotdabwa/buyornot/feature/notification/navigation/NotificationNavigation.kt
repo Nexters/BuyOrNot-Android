@@ -6,8 +6,8 @@ import androidx.navigation.NavOptions
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.sseotdabwa.buyornot.feature.notification.ui.NotificationDetailScreen
-import com.sseotdabwa.buyornot.feature.notification.ui.NotificationScreen
+import com.sseotdabwa.buyornot.feature.notification.ui.NotificationDetailRoute
+import com.sseotdabwa.buyornot.feature.notification.ui.NotificationRoute
 
 const val NOTIFICATION_ROUTE = "notification"
 const val NOTIFICATION_DETAIL_ROUTE = "notification_detail"
@@ -17,7 +17,7 @@ fun NavGraphBuilder.notificationGraph(
     onNotificationClick: (Long, Long) -> Unit,
 ) {
     composable(route = NOTIFICATION_ROUTE) {
-        NotificationScreen(
+        NotificationRoute(
             onBackClick = onBackClick,
             onNotificationClick = onNotificationClick,
         )
@@ -31,7 +31,7 @@ fun NavGraphBuilder.notificationGraph(
                 navArgument("feedId") { type = NavType.LongType },
             ),
     ) {
-        NotificationDetailScreen(
+        NotificationDetailRoute(
             onBackClick = onBackClick,
         )
     }

@@ -44,12 +44,25 @@ import com.sseotdabwa.buyornot.domain.model.VoteChoice
  * @param viewModel 알림 상세 ViewModel
  */
 @Composable
-fun NotificationDetailScreen(
+fun NotificationDetailRoute(
     onBackClick: () -> Unit,
     viewModel: NotificationDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    NotificationDetailScreen(
+        uiState = uiState,
+        onBackClick = onBackClick,
+        onIntent = viewModel::handleIntent,
+    )
+}
+
+@Composable
+fun NotificationDetailScreen(
+    uiState: NotificationDetailUiState,
+    onBackClick: () -> Unit,
+    onIntent: (NotificationDetailIntent) -> Unit,
+) {
     Column(
         modifier =
             Modifier
@@ -71,7 +84,7 @@ fun NotificationDetailScreen(
             uiState.isError -> {
                 BuyOrNotErrorView(
                     modifier = Modifier.fillMaxSize(),
-                    onRefreshClick = { viewModel.handleIntent(NotificationDetailIntent.OnRefresh) },
+                    onRefreshClick = { onIntent(NotificationDetailIntent.OnRefresh) },
                 )
             }
 
@@ -122,7 +135,36 @@ fun NotificationDetailScreen(
 private fun NotificationDetailScreenPreview() {
     BuyOrNotTheme {
         NotificationDetailScreen(
+            uiState =
+                NotificationDetailUiState(
+                    isLoading = false,
+                    feed =
+                        com.sseotdabwa.buyornot.domain.model.Feed(
+                            feedId = 1L,
+                            content = "이거 어때요? 투표 결과가 궁금해요!",
+                            price = 35000,
+                            category = "패션",
+                            yesCount = 80,
+                            noCount = 20,
+                            totalCount = 100,
+                            feedStatus = FeedStatus.CLOSED,
+                            s3ObjectKey = "",
+                            viewUrl = "https://picsum.photos/800/800",
+                            imageWidth = 800,
+                            imageHeight = 800,
+                            author =
+                                com.sseotdabwa.buyornot.domain.model.Author(
+                                    userId = 1L,
+                                    nickname = "결정장애",
+                                    profileImage = "https://picsum.photos/200",
+                                ),
+                            createdAt = "2026-02-21T15:00:53.552Z",
+                            hasVoted = true,
+                            myVoteChoice = VoteChoice.YES,
+                        ),
+                ),
             onBackClick = {},
+            onIntent = {},
         )
     }
 }
