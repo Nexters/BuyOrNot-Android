@@ -178,11 +178,12 @@ fun HomeScreen(
 
     // 콘텐츠 상태가 변경되면 오프셋 리셋
     LaunchedEffect(topBarHeightPx, hasScrollableContent) {
-        if (!hasScrollableContent) {
-            topBarOffsetHeightPx = 0f
-        } else {
-            topBarOffsetHeightPx = topBarOffsetHeightPx.coerceIn(-topBarHeightPx, 0f)
-        }
+        topBarOffsetHeightPx =
+            if (!hasScrollableContent) {
+                0f
+            } else {
+                topBarOffsetHeightPx.coerceIn(-topBarHeightPx, 0f)
+            }
     }
 
     Box(
@@ -527,8 +528,6 @@ private fun FeedItemCard(
     onDelete: (String) -> Unit,
     onReport: (String) -> Unit,
 ) {
-    var userVotedOption by remember(feed.id, feed.userVotedOptionIndex) { mutableStateOf(feed.userVotedOptionIndex) }
-
     Column {
         FeedCard(
             modifier = modifier,
@@ -541,13 +540,12 @@ private fun FeedItemCard(
             price = feed.price,
             imageAspectRatio = feed.imageAspectRatio,
             isVoteEnded = feed.isVoteEnded,
-            userVotedOptionIndex = userVotedOption,
+            userVotedOptionIndex = feed.userVotedOptionIndex,
             buyVoteCount = feed.buyVoteCount,
             maybeVoteCount = feed.maybeVoteCount,
             totalVoteCount = feed.totalVoteCount,
             isOwner = feed.isOwner,
             onVote = { option ->
-                userVotedOption = option
                 onVote(feed.id, option)
             },
             onDeleteClick = { onDelete(feed.id) },
