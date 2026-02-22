@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -27,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -67,6 +69,8 @@ import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeIntent
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeSideEffect
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeUiState
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlin.math.roundToInt
 
 /**
@@ -413,8 +417,28 @@ private fun HomeFeedList(
 ) {
     // ViewModel에서 이미 탭과 필터에 따라 필터링된 피드를 제공
     val filteredFeeds = uiState.feeds
+    val listState = rememberLazyListState()
+
+    // 무한 스크롤 구현: 리스트 끝에 도달하면 다음 페이지 로드
+    LaunchedEffect(listState, uiState.hasNextPage, uiState.isNextPageLoading) {
+        snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.filter { lastVisibleIndex ->
+            val totalItemsCount = listState.layoutInfo.totalItemsCount
+            // 전체 아이템 수에서 3개 전쯤에 도달하면 미리 로드 (0-based index)
+            lastVisibleIndex != null && lastVisibleIndex >= totalItemsCount - 3
+        }.distinctUntilChanged()
+            .collect {
+                if (uiState.hasNextPage && !uiState.isNextPageLoading) {
+                    onIntent(HomeIntent.LoadNextPage)
+                }
+            }
+    }
 
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = headerPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -457,6 +481,24 @@ private fun HomeFeedList(
                         onDelete = { id -> onIntent(HomeIntent.OnDeleteClicked(id)) },
                         onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
                     )
+                }
+
+                // 다음 페이지 로딩 중일 때 표시
+                if (uiState.isNextPageLoading) {
+                    item {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                color = BuyOrNotTheme.colors.gray900,
+                                strokeWidth = 2.dp,
+                            )
+                        }
+                    }
                 }
             }
 

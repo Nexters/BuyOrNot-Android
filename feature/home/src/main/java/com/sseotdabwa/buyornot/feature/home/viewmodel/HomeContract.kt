@@ -52,6 +52,9 @@ data class FeedItem(
  * @property isBannerVisible 배너 표시 여부
  * @property feeds 피드 목록
  * @property isLoading 로딩 상태
+ * @property isNextPageLoading 다음 페이지 로딩 상태
+ * @property hasNextPage 다음 페이지 존재 여부
+ * @property nextCursor 다음 페이지를 위한 커서
  * @property hasError 에러 발생 여부
  */
 @Immutable
@@ -62,6 +65,9 @@ data class HomeUiState(
     val isBannerVisible: Boolean = true,
     val feeds: List<FeedItem> = emptyList(),
     val isLoading: Boolean = true,
+    val isNextPageLoading: Boolean = false,
+    val hasNextPage: Boolean = false,
+    val nextCursor: Long? = null,
     val hasError: Boolean = false,
 )
 
@@ -93,6 +99,8 @@ sealed interface HomeIntent {
     ) : HomeIntent
 
     data object LoadFeeds : HomeIntent
+
+    data object LoadNextPage : HomeIntent
 }
 
 /**

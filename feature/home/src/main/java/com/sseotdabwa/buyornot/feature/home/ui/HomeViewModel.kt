@@ -121,11 +121,22 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.OnDeleteClicked -> handleDelete(intent.feedId)
             is HomeIntent.OnReportClicked -> handleReport(intent.feedId)
             is HomeIntent.LoadFeeds -> loadFeeds()
+            is HomeIntent.LoadNextPage -> handleNextPage()
         }
     }
 
     private fun handleTabSelection(tab: HomeTab) {
-        updateState { it.copy(selectedTab = tab, isLoading = true, hasError = false) }
+        updateState {
+            it.copy(
+                selectedTab = tab,
+                isLoading = true,
+                hasError = false,
+                feeds = emptyList(),
+                hasNextPage = false,
+                nextCursor = null,
+            )
+        }
+        cachedFeeds = emptyList()
         // 탭이 변경되므로 loadFeeds에 명시적으로 탭을 전달
         loadFeeds(tab)
     }
@@ -137,6 +148,49 @@ class HomeViewModel @Inject constructor(
 
     private fun handleBannerDismiss() {
         updateState { it.copy(isBannerVisible = false) }
+    }
+
+    private fun handleNextPage() {
+        if (currentState.isNextPageLoading || !currentState.hasNextPage) return
+
+        viewModelScope.launch {
+            updateState { it.copy(isNextPageLoading = true) }
+
+            runCatchingCancellable {
+                val currentTab = currentState.selectedTab
+                when (currentTab) {
+                    HomeTab.FEED ->
+                        feedRepository.getFeedList(
+                            cursor = currentState.nextCursor,
+                            feedStatus = null,
+                        )
+                    HomeTab.MY_FEED ->
+                        feedRepository.getMyFeeds(
+                            cursor = currentState.nextCursor,
+                            feedStatus = null,
+                        )
+                }
+            }.onSuccess { feedList ->
+                val newItems =
+                    feedList.feeds.map { feed ->
+                        val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                        feed.toFeedItem(isOwner)
+                    }
+                cachedFeeds = cachedFeeds + newItems
+
+                updateState {
+                    it.copy(
+                        isNextPageLoading = false,
+                        hasNextPage = feedList.hasNext,
+                        nextCursor = feedList.nextCursor,
+                    )
+                }
+                applyFiltering()
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to load next page", e)
+                updateState { it.copy(isNextPageLoading = false) }
+            }
+        }
     }
 
     private fun handleVote(
@@ -296,17 +350,24 @@ class HomeViewModel @Inject constructor(
                 val currentTab = tab ?: uiState.value.selectedTab
                 // 필터 없이 해당 탭의 전체 데이터를 가져옴
                 when (currentTab) {
-                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null).feeds // 전체 가져오기
-                    HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = null).feeds // 내 피드 전체 가져오기
+                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null)
+                    HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = null)
                 }
-            }.onSuccess { feeds ->
+            }.onSuccess { feedList ->
                 // 원본 데이터를 캐시에 저장
                 // 각 피드의 작성자 ID와 현재 사용자 ID를 비교하여 isOwner 설정
                 cachedFeeds =
-                    feeds.map { feed ->
+                    feedList.feeds.map { feed ->
                         val isOwner = currentUserId != null && feed.author.userId == currentUserId
                         feed.toFeedItem(isOwner)
                     }
+
+                updateState {
+                    it.copy(
+                        hasNextPage = feedList.hasNext,
+                        nextCursor = feedList.nextCursor,
+                    )
+                }
 
                 // 현재 선택된 필터에 맞춰 UI 상태 업데이트
                 // 탭 파라미터를 전달하여 즉시 반영되도록 함
