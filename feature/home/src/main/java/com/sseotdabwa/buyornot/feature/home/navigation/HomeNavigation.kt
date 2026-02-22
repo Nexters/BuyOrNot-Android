@@ -6,7 +6,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.sseotdabwa.buyornot.feature.home.ui.HomeScreen
+import com.sseotdabwa.buyornot.feature.home.ui.HomeRoute
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
 
 const val HOME_ROUTE = "home"
@@ -35,7 +35,7 @@ fun NavGraphBuilder.homeScreen(
                 else -> HomeTab.FEED
             }
 
-        HomeScreen(
+        HomeRoute(
             onLoginClick = onLoginClick,
             onNotificationClick = onNotificationClick,
             onProfileClick = onProfileClick,

@@ -81,7 +81,7 @@ import kotlin.math.roundToInt
  * @param viewModel HomeViewModel (Hilt 주입)
  */
 @Composable
-fun HomeScreen(
+fun HomeRoute(
     onLoginClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
@@ -91,9 +91,6 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-
-    // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
-    var isFabExpanded by remember { mutableStateOf(false) }
 
     // 초기 탭 설정
     LaunchedEffect(initialTab) {
@@ -120,16 +117,14 @@ fun HomeScreen(
         }
     }
 
-    HomeScreenContent(
+    HomeScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
-        isFabExpanded = isFabExpanded,
         onLoginClick = onLoginClick,
         onNotificationClick = onNotificationClick,
         onProfileClick = onProfileClick,
         onUploadClick = onUploadClick,
         onIntent = viewModel::handleIntent,
-        onFabExpandedChange = { isFabExpanded = it },
     )
 }
 
@@ -137,17 +132,18 @@ fun HomeScreen(
  * 홈 화면 UI 컨텐츠 (상태를 받아서 렌더링만 담당)
  */
 @Composable
-private fun HomeScreenContent(
+fun HomeScreen(
     uiState: HomeUiState,
-    isFabExpanded: Boolean,
-    onLoginClick: () -> Unit,
-    onNotificationClick: () -> Unit,
-    onProfileClick: () -> Unit,
-    onUploadClick: () -> Unit,
     onIntent: (HomeIntent) -> Unit,
-    onFabExpandedChange: (Boolean) -> Unit,
-    snackbarHostState: SnackbarHostState,
+    onLoginClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onUploadClick: () -> Unit = {},
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+    // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
+    var isFabExpanded by remember { mutableStateOf(false) }
+
     val density = LocalDensity.current
     var topBarHeightPx by remember { mutableStateOf(0f) }
     var tabHeightPx by remember { mutableStateOf(0f) }
@@ -200,7 +196,7 @@ private fun HomeScreenContent(
             floatingActionButton = {
                 HomeFab(
                     expanded = isFabExpanded,
-                    onExpandedChange = onFabExpandedChange,
+                    onExpandedChange = { isFabExpanded = it },
                     onUploadClick = onUploadClick,
                 )
             },
@@ -215,7 +211,7 @@ private fun HomeScreenContent(
 
             FabDimOverlay(
                 visible = isFabExpanded,
-                onDismiss = { onFabExpandedChange(false) },
+                onDismiss = { isFabExpanded = false },
             )
         }
 
@@ -579,6 +575,9 @@ fun HomeFeedEmptyView(modifier: Modifier = Modifier) {
 @Composable
 private fun HomeScreenPreview() {
     BuyOrNotTheme {
-        HomeScreen()
+        HomeScreen(
+            uiState = HomeUiState(),
+            onIntent = {},
+        )
     }
 }
