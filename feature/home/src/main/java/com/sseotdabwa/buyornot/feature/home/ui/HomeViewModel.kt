@@ -159,10 +159,10 @@ class HomeViewModel @Inject constructor(
 
         viewModelScope.launch {
             updateState { it.copy(isNextPageLoading = true) }
+            val requestedTab = currentState.selectedTab
 
             runCatchingCancellable {
-                val currentTab = currentState.selectedTab
-                when (currentTab) {
+                when (requestedTab) {
                     HomeTab.FEED ->
                         feedRepository.getFeedList(
                             cursor = currentState.nextCursor,
@@ -175,6 +175,11 @@ class HomeViewModel @Inject constructor(
                         )
                 }
             }.onSuccess { feedList ->
+                if (currentState.selectedTab != requestedTab) {
+                    updateState { it.copy(isNextPageLoading = false) }
+                    return@launch
+                }
+
                 val newItems =
                     feedList.feeds.map { feed ->
                         val isOwner = currentUserId != null && feed.author.userId == currentUserId
