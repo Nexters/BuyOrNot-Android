@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
 import java.security.SecureRandom
 import java.util.Base64
 import javax.inject.Inject
-import kotlin.coroutines.cancellation.CancellationException
 
 private const val TAG = "LoginViewModel"
 
@@ -184,9 +183,7 @@ class LoginViewModel @Inject constructor(
                 }.onSuccess {
                     Log.d("FCM", "FCM Token successfully updated to server.")
                 }.onFailure { e ->
-                    if (e !is CancellationException) {
-                        Log.e("FCM", "Failed to update FCM token to server", e)
-                    }
+                    Log.e("FCM", "Failed to update FCM token to server", e)
                 }
             }
         }
