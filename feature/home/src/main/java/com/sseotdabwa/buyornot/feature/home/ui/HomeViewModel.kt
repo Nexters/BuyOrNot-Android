@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.feature.home.ui
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
@@ -70,7 +71,8 @@ class HomeViewModel @Inject constructor(
             }
         }.onSuccess { id ->
             currentUserId = id
-        }.onFailure {
+        }.onFailure { e ->
+            Log.e("HomeViewModel", "Failed to load current userId", e)
             currentUserId = null
         }
     }
@@ -195,6 +197,7 @@ class HomeViewModel @Inject constructor(
                 updateState { it.copy(feeds = finalUpdate(it.feeds)) }
                 cachedFeeds = finalUpdate(cachedFeeds)
             }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
                 // 3. 롤백 (Rollback): 에러 발생 시 원래 상태로 복구
                 updateState { it.copy(feeds = previousFeeds) }
                 cachedFeeds = previousCachedFeeds
@@ -234,7 +237,8 @@ class HomeViewModel @Inject constructor(
                         icon = BuyOrNotIcons.CheckCircle,
                     ),
                 )
-            }.onFailure {
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to delete feed: $feedId", e)
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = "삭제에 실패했습니다.",
@@ -257,6 +261,7 @@ class HomeViewModel @Inject constructor(
                     ),
                 )
             }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to report feed: $feedId", e)
                 // 400 에러 (본인 피드 또는 이미 신고된 피드)에 대한 처리
                 val errorMessage =
                     when {
@@ -306,7 +311,8 @@ class HomeViewModel @Inject constructor(
                 // 현재 선택된 필터에 맞춰 UI 상태 업데이트
                 // 탭 파라미터를 전달하여 즉시 반영되도록 함
                 applyFiltering(tab ?: uiState.value.selectedTab)
-            }.onFailure {
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to load feeds", e)
                 updateState { it.copy(isLoading = false, hasError = true) }
             }
         }
