@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -27,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -67,6 +69,8 @@ import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeIntent
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeSideEffect
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
 import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeUiState
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlin.math.roundToInt
 
 /**
@@ -81,7 +85,7 @@ import kotlin.math.roundToInt
  * @param viewModel HomeViewModel (Hilt 주입)
  */
 @Composable
-fun HomeScreen(
+fun HomeRoute(
     onLoginClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
@@ -92,27 +96,10 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
-    var isFabExpanded by remember { mutableStateOf(false) }
-
-    var isTimeOut by remember { mutableStateOf(false) }
-
     // 초기 탭 설정
     LaunchedEffect(initialTab) {
         if (uiState.selectedTab != initialTab) {
             viewModel.handleIntent(HomeIntent.OnTabSelected(initialTab))
-        }
-    }
-
-    LaunchedEffect(uiState.isLoading, uiState.feeds.isEmpty()) {
-        if (uiState.isLoading && uiState.feeds.isEmpty()) {
-            // 로딩이 시작되면 타임아웃을 초기화하고 대기합니다.
-            isTimeOut = false
-            kotlinx.coroutines.delay(5000L) // 5초 가이드
-            isTimeOut = true
-        } else {
-            // 로딩이 끝나거나 데이터가 들어오면 타임아웃을 리셋합니다.
-            isTimeOut = false
         }
     }
 
@@ -134,17 +121,14 @@ fun HomeScreen(
         }
     }
 
-    HomeScreenContent(
+    HomeScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
-        isFabExpanded = isFabExpanded,
-        isTimeOut = isTimeOut,
         onLoginClick = onLoginClick,
         onNotificationClick = onNotificationClick,
         onProfileClick = onProfileClick,
         onUploadClick = onUploadClick,
         onIntent = viewModel::handleIntent,
-        onFabExpandedChange = { isFabExpanded = it },
     )
 }
 
@@ -152,18 +136,18 @@ fun HomeScreen(
  * 홈 화면 UI 컨텐츠 (상태를 받아서 렌더링만 담당)
  */
 @Composable
-private fun HomeScreenContent(
+fun HomeScreen(
     uiState: HomeUiState,
-    isFabExpanded: Boolean,
-    isTimeOut: Boolean,
-    onLoginClick: () -> Unit,
-    onNotificationClick: () -> Unit,
-    onProfileClick: () -> Unit,
-    onUploadClick: () -> Unit,
     onIntent: (HomeIntent) -> Unit,
-    onFabExpandedChange: (Boolean) -> Unit,
-    snackbarHostState: SnackbarHostState,
+    onLoginClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
+    onUploadClick: () -> Unit = {},
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+    // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
+    var isFabExpanded by remember { mutableStateOf(false) }
+
     val density = LocalDensity.current
     var topBarHeightPx by remember { mutableStateOf(0f) }
     var tabHeightPx by remember { mutableStateOf(0f) }
@@ -198,11 +182,12 @@ private fun HomeScreenContent(
 
     // 콘텐츠 상태가 변경되면 오프셋 리셋
     LaunchedEffect(topBarHeightPx, hasScrollableContent) {
-        if (!hasScrollableContent) {
-            topBarOffsetHeightPx = 0f
-        } else {
-            topBarOffsetHeightPx = topBarOffsetHeightPx.coerceIn(-topBarHeightPx, 0f)
-        }
+        topBarOffsetHeightPx =
+            if (!hasScrollableContent) {
+                0f
+            } else {
+                topBarOffsetHeightPx.coerceIn(-topBarHeightPx, 0f)
+            }
     }
 
     Box(
@@ -216,7 +201,7 @@ private fun HomeScreenContent(
             floatingActionButton = {
                 HomeFab(
                     expanded = isFabExpanded,
-                    onExpandedChange = onFabExpandedChange,
+                    onExpandedChange = { isFabExpanded = it },
                     onUploadClick = onUploadClick,
                 )
             },
@@ -225,14 +210,13 @@ private fun HomeScreenContent(
             HomeFeedList(
                 uiState = uiState,
                 onIntent = onIntent,
-                isTimeOut = isTimeOut,
                 headerPadding = totalHeaderHeight + innerPadding.calculateTopPadding(),
                 onUploadClick = onUploadClick,
             )
 
             FabDimOverlay(
                 visible = isFabExpanded,
-                onDismiss = { onFabExpandedChange(false) },
+                onDismiss = { isFabExpanded = false },
             )
         }
 
@@ -303,6 +287,7 @@ private fun HomeHeader(
         val tabPlaceable =
             subcompose(HomeHeaderSlot.Tab) {
                 HomeTabSection(
+                    userType = uiState.userType,
                     selectedTab = uiState.selectedTab,
                     onTabSelected = onTabSelected,
                 )
@@ -334,13 +319,16 @@ private fun HomeHeader(
  */
 @Composable
 private fun HomeTabSection(
+    userType: UserType,
     selectedTab: HomeTab,
     onTabSelected: (HomeTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val tabs = if (userType == UserType.GUEST) listOf(HomeTab.FEED) else HomeTab.entries.toList()
+
     Column(modifier = modifier) {
         BuyOrNotTabRow(
-            selectedTabIndex = HomeTab.entries.indexOf(selectedTab),
+            selectedTabIndex = tabs.indexOf(selectedTab).coerceAtLeast(0),
             modifier = Modifier.padding(start = 20.dp),
         ) {
             BuyOrNotTab(
@@ -348,11 +336,13 @@ private fun HomeTabSection(
                 selected = selectedTab == HomeTab.FEED,
                 onClick = { onTabSelected(HomeTab.FEED) },
             )
-            BuyOrNotTab(
-                title = "내 투표",
-                selected = selectedTab == HomeTab.MY_FEED,
-                onClick = { onTabSelected(HomeTab.MY_FEED) },
-            )
+            if (userType == UserType.SOCIAL) {
+                BuyOrNotTab(
+                    title = "내 투표",
+                    selected = selectedTab == HomeTab.MY_FEED,
+                    onClick = { onTabSelected(HomeTab.MY_FEED) },
+                )
+            }
         }
 
         BuyOrNotDivider(
@@ -426,7 +416,6 @@ private fun FabDimOverlay(
 @Composable
 private fun HomeFeedList(
     uiState: HomeUiState,
-    isTimeOut: Boolean,
     onIntent: (HomeIntent) -> Unit,
     headerPadding: Dp,
     onUploadClick: () -> Unit,
@@ -434,8 +423,28 @@ private fun HomeFeedList(
 ) {
     // ViewModel에서 이미 탭과 필터에 따라 필터링된 피드를 제공
     val filteredFeeds = uiState.feeds
+    val listState = rememberLazyListState()
+
+    // 무한 스크롤 구현: 리스트 끝에 도달하면 다음 페이지 로드
+    LaunchedEffect(listState, uiState.hasNextPage, uiState.isNextPageLoading) {
+        snapshotFlow {
+            listState.layoutInfo.visibleItemsInfo
+                .lastOrNull()
+                ?.index
+        }.filter { lastVisibleIndex ->
+            val totalItemsCount = listState.layoutInfo.totalItemsCount
+            // 전체 아이템 수에서 3개 전쯤에 도달하면 미리 로드 (0-based index)
+            lastVisibleIndex != null && lastVisibleIndex >= totalItemsCount - 3
+        }.distinctUntilChanged()
+            .collect {
+                if (uiState.hasNextPage && !uiState.isNextPageLoading) {
+                    onIntent(HomeIntent.LoadNextPage)
+                }
+            }
+    }
 
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = headerPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -479,25 +488,31 @@ private fun HomeFeedList(
                         onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
                     )
                 }
+
+                // 다음 페이지 로딩 중일 때 표시
+                if (uiState.isNextPageLoading) {
+                    item {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                color = BuyOrNotTheme.colors.gray900,
+                                strokeWidth = 2.dp,
+                            )
+                        }
+                    }
+                }
             }
 
             // 2. 로딩 중인 단계 (로딩이 끝나기 전까지는 Result를 판단하지 않음)
             uiState.isLoading -> {
-                if (isTimeOut) {
-                    // [요청사항] 특정 초(5초) 이상 로딩 중이면 에러 뷰 노출
-                    item {
-                        BuyOrNotErrorView(
-                            modifier = Modifier.padding(top = 80.dp),
-                            message = "연결 시간이 초과되었습니다",
-                            onRefreshClick = { onIntent(HomeIntent.LoadFeeds) },
-                        )
-                    }
-                } else {
-                    // 아직 5초 미만이면 로딩 인디케이터만 노출
-                    item {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
-                        }
+                item {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
                     }
                 }
             }
@@ -561,8 +576,6 @@ private fun FeedItemCard(
     onDelete: (String) -> Unit,
     onReport: (String) -> Unit,
 ) {
-    var userVotedOption by remember(feed.id, feed.userVotedOptionIndex) { mutableStateOf(feed.userVotedOptionIndex) }
-
     Column {
         FeedCard(
             modifier = modifier,
@@ -575,13 +588,12 @@ private fun FeedItemCard(
             price = feed.price,
             imageAspectRatio = feed.imageAspectRatio,
             isVoteEnded = feed.isVoteEnded,
-            userVotedOptionIndex = userVotedOption,
+            userVotedOptionIndex = feed.userVotedOptionIndex,
             buyVoteCount = feed.buyVoteCount,
             maybeVoteCount = feed.maybeVoteCount,
             totalVoteCount = feed.totalVoteCount,
             isOwner = feed.isOwner,
             onVote = { option ->
-                userVotedOption = option
                 onVote(feed.id, option)
             },
             onDeleteClick = { onDelete(feed.id) },
@@ -609,6 +621,9 @@ fun HomeFeedEmptyView(modifier: Modifier = Modifier) {
 @Composable
 private fun HomeScreenPreview() {
     BuyOrNotTheme {
-        HomeScreen()
+        HomeScreen(
+            uiState = HomeUiState(),
+            onIntent = {},
+        )
     }
 }

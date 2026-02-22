@@ -7,7 +7,7 @@ data class Feed(
     val feedId: Long,
     val content: String,
     val price: Int,
-    val category: String,
+    val category: FeedCategory,
     val yesCount: Int,
     val noCount: Int,
     val totalCount: Int,

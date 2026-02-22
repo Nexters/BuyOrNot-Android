@@ -24,6 +24,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.Feed
+import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 
@@ -95,7 +96,7 @@ fun NotificationDetailScreen(
                             modifier = Modifier.padding(20.dp),
                             profileImageUrl = feed.author.profileImage ?: "",
                             nickname = feed.author.nickname,
-                            category = feed.category,
+                            category = feed.category.displayName,
                             createdAt = TimeUtils.formatRelativeTime(feed.createdAt),
                             content = feed.content,
                             productImageUrl = feed.viewUrl,
@@ -138,7 +139,7 @@ private fun NotificationDetailScreenPreview() {
                             feedId = 1L,
                             content = "이거 어때요? 투표 결과가 궁금해요!",
                             price = 35000,
-                            category = "패션",
+                            category = FeedCategory.BOOK,
                             yesCount = 80,
                             noCount = 20,
                             totalCount = 100,

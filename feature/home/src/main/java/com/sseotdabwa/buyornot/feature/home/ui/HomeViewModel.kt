@@ -1,7 +1,9 @@
 package com.sseotdabwa.buyornot.feature.home.ui
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
@@ -61,12 +63,16 @@ class HomeViewModel @Inject constructor(
      * suspend 함수로 사용자 ID를 동기적으로 로드
      */
     private suspend fun loadCurrentUserIdSuspend() {
-        try {
+        runCatchingCancellable {
             if (uiState.value.userType == UserType.SOCIAL) {
-                val profile = userRepository.getMyProfile()
-                currentUserId = profile.id
+                userRepository.getMyProfile().id
+            } else {
+                null
             }
-        } catch (e: Exception) {
+        }.onSuccess { id ->
+            currentUserId = id
+        }.onFailure { e ->
+            Log.e("HomeViewModel", "Failed to load current userId", e)
             currentUserId = null
         }
     }
@@ -86,8 +92,9 @@ class HomeViewModel @Inject constructor(
                     } else {
                         currentUserId = null
                         isUserIdLoaded = true
-                        // 로그아웃 시에도 피드 갱신 (isOwner를 false로)
-                        loadFeeds()
+                        // 게스트 전환 시 탭을 무조건 FEED로 변경
+                        updateState { it.copy(selectedTab = HomeTab.FEED) }
+                        loadFeeds(HomeTab.FEED)
                     }
                 }
         }
@@ -115,11 +122,26 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.OnDeleteClicked -> handleDelete(intent.feedId)
             is HomeIntent.OnReportClicked -> handleReport(intent.feedId)
             is HomeIntent.LoadFeeds -> loadFeeds()
+            is HomeIntent.LoadNextPage -> handleNextPage()
         }
     }
 
     private fun handleTabSelection(tab: HomeTab) {
-        updateState { it.copy(selectedTab = tab, isLoading = true, hasError = false) }
+        // 게스트일 때는 내 투표 탭 선택 불가
+        if (uiState.value.userType == UserType.GUEST && tab == HomeTab.MY_FEED) return
+
+        updateState {
+            it.copy(
+                selectedTab = tab,
+                isLoading = true,
+                hasError = false,
+                feeds = emptyList(),
+                hasNextPage = false,
+                nextCursor = null,
+                isNextPageLoading = false,
+            )
+        }
+        cachedFeeds = emptyList()
         // 탭이 변경되므로 loadFeeds에 명시적으로 탭을 전달
         loadFeeds(tab)
     }
@@ -133,25 +155,96 @@ class HomeViewModel @Inject constructor(
         updateState { it.copy(isBannerVisible = false) }
     }
 
+    private fun handleNextPage() {
+        if (currentState.isNextPageLoading || !currentState.hasNextPage) return
+
+        viewModelScope.launch {
+            updateState { it.copy(isNextPageLoading = true) }
+            val requestedTab = currentState.selectedTab
+
+            runCatchingCancellable {
+                when (requestedTab) {
+                    HomeTab.FEED ->
+                        feedRepository.getFeedList(
+                            cursor = currentState.nextCursor,
+                            feedStatus = null,
+                        )
+                    HomeTab.MY_FEED ->
+                        feedRepository.getMyFeeds(
+                            cursor = currentState.nextCursor,
+                            feedStatus = null,
+                        )
+                }
+            }.onSuccess { feedList ->
+                if (currentState.selectedTab != requestedTab) {
+                    updateState { it.copy(isNextPageLoading = false) }
+                    return@launch
+                }
+
+                val newItems =
+                    feedList.feeds.map { feed ->
+                        val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                        feed.toFeedItem(isOwner)
+                    }
+                cachedFeeds = cachedFeeds + newItems
+
+                updateState {
+                    it.copy(
+                        isNextPageLoading = false,
+                        hasNextPage = feedList.hasNext,
+                        nextCursor = feedList.nextCursor,
+                    )
+                }
+                applyFiltering()
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to load next page", e)
+                updateState { it.copy(isNextPageLoading = false) }
+            }
+        }
+    }
+
     private fun handleVote(
         feedId: String,
         optionIndex: Int,
     ) {
+        val previousFeeds = uiState.value.feeds
+        val previousCachedFeeds = cachedFeeds
+
+        // 1. 낙관적 업데이트 (Optimistic Update)
+        // API 호출 전 UI를 즉시 업데이트하여 사용자 경험 개선
+        val optimisticUpdate = { feeds: List<FeedItem> ->
+            feeds.map { feed ->
+                if (feed.id == feedId) {
+                    val isYes = optionIndex == 0
+                    feed.copy(
+                        userVotedOptionIndex = optionIndex,
+                        buyVoteCount = if (isYes) feed.buyVoteCount + 1 else feed.buyVoteCount,
+                        maybeVoteCount = if (!isYes) feed.maybeVoteCount + 1 else feed.maybeVoteCount,
+                        totalVoteCount = feed.totalVoteCount + 1,
+                    )
+                } else {
+                    feed
+                }
+            }
+        }
+
+        updateState { it.copy(feeds = optimisticUpdate(it.feeds)) }
+        cachedFeeds = optimisticUpdate(cachedFeeds)
+
         viewModelScope.launch {
-            try {
-                // optionIndex: 0 = YES, 1 = NO
-                val choice = if (optionIndex == 0) VoteChoice.YES else VoteChoice.NO
+            // optionIndex: 0 = YES, 1 = NO
+            val choice = if (optionIndex == 0) VoteChoice.YES else VoteChoice.NO
 
+            runCatchingCancellable {
                 // 사용자 타입에 따라 회원/비회원 투표 API 호출
-                val voteResult =
-                    when (uiState.value.userType) {
-                        UserType.SOCIAL -> feedRepository.voteFeed(feedId.toLong(), choice)
-                        UserType.GUEST -> feedRepository.voteGuestFeed(feedId.toLong(), choice)
-                    }
-
-                // UI 업데이트: 투표 결과를 반영
-                val updatedFeeds =
-                    uiState.value.feeds.map { feed ->
+                when (uiState.value.userType) {
+                    UserType.SOCIAL -> feedRepository.voteFeed(feedId.toLong(), choice)
+                    UserType.GUEST -> feedRepository.voteGuestFeed(feedId.toLong(), choice)
+                }
+            }.onSuccess { voteResult ->
+                // 2. 최종 업데이트: 서버 응답 데이터를 기반으로 UI 확정
+                val finalUpdate = { feeds: List<FeedItem> ->
+                    feeds.map { feed ->
                         if (feed.id == feedId) {
                             feed.copy(
                                 userVotedOptionIndex = optionIndex,
@@ -163,23 +256,16 @@ class HomeViewModel @Inject constructor(
                             feed
                         }
                     }
-                updateState { it.copy(feeds = updatedFeeds) }
+                }
 
-                // 캐시도 업데이트
-                cachedFeeds =
-                    cachedFeeds.map { feed ->
-                        if (feed.id == feedId) {
-                            feed.copy(
-                                userVotedOptionIndex = optionIndex,
-                                buyVoteCount = voteResult.yesCount,
-                                maybeVoteCount = voteResult.noCount,
-                                totalVoteCount = voteResult.totalCount,
-                            )
-                        } else {
-                            feed
-                        }
-                    }
-            } catch (e: Exception) {
+                updateState { it.copy(feeds = finalUpdate(it.feeds)) }
+                cachedFeeds = finalUpdate(cachedFeeds)
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
+                // 3. 롤백 (Rollback): 에러 발생 시 원래 상태로 복구
+                updateState { it.copy(feeds = previousFeeds) }
+                cachedFeeds = previousCachedFeeds
+
                 // 에러 발생 시 스낵바로 알림
                 val errorMessage =
                     when {
@@ -199,9 +285,9 @@ class HomeViewModel @Inject constructor(
 
     private fun handleDelete(feedId: String) {
         viewModelScope.launch {
-            try {
+            runCatchingCancellable {
                 feedRepository.deleteFeed(feedId.toLong())
-
+            }.onSuccess {
                 // UI에서 피드 제거
                 val updatedFeeds = uiState.value.feeds.filter { it.id != feedId }
                 updateState { it.copy(feeds = updatedFeeds) }
@@ -215,7 +301,8 @@ class HomeViewModel @Inject constructor(
                         icon = BuyOrNotIcons.CheckCircle,
                     ),
                 )
-            } catch (e: Exception) {
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to delete feed: $feedId", e)
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = "삭제에 실패했습니다.",
@@ -228,15 +315,17 @@ class HomeViewModel @Inject constructor(
 
     private fun handleReport(feedId: String) {
         viewModelScope.launch {
-            try {
+            runCatchingCancellable {
                 feedRepository.reportFeed(feedId.toLong())
+            }.onSuccess {
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = "신고가 완료되었습니다.",
                         icon = BuyOrNotIcons.CheckCircle,
                     ),
                 )
-            } catch (e: Exception) {
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to report feed: $feedId", e)
                 // 400 에러 (본인 피드 또는 이미 신고된 피드)에 대한 처리
                 val errorMessage =
                     when {
@@ -260,7 +349,8 @@ class HomeViewModel @Inject constructor(
     private fun loadFeeds(tab: HomeTab? = null) {
         viewModelScope.launch {
             updateState { it.copy(isLoading = true, hasError = false) }
-            try {
+
+            runCatchingCancellable {
                 // ID가 아직 로드되지 않았으면 먼저 로드
                 if (!isUserIdLoaded && uiState.value.userType == UserType.SOCIAL) {
                     loadCurrentUserIdSuspend()
@@ -269,24 +359,31 @@ class HomeViewModel @Inject constructor(
 
                 val currentTab = tab ?: uiState.value.selectedTab
                 // 필터 없이 해당 탭의 전체 데이터를 가져옴
-                val feeds =
-                    when (currentTab) {
-                        HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null) // 전체 가져오기
-                        HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = null) // 내 피드 전체 가져오기
-                    }
-
-                // 원�� 데이터를 캐시에 저장
+                when (currentTab) {
+                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null)
+                    HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = null)
+                }
+            }.onSuccess { feedList ->
+                // 원본 데이터를 캐시에 저장
                 // 각 피드의 작성자 ID와 현재 사용자 ID를 비교하여 isOwner 설정
                 cachedFeeds =
-                    feeds.map { feed ->
+                    feedList.feeds.map { feed ->
                         val isOwner = currentUserId != null && feed.author.userId == currentUserId
                         feed.toFeedItem(isOwner)
                     }
 
+                updateState {
+                    it.copy(
+                        hasNextPage = feedList.hasNext,
+                        nextCursor = feedList.nextCursor,
+                    )
+                }
+
                 // 현재 선택된 필터에 맞춰 UI 상태 업데이트
                 // 탭 파라미터를 전달하여 즉시 반영되도록 함
-                applyFiltering(currentTab)
-            } catch (e: Exception) {
+                applyFiltering(tab ?: uiState.value.selectedTab)
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to load feeds", e)
                 updateState { it.copy(isLoading = false, hasError = true) }
             }
         }
@@ -335,7 +432,7 @@ class HomeViewModel @Inject constructor(
             id = feedId.toString(),
             profileImageUrl = author.profileImage ?: "",
             nickname = author.nickname,
-            category = category,
+            category = category.displayName,
             createdAt = TimeUtils.formatRelativeTime(createdAt),
             content = content,
             productImageUrl = viewUrl,
