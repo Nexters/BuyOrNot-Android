@@ -5,13 +5,11 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * 시간 및 날짜 관련 유틸리티 클래스
  */
 object TimeUtils {
-
     private val KOREA_ZONE = ZoneId.of("Asia/Seoul")
 
     /**
@@ -38,17 +36,19 @@ object TimeUtils {
         isoString: String,
         now: LocalDateTime = LocalDateTime.now(KOREA_ZONE),
     ): String {
-        val dateTime = runCatching {
-            // 1. 오프셋이 있으면 UTC로 변환 후 한국 시간으로 맞춤 (안정성 강화)
-            OffsetDateTime.parse(isoString)
-                .atZoneSameInstant(KOREA_ZONE)
-                .toLocalDateTime()
-        }.recoverCatching {
-            // 2. 오프셋이 없으면 서버가 한국 시간(KST)으로 보냈다고 가정하고 파싱
-            LocalDateTime.parse(isoString)
-        }.getOrElse {
-            return isoString
-        }
+        val dateTime =
+            runCatching {
+                // 1. 오프셋이 있으면 UTC로 변환 후 한국 시간으로 맞춤 (안정성 강화)
+                OffsetDateTime
+                    .parse(isoString)
+                    .atZoneSameInstant(KOREA_ZONE)
+                    .toLocalDateTime()
+            }.recoverCatching {
+                // 2. 오프셋이 없으면 서버가 한국 시간(KST)으로 보냈다고 가정하고 파싱
+                LocalDateTime.parse(isoString)
+            }.getOrElse {
+                return isoString
+            }
 
         // 미래 시간 예외 처리 (isAfter 사용)
         if (dateTime.isAfter(now)) {

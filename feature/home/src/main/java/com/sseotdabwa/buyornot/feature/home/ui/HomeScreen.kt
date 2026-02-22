@@ -463,10 +463,8 @@ private fun HomeFeedList(
                     size = BuyOrNotDividerSize.Small,
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
-
             }
         }
-
 
         when {
             // 1. 데이터가 있으면 로딩 여부와 상관없이 최우선 노출
