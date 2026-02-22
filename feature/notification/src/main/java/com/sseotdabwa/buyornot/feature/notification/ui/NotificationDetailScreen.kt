@@ -1,41 +1,26 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotErrorView
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCard
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
-import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
-import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.Feed
@@ -71,8 +56,6 @@ fun NotificationDetailScreen(
     onBackClick: () -> Unit,
     onIntent: (NotificationDetailIntent) -> Unit,
 ) {
-    var expandedImageUrl by remember { mutableStateOf<String?>(null) }
-
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier =
@@ -138,62 +121,6 @@ fun NotificationDetailScreen(
                     }
                 }
             }
-        }
-
-        // 이미지 전체 보기 오버레이
-        AnimatedVisibility(
-            visible = expandedImageUrl != null,
-            enter = fadeIn(),
-            exit = fadeOut(),
-        ) {
-            FullScreenImageOverlay(
-                imageUrl = expandedImageUrl ?: "",
-                onDismiss = { expandedImageUrl = null },
-            )
-        }
-    }
-}
-
-/**
- * 이미지 전체 보기 오버레이 컴포넌트
- */
-@Composable
-private fun FullScreenImageOverlay(
-    imageUrl: String,
-    onDismiss: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                ) { onDismiss() },
-    ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = "Expanded Image",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit,
-        )
-
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = 10.dp, top = 10.dp)
-                    .size(40.dp)
-                    .clickable { onDismiss() },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = BuyOrNotIcons.Close.asImageVector(),
-                contentDescription = "Close",
-                tint = Color.White,
-                modifier = Modifier.size(20.dp),
-            )
         }
     }
 }
