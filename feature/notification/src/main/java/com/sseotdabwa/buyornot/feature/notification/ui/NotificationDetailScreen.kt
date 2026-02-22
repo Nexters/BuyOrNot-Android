@@ -99,7 +99,7 @@ fun NotificationDetailScreen(
                             createdAt = TimeUtils.formatRelativeTime(feed.createdAt),
                             content = feed.content,
                             productImageUrl = feed.viewUrl,
-                            price = String.format("%,d", feed.price),
+                            price = String.format(java.util.Locale.KOREA, "%,d", feed.price),
                             imageAspectRatio =
                                 if (feed.imageWidth > 0 && feed.imageHeight > 0) {
                                     if (feed.imageHeight > feed.imageWidth) ImageAspectRatio.PORTRAIT else ImageAspectRatio.SQUARE
