@@ -22,7 +22,7 @@ android {
     defaultConfig {
         applicationId = "com.sseotdabwa.buyornot"
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = "0.0.1"
 
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${localProperties.getProperty("kakao.nativeAppKey", "")}\"")
         manifestPlaceholders["NATIVE_APP_KEY"] = localProperties.getProperty("kakao.nativeAppKey", "")
