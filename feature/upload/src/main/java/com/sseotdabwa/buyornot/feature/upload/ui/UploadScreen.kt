@@ -119,7 +119,11 @@ fun UploadScreen(
     }
 
     BackHandler {
-        if (!uiState.showExitDialog) viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
+        if (uiState.hasInput) {
+            if (!uiState.showExitDialog) viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
+        } else {
+            onNavigateBack()
+        }
     }
 
     Column(
@@ -131,7 +135,11 @@ fun UploadScreen(
                 .windowInsetsPadding(WindowInsets.safeDrawing),
     ) {
         BackTopBar {
-            viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
+            if (uiState.hasInput) {
+                viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
+            } else {
+                onNavigateBack()
+            }
         }
 
         Column(

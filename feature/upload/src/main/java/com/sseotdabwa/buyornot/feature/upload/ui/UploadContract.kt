@@ -15,7 +15,10 @@ data class UploadUiState(
     val showCategorySheet: Boolean = false,
     val showExitDialog: Boolean = false,
     val categories: List<FeedCategory> = FeedCategory.entries,
-)
+) {
+    val hasInput: Boolean
+        get() = selectedImageUri != null || category != null || price.isNotEmpty() || content.isNotEmpty()
+}
 
 sealed interface UploadIntent {
     data class UpdateCategory(
