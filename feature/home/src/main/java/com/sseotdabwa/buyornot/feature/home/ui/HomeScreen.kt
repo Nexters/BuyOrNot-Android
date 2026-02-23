@@ -63,12 +63,6 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.domain.model.UserType
-import com.sseotdabwa.buyornot.feature.home.viewmodel.FeedItem
-import com.sseotdabwa.buyornot.feature.home.viewmodel.FilterChip
-import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeIntent
-import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeSideEffect
-import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
-import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeUiState
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlin.math.roundToInt

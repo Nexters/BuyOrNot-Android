@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.feature.home.viewmodel
+package com.sseotdabwa.buyornot.feature.home.ui
 
 import androidx.compose.runtime.Immutable
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
