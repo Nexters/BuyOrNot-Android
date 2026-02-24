@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,8 +7,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -19,8 +22,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotErrorView
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCard
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
+import com.sseotdabwa.buyornot.core.designsystem.components.showBuyOrNotSnackBar
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.Feed
@@ -43,9 +48,27 @@ fun NotificationDetailRoute(
     viewModel: NotificationDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // SideEffect 처리
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { sideEffect ->
+            when (sideEffect) {
+                is NotificationDetailSideEffect.ShowSnackbar -> {
+                    showBuyOrNotSnackBar(
+                        snackbarHostState = snackbarHostState,
+                        message = sideEffect.message,
+                        iconResource = sideEffect.icon,
+                    )
+                }
+                NotificationDetailSideEffect.NavigateBack -> onBackClick()
+            }
+        }
+    }
 
     NotificationDetailScreen(
         uiState = uiState,
+        snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onIntent = viewModel::handleIntent,
     )
@@ -56,16 +79,19 @@ fun NotificationDetailScreen(
     uiState: NotificationDetailUiState,
     onBackClick: () -> Unit,
     onIntent: (NotificationDetailIntent) -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
+    Scaffold(
+        snackbarHost = { BuyOrNotSnackBarHost(snackbarHostState) },
+        topBar = { BackTopBar(onBackClick = onBackClick) },
+        containerColor = BuyOrNotTheme.colors.gray0,
+    ) { innerPadding ->
+        Box(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(BuyOrNotTheme.colors.gray0),
+                    .padding(innerPadding),
         ) {
-            BackTopBar(onBackClick = onBackClick)
-
             when {
                 uiState.isLoading -> {
                     Box(
@@ -117,7 +143,10 @@ fun NotificationDetailScreen(
                             buyVoteCount = feed.yesCount,
                             maybeVoteCount = feed.noCount,
                             totalVoteCount = feed.totalCount,
+                            isOwner = uiState.isOwner,
                             onVote = { /* 이미 종료된 투표이기 때문에 투표 기능 미구현 */ },
+                            onDeleteClick = { onIntent(NotificationDetailIntent.OnDeleteClicked) },
+                            onReportClick = { onIntent(NotificationDetailIntent.OnReportClicked) },
                         )
                     }
                 }
