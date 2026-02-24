@@ -38,4 +38,9 @@ interface UserPreferencesRepository {
      * 프로필 이미지 URL 업데이트
      */
     suspend fun updateProfileImageUrl(newUrl: String)
+
+    /**
+     * 최초 실행 여부 업데이트
+     */
+    suspend fun updateIsFirstRun(isFirstRun: Boolean)
 }

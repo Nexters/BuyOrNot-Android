@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.core.datastore
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -29,6 +30,7 @@ class UserPreferencesDataSourceImpl
             val ACCESS_TOKEN = stringPreferencesKey("access_token")
             val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
             val USER_TYPE = stringPreferencesKey("user_type")
+            val IS_FIRST_RUN = booleanPreferencesKey("is_first_run")
         }
 
         override val preferences: Flow<UserPreferences> =
@@ -46,6 +48,7 @@ class UserPreferencesDataSourceImpl
                                 UserPreferences().userType
                             }
                         } ?: UserPreferences().userType,
+                    isFirstRun = prefs[Keys.IS_FIRST_RUN] ?: true,
                 )
             }
 
@@ -71,6 +74,12 @@ class UserPreferencesDataSourceImpl
         override suspend fun updateProfileImageUrl(newUrl: String) {
             context.userPreferencesDataStore.edit { prefs ->
                 prefs[Keys.PROFILE_IMAGE_URL] = newUrl
+            }
+        }
+
+        override suspend fun updateIsFirstRun(isFirstRun: Boolean) {
+            context.userPreferencesDataStore.edit { prefs ->
+                prefs[Keys.IS_FIRST_RUN] = isFirstRun
             }
         }
 

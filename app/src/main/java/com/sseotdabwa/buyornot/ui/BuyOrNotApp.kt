@@ -10,6 +10,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -37,28 +39,35 @@ import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
  *
  * @param authEventBus 인증 관련 이벤트 버스
  * @param onBackPressed 홈 화면에서 뒤로가기 시 앱 종료를 위한 콜백
+ * @param viewModel 앱 공통 ViewModel
  */
 @Composable
 fun BuyOrNotApp(
     authEventBus: AuthEventBus,
     onBackPressed: () -> Unit = {},
+    viewModel: BuyOrNotViewModel = hiltViewModel(),
 ) {
     val navController = rememberNavController()
     val snackbarState = rememberBuyOrNotSnackbarState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    val isFirstRun by viewModel.isFirstRun.collectAsStateWithLifecycle()
+
     // 홈 화면에서 뒤로가기 시 앱 종료
     BackHandler(enabled = currentDestination?.route == HOME_ROUTE) {
         onBackPressed()
     }
 
-    // 앱 진입 시 알림 권한 자동 요청
+    // 앱 진입 시 최초 1회만 알림 권한 자동 요청
     val (hasNotificationPermission, requestNotificationPermission) = rememberNotificationPermission()
 
-    LaunchedEffect(Unit) {
-        if (!hasNotificationPermission) {
-            requestNotificationPermission()
+    LaunchedEffect(isFirstRun) {
+        if (isFirstRun) {
+            if (!hasNotificationPermission) {
+                requestNotificationPermission()
+            }
+            viewModel.updateIsFirstRun(false)
         }
     }
 

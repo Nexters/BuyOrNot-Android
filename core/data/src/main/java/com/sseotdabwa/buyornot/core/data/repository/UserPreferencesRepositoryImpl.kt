@@ -38,6 +38,10 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     override suspend fun updateProfileImageUrl(newUrl: String) {
         userPreferencesDataSource.updateProfileImageUrl(newUrl)
     }
+
+    override suspend fun updateIsFirstRun(isFirstRun: Boolean) {
+        userPreferencesDataSource.updateIsFirstRun(isFirstRun)
+    }
 }
 
 /**
@@ -48,6 +52,7 @@ private fun DatastoreUserPreferences.toDomain(): UserPreferences =
         displayName = displayName,
         profileImageUrl = profileImageUrl,
         userType = userType.toDomain(),
+        isFirstRun = isFirstRun,
     )
 
 /**
