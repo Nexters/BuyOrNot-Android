@@ -63,6 +63,7 @@ data class HomeUiState(
     val selectedTab: HomeTab = HomeTab.FEED,
     val selectedFilter: FilterChip = FilterChip.ALL,
     val isBannerVisible: Boolean = true,
+    val voterProfileImageUrl: String = "",
     val feeds: List<FeedItem> = emptyList(),
     val isLoading: Boolean = true,
     val isNextPageLoading: Boolean = false,

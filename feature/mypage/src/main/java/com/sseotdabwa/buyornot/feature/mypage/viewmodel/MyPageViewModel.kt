@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.mypage.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -11,6 +12,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MyPageViewModel @Inject constructor(
     private val userRepository: UserRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
 ) : BaseViewModel<MyPageUiState, MyPageIntent, MyPageSideEffect>(MyPageUiState()) {
     init {
         handleIntent(MyPageIntent.LoadProfile)
@@ -29,6 +31,8 @@ class MyPageViewModel @Inject constructor(
                 userRepository.getMyProfile()
             }.onSuccess { profile ->
                 updateState { it.copy(isLoading = false, userProfile = profile) }
+                userPreferencesRepository.updateDisplayName(profile.nickname)
+                userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
             }.onFailure { throwable ->
                 updateState { it.copy(isLoading = false) }
                 sendSideEffect(MyPageSideEffect.ShowSnackbar(throwable.message ?: "프로필을 불러오지 못했습니다."))

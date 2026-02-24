@@ -25,6 +25,7 @@ class UserPreferencesDataSourceImpl
     ) : UserPreferencesDataSource {
         private object Keys {
             val DISPLAY_NAME = stringPreferencesKey("display_name")
+            val PROFILE_IMAGE_URL = stringPreferencesKey("profile_image_url")
             val ACCESS_TOKEN = stringPreferencesKey("access_token")
             val REFRESH_TOKEN = stringPreferencesKey("refresh_token")
             val USER_TYPE = stringPreferencesKey("user_type")
@@ -34,6 +35,7 @@ class UserPreferencesDataSourceImpl
             context.userPreferencesDataStore.data.map { prefs ->
                 UserPreferences(
                     displayName = prefs[Keys.DISPLAY_NAME] ?: UserPreferences().displayName,
+                    profileImageUrl = prefs[Keys.PROFILE_IMAGE_URL] ?: UserPreferences().profileImageUrl,
                     accessToken = prefs[Keys.ACCESS_TOKEN] ?: UserPreferences().accessToken,
                     refreshToken = prefs[Keys.REFRESH_TOKEN] ?: UserPreferences().refreshToken,
                     userType =
@@ -63,6 +65,12 @@ class UserPreferencesDataSourceImpl
         override suspend fun updateDisplayName(newName: String) {
             context.userPreferencesDataStore.edit { prefs ->
                 prefs[Keys.DISPLAY_NAME] = newName
+            }
+        }
+
+        override suspend fun updateProfileImageUrl(newUrl: String) {
+            context.userPreferencesDataStore.edit { prefs ->
+                prefs[Keys.PROFILE_IMAGE_URL] = newUrl
             }
         }
 

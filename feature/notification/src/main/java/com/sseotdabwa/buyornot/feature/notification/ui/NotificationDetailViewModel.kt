@@ -8,6 +8,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
+import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ class NotificationDetailViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val notificationRepository: NotificationRepository,
     private val userRepository: UserRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
 ) : BaseViewModel<NotificationDetailUiState, NotificationDetailIntent, NotificationDetailSideEffect>(
         NotificationDetailUiState(),
     ) {
@@ -28,8 +30,20 @@ class NotificationDetailViewModel @Inject constructor(
     private var currentUserId: Long? = null
 
     init {
+        observeUserPreferences()
         loadDetail()
         markAsRead()
+    }
+
+    private fun observeUserPreferences() {
+        viewModelScope.launch {
+            userPreferencesRepository.userPreferences
+                .collect { preferences ->
+                    updateState {
+                        it.copy(voterProfileImageUrl = preferences.profileImageUrl)
+                    }
+                }
+        }
     }
 
     override fun handleIntent(intent: NotificationDetailIntent) {

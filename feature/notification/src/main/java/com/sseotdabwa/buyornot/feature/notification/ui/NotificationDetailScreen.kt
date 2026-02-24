@@ -144,6 +144,7 @@ fun NotificationDetailScreen(
                             maybeVoteCount = feed.noCount,
                             totalVoteCount = feed.totalCount,
                             isOwner = uiState.isOwner,
+                            voterProfileImageUrl = uiState.voterProfileImageUrl,
                             onVote = { /* 이미 종료된 투표이기 때문에 투표 기능 미구현 */ },
                             onDeleteClick = { onIntent(NotificationDetailIntent.OnDeleteClicked) },
                             onReportClick = { onIntent(NotificationDetailIntent.OnReportClicked) },

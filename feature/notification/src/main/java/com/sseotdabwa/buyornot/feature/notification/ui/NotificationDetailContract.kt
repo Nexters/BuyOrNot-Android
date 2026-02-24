@@ -9,6 +9,7 @@ data class NotificationDetailUiState(
     val isLoading: Boolean = true,
     val isError: Boolean = false,
     val feed: Feed? = null,
+    val voterProfileImageUrl: String = "",
     val isOwner: Boolean = false,
 )
 

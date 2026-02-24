@@ -101,6 +101,7 @@ class LoginViewModel @Inject constructor(
             runCatchingCancellable {
                 authRepository.googleLogin(idToken)
             }.onSuccess {
+                fetchAndStoreUserProfile()
                 updateFcmToken()
                 sendSideEffect(LoginSideEffect.NavigateToHome)
             }.onFailure {
@@ -157,12 +158,26 @@ class LoginViewModel @Inject constructor(
             runCatchingCancellable {
                 authRepository.kakaoLogin(accessToken)
             }.onSuccess {
+                fetchAndStoreUserProfile()
                 updateFcmToken()
                 sendSideEffect(LoginSideEffect.NavigateToHome)
             }.onFailure {
                 sendSideEffect(LoginSideEffect.ShowSnackbar(it.message ?: "카카오 로그인에 실패했습니다."))
             }
             updateState { it.copy(isLoading = false) }
+        }
+    }
+
+    private fun fetchAndStoreUserProfile() {
+        viewModelScope.launch {
+            runCatchingCancellable {
+                userRepository.getMyProfile()
+            }.onSuccess { profile ->
+                userPreferencesRepository.updateDisplayName(profile.nickname)
+                userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
+            }.onFailure { e ->
+                Log.e(TAG, "Failed to fetch user profile after login", e)
+            }
         }
     }
 
