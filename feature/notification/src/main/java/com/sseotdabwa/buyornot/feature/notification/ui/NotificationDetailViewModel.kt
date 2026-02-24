@@ -50,7 +50,13 @@ class NotificationDetailViewModel @Inject constructor(
                 feedRepository.getFeed(feedId)
             }.onSuccess { feed ->
                 val isOwner = currentUserId != null && feed.author.userId == currentUserId
-                updateState { it.copy(isLoading = false, feed = feed, isOwner = isOwner) }
+                updateState {
+                    it.copy(
+                        isLoading = false,
+                        feed = feed,
+                        isOwner = isOwner,
+                    )
+                }
             }.onFailure {
                 updateState { it.copy(isLoading = false, isError = true) }
             }

@@ -579,7 +579,7 @@ private fun FeedItemCard(
             createdAt = feed.createdAt,
             content = feed.content,
             productImageUrl = feed.productImageUrl,
-            price = String.format(java.util.Locale.KOREA, "%,d", feed.price),
+            price = feed.price,
             imageAspectRatio = feed.imageAspectRatio,
             isVoteEnded = feed.isVoteEnded,
             userVotedOptionIndex = feed.userVotedOptionIndex,

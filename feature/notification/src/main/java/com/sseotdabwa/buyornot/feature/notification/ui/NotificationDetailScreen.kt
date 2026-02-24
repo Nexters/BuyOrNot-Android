@@ -126,7 +126,7 @@ fun NotificationDetailScreen(
                             createdAt = TimeUtils.formatRelativeTime(feed.createdAt),
                             content = feed.content,
                             productImageUrl = feed.viewUrl,
-                            price = String.format(java.util.Locale.KOREA, "%,d", feed.price),
+                            price = feed.price,
                             imageAspectRatio =
                                 if (feed.imageWidth > 0 && feed.imageHeight > 0) {
                                     if (feed.imageHeight > feed.imageWidth) ImageAspectRatio.PORTRAIT else ImageAspectRatio.SQUARE
@@ -167,7 +167,7 @@ private fun NotificationDetailScreenPreview() {
                         Feed(
                             feedId = 1L,
                             content = "이거 어때요? 투표 결과가 궁금해요!",
-                            price = 35000,
+                            price = "35,000",
                             category = FeedCategory.BOOK,
                             yesCount = 80,
                             noCount = 20,

@@ -150,7 +150,7 @@ private fun FeedItemDto.toDomain(): Feed =
     Feed(
         feedId = feedId,
         content = content,
-        price = price,
+        price = String.format(java.util.Locale.KOREA, "%,d", price),
         category = category.toFeedCategory(),
         yesCount = yesCount,
         noCount = noCount,

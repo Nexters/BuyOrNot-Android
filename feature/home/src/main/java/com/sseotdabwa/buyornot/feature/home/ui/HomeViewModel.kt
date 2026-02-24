@@ -442,7 +442,7 @@ class HomeViewModel @Inject constructor(
             createdAt = TimeUtils.formatRelativeTime(createdAt),
             content = content,
             productImageUrl = viewUrl,
-            price = price.toString(),
+            price = price,
             imageAspectRatio = aspectRatio,
             isVoteEnded = feedStatus == FeedStatus.CLOSED,
             userVotedOptionIndex =
