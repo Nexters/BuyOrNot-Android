@@ -41,8 +41,9 @@ googleid = "1.2.0"
 lottie = "6.7.1"
 
 # Firebase
-firebaseBom = "33.9.0"
+firebaseBom = "34.9.0"
 googleServices = "4.4.2"
+firebaseCrashlytics = "3.0.3"
 
 # Code Quality
 ktlint = "14.0.1"
@@ -120,6 +121,7 @@ androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 
@@ -134,3 +136,4 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlytics" }

@@ -7,7 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.sseotdabwa.buyornot.feature.home.ui.HomeRoute
-import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
+import com.sseotdabwa.buyornot.feature.home.ui.HomeTab
 
 const val HOME_ROUTE = "home"
 const val HOME_ROUTE_WITH_TAB = "home?tab={tab}"

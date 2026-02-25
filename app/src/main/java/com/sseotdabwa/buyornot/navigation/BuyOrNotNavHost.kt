@@ -20,7 +20,7 @@ import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
 import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHomeWithTab
-import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
+import com.sseotdabwa.buyornot.feature.home.ui.HomeTab
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
 import com.sseotdabwa.buyornot.feature.mypage.navigation.navigateToMyPage
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotification
