@@ -98,7 +98,7 @@ class NotificationDetailViewModel @Inject constructor(
                 )
                 sendSideEffect(NotificationDetailSideEffect.NavigateBack)
             }.onFailure { e ->
-                Log.e("NotificationDetailViewModel", "Failed to delete feed: $feedId", e)
+                Log.e(TAG, "Failed to delete feed: $feedId", e)
                 sendSideEffect(
                     NotificationDetailSideEffect.ShowSnackbar(
                         message = "삭제에 실패했습니다.",
