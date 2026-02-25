@@ -14,6 +14,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val TAG = "NotificationDetailViewModel"
+
 @HiltViewModel
 class NotificationDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
@@ -59,7 +61,13 @@ class NotificationDetailViewModel @Inject constructor(
             updateState { it.copy(isLoading = true, isError = false) }
             runCatchingCancellable {
                 if (currentUserId == null) {
-                    currentUserId = userRepository.getMyProfile().id
+                    runCatchingCancellable {
+                        userRepository.getMyProfile().id
+                    }.onSuccess { id ->
+                        currentUserId = id
+                    }.onFailure {
+                        Log.w(TAG, "Failed to get current user ID")
+                    }
                 }
                 feedRepository.getFeed(feedId)
             }.onSuccess { feed ->
