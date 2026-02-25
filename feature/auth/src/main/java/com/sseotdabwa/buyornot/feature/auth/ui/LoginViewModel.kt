@@ -168,16 +168,14 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private fun fetchAndStoreUserProfile() {
-        viewModelScope.launch {
-            runCatchingCancellable {
-                userRepository.getMyProfile()
-            }.onSuccess { profile ->
-                userPreferencesRepository.updateDisplayName(profile.nickname)
-                userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
-            }.onFailure { e ->
-                Log.e(TAG, "Failed to fetch user profile after login", e)
-            }
+    private suspend fun fetchAndStoreUserProfile() {
+        runCatchingCancellable {
+            userRepository.getMyProfile()
+        }.onSuccess { profile ->
+            userPreferencesRepository.updateDisplayName(profile.nickname)
+            userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
+        }.onFailure { e ->
+            Log.e(TAG, "Failed to fetch user profile after login", e)
         }
     }
 
