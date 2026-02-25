@@ -14,12 +14,6 @@ import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
-import com.sseotdabwa.buyornot.feature.home.viewmodel.FeedItem
-import com.sseotdabwa.buyornot.feature.home.viewmodel.FilterChip
-import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeIntent
-import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeSideEffect
-import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeTab
-import com.sseotdabwa.buyornot.feature.home.viewmodel.HomeUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -209,6 +203,18 @@ class HomeViewModel @Inject constructor(
     ) {
         val previousFeeds = uiState.value.feeds
         val previousCachedFeeds = cachedFeeds
+
+        // 본인 글 여부 확인 (투표 방지)
+        val targetFeed = cachedFeeds.find { it.id == feedId }
+        if (targetFeed?.isOwner == true) {
+            sendSideEffect(
+                HomeSideEffect.ShowSnackbar(
+                    message = "자신의 글에는 투표할 수 없습니다.",
+                    icon = null,
+                ),
+            )
+            return
+        }
 
         // 1. 낙관적 업데이트 (Optimistic Update)
         // API 호출 전 UI를 즉시 업데이트하여 사용자 경험 개선

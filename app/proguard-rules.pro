@@ -1,21 +1,60 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# [Common] Android
+-keepattributes SourceFile,LineNumberTable
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes InnerClasses
+-dontwarn sun.misc.**
+-dontwarn javax.annotation.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# [Kotlin]
+-keep class kotlin.Metadata { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# [Hilt / Dagger]
+-keep class dagger.hilt.** { *; }
+-keep class com.google.dagger.** { *; }
+-keep @dagger.hilt.android.lifecycle.HiltViewModel class *
+-keep interface * extends javax.inject.Provider
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# [Retrofit / OkHttp]
+-keep class retrofit2.** { *; }
+-dontwarn retrofit2.**
+-keepattributes *Annotation*
+-keepclassmembers class * {
+    @retrofit2.http.* <methods>;
+}
+-keep class okhttp3.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+# [Kotlinx Serialization]
+-keepattributes *Annotation*, InnerClasses
+-keepclassmembers class * {
+    @kotlinx.serialization.Serializable *;
+}
+-keepclassmembers class * {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# [Domain/Data Models] - API 통신 데이터 클래스 보존
+# 모든 모듈의 domain.model, network.model 하위의 클래스들을 보존합니다.
+-keep class com.sseotdabwa.buyornot.domain.model.** { *; }
+-keep class com.sseotdabwa.buyornot.core.network.model.** { *; }
+
+# [Coil]
+-keep class coil.** { *; }
+-dontwarn coil.**
+
+# [Firebase]
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
+# [Lottie]
+-keep class com.airbnb.lottie.** { *; }
+
+# [Kakao SDK]
+-keep class com.kakao.sdk.** { *; }
+-dontwarn com.kakao.sdk.**
+
+# [Jetpack Compose]
+-keep class androidx.compose.runtime.RecomposeScopeImpl { *; }
+-keep class * implements androidx.compose.runtime.Parcelable { *; }
