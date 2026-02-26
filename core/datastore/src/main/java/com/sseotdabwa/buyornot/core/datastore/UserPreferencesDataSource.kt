@@ -25,5 +25,5 @@ interface UserPreferencesDataSource {
 
     suspend fun updateUserType(userType: UserType)
 
-    suspend fun clearTokens()
+    suspend fun clearUserInfo()
 }

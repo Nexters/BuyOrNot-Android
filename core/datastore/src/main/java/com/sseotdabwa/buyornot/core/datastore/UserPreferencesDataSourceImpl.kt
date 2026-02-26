@@ -90,10 +90,11 @@ class UserPreferencesDataSourceImpl
             }
         }
 
-        override suspend fun clearTokens() {
+        override suspend fun clearUserInfo() {
             context.userPreferencesDataStore.edit { prefs ->
                 prefs.remove(Keys.ACCESS_TOKEN)
                 prefs.remove(Keys.REFRESH_TOKEN)
+                prefs.remove(Keys.PROFILE_IMAGE_URL)
                 prefs[Keys.USER_TYPE] = UserType.GUEST.name
             }
         }

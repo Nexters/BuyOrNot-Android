@@ -44,7 +44,7 @@ class TokenAuthenticator @Inject constructor(
 
             val maxRetries = 2
             if (retryCount(response) > maxRetries) {
-                userPreferencesDataSource.clearTokens()
+                userPreferencesDataSource.clearUserInfo()
                 authEventBus.emit(AuthEvent.FORCE_LOGOUT)
                 return@runBlocking null
             }
@@ -89,7 +89,7 @@ class TokenAuthenticator @Inject constructor(
                         .header("Authorization", "Bearer ${newTokens.accessToken}")
                         .build()
                 }.getOrElse {
-                    userPreferencesDataSource.clearTokens()
+                    userPreferencesDataSource.clearUserInfo()
                     authEventBus.emit(AuthEvent.FORCE_LOGOUT)
                     null
                 }
