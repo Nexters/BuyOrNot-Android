@@ -476,6 +476,7 @@ private fun HomeFeedList(
                 items(filteredFeeds.size, key = { index -> filteredFeeds[index].id }) { index ->
                     FeedItemCard(
                         feed = filteredFeeds[index],
+                        voterProfileImageUrl = uiState.voterProfileImageUrl,
                         modifier = Modifier.padding(20.dp).animateItem(),
                         onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
                         onDelete = { id -> onIntent(HomeIntent.OnDeleteClicked(id)) },
@@ -565,6 +566,7 @@ private fun FilterChipRow(
 @Composable
 private fun FeedItemCard(
     feed: FeedItem,
+    voterProfileImageUrl: String,
     modifier: Modifier = Modifier,
     onVote: (String, Int) -> Unit,
     onDelete: (String) -> Unit,
@@ -587,6 +589,7 @@ private fun FeedItemCard(
             maybeVoteCount = feed.maybeVoteCount,
             totalVoteCount = feed.totalVoteCount,
             isOwner = feed.isOwner,
+            voterProfileImageUrl = voterProfileImageUrl,
             onVote = { option ->
                 onVote(feed.id, option)
             },

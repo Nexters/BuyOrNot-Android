@@ -15,8 +15,6 @@ import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,13 +33,41 @@ class HomeViewModel @Inject constructor(
     private var isUserIdLoaded = false // ID 로드 완료 여부 추적
 
     init {
-        observeUserType()
+        observeUserPreferences()
         loadInitialData()
+    }
+
+    private fun observeUserPreferences() {
+        viewModelScope.launch {
+            var lastUserType: UserType? = null
+            userPreferencesRepository.userPreferences
+                .collect { preferences ->
+                    val userType = preferences.userType
+                    updateState {
+                        it.copy(
+                            userType = userType,
+                            voterProfileImageUrl = preferences.profileImageUrl,
+                        )
+                    }
+
+                    if (lastUserType != userType) {
+                        if (userType == UserType.SOCIAL) {
+                            loadUserIdAndRefreshFeeds()
+                        } else {
+                            currentUserId = null
+                            isUserIdLoaded = true
+                            // 게스트 전환 시 탭을 무조건 FEED로 변경
+                            updateState { it.copy(selectedTab = HomeTab.FEED) }
+                            loadFeeds(HomeTab.FEED)
+                        }
+                        lastUserType = userType
+                    }
+                }
+        }
     }
 
     /**
      * 초기 데이터 로드: 사용자 ID를 먼저 로드한 후 피드 로드
-     * 경쟁 조건을 방지하기 위해 순차적으로 실행
      */
     private fun loadInitialData() {
         viewModelScope.launch {
@@ -59,7 +85,10 @@ class HomeViewModel @Inject constructor(
     private suspend fun loadCurrentUserIdSuspend() {
         runCatchingCancellable {
             if (uiState.value.userType == UserType.SOCIAL) {
-                userRepository.getMyProfile().id
+                val profile = userRepository.getMyProfile()
+                userPreferencesRepository.updateDisplayName(profile.nickname)
+                userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
+                profile.id
             } else {
                 null
             }
@@ -71,33 +100,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun observeUserType() {
-        viewModelScope.launch {
-            userPreferencesRepository.userType
-                .stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5000),
-                    initialValue = UserType.GUEST,
-                ).collect { userType ->
-                    updateState { it.copy(userType = userType) }
-                    // 사용자 타입이 변경되면 userId를 다시 로드하고 피드도 갱신
-                    if (userType == UserType.SOCIAL) {
-                        loadUserIdAndRefreshFeeds()
-                    } else {
-                        currentUserId = null
-                        isUserIdLoaded = true
-                        // 게스트 전환 시 탭을 무조건 FEED로 변경
-                        updateState { it.copy(selectedTab = HomeTab.FEED) }
-                        loadFeeds(HomeTab.FEED)
-                    }
-                }
-        }
-    }
-
-    /**
-     * 사용자 ID를 로드하고 피드를 갱신
-     * 로그인 후 자신의 피드에 대한 isOwner를 올바르게 설정
-     */
     private fun loadUserIdAndRefreshFeeds() {
         viewModelScope.launch {
             loadCurrentUserIdSuspend()
@@ -442,7 +444,7 @@ class HomeViewModel @Inject constructor(
             createdAt = TimeUtils.formatRelativeTime(createdAt),
             content = content,
             productImageUrl = viewUrl,
-            price = price.toString(),
+            price = price,
             imageAspectRatio = aspectRatio,
             isVoteEnded = feedStatus == FeedStatus.CLOSED,
             userVotedOptionIndex =

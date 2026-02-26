@@ -16,6 +16,8 @@ interface UserPreferencesDataSource {
 
     suspend fun updateDisplayName(newName: String)
 
+    suspend fun updateProfileImageUrl(newUrl: String)
+
     suspend fun updateTokens(
         accessToken: String,
         refreshToken: String,
@@ -23,5 +25,5 @@ interface UserPreferencesDataSource {
 
     suspend fun updateUserType(userType: UserType)
 
-    suspend fun clearTokens()
+    suspend fun clearUserInfo()
 }

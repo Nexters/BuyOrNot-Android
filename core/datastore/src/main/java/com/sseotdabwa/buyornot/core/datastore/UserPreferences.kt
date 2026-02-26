@@ -15,6 +15,7 @@ enum class UserType {
  */
 data class UserPreferences(
     val displayName: String = "손님",
+    val profileImageUrl: String = "",
     val accessToken: String = "",
     val refreshToken: String = "",
     val userType: UserType = UserType.GUEST,

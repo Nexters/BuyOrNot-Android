@@ -7,5 +7,5 @@ interface AuthRepository {
 
     suspend fun logout()
 
-    suspend fun clearTokens()
+    suspend fun clearUserInfo()
 }
