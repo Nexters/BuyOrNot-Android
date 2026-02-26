@@ -19,5 +19,4 @@ data class UserPreferences(
     val accessToken: String = "",
     val refreshToken: String = "",
     val userType: UserType = UserType.GUEST,
-    val isFirstRun: Boolean = true,
 )

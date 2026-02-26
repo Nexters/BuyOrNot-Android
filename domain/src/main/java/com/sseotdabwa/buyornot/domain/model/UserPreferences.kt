@@ -7,5 +7,4 @@ data class UserPreferences(
     val displayName: String,
     val profileImageUrl: String,
     val userType: UserType,
-    val isFirstRun: Boolean,
 )

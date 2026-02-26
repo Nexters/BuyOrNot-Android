@@ -14,7 +14,17 @@ interface AppPreferencesRepository {
     val hasRequestedNotificationPermission: Flow<Boolean>
 
     /**
+     * 최초 실행 여부를 Flow로 제공
+     */
+    val isFirstRun: Flow<Boolean>
+
+    /**
      * 알림 권한 요청 이력 업데이트
      */
     suspend fun updateNotificationPermissionRequested(requested: Boolean)
+
+    /**
+     * 최초 실행 여부 업데이트
+     */
+    suspend fun updateIsFirstRun(isFirstRun: Boolean)
 }

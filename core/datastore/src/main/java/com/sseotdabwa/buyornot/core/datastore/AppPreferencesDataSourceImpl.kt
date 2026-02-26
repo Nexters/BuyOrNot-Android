@@ -25,12 +25,14 @@ class AppPreferencesDataSourceImpl
     ) : AppPreferencesDataSource {
         private object Keys {
             val HAS_REQUESTED_NOTIFICATION_PERMISSION = booleanPreferencesKey("has_requested_notification_permission")
+            val IS_FIRST_RUN = booleanPreferencesKey("is_first_run")
         }
 
         override val preferences: Flow<AppPreferences> =
             context.appPreferencesDataStore.data.map { prefs ->
                 AppPreferences(
                     hasRequestedNotificationPermission = prefs[Keys.HAS_REQUESTED_NOTIFICATION_PERMISSION] ?: false,
+                    isFirstRun = prefs[Keys.IS_FIRST_RUN] ?: true,
                 )
             }
 
@@ -39,9 +41,20 @@ class AppPreferencesDataSourceImpl
                 prefs[Keys.HAS_REQUESTED_NOTIFICATION_PERMISSION] ?: false
             }
 
+        override val isFirstRun: Flow<Boolean> =
+            context.appPreferencesDataStore.data.map { prefs ->
+                prefs[Keys.IS_FIRST_RUN] ?: true
+            }
+
         override suspend fun updateNotificationPermissionRequested(requested: Boolean) {
             context.appPreferencesDataStore.edit { prefs ->
                 prefs[Keys.HAS_REQUESTED_NOTIFICATION_PERMISSION] = requested
+            }
+        }
+
+        override suspend fun updateIsFirstRun(isFirstRun: Boolean) {
+            context.appPreferencesDataStore.edit { prefs ->
+                prefs[Keys.IS_FIRST_RUN] = isFirstRun
             }
         }
     }

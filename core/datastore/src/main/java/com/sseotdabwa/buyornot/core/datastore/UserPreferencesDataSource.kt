@@ -18,8 +18,6 @@ interface UserPreferencesDataSource {
 
     suspend fun updateProfileImageUrl(newUrl: String)
 
-    suspend fun updateIsFirstRun(isFirstRun: Boolean)
-
     suspend fun updateTokens(
         accessToken: String,
         refreshToken: String,

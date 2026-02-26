@@ -15,7 +15,14 @@ class AppPreferencesRepositoryImpl @Inject constructor(
     override val hasRequestedNotificationPermission: Flow<Boolean> =
         appPreferencesDataSource.hasRequestedNotificationPermission
 
+    override val isFirstRun: Flow<Boolean> =
+        appPreferencesDataSource.isFirstRun
+
     override suspend fun updateNotificationPermissionRequested(requested: Boolean) {
         appPreferencesDataSource.updateNotificationPermissionRequested(requested)
+    }
+
+    override suspend fun updateIsFirstRun(isFirstRun: Boolean) {
+        appPreferencesDataSource.updateIsFirstRun(isFirstRun)
     }
 }
