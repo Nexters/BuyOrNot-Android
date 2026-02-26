@@ -6,7 +6,7 @@ package com.sseotdabwa.buyornot.domain.model
 data class Feed(
     val feedId: Long,
     val content: String,
-    val price: Int,
+    val price: String,
     val category: FeedCategory,
     val yesCount: Int,
     val noCount: Int,

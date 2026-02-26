@@ -90,7 +90,7 @@ class AccountSettingViewModel @Inject constructor(
             // 2. (가장 중요) 어떤 경우든 로컬 토큰은 반드시 삭제
             withContext(NonCancellable) {
                 runCatchingCancellable {
-                    authRepository.clearTokens()
+                    authRepository.clearUserInfo()
                 }
             }
 

@@ -23,6 +23,7 @@ import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import com.sseotdabwa.buyornot.feature.auth.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.security.SecureRandom
 import java.util.Base64
 import javax.inject.Inject
@@ -101,6 +102,7 @@ class LoginViewModel @Inject constructor(
             runCatchingCancellable {
                 authRepository.googleLogin(idToken)
             }.onSuccess {
+                fetchAndStoreUserProfile()
                 updateFcmToken()
                 sendSideEffect(LoginSideEffect.NavigateToHome)
             }.onFailure {
@@ -157,6 +159,7 @@ class LoginViewModel @Inject constructor(
             runCatchingCancellable {
                 authRepository.kakaoLogin(accessToken)
             }.onSuccess {
+                fetchAndStoreUserProfile()
                 updateFcmToken()
                 sendSideEffect(LoginSideEffect.NavigateToHome)
             }.onFailure {
@@ -166,26 +169,26 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    private suspend fun fetchAndStoreUserProfile() {
+        runCatchingCancellable {
+            userRepository.getMyProfile()
+        }.onSuccess { profile ->
+            userPreferencesRepository.updateDisplayName(profile.nickname)
+            userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
+        }.onFailure { e ->
+            Log.e(TAG, "Failed to fetch user profile after login", e)
+        }
+    }
+
     /**
      * FCM 토큰을 가져와 서버에 업데이트합니다.
      */
-    private fun updateFcmToken() {
-        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-            if (!task.isSuccessful) {
-                Log.w("FCM", "Fetching FCM registration token failed", task.exception)
-                return@addOnCompleteListener
-            }
-
-            val token = task.result ?: return@addOnCompleteListener
-            viewModelScope.launch {
-                runCatchingCancellable {
-                    userRepository.updateFcmToken(token)
-                }.onSuccess {
-                    Log.d("FCM", "FCM Token successfully updated to server.")
-                }.onFailure { e ->
-                    Log.e("FCM", "Failed to update FCM token to server", e)
-                }
-            }
+    private suspend fun updateFcmToken() {
+        runCatchingCancellable {
+            val token = FirebaseMessaging.getInstance().token.await()
+            userRepository.updateFcmToken(token)
+        }.onFailure {
+            Log.e("FCM", "Failed to update FCM token to server", it)
         }
     }
 

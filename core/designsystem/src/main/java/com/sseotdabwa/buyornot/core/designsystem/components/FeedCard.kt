@@ -72,6 +72,7 @@ fun FeedCard(
     totalVoteCount: Int,
     onVote: (Int) -> Unit, // 투표 옵션 인덱스 (0: 사!, 1: 애매..)
     isOwner: Boolean = false, // 본인 글인지 여부
+    voterProfileImageUrl: String = "", // 사용자가 투표한 경우의 프로필 이미지 URL
     onDeleteClick: () -> Unit = {}, // 삭제 클릭 콜백 추가
     onReportClick: () -> Unit = {}, // 신고 클릭 콜백 추가
 ) {
@@ -265,15 +266,15 @@ fun FeedCard(
                         leadingContent =
                             if (userVotedOptionIndex == 0) {
                                 {
-                                    Box(
+                                    AsyncImage(
+                                        model = voterProfileImageUrl,
+                                        contentDescription = null,
                                         modifier =
                                             Modifier
                                                 .height(20.dp)
                                                 .width(20.dp)
-                                                .background(
-                                                    color = BuyOrNotTheme.colors.gray500,
-                                                    shape = RoundedCornerShape(10.dp),
-                                                ),
+                                                .clip(CircleShape),
+                                        contentScale = ContentScale.Crop,
                                     )
                                 }
                             } else {
@@ -289,15 +290,15 @@ fun FeedCard(
                         leadingContent =
                             if (userVotedOptionIndex == 1) {
                                 {
-                                    Box(
+                                    AsyncImage(
+                                        model = voterProfileImageUrl,
+                                        contentDescription = null,
                                         modifier =
                                             Modifier
                                                 .height(20.dp)
                                                 .width(20.dp)
-                                                .background(
-                                                    color = BuyOrNotTheme.colors.gray500,
-                                                    shape = RoundedCornerShape(10.dp),
-                                                ),
+                                                .clip(CircleShape),
+                                        contentScale = ContentScale.Crop,
                                     )
                                 }
                             } else {

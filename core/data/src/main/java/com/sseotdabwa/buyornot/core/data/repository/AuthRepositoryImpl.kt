@@ -44,7 +44,7 @@ class AuthRepositoryImpl @Inject constructor(
         authApiService.logout(RefreshRequest(refreshToken)).getOrThrow()
     }
 
-    override suspend fun clearTokens() {
-        userPreferencesDataSource.clearTokens()
+    override suspend fun clearUserInfo() {
+        userPreferencesDataSource.clearUserInfo()
     }
 }
