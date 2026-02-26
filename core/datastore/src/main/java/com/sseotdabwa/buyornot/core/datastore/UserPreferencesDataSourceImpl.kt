@@ -95,6 +95,7 @@ class UserPreferencesDataSourceImpl
                 prefs.remove(Keys.ACCESS_TOKEN)
                 prefs.remove(Keys.REFRESH_TOKEN)
                 prefs.remove(Keys.PROFILE_IMAGE_URL)
+                prefs.remove(Keys.DISPLAY_NAME)
                 prefs[Keys.USER_TYPE] = UserType.GUEST.name
             }
         }
