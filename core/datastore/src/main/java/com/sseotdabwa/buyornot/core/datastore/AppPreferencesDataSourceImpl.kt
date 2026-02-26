@@ -32,7 +32,7 @@ class AppPreferencesDataSourceImpl
             context.appPreferencesDataStore.data.map { prefs ->
                 AppPreferences(
                     hasRequestedNotificationPermission = prefs[Keys.HAS_REQUESTED_NOTIFICATION_PERMISSION] ?: false,
-                    isFirstRun = prefs[Keys.IS_FIRST_RUN] ?: true,
+                    isFirstRun = prefs[Keys.IS_FIRST_RUN] ?: false,
                 )
             }
 
