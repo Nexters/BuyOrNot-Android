@@ -49,6 +49,8 @@ class UploadViewModel @Inject constructor(
     }
 
     private fun submitFeed(context: Context) {
+        if (currentState.isLoading) return
+
         val uri = currentState.selectedImageUri ?: return
         val category = currentState.category ?: return
         val price = currentState.price.toIntOrNull() ?: return

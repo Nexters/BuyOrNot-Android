@@ -114,7 +114,8 @@ fun UploadScreen(
         derivedStateOf {
             uiState.category != null &&
                 uiState.price.isNotEmpty() &&
-                uiState.selectedImageUri != null
+                uiState.selectedImageUri != null &&
+                !uiState.isLoading
         }
     }
 
