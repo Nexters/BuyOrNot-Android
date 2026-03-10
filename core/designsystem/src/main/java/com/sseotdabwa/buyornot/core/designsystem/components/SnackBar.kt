@@ -1,6 +1,8 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -45,15 +47,11 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 
 private val SnackbarVerticalMargin = 10.dp
 private val SnackbarHorizontalMargin = 20.dp
 private val SnackbarMaxWidth = 800.dp
-
-private val snackbarMutex = Mutex()
 
 enum class SnackBarIconTint {
     Success,
@@ -124,9 +122,23 @@ fun BuyOrNotSnackBarHost(hostState: SnackbarHostState) {
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.BottomCenter,
         transitionSpec = {
-            (slideInVertically { it } + fadeIn(tween(400)))
-                .togetherWith(slideOutVertically(animationSpec = tween(400)) { it } + fadeOut(tween(400)))
-                .using(SizeTransform(clip = false))
+            val slideUp = slideInVertically(tween(400)) { it } + fadeIn(tween(400))
+            val slideDown = slideOutVertically(tween(400)) { it } + fadeOut(tween(400))
+
+            when {
+                targetState != null && initialState != null -> {
+                    // 새 메시지가 이전 메시지를 아래로 밀어내며 올라옴
+                    slideUp.togetherWith(slideDown).using(SizeTransform(clip = false))
+                }
+                targetState != null -> {
+                    // 최초 등장: 아래에서 올라옴
+                    slideUp.togetherWith(ExitTransition.None).using(SizeTransform(clip = false))
+                }
+                else -> {
+                    // Dismiss: 아래로 부드럽게 사라짐 (SizeTransform 없이 자연스럽게)
+                    EnterTransition.None.togetherWith(slideDown)
+                }
+            }
         },
         label = "BuyOrNotSnackBarAnimation",
     ) { data ->
@@ -169,25 +181,27 @@ suspend fun showBuyOrNotSnackBar(
     iconResource: IconResource? = null,
     iconTint: SnackBarIconTint = SnackBarIconTint.Success,
     duration: SnackbarDuration = SnackbarDuration.Short,
-): SnackbarResult =
-    snackbarMutex.withLock {
-        try {
-            withTimeout(duration.toMillis()) {
-                snackbarHostState.showSnackbar(
-                    BuyOrNotSnackBarVisuals(
-                        message = message,
-                        iconResource = iconResource,
-                        iconTint = iconTint,
-                        duration = SnackbarDuration.Indefinite, // 직접 타이머 제어
-                    ),
-                )
-            }
-        } catch (_: TimeoutCancellationException) {
-            SnackbarResult.Dismissed
-        } finally {
-            snackbarHostState.currentSnackbarData?.dismiss()
+): SnackbarResult {
+    // 현재 표시 중인 스낵바를 즉시 dismiss하여 새 메시지가 바로 교체되도록 함
+    snackbarHostState.currentSnackbarData?.dismiss()
+
+    return try {
+        withTimeout(duration.toMillis()) {
+            snackbarHostState.showSnackbar(
+                BuyOrNotSnackBarVisuals(
+                    message = message,
+                    iconResource = iconResource,
+                    iconTint = iconTint,
+                    duration = SnackbarDuration.Indefinite, // 직접 타이머 제어
+                ),
+            )
         }
+    } catch (_: TimeoutCancellationException) {
+        SnackbarResult.Dismissed
+    } finally {
+        snackbarHostState.currentSnackbarData?.dismiss()
     }
+}
 
 private fun SnackbarDuration.toMillis(): Long =
     when (this) {
