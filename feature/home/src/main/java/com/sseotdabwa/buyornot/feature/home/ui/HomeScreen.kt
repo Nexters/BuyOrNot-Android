@@ -403,7 +403,16 @@ private fun HomeFeedList(
                     }
                 }
 
-                // 2. 로딩이 끝난 단계 (isLoading == false)
+                // 2. 로딩 중인 단계 (로딩이 끝나기 전까지는 Result를 판단하지 않음)
+                uiState.isLoading -> {
+                    item {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
+                        }
+                    }
+                }
+
+                // 3. 로딩이 끝난 단계 (isLoading == false)
                 uiState.hasError -> {
                     // 통신 실패로 로딩이 끝난 경우
                     item {

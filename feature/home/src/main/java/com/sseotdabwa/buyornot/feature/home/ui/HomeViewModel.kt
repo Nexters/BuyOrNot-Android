@@ -130,17 +130,8 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun handleFilterSelection(filter: FilterChip) {
-        updateState {
-            it.copy(
-                selectedFilter = filter,
-                isLoading = true,
-                hasError = false,
-                feeds = emptyList(),
-                hasNextPage = false,
-                nextCursor = null,
-            )
-        }
-        loadFeeds()
+        updateState { it.copy(selectedFilter = filter, hasError = false) }
+        loadFeeds(clearFeeds = false)
     }
 
     private fun handleBannerDismiss() {
@@ -174,10 +165,11 @@ class HomeViewModel @Inject constructor(
                     return@launch
                 }
 
-                val newItems = feedList.feeds.map { feed ->
-                    val isOwner = currentUserId != null && feed.author.userId == currentUserId
-                    feed.toFeedItem(isOwner)
-                }
+                val newItems =
+                    feedList.feeds.map { feed ->
+                        val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                        feed.toFeedItem(isOwner)
+                    }
 
                 updateState {
                     it.copy(
@@ -231,18 +223,19 @@ class HomeViewModel @Inject constructor(
                 // 2. 최종 업데이트: 서버 응답으로 확정
                 updateState {
                     it.copy(
-                        feeds = it.feeds.map { feed ->
-                            if (feed.id == feedId) {
-                                feed.copy(
-                                    userVotedOptionIndex = optionIndex,
-                                    buyVoteCount = voteResult.yesCount,
-                                    maybeVoteCount = voteResult.noCount,
-                                    totalVoteCount = voteResult.totalCount,
-                                )
-                            } else {
-                                feed
-                            }
-                        },
+                        feeds =
+                            it.feeds.map { feed ->
+                                if (feed.id == feedId) {
+                                    feed.copy(
+                                        userVotedOptionIndex = optionIndex,
+                                        buyVoteCount = voteResult.yesCount,
+                                        maybeVoteCount = voteResult.noCount,
+                                        totalVoteCount = voteResult.totalCount,
+                                    )
+                                } else {
+                                    feed
+                                }
+                            },
                     )
                 }
             }.onFailure { e ->
@@ -339,10 +332,18 @@ class HomeViewModel @Inject constructor(
      * 탭/필터 변경 시 모두 API를 호출합니다.
      *
      * @param tab 로드할 탭 (null이면 현재 선택된 탭 사용)
+     * @param clearFeeds true면 로딩 중 기존 피드를 비워 전체 로딩 UI 표시, false면 기존 피드 유지
      */
-    private fun loadFeeds(tab: HomeTab? = null) {
+    private fun loadFeeds(
+        tab: HomeTab? = null,
+        clearFeeds: Boolean = true,
+    ) {
         viewModelScope.launch {
-            updateState { it.copy(isLoading = true, hasError = false) }
+            if (clearFeeds) {
+                updateState { it.copy(isLoading = true, hasError = false, feeds = emptyList()) }
+            } else {
+                updateState { it.copy(hasError = false) }
+            }
 
             runCatchingCancellable {
                 if (!isUserIdLoaded && uiState.value.userType == UserType.SOCIAL) {
@@ -357,10 +358,11 @@ class HomeViewModel @Inject constructor(
                     HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
                 }
             }.onSuccess { feedList ->
-                val feeds = feedList.feeds.map { feed ->
-                    val isOwner = currentUserId != null && feed.author.userId == currentUserId
-                    feed.toFeedItem(isOwner)
-                }
+                val feeds =
+                    feedList.feeds.map { feed ->
+                        val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                        feed.toFeedItem(isOwner)
+                    }
                 updateState {
                     it.copy(
                         feeds = feeds,
@@ -395,10 +397,11 @@ class HomeViewModel @Inject constructor(
                     HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
                 }
             }.onSuccess { feedList ->
-                val feeds = feedList.feeds.map { feed ->
-                    val isOwner = currentUserId != null && feed.author.userId == currentUserId
-                    feed.toFeedItem(isOwner)
-                }
+                val feeds =
+                    feedList.feeds.map { feed ->
+                        val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                        feed.toFeedItem(isOwner)
+                    }
                 updateState {
                     it.copy(
                         feeds = feeds,
