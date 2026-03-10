@@ -67,6 +67,12 @@ fun WithdrawalRoute(
             onWithdrawalClick = {
                 viewModel.handleIntent(WithdrawalIntent.Withdraw(context))
             },
+            onShowWithdrawalDialog = {
+                viewModel.handleIntent(WithdrawalIntent.ShowWithdrawalDialog)
+            },
+            onDismissWithdrawalDialog = {
+                viewModel.handleIntent(WithdrawalIntent.DismissWithdrawalDialog)
+            },
             uiState = uiState,
         )
         if (uiState.isLoading) {
