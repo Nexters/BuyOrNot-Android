@@ -130,7 +130,14 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun handleFilterSelection(filter: FilterChip) {
-        updateState { it.copy(selectedFilter = filter, hasError = false) }
+        updateState {
+            it.copy(
+                selectedFilter = filter,
+                hasError = false,
+                hasNextPage = false,
+                nextCursor = null,
+            )
+        }
         loadFeeds(clearFeeds = false)
     }
 
