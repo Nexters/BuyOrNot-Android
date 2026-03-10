@@ -213,8 +213,6 @@ class HomeViewModel @Inject constructor(
             targetFeed.userVotedOptionIndex != null -> return
         }
 
-        val previousFeeds = uiState.value.feeds
-
         // 1. 낙관적 업데이트 (Optimistic Update)
         updateState { it.copy(feeds = optimisticVoteUpdate(it.feeds, feedId, optionIndex)) }
 
@@ -247,8 +245,15 @@ class HomeViewModel @Inject constructor(
                 }
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
-                // 3. 롤백 (Rollback)
-                updateState { it.copy(feeds = previousFeeds) }
+                // 3. 롤백 (Rollback): 해당 피드만 원복, 나머지 동시 변경사항 보존
+                updateState {
+                    it.copy(
+                        feeds =
+                            it.feeds.map { feed ->
+                                if (feed.id == feedId) targetFeed else feed
+                            },
+                    )
+                }
 
                 val errorMessage =
                     when {
