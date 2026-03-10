@@ -119,6 +119,7 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.OnReportClicked -> handleReport(intent.feedId)
             is HomeIntent.LoadFeeds -> loadFeeds()
             is HomeIntent.LoadNextPage -> handleNextPage()
+            is HomeIntent.Refresh -> handleRefresh()
         }
     }
 
@@ -346,6 +347,39 @@ class HomeViewModel @Inject constructor(
                         icon = null,
                     ),
                 )
+            }
+        }
+    }
+
+    private fun handleRefresh() {
+        if (currentState.isRefreshing) return
+
+        viewModelScope.launch {
+            updateState { it.copy(isRefreshing = true, hasError = false) }
+            cachedFeeds = emptyList()
+
+            val currentTab = currentState.selectedTab
+            runCatchingCancellable {
+                when (currentTab) {
+                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = null)
+                    HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = null)
+                }
+            }.onSuccess { feedList ->
+                cachedFeeds = feedList.feeds.map { feed ->
+                    val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                    feed.toFeedItem(isOwner)
+                }
+                updateState {
+                    it.copy(
+                        isRefreshing = false,
+                        hasNextPage = feedList.hasNext,
+                        nextCursor = feedList.nextCursor,
+                    )
+                }
+                applyFiltering(currentTab)
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to refresh feeds", e)
+                updateState { it.copy(isRefreshing = false, hasError = true) }
             }
         }
     }

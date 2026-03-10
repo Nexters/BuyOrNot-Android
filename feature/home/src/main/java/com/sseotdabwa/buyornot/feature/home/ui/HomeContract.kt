@@ -66,6 +66,7 @@ data class HomeUiState(
     val voterProfileImageUrl: String = "",
     val feeds: List<FeedItem> = emptyList(),
     val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
     val isNextPageLoading: Boolean = false,
     val hasNextPage: Boolean = false,
     val nextCursor: Long? = null,
@@ -102,6 +103,8 @@ sealed interface HomeIntent {
     data object LoadFeeds : HomeIntent
 
     data object LoadNextPage : HomeIntent
+
+    data object Refresh : HomeIntent
 }
 
 /**
