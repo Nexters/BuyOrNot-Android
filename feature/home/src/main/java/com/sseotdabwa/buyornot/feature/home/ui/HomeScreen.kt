@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -31,17 +30,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,7 +55,6 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.domain.model.UserType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
-import kotlin.math.roundToInt
 
 /**
  * 홈 화면 루트 컴포저블
@@ -142,54 +131,7 @@ fun HomeScreen(
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
     var isFabExpanded by remember { mutableStateOf(false) }
 
-    val density = LocalDensity.current
-    var topBarHeightPx by remember { mutableStateOf(0f) }
-    var tabHeightPx by remember { mutableStateOf(0f) }
-
-    val totalHeaderHeight = with(density) { (topBarHeightPx + tabHeightPx).toDp() }
-
-    // TopBar 오프셋 상태 (0 = 보임, -topBarHeightPx = 숨김)
-    var topBarOffsetHeightPx by remember { mutableStateOf(0f) }
-
-    // 스크롤 가능한 콘텐츠가 있는지 확인 (피드가 있을 때만 스크롤 활성화)
-    val hasScrollableContent = uiState.feeds.isNotEmpty()
-
-    val nestedScrollConnection =
-        remember(topBarHeightPx, hasScrollableContent) {
-            object : NestedScrollConnection {
-                override fun onPreScroll(
-                    available: Offset,
-                    source: NestedScrollSource,
-                ): Offset {
-                    // 스크롤 가능한 콘텐츠가 없으면 스크롤 연결 비활성화
-                    if (!hasScrollableContent) {
-                        return Offset.Zero
-                    }
-
-                    val delta = available.y
-                    val newOffset = topBarOffsetHeightPx + delta
-                    topBarOffsetHeightPx = newOffset.coerceIn(-topBarHeightPx, 0f)
-                    return Offset.Zero
-                }
-            }
-        }
-
-    // 콘텐츠 상태가 변경되면 오프셋 리셋
-    LaunchedEffect(topBarHeightPx, hasScrollableContent) {
-        topBarOffsetHeightPx =
-            if (!hasScrollableContent) {
-                0f
-            } else {
-                topBarOffsetHeightPx.coerceIn(-topBarHeightPx, 0f)
-            }
-    }
-
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .nestedScroll(nestedScrollConnection),
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             snackbarHost = { BuyOrNotSnackBarHost(snackbarHostState) },
             floatingActionButton = {
@@ -204,7 +146,10 @@ fun HomeScreen(
             HomeFeedList(
                 uiState = uiState,
                 onIntent = onIntent,
-                headerPadding = totalHeaderHeight + innerPadding.calculateTopPadding(),
+                contentPadding = innerPadding,
+                onLoginClick = onLoginClick,
+                onNotificationClick = onNotificationClick,
+                onProfileClick = onProfileClick,
                 onUploadClick = onUploadClick,
             )
 
@@ -213,97 +158,23 @@ fun HomeScreen(
                 onDismiss = { isFabExpanded = false },
             )
         }
-
-        HomeHeader(
-            uiState = uiState,
-            onLoginClick = onLoginClick,
-            onNotificationClick = onNotificationClick,
-            onProfileClick = onProfileClick,
-            onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
-            currentTopBarHeightPx = topBarHeightPx,
-            currentTabHeightPx = tabHeightPx,
-            onHeightsMeasured = { topBar, tab ->
-                topBarHeightPx = topBar
-                tabHeightPx = tab
-            },
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .offset { IntOffset(x = 0, y = topBarOffsetHeightPx.roundToInt()) }
-                    .background(BuyOrNotTheme.colors.gray0),
-        )
     }
 }
 
-private enum class HomeHeaderSlot {
-    TopBar,
-    Tab,
-}
-
 @Composable
-private fun HomeHeader(
-    uiState: HomeUiState,
+private fun HomeTopBarSection(
+    userType: UserType,
     onLoginClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
-    onTabSelected: (HomeTab) -> Unit,
-    currentTopBarHeightPx: Float,
-    currentTabHeightPx: Float,
-    onHeightsMeasured: (Float, Float) -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    SubcomposeLayout(modifier = modifier) { constraints ->
-        val width = constraints.maxWidth
-        val childConstraints =
-            if (width == Constraints.Infinity) {
-                constraints
-            } else {
-                Constraints.fixedWidth(width)
-            }
-
-        val topBarPlaceable =
-            subcompose(HomeHeaderSlot.TopBar) {
-                when (uiState.userType) {
-                    UserType.GUEST -> {
-                        GuestTopBar(
-                            onLoginClick = onLoginClick,
-                        )
-                    }
-                    UserType.SOCIAL -> {
-                        HomeTopBar(
-                            onNotificationClick = onNotificationClick,
-                            onProfileClick = onProfileClick,
-                        )
-                    }
-                }
-            }.first().measure(childConstraints)
-
-        val tabPlaceable =
-            subcompose(HomeHeaderSlot.Tab) {
-                HomeTabSection(
-                    userType = uiState.userType,
-                    selectedTab = uiState.selectedTab,
-                    onTabSelected = onTabSelected,
-                )
-            }.first().measure(childConstraints)
-
-        val newTopBarHeight = topBarPlaceable.height.toFloat()
-        val newTabHeight = tabPlaceable.height.toFloat()
-
-        if (newTopBarHeight != currentTopBarHeightPx || newTabHeight != currentTabHeightPx) {
-            onHeightsMeasured(newTopBarHeight, newTabHeight)
-        }
-
-        val layoutWidth =
-            if (width == Constraints.Infinity) {
-                topBarPlaceable.width.coerceAtLeast(tabPlaceable.width)
-            } else {
-                width
-            }
-
-        layout(width = layoutWidth, height = topBarPlaceable.height + tabPlaceable.height) {
-            topBarPlaceable.place(0, 0)
-            tabPlaceable.place(0, topBarPlaceable.height)
+    when (userType) {
+        UserType.GUEST -> GuestTopBar(onLoginClick = onLoginClick)
+        UserType.SOCIAL -> {
+            HomeTopBar(
+                onNotificationClick = onNotificationClick,
+                onProfileClick = onProfileClick,
+            )
         }
     }
 }
@@ -411,7 +282,10 @@ private fun FabDimOverlay(
 private fun HomeFeedList(
     uiState: HomeUiState,
     onIntent: (HomeIntent) -> Unit,
-    headerPadding: Dp,
+    contentPadding: PaddingValues,
+    onLoginClick: () -> Unit,
+    onNotificationClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onUploadClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -440,9 +314,27 @@ private fun HomeFeedList(
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = headerPadding),
+        contentPadding = contentPadding,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        item {
+            HomeTopBarSection(
+                userType = uiState.userType,
+                onLoginClick = onLoginClick,
+                onNotificationClick = onNotificationClick,
+                onProfileClick = onProfileClick,
+            )
+        }
+
+        stickyHeader {
+            HomeTabSection(
+                userType = uiState.userType,
+                selectedTab = uiState.selectedTab,
+                onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
+                modifier = Modifier.background(BuyOrNotTheme.colors.gray0),
+            )
+        }
+
         // 공통 필터 칩 영역
         item {
             Spacer(modifier = Modifier.height(16.dp))
