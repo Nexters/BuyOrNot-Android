@@ -203,55 +203,41 @@ class HomeViewModel @Inject constructor(
         feedId: String,
         optionIndex: Int,
     ) {
+        val targetFeed = cachedFeeds.find { it.id == feedId } ?: return
+
+        // 투표 불가 조건: 본인 글, 마감된 투표, 이미 투표한 피드
+        when {
+            targetFeed.isOwner -> {
+                sendSideEffect(
+                    HomeSideEffect.ShowSnackbar(
+                        message = "자신의 글에는 투표할 수 없습니다.",
+                        icon = null,
+                    ),
+                )
+                return
+            }
+            targetFeed.isVoteEnded -> return
+            targetFeed.userVotedOptionIndex != null -> return
+        }
+
         val previousFeeds = uiState.value.feeds
         val previousCachedFeeds = cachedFeeds
 
-        // 본인 글 여부 확인 (투표 방지)
-        val targetFeed = cachedFeeds.find { it.id == feedId }
-        if (targetFeed?.isOwner == true) {
-            sendSideEffect(
-                HomeSideEffect.ShowSnackbar(
-                    message = "자신의 글에는 투표할 수 없습니다.",
-                    icon = null,
-                ),
-            )
-            return
-        }
-
         // 1. 낙관적 업데이트 (Optimistic Update)
-        // API 호출 전 UI를 즉시 업데이트하여 사용자 경험 개선
-        val optimisticUpdate = { feeds: List<FeedItem> ->
-            feeds.map { feed ->
-                if (feed.id == feedId) {
-                    val isYes = optionIndex == 0
-                    feed.copy(
-                        userVotedOptionIndex = optionIndex,
-                        buyVoteCount = if (isYes) feed.buyVoteCount + 1 else feed.buyVoteCount,
-                        maybeVoteCount = if (!isYes) feed.maybeVoteCount + 1 else feed.maybeVoteCount,
-                        totalVoteCount = feed.totalVoteCount + 1,
-                    )
-                } else {
-                    feed
-                }
-            }
-        }
-
-        updateState { it.copy(feeds = optimisticUpdate(it.feeds)) }
-        cachedFeeds = optimisticUpdate(cachedFeeds)
+        updateState { it.copy(feeds = optimisticVoteUpdate(it.feeds, feedId, optionIndex)) }
+        cachedFeeds = optimisticVoteUpdate(cachedFeeds, feedId, optionIndex)
 
         viewModelScope.launch {
-            // optionIndex: 0 = YES, 1 = NO
             val choice = if (optionIndex == 0) VoteChoice.YES else VoteChoice.NO
 
             runCatchingCancellable {
-                // 사용자 타입에 따라 회원/비회원 투표 API 호출
                 when (uiState.value.userType) {
                     UserType.SOCIAL -> feedRepository.voteFeed(feedId.toLong(), choice)
                     UserType.GUEST -> feedRepository.voteGuestFeed(feedId.toLong(), choice)
                 }
             }.onSuccess { voteResult ->
-                // 2. 최종 업데이트: 서버 응답 데이터를 기반으로 UI 확정
-                val finalUpdate = { feeds: List<FeedItem> ->
+                // 2. 최종 업데이트: 서버 응답으로 확정
+                val confirmedFeeds = { feeds: List<FeedItem> ->
                     feeds.map { feed ->
                         if (feed.id == feedId) {
                             feed.copy(
@@ -265,16 +251,14 @@ class HomeViewModel @Inject constructor(
                         }
                     }
                 }
-
-                updateState { it.copy(feeds = finalUpdate(it.feeds)) }
-                cachedFeeds = finalUpdate(cachedFeeds)
+                updateState { it.copy(feeds = confirmedFeeds(it.feeds)) }
+                cachedFeeds = confirmedFeeds(cachedFeeds)
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
-                // 3. 롤백 (Rollback): 에러 발생 시 원래 상태로 복구
+                // 3. 롤백 (Rollback)
                 updateState { it.copy(feeds = previousFeeds) }
                 cachedFeeds = previousCachedFeeds
 
-                // 에러 발생 시 스낵바로 알림
                 val errorMessage =
                     when {
                         e.message?.contains("400") == true -> "이미 투표했거나 마감된 피드입니다."
@@ -290,6 +274,22 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    private fun optimisticVoteUpdate(
+        feeds: List<FeedItem>,
+        feedId: String,
+        optionIndex: Int,
+    ): List<FeedItem> =
+        feeds.map { feed ->
+            if (feed.id != feedId) return@map feed
+            val isYes = optionIndex == 0
+            feed.copy(
+                userVotedOptionIndex = optionIndex,
+                buyVoteCount = if (isYes) feed.buyVoteCount + 1 else feed.buyVoteCount,
+                maybeVoteCount = if (!isYes) feed.maybeVoteCount + 1 else feed.maybeVoteCount,
+                totalVoteCount = feed.totalVoteCount + 1,
+            )
+        }
 
     private fun handleDelete(feedId: String) {
         viewModelScope.launch {
