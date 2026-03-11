@@ -12,6 +12,7 @@ import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToTerms
 import com.sseotdabwa.buyornot.core.ui.webview.webViewScreen
+import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateForceToLogin
@@ -79,7 +80,7 @@ fun BuyOrNotNavHost(
                 navController.navigateToHome(
                     navOptions =
                         androidx.navigation.navOptions {
-                            popUpTo(SPLASH_ROUTE) { inclusive = true }
+                            popUpTo(AUTH_ROUTE) { inclusive = true }
                             launchSingleTop = true
                         },
                 )
