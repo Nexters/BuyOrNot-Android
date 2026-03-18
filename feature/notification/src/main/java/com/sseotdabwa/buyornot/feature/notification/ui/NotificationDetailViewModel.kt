@@ -118,8 +118,14 @@ class NotificationDetailViewModel @Inject constructor(
     }
 
     private fun handleBlockConfirmed() {
-        val userId = uiState.value.feed?.author?.userId ?: return
-        val nickname = uiState.value.feed?.author?.nickname
+        val userId =
+            uiState.value.feed
+                ?.author
+                ?.userId ?: return
+        val nickname =
+            uiState.value.feed
+                ?.author
+                ?.nickname
         updateState { it.copy(showBlockDialog = false) }
         viewModelScope.launch {
             runCatchingCancellable {
