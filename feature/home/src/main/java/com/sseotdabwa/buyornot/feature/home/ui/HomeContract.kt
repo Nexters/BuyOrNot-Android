@@ -40,8 +40,8 @@ data class FeedItem(
     val buyVoteCount: Int,
     val maybeVoteCount: Int,
     val totalVoteCount: Int,
-    val isOwner: Boolean = false,
-    val authorUserId: Long = 0L,
+    val isOwner: Boolean,
+    val authorUserId: Long,
 )
 
 /**

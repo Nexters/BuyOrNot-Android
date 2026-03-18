@@ -495,7 +495,7 @@ class HomeViewModel @Inject constructor(
     /**
      * Domain Feed를 UI FeedItem으로 변환
      */
-    private fun Feed.toFeedItem(isOwner: Boolean = false): FeedItem {
+    private fun Feed.toFeedItem(isOwner: Boolean): FeedItem {
         val aspectRatio =
             if (imageWidth == imageHeight) {
                 ImageAspectRatio.SQUARE
