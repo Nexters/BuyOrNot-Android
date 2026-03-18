@@ -71,6 +71,8 @@ data class HomeUiState(
     val hasNextPage: Boolean = false,
     val nextCursor: Long? = null,
     val hasError: Boolean = false,
+    val showDeleteDialog: Boolean = false,
+    val deletingFeedId: String? = null,
 )
 
 /**
@@ -92,7 +94,13 @@ sealed interface HomeIntent {
         val optionIndex: Int,
     ) : HomeIntent
 
-    data class OnDeleteClicked(
+    data class ShowDeleteDialog(
+        val feedId: String,
+    ) : HomeIntent
+
+    data object DismissDeleteDialog : HomeIntent
+
+    data class OnDeleteConfirmed(
         val feedId: String,
     ) : HomeIntent
 

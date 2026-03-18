@@ -104,7 +104,12 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.OnFilterSelected -> handleFilterSelection(intent.filter)
             is HomeIntent.OnBannerDismissed -> handleBannerDismiss()
             is HomeIntent.OnVoteClicked -> handleVote(intent.feedId, intent.optionIndex)
-            is HomeIntent.OnDeleteClicked -> handleDelete(intent.feedId)
+            is HomeIntent.ShowDeleteDialog -> updateState { it.copy(showDeleteDialog = true, deletingFeedId = intent.feedId) }
+            is HomeIntent.DismissDeleteDialog -> updateState { it.copy(showDeleteDialog = false, deletingFeedId = null) }
+            is HomeIntent.OnDeleteConfirmed -> {
+                updateState { it.copy(showDeleteDialog = false, deletingFeedId = null) }
+                handleDelete(intent.feedId)
+            }
             is HomeIntent.OnReportClicked -> handleReport(intent.feedId)
             is HomeIntent.LoadFeeds -> loadFeeds()
             is HomeIntent.LoadNextPage -> handleNextPage()
