@@ -45,6 +45,7 @@ fun MyPageRoute(
     versionName: String,
     onBackClick: () -> Unit,
     onAccountSettingClick: () -> Unit,
+    onBlockedAccountsClick: () -> Unit,
     onPolicyClick: () -> Unit,
     onFeedbackClick: () -> Unit,
     viewModel: MyPageViewModel = hiltViewModel(),
@@ -78,6 +79,7 @@ fun MyPageRoute(
             versionName = versionName,
             onBackClick = onBackClick,
             onAccountSettingClick = onAccountSettingClick,
+            onBlockedAccountsClick = onBlockedAccountsClick,
             onPolicyClick = onPolicyClick,
             onFeedbackClick = onFeedbackClick,
             uiState = uiState,
@@ -92,6 +94,7 @@ fun MyPageScreen(
     uiState: MyPageUiState,
     onBackClick: () -> Unit = {},
     onAccountSettingClick: () -> Unit = {},
+    onBlockedAccountsClick: () -> Unit = {},
     onPolicyClick: () -> Unit = {},
     onFeedbackClick: () -> Unit,
 ) {
@@ -150,6 +153,7 @@ fun MyPageScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 SettingItem(title = "계정 설정") { onAccountSettingClick() }
+                SettingItem(title = "차단된 계정") { onBlockedAccountsClick() }
                 SettingItem(title = "약관 및 정책") { onPolicyClick() }
                 SettingItem(title = "의견 남기기") { onFeedbackClick() }
             }
