@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.feature.mypage.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -28,7 +29,9 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
 import com.sseotdabwa.buyornot.core.designsystem.components.PrimaryButton
+import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 data class BlockedUserItem(
@@ -55,16 +58,29 @@ fun BlockedAccountsScreen(
             onBackClick = onBackClick,
         )
 
-        LazyColumn(
-            contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            items(blockedUsers, key = { it.userId }) { user ->
-                BlockedUser(
-                    profileImageUrl = user.profileImageUrl,
-                    nickname = user.nickname,
-                    onUnblockClick = { onUnblockClick(user.userId) },
+        if (blockedUsers.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                BuyOrNotEmptyView(
+                    title = "차단된 사용자가 없어요",
+                    description = "사용자를 차단하면 투표를 볼 수 없어요.",
+                    image = BuyOrNotImgs.NoBlockedUser.resId,
                 )
+            }
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                items(blockedUsers, key = { it.userId }) { user ->
+                    BlockedUser(
+                        profileImageUrl = user.profileImageUrl,
+                        nickname = user.nickname,
+                        onUnblockClick = { onUnblockClick(user.userId) },
+                    )
+                }
             }
         }
     }
@@ -129,6 +145,22 @@ private fun BlockedUserPreview() {
             nickname = "결정장애",
             onUnblockClick = {},
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BlockedAccountsScreenEmptyPreview() {
+    BuyOrNotTheme {
+        Scaffold(
+            containerColor = BuyOrNotTheme.colors.gray0,
+        ) { paddingValues ->
+            BlockedAccountsScreen(
+                modifier = Modifier.padding(paddingValues),
+                blockedUsers = emptyList(),
+                onBackClick = {},
+            )
+        }
     }
 }
 
