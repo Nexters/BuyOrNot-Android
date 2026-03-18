@@ -12,6 +12,7 @@ data class NotificationDetailUiState(
     val voterProfileImageUrl: String = "",
     val isOwner: Boolean = false,
     val showDeleteDialog: Boolean = false,
+    val showBlockDialog: Boolean = false,
 )
 
 sealed interface NotificationDetailIntent {
@@ -24,6 +25,12 @@ sealed interface NotificationDetailIntent {
     data object OnDeleteConfirmed : NotificationDetailIntent
 
     data object OnReportClicked : NotificationDetailIntent
+
+    data object ShowBlockDialog : NotificationDetailIntent
+
+    data object DismissBlockDialog : NotificationDetailIntent
+
+    data object OnBlockConfirmed : NotificationDetailIntent
 }
 
 sealed interface NotificationDetailSideEffect {

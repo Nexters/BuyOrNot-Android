@@ -135,6 +135,18 @@ fun HomeScreen(
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
     var isFabExpanded by remember { mutableStateOf(false) }
 
+    if (uiState.showBlockDialog && uiState.blockingNickname != null) {
+        BuyOrNotAlertDialog(
+            onDismissRequest = { onIntent(HomeIntent.DismissBlockDialog) },
+            title = "이 글의 사용자를 차단하시겠어요?",
+            subText = "${uiState.blockingNickname}님의 투표를 볼 수 없어요.",
+            confirmText = "차단하기",
+            dismissText = "취소",
+            onConfirm = { onIntent(HomeIntent.OnBlockConfirmed) },
+            onDismiss = { onIntent(HomeIntent.DismissBlockDialog) },
+        )
+    }
+
     if (uiState.showDeleteDialog && uiState.deletingFeedId != null) {
         BuyOrNotAlertDialog(
             onDismissRequest = { onIntent(HomeIntent.DismissDeleteDialog) },
@@ -396,6 +408,7 @@ private fun HomeFeedList(
                             onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
                             onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
                             onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
+                            onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
                         )
                     }
 
@@ -487,6 +500,7 @@ private fun FeedItemCard(
     onVote: (String, Int) -> Unit,
     onDelete: (String) -> Unit,
     onReport: (String) -> Unit,
+    onBlock: (String) -> Unit,
 ) {
     Column {
         FeedCard(
@@ -511,6 +525,7 @@ private fun FeedItemCard(
             },
             onDeleteClick = { onDelete(feed.id) },
             onReportClick = { onReport(feed.id) },
+            onBlockClick = { onBlock(feed.id) },
         )
 
         BuyOrNotDivider(

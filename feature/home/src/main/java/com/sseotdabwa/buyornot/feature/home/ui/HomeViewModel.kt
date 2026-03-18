@@ -111,6 +111,16 @@ class HomeViewModel @Inject constructor(
                 handleDelete(intent.feedId)
             }
             is HomeIntent.OnReportClicked -> handleReport(intent.feedId)
+            is HomeIntent.ShowBlockDialog -> handleShowBlockDialog(intent.feedId)
+            is HomeIntent.DismissBlockDialog ->
+                updateState {
+                    it.copy(
+                        showBlockDialog = false,
+                        blockingNickname = null,
+                        blockingUserId = null,
+                    )
+                }
+            is HomeIntent.OnBlockConfirmed -> handleBlockConfirmed()
             is HomeIntent.LoadFeeds -> loadFeeds()
             is HomeIntent.LoadNextPage -> handleNextPage()
             is HomeIntent.Refresh -> handleRefresh()
@@ -316,6 +326,25 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun handleShowBlockDialog(feedId: String) {
+        val feed = uiState.value.feeds.find { it.id == feedId } ?: return
+        updateState {
+            it.copy(
+                showBlockDialog = true,
+                blockingNickname = feed.nickname,
+                blockingUserId = feed.authorUserId,
+            )
+        }
+    }
+
+    private fun handleBlockConfirmed() {
+        val userId = uiState.value.blockingUserId ?: return
+        updateState { it.copy(showBlockDialog = false, blockingNickname = null, blockingUserId = null) }
+        viewModelScope.launch {
+            // TODO: implement block user API call with userId
+        }
+    }
+
     private fun handleReport(feedId: String) {
         viewModelScope.launch {
             runCatchingCancellable {
@@ -478,6 +507,7 @@ class HomeViewModel @Inject constructor(
             maybeVoteCount = noCount,
             totalVoteCount = totalCount,
             isOwner = isOwner,
+            authorUserId = author.userId,
         )
     }
 }

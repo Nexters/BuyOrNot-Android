@@ -41,6 +41,7 @@ data class FeedItem(
     val maybeVoteCount: Int,
     val totalVoteCount: Int,
     val isOwner: Boolean = false,
+    val authorUserId: Long = 0L,
 )
 
 /**
@@ -73,6 +74,9 @@ data class HomeUiState(
     val hasError: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val deletingFeedId: String? = null,
+    val showBlockDialog: Boolean = false,
+    val blockingNickname: String? = null,
+    val blockingUserId: Long? = null,
 )
 
 /**
@@ -113,6 +117,14 @@ sealed interface HomeIntent {
     data object LoadNextPage : HomeIntent
 
     data object Refresh : HomeIntent
+
+    data class ShowBlockDialog(
+        val feedId: String,
+    ) : HomeIntent
+
+    data object DismissBlockDialog : HomeIntent
+
+    data object OnBlockConfirmed : HomeIntent
 }
 
 /**

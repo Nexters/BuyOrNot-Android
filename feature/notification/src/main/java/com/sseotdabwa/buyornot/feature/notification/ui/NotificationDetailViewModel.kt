@@ -58,6 +58,9 @@ class NotificationDetailViewModel @Inject constructor(
                 handleDelete()
             }
             NotificationDetailIntent.OnReportClicked -> handleReport()
+            NotificationDetailIntent.ShowBlockDialog -> updateState { it.copy(showBlockDialog = true) }
+            NotificationDetailIntent.DismissBlockDialog -> updateState { it.copy(showBlockDialog = false) }
+            NotificationDetailIntent.OnBlockConfirmed -> handleBlockConfirmed()
         }
     }
 
@@ -111,6 +114,17 @@ class NotificationDetailViewModel @Inject constructor(
                     ),
                 )
             }
+        }
+    }
+
+    private fun handleBlockConfirmed() {
+        val userId =
+            uiState.value.feed
+                ?.author
+                ?.userId ?: return
+        updateState { it.copy(showBlockDialog = false) }
+        viewModelScope.launch {
+            // TODO: implement block user API call with userId
         }
     }
 

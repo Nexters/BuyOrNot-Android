@@ -75,6 +75,7 @@ fun FeedCard(
     voterProfileImageUrl: String = "", // 사용자가 투표한 경우의 프로필 이미지 URL
     onDeleteClick: () -> Unit = {}, // 삭제 클릭 콜백 추가
     onReportClick: () -> Unit = {}, // 신고 클릭 콜백 추가
+    onBlockClick: () -> Unit = {}, // 차단 클릭 콜백 추가
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
@@ -149,14 +150,28 @@ fun FeedCard(
                             .clickable { showMenu = true },
                     tint = BuyOrNotTheme.colors.gray500,
                 )
+                val ownerMenuItems =
+                    listOf(
+                        "삭제하기" to {
+                            showMenu = false
+                            onDeleteClick()
+                        },
+                    )
+                val userMenuItems =
+                    listOf(
+                        "신고하기" to {
+                            showMenu = false
+                            onReportClick()
+                        },
+                        "차단하기" to {
+                            showMenu = false
+                            onBlockClick()
+                        },
+                    )
                 if (showMenu) {
                     FeedActionPopup(
-                        label = if (isOwner) "삭제하기" else "신고하기",
+                        items = if (isOwner) ownerMenuItems else userMenuItems,
                         onDismiss = { showMenu = false },
-                        onClick = {
-                            showMenu = false
-                            if (isOwner) onDeleteClick() else onReportClick()
-                        },
                     )
                 }
             }
@@ -427,9 +442,8 @@ private fun VoteOption(
  */
 @Composable
 private fun FeedActionPopup(
-    label: String,
+    items: List<Pair<String, () -> Unit>>,
     onDismiss: () -> Unit,
-    onClick: () -> Unit,
 ) {
     val density = LocalDensity.current
     val navHeight = 20.dp // Anchor icon height
@@ -451,8 +465,7 @@ private fun FeedActionPopup(
         properties = PopupProperties(focusable = true),
     ) {
         FeedActionPopupContent(
-            label = label,
-            onClick = onClick,
+            items = items,
             tonalElevation = 8.dp,
             shadowElevation = 8.dp,
         )
@@ -464,8 +477,7 @@ private fun FeedActionPopup(
  */
 @Composable
 private fun FeedActionPopupContent(
-    label: String,
-    onClick: () -> Unit,
+    items: List<Pair<String, () -> Unit>>,
     modifier: Modifier = Modifier,
     tonalElevation: Dp = 0.dp,
     shadowElevation: Dp = 0.dp,
@@ -482,22 +494,21 @@ private fun FeedActionPopupContent(
         tonalElevation = tonalElevation,
         shadowElevation = shadowElevation,
     ) {
-        Box(
-            modifier = Modifier.padding(vertical = 14.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = label,
-                modifier =
-                    Modifier
-                        .clickable { onClick() }
-                        .padding(
-                            horizontal = 20.dp,
-                            vertical = 8.dp,
-                        ),
-                style = BuyOrNotTheme.typography.bodyB3Medium,
-                color = BuyOrNotTheme.colors.gray800,
-            )
+        Column(modifier = Modifier.padding(vertical = 14.dp)) {
+            items.forEach { (label, onClick) ->
+                Text(
+                    text = label,
+                    modifier =
+                        Modifier
+                            .clickable { onClick() }
+                            .padding(
+                                horizontal = 20.dp,
+                                vertical = 8.dp,
+                            ),
+                    style = BuyOrNotTheme.typography.bodyB3Medium,
+                    color = BuyOrNotTheme.colors.gray800,
+                )
+            }
         }
     }
 }
@@ -569,8 +580,7 @@ private fun FeedCardSquareInteractivePreview() {
 private fun FeedActionPopupContentOwnerPreview() {
     BuyOrNotTheme {
         FeedActionPopupContent(
-            label = "삭제하기",
-            onClick = { /* do nothing */ },
+            items = listOf("삭제하기" to {}),
         )
     }
 }
@@ -584,8 +594,7 @@ private fun FeedActionPopupContentOwnerPreview() {
 private fun FeedActionPopupContentUserPreview() {
     BuyOrNotTheme {
         FeedActionPopupContent(
-            label = "신고하기",
-            onClick = { /* do nothing */ },
+            items = listOf("신고하기" to {}, "차단하기" to {}),
         )
     }
 }

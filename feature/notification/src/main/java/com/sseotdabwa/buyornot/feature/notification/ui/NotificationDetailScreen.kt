@@ -83,6 +83,18 @@ fun NotificationDetailScreen(
     onIntent: (NotificationDetailIntent) -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+    if (uiState.showBlockDialog) {
+        BuyOrNotAlertDialog(
+            onDismissRequest = { onIntent(NotificationDetailIntent.DismissBlockDialog) },
+            title = "이 글의 사용자를 차단하시겠어요?",
+            subText = "${uiState.feed?.author?.nickname}님의 투표를 볼 수 없어요.",
+            confirmText = "차단하기",
+            dismissText = "취소",
+            onConfirm = { onIntent(NotificationDetailIntent.OnBlockConfirmed) },
+            onDismiss = { onIntent(NotificationDetailIntent.DismissBlockDialog) },
+        )
+    }
+
     if (uiState.showDeleteDialog) {
         BuyOrNotAlertDialog(
             onDismissRequest = { onIntent(NotificationDetailIntent.DismissDeleteDialog) },
@@ -163,6 +175,7 @@ fun NotificationDetailScreen(
                             onVote = { /* 이미 종료된 투표이기 때문에 투표 기능 미구현 */ },
                             onDeleteClick = { onIntent(NotificationDetailIntent.ShowDeleteDialog) },
                             onReportClick = { onIntent(NotificationDetailIntent.OnReportClicked) },
+                            onBlockClick = { onIntent(NotificationDetailIntent.ShowBlockDialog) },
                         )
                     }
                 }
