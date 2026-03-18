@@ -76,6 +76,7 @@ fun FeedCard(
     onDeleteClick: () -> Unit = {}, // 삭제 클릭 콜백 추가
     onReportClick: () -> Unit = {}, // 신고 클릭 콜백 추가
     onBlockClick: () -> Unit = {}, // 차단 클릭 콜백 추가
+    showMoreButton: Boolean = true,
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
@@ -140,39 +141,41 @@ fun FeedCard(
                     )
                 }
             }
-            Box {
-                Icon(
-                    imageVector = BuyOrNotIcons.More.asImageVector(),
-                    contentDescription = "More",
-                    modifier =
-                        Modifier
-                            .size(20.dp)
-                            .clickable { showMenu = true },
-                    tint = BuyOrNotTheme.colors.gray500,
-                )
-                val ownerMenuItems =
-                    listOf(
-                        "삭제하기" to {
-                            showMenu = false
-                            onDeleteClick()
-                        },
+            if (showMoreButton) {
+                Box {
+                    Icon(
+                        imageVector = BuyOrNotIcons.More.asImageVector(),
+                        contentDescription = "More",
+                        modifier =
+                            Modifier
+                                .size(20.dp)
+                                .clickable { showMenu = true },
+                        tint = BuyOrNotTheme.colors.gray500,
                     )
-                val userMenuItems =
-                    listOf(
-                        "신고하기" to {
-                            showMenu = false
-                            onReportClick()
-                        },
-                        "차단하기" to {
-                            showMenu = false
-                            onBlockClick()
-                        },
-                    )
-                if (showMenu) {
-                    FeedActionPopup(
-                        items = if (isOwner) ownerMenuItems else userMenuItems,
-                        onDismiss = { showMenu = false },
-                    )
+                    val ownerMenuItems =
+                        listOf(
+                            "삭제하기" to {
+                                showMenu = false
+                                onDeleteClick()
+                            },
+                        )
+                    val userMenuItems =
+                        listOf(
+                            "신고하기" to {
+                                showMenu = false
+                                onReportClick()
+                            },
+                            "차단하기" to {
+                                showMenu = false
+                                onBlockClick()
+                            },
+                        )
+                    if (showMenu) {
+                        FeedActionPopup(
+                            items = if (isOwner) ownerMenuItems else userMenuItems,
+                            onDismiss = { showMenu = false },
+                        )
+                    }
                 }
             }
         }

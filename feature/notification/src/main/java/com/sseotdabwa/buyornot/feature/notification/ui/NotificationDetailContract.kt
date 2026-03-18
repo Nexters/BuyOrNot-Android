@@ -13,6 +13,7 @@ data class NotificationDetailUiState(
     val isOwner: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val showBlockDialog: Boolean = false,
+    val isGuest: Boolean = false,
 )
 
 sealed interface NotificationDetailIntent {

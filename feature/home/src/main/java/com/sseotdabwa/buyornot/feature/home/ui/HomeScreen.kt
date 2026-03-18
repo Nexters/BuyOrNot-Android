@@ -404,6 +404,7 @@ private fun HomeFeedList(
                         FeedItemCard(
                             feed = filteredFeeds[index],
                             voterProfileImageUrl = uiState.voterProfileImageUrl,
+                            isGuest = uiState.userType == UserType.GUEST,
                             modifier = Modifier.padding(20.dp).animateItem(),
                             onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
                             onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
@@ -496,6 +497,7 @@ private fun FilterChipRow(
 private fun FeedItemCard(
     feed: FeedItem,
     voterProfileImageUrl: String,
+    isGuest: Boolean,
     modifier: Modifier = Modifier,
     onVote: (String, Int) -> Unit,
     onDelete: (String) -> Unit,
@@ -526,6 +528,7 @@ private fun FeedItemCard(
             onDeleteClick = { onDelete(feed.id) },
             onReportClick = { onReport(feed.id) },
             onBlockClick = { onBlock(feed.id) },
+            showMoreButton = !isGuest,
         )
 
         BuyOrNotDivider(

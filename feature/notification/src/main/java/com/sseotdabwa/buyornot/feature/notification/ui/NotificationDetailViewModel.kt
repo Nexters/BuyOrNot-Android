@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
@@ -42,7 +43,10 @@ class NotificationDetailViewModel @Inject constructor(
             userPreferencesRepository.userPreferences
                 .collect { preferences ->
                     updateState {
-                        it.copy(voterProfileImageUrl = preferences.profileImageUrl)
+                        it.copy(
+                            voterProfileImageUrl = preferences.profileImageUrl,
+                            isGuest = preferences.userType == UserType.GUEST,
+                        )
                     }
                 }
         }

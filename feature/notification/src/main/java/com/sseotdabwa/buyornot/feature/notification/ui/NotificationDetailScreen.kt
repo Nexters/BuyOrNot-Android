@@ -176,6 +176,7 @@ fun NotificationDetailScreen(
                             onDeleteClick = { onIntent(NotificationDetailIntent.ShowDeleteDialog) },
                             onReportClick = { onIntent(NotificationDetailIntent.OnReportClicked) },
                             onBlockClick = { onIntent(NotificationDetailIntent.ShowBlockDialog) },
+                            showMoreButton = !uiState.isGuest,
                         )
                     }
                 }
