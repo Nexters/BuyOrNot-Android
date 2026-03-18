@@ -21,6 +21,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotAlertDialog
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotButtonDefaults
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotErrorView
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCard
@@ -81,6 +83,19 @@ fun NotificationDetailScreen(
     onIntent: (NotificationDetailIntent) -> Unit,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
+    if (uiState.showDeleteDialog) {
+        BuyOrNotAlertDialog(
+            onDismissRequest = { onIntent(NotificationDetailIntent.DismissDeleteDialog) },
+            title = "정말 삭제하시겠어요?",
+            subText = "투표 데이터가 모두 사라지며, 복구할 수 없어요.",
+            confirmText = "삭제",
+            dismissText = "취소",
+            onConfirm = { onIntent(NotificationDetailIntent.OnDeleteConfirmed) },
+            onDismiss = { onIntent(NotificationDetailIntent.DismissDeleteDialog) },
+            confirmButtonColors = BuyOrNotButtonDefaults.destructiveButtonColors(),
+        )
+    }
+
     Scaffold(
         snackbarHost = { BuyOrNotSnackBarHost(snackbarHostState) },
         topBar = { BackTopBar(onBackClick = onBackClick) },
@@ -146,7 +161,7 @@ fun NotificationDetailScreen(
                             isOwner = uiState.isOwner,
                             voterProfileImageUrl = uiState.voterProfileImageUrl,
                             onVote = { /* 이미 종료된 투표이기 때문에 투표 기능 미구현 */ },
-                            onDeleteClick = { onIntent(NotificationDetailIntent.OnDeleteClicked) },
+                            onDeleteClick = { onIntent(NotificationDetailIntent.ShowDeleteDialog) },
                             onReportClick = { onIntent(NotificationDetailIntent.OnReportClicked) },
                         )
                     }

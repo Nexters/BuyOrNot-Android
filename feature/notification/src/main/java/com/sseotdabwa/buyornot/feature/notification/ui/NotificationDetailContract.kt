@@ -11,12 +11,17 @@ data class NotificationDetailUiState(
     val feed: Feed? = null,
     val voterProfileImageUrl: String = "",
     val isOwner: Boolean = false,
+    val showDeleteDialog: Boolean = false,
 )
 
 sealed interface NotificationDetailIntent {
     data object OnRefresh : NotificationDetailIntent
 
-    data object OnDeleteClicked : NotificationDetailIntent
+    data object ShowDeleteDialog : NotificationDetailIntent
+
+    data object DismissDeleteDialog : NotificationDetailIntent
+
+    data object OnDeleteConfirmed : NotificationDetailIntent
 
     data object OnReportClicked : NotificationDetailIntent
 }

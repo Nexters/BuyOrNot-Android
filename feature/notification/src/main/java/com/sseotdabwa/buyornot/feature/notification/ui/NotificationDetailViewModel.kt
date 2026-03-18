@@ -51,7 +51,12 @@ class NotificationDetailViewModel @Inject constructor(
     override fun handleIntent(intent: NotificationDetailIntent) {
         when (intent) {
             NotificationDetailIntent.OnRefresh -> loadDetail()
-            NotificationDetailIntent.OnDeleteClicked -> handleDelete()
+            NotificationDetailIntent.ShowDeleteDialog -> updateState { it.copy(showDeleteDialog = true) }
+            NotificationDetailIntent.DismissDeleteDialog -> updateState { it.copy(showDeleteDialog = false) }
+            NotificationDetailIntent.OnDeleteConfirmed -> {
+                updateState { it.copy(showDeleteDialog = false) }
+                handleDelete()
+            }
             NotificationDetailIntent.OnReportClicked -> handleReport()
         }
     }
