@@ -27,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,6 +46,9 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotButtonDefaul
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
+import com.sseotdabwa.buyornot.feature.mypage.viewmodel.BlockedAccountsIntent
+import com.sseotdabwa.buyornot.feature.mypage.viewmodel.BlockedAccountsSideEffect
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.BlockedAccountsViewModel
 
 data class BlockedUserItem(
@@ -59,6 +63,21 @@ fun BlockedAccountsRoute(
     viewModel: BlockedAccountsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarState = LocalSnackbarState.current
+
+    LaunchedEffect(Unit) {
+        viewModel.sideEffect.collect { sideEffect ->
+            when (sideEffect) {
+                is BlockedAccountsSideEffect.ShowSnackbar -> {
+                    snackbarState.show(
+                        message = sideEffect.message,
+                        icon = sideEffect.icon,
+                        iconTint = sideEffect.iconTint,
+                    )
+                }
+            }
+        }
+    }
 
     if (uiState.isLoading) {
         Box(
@@ -70,6 +89,9 @@ fun BlockedAccountsRoute(
     } else {
         BlockedAccountsScreen(
             blockedUsers = uiState.blockedUsers,
+            onUnblockClick = { userId, nickname ->
+                viewModel.handleIntent(BlockedAccountsIntent.UnblockUser(userId, nickname))
+            },
             onBackClick = onBackClick,
         )
     }
@@ -79,7 +101,7 @@ fun BlockedAccountsRoute(
 fun BlockedAccountsScreen(
     modifier: Modifier = Modifier,
     blockedUsers: List<BlockedUserItem> = emptyList(),
-    onUnblockClick: (userId: Long) -> Unit = {},
+    onUnblockClick: (userId: Long, nickname: String) -> Unit = { _, _ -> },
     onBackClick: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -108,7 +130,7 @@ fun BlockedAccountsScreen(
                     BlockedUser(
                         profileImageUrl = user.profileImageUrl,
                         nickname = user.nickname,
-                        onUnblockClick = { onUnblockClick(user.userId) },
+                        onUnblockClick = { onUnblockClick(user.userId, user.nickname) },
                     )
                 }
             }

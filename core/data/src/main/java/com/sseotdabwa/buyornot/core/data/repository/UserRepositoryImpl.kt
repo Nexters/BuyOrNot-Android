@@ -29,6 +29,10 @@ class UserRepositoryImpl @Inject constructor(
         userApiService.blockUser(userId).getOrThrow()
     }
 
+    override suspend fun unblockUser(userId: Long) {
+        userApiService.unblockUser(userId).getOrThrow()
+    }
+
     private fun User.toDomain(): UserProfile =
         UserProfile(
             id = id,

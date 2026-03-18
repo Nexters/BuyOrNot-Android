@@ -30,4 +30,9 @@ interface UserApiService {
     suspend fun blockUser(
         @Path("userId") userId: Long,
     ): BaseResponse<Unit>
+
+    @DELETE("/api/v1/users/blocks/{userId}")
+    suspend fun unblockUser(
+        @Path("userId") userId: Long,
+    ): BaseResponse<Unit>
 }

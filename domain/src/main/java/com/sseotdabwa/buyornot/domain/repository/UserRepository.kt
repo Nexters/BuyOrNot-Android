@@ -13,4 +13,6 @@ interface UserRepository {
     suspend fun getBlockedUsers(): List<BlockedUser>
 
     suspend fun blockUser(userId: Long)
+
+    suspend fun unblockUser(userId: Long)
 }

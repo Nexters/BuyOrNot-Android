@@ -23,6 +23,23 @@ class BlockedAccountsViewModel @Inject constructor(
     override fun handleIntent(intent: BlockedAccountsIntent) {
         when (intent) {
             is BlockedAccountsIntent.LoadBlockedUsers -> loadBlockedUsers()
+            is BlockedAccountsIntent.UnblockUser -> unblockUser(intent.userId, intent.nickname)
+        }
+    }
+
+    private fun unblockUser(
+        userId: Long,
+        nickname: String,
+    ) {
+        viewModelScope.launch {
+            runCatchingCancellable {
+                userRepository.unblockUser(userId)
+            }.onSuccess {
+                updateState { it.copy(blockedUsers = it.blockedUsers.filter { user -> user.userId != userId }) }
+                sendSideEffect(BlockedAccountsSideEffect.ShowSnackbar("${nickname}의 차단이 해제되었어요."))
+            }.onFailure { throwable ->
+                Log.w(TAG, throwable.toString())
+            }
         }
     }
 
