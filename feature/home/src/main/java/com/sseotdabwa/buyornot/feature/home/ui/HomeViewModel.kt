@@ -339,9 +339,28 @@ class HomeViewModel @Inject constructor(
 
     private fun handleBlockConfirmed() {
         val userId = uiState.value.blockingUserId ?: return
+        val nickname = uiState.value.blockingNickname
         updateState { it.copy(showBlockDialog = false, blockingNickname = null, blockingUserId = null) }
         viewModelScope.launch {
-            // TODO: implement block user API call with userId
+            runCatchingCancellable {
+                userRepository.blockUser(userId)
+            }.onSuccess {
+                sendSideEffect(
+                    HomeSideEffect.ShowSnackbar(
+                        message = "${nickname}님이 차단되었어요.",
+                        icon = null,
+                    ),
+                )
+                updateState { it.copy(feeds = it.feeds.filter { feed -> feed.authorUserId != userId }) }
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to block user: $userId", e)
+                sendSideEffect(
+                    HomeSideEffect.ShowSnackbar(
+                        message = "차단에 실패했습니다.",
+                        icon = null,
+                    ),
+                )
+            }
         }
     }
 

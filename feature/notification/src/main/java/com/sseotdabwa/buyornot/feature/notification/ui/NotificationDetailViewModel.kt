@@ -118,13 +118,29 @@ class NotificationDetailViewModel @Inject constructor(
     }
 
     private fun handleBlockConfirmed() {
-        val userId =
-            uiState.value.feed
-                ?.author
-                ?.userId ?: return
+        val userId = uiState.value.feed?.author?.userId ?: return
+        val nickname = uiState.value.feed?.author?.nickname
         updateState { it.copy(showBlockDialog = false) }
         viewModelScope.launch {
-            // TODO: implement block user API call with userId
+            runCatchingCancellable {
+                userRepository.blockUser(userId)
+            }.onSuccess {
+                sendSideEffect(
+                    NotificationDetailSideEffect.ShowSnackbar(
+                        message = "${nickname}님이 차단되었어요.",
+                        icon = null,
+                    ),
+                )
+                sendSideEffect(NotificationDetailSideEffect.NavigateBack)
+            }.onFailure { e ->
+                Log.e(TAG, "Failed to block user: $userId", e)
+                sendSideEffect(
+                    NotificationDetailSideEffect.ShowSnackbar(
+                        message = "차단에 실패했습니다.",
+                        icon = null,
+                    ),
+                )
+            }
         }
     }
 

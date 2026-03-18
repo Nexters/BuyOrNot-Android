@@ -21,6 +21,10 @@ class UserRepositoryImpl @Inject constructor(
         userApiService.updateFcmToken(FcmTokenRequest(fcmToken)).getOrThrow()
     }
 
+    override suspend fun blockUser(userId: Long) {
+        userApiService.blockUser(userId).getOrThrow()
+    }
+
     private fun User.toDomain(): UserProfile =
         UserProfile(
             id = id,

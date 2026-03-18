@@ -7,6 +7,8 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface UserApiService {
     @GET("/api/v1/users/me")
@@ -18,5 +20,10 @@ interface UserApiService {
     @PATCH("/api/v1/users/fcm")
     suspend fun updateFcmToken(
         @Body request: FcmTokenRequest,
+    ): BaseResponse<Unit>
+
+    @POST("/api/v1/users/blocks/{userId}")
+    suspend fun blockUser(
+        @Path("userId") userId: Long,
     ): BaseResponse<Unit>
 }

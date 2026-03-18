@@ -8,4 +8,6 @@ interface UserRepository {
     suspend fun deleteMyAccount()
 
     suspend fun updateFcmToken(fcmToken: String)
+
+    suspend fun blockUser(userId: Long)
 }
