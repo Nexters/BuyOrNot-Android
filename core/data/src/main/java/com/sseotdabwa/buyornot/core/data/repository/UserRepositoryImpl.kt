@@ -4,9 +4,11 @@ import com.sseotdabwa.buyornot.core.network.api.UserApiService
 import com.sseotdabwa.buyornot.core.network.dto.request.FcmTokenRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.User
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
+import com.sseotdabwa.buyornot.domain.model.BlockedUser
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import javax.inject.Inject
+import com.sseotdabwa.buyornot.core.network.dto.response.BlockedUser as BlockedUserResponse
 
 class UserRepositoryImpl @Inject constructor(
     private val userApiService: UserApiService,
@@ -21,6 +23,8 @@ class UserRepositoryImpl @Inject constructor(
         userApiService.updateFcmToken(FcmTokenRequest(fcmToken)).getOrThrow()
     }
 
+    override suspend fun getBlockedUsers(): List<BlockedUser> = userApiService.getBlockedUsers().getOrThrow().map { it.toDomain() }
+
     override suspend fun blockUser(userId: Long) {
         userApiService.blockUser(userId).getOrThrow()
     }
@@ -32,5 +36,12 @@ class UserRepositoryImpl @Inject constructor(
             profileImage = profileImage,
             socialAccount = socialAccount,
             email = email,
+        )
+
+    private fun BlockedUserResponse.toDomain(): BlockedUser =
+        BlockedUser(
+            userId = userId,
+            nickname = nickname,
+            profileImage = profileImage,
         )
 }

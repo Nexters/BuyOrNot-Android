@@ -15,9 +15,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +27,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
@@ -33,6 +37,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
 import com.sseotdabwa.buyornot.core.designsystem.components.PrimaryButton
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.feature.mypage.viewmodel.BlockedAccountsViewModel
 
 data class BlockedUserItem(
     val userId: Long,
@@ -41,8 +46,25 @@ data class BlockedUserItem(
 )
 
 @Composable
-fun BlockedAccountsRoute(onBackClick: () -> Unit) {
-    BlockedAccountsScreen(onBackClick = onBackClick)
+fun BlockedAccountsRoute(
+    onBackClick: () -> Unit,
+    viewModel: BlockedAccountsViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    if (uiState.isLoading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator()
+        }
+    } else {
+        BlockedAccountsScreen(
+            blockedUsers = uiState.blockedUsers,
+            onBackClick = onBackClick,
+        )
+    }
 }
 
 @Composable

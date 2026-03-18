@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.core.network.api
 
 import com.sseotdabwa.buyornot.core.network.dto.request.FcmTokenRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.BlockedUser
 import com.sseotdabwa.buyornot.core.network.dto.response.User
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -21,6 +22,9 @@ interface UserApiService {
     suspend fun updateFcmToken(
         @Body request: FcmTokenRequest,
     ): BaseResponse<Unit>
+
+    @GET("/api/v1/users/blocks")
+    suspend fun getBlockedUsers(): BaseResponse<List<BlockedUser>>
 
     @POST("/api/v1/users/blocks/{userId}")
     suspend fun blockUser(
