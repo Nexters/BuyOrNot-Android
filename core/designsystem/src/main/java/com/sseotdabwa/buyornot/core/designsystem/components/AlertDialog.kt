@@ -29,6 +29,7 @@ fun BuyOrNotAlertDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    confirmButtonColors: BuyOrNotButtonColors = BuyOrNotButtonDefaults.primaryButtonColors(),
 ) {
     Dialog(
         onDismissRequest = onDismissRequest,
@@ -80,9 +81,34 @@ fun BuyOrNotAlertDialog(
                         text = confirmText,
                         onClick = onConfirm,
                         modifier = Modifier.weight(1f),
+                        colors = confirmButtonColors,
                     )
                 }
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun BuyOrNotDestructiveAlertDialogPreview() {
+    BuyOrNotTheme {
+        Box(
+            modifier =
+                Modifier
+                    .background(BuyOrNotTheme.colors.gray1000)
+                    .padding(10.dp),
+        ) {
+            BuyOrNotAlertDialog(
+                onDismissRequest = { /* Handle dismiss */ },
+                title = "피드를 삭제할까요?",
+                subText = "삭제된 피드는 복구할 수 없어요.",
+                confirmText = "삭제",
+                dismissText = "취소",
+                onConfirm = { /* Handle confirm */ },
+                onDismiss = { /* Handle dismiss */ },
+                confirmButtonColors = BuyOrNotButtonDefaults.destructiveButtonColors(),
+            )
         }
     }
 }
