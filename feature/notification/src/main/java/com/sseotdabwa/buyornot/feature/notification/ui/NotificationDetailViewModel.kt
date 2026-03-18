@@ -101,7 +101,7 @@ class NotificationDetailViewModel @Inject constructor(
                 sendSideEffect(
                     NotificationDetailSideEffect.ShowSnackbar(
                         message = "삭제가 완료되었습니다.",
-                        icon = BuyOrNotIcons.CheckCircle,
+                        icon = null,
                     ),
                 )
                 sendSideEffect(NotificationDetailSideEffect.NavigateBack)

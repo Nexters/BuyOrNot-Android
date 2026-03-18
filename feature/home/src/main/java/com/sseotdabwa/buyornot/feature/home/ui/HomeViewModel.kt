@@ -311,7 +311,7 @@ class HomeViewModel @Inject constructor(
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = "삭제가 완료되었습니다.",
-                        icon = BuyOrNotIcons.CheckCircle,
+                        icon = null,
                     ),
                 )
             }.onFailure { e ->
