@@ -339,7 +339,7 @@ class HomeViewModel @Inject constructor(
 
     private fun handleBlockConfirmed() {
         val userId = uiState.value.blockingUserId ?: return
-        val nickname = uiState.value.blockingNickname
+        val nickname = uiState.value.blockingNickname ?: return
         updateState { it.copy(showBlockDialog = false, blockingNickname = null, blockingUserId = null) }
         viewModelScope.launch {
             runCatchingCancellable {
