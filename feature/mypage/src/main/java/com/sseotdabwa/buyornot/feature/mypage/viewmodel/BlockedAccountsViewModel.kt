@@ -24,6 +24,7 @@ class BlockedAccountsViewModel @Inject constructor(
         when (intent) {
             is BlockedAccountsIntent.LoadBlockedUsers -> loadBlockedUsers()
             is BlockedAccountsIntent.UnblockUser -> unblockUser(intent.userId, intent.nickname)
+            is BlockedAccountsIntent.BlockUser -> blockUser(intent.userId, intent.nickname)
         }
     }
 
@@ -35,8 +36,38 @@ class BlockedAccountsViewModel @Inject constructor(
             runCatchingCancellable {
                 userRepository.unblockUser(userId)
             }.onSuccess {
-                updateState { it.copy(blockedUsers = it.blockedUsers.filter { user -> user.userId != userId }) }
+                updateState {
+                    it.copy(
+                        blockedUsers =
+                            it.blockedUsers.map { user ->
+                                if (user.userId == userId) user.copy(isBlocked = false) else user
+                            },
+                    )
+                }
                 sendSideEffect(BlockedAccountsSideEffect.ShowSnackbar("${nickname}의 차단이 해제되었어요."))
+            }.onFailure { throwable ->
+                Log.w(TAG, throwable.toString())
+            }
+        }
+    }
+
+    private fun blockUser(
+        userId: Long,
+        nickname: String,
+    ) {
+        viewModelScope.launch {
+            runCatchingCancellable {
+                userRepository.blockUser(userId)
+            }.onSuccess {
+                updateState {
+                    it.copy(
+                        blockedUsers =
+                            it.blockedUsers.map { user ->
+                                if (user.userId == userId) user.copy(isBlocked = true) else user
+                            },
+                    )
+                }
+                sendSideEffect(BlockedAccountsSideEffect.ShowSnackbar("${nickname}이 차단되었어요."))
             }.onFailure { throwable ->
                 Log.w(TAG, throwable.toString())
             }

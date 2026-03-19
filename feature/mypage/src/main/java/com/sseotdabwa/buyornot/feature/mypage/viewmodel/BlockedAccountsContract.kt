@@ -16,6 +16,11 @@ sealed interface BlockedAccountsIntent {
         val userId: Long,
         val nickname: String,
     ) : BlockedAccountsIntent
+
+    data class BlockUser(
+        val userId: Long,
+        val nickname: String,
+    ) : BlockedAccountsIntent
 }
 
 sealed interface BlockedAccountsSideEffect {

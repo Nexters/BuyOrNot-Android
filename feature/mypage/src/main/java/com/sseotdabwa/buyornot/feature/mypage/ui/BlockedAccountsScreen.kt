@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
+import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotButtonDefaults
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
@@ -55,6 +56,7 @@ data class BlockedUserItem(
     val userId: Long,
     val profileImageUrl: String,
     val nickname: String,
+    val isBlocked: Boolean = true,
 )
 
 @Composable
@@ -92,6 +94,9 @@ fun BlockedAccountsRoute(
             onUnblockClick = { userId, nickname ->
                 viewModel.handleIntent(BlockedAccountsIntent.UnblockUser(userId, nickname))
             },
+            onBlockClick = { userId, nickname ->
+                viewModel.handleIntent(BlockedAccountsIntent.BlockUser(userId, nickname))
+            },
             onBackClick = onBackClick,
         )
     }
@@ -102,6 +107,7 @@ fun BlockedAccountsScreen(
     modifier: Modifier = Modifier,
     blockedUsers: List<BlockedUserItem> = emptyList(),
     onUnblockClick: (userId: Long, nickname: String) -> Unit = { _, _ -> },
+    onBlockClick: (userId: Long, nickname: String) -> Unit = { _, _ -> },
     onBackClick: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -130,7 +136,9 @@ fun BlockedAccountsScreen(
                     BlockedUser(
                         profileImageUrl = user.profileImageUrl,
                         nickname = user.nickname,
+                        isBlocked = user.isBlocked,
                         onUnblockClick = { onUnblockClick(user.userId, user.nickname) },
+                        onBlockClick = { onBlockClick(user.userId, user.nickname) },
                     )
                 }
             }
@@ -142,7 +150,9 @@ fun BlockedAccountsScreen(
 private fun BlockedUser(
     profileImageUrl: String,
     nickname: String,
+    isBlocked: Boolean,
     onUnblockClick: () -> Unit,
+    onBlockClick: () -> Unit,
 ) {
     Row(
         modifier =
@@ -180,7 +190,11 @@ private fun BlockedUser(
             )
         }
 
-        UnblockButton(onClick = onUnblockClick)
+        if (isBlocked) {
+            UnblockButton(onClick = onUnblockClick)
+        } else {
+            BlockButton(onClick = onBlockClick)
+        }
     }
 }
 
@@ -225,6 +239,47 @@ private fun UnblockButton(
     }
 }
 
+@Composable
+private fun BlockButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+) {
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val colors = BuyOrNotButtonDefaults.neutralButtonColors(ButtonSize.Small)
+
+    val containerColor by animateColorAsState(
+        targetValue =
+            when {
+                isPressed -> colors.pressedContainer
+                isHovered -> colors.hoverContainer
+                else -> colors.defaultContainer
+            },
+        label = "blockButtonContainerColor",
+    )
+
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(36.dp),
+        interactionSource = interactionSource,
+        shape = RoundedCornerShape(12.dp),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = containerColor,
+                contentColor = colors.content,
+                disabledContainerColor = colors.disabledContainer,
+                disabledContentColor = colors.disabledContent,
+            ),
+        contentPadding = PaddingValues(horizontal = 12.dp),
+    ) {
+        Text(
+            text = "차단하기",
+            style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun BlockedUserPreview() {
@@ -232,7 +287,9 @@ private fun BlockedUserPreview() {
         BlockedUser(
             profileImageUrl = "",
             nickname = "결정장애",
+            isBlocked = false,
             onUnblockClick = {},
+            onBlockClick = {},
         )
     }
 }
