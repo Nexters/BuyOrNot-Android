@@ -188,7 +188,6 @@ private fun BlockedUser(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 private fun BlockedUserPreview() {
