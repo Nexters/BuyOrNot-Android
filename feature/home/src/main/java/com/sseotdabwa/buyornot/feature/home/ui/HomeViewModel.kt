@@ -104,8 +104,23 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.OnFilterSelected -> handleFilterSelection(intent.filter)
             is HomeIntent.OnBannerDismissed -> handleBannerDismiss()
             is HomeIntent.OnVoteClicked -> handleVote(intent.feedId, intent.optionIndex)
-            is HomeIntent.OnDeleteClicked -> handleDelete(intent.feedId)
+            is HomeIntent.ShowDeleteDialog -> updateState { it.copy(showDeleteDialog = true, deletingFeedId = intent.feedId) }
+            is HomeIntent.DismissDeleteDialog -> updateState { it.copy(showDeleteDialog = false, deletingFeedId = null) }
+            is HomeIntent.OnDeleteConfirmed -> {
+                updateState { it.copy(showDeleteDialog = false, deletingFeedId = null) }
+                handleDelete(intent.feedId)
+            }
             is HomeIntent.OnReportClicked -> handleReport(intent.feedId)
+            is HomeIntent.ShowBlockDialog -> handleShowBlockDialog(intent.feedId)
+            is HomeIntent.DismissBlockDialog ->
+                updateState {
+                    it.copy(
+                        showBlockDialog = false,
+                        blockingNickname = null,
+                        blockingUserId = null,
+                    )
+                }
+            is HomeIntent.OnBlockConfirmed -> handleBlockConfirmed()
             is HomeIntent.LoadFeeds -> loadFeeds()
             is HomeIntent.LoadNextPage -> handleNextPage()
             is HomeIntent.Refresh -> handleRefresh()
@@ -296,7 +311,7 @@ class HomeViewModel @Inject constructor(
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = "삭제가 완료되었습니다.",
-                        icon = BuyOrNotIcons.CheckCircle,
+                        icon = null,
                     ),
                 )
             }.onFailure { e ->
@@ -304,6 +319,44 @@ class HomeViewModel @Inject constructor(
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = "삭제에 실패했습니다.",
+                        icon = null,
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun handleShowBlockDialog(feedId: String) {
+        val feed = uiState.value.feeds.find { it.id == feedId } ?: return
+        updateState {
+            it.copy(
+                showBlockDialog = true,
+                blockingNickname = feed.nickname,
+                blockingUserId = feed.authorUserId,
+            )
+        }
+    }
+
+    private fun handleBlockConfirmed() {
+        val userId = uiState.value.blockingUserId ?: return
+        val nickname = uiState.value.blockingNickname ?: return
+        updateState { it.copy(showBlockDialog = false, blockingNickname = null, blockingUserId = null) }
+        viewModelScope.launch {
+            runCatchingCancellable {
+                userRepository.blockUser(userId)
+            }.onSuccess {
+                sendSideEffect(
+                    HomeSideEffect.ShowSnackbar(
+                        message = "${nickname}님이 차단되었어요.",
+                        icon = null,
+                    ),
+                )
+                updateState { it.copy(feeds = it.feeds.filter { feed -> feed.authorUserId != userId }) }
+            }.onFailure { e ->
+                Log.e("HomeViewModel", "Failed to block user: $userId", e)
+                sendSideEffect(
+                    HomeSideEffect.ShowSnackbar(
+                        message = "차단에 실패했습니다.",
                         icon = null,
                     ),
                 )
@@ -442,7 +495,7 @@ class HomeViewModel @Inject constructor(
     /**
      * Domain Feed를 UI FeedItem으로 변환
      */
-    private fun Feed.toFeedItem(isOwner: Boolean = false): FeedItem {
+    private fun Feed.toFeedItem(isOwner: Boolean): FeedItem {
         val aspectRatio =
             if (imageWidth == imageHeight) {
                 ImageAspectRatio.SQUARE
@@ -473,6 +526,7 @@ class HomeViewModel @Inject constructor(
             maybeVoteCount = noCount,
             totalVoteCount = totalCount,
             isOwner = isOwner,
+            authorUserId = author.userId,
         )
     }
 }

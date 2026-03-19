@@ -27,6 +27,7 @@ import com.sseotdabwa.buyornot.feature.mypage.navigation.navigateToMyPage
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotification
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotificationDetail
 import com.sseotdabwa.buyornot.feature.notification.navigation.notificationGraph
+import com.sseotdabwa.buyornot.feature.upload.navigation.UPLOAD_ROUTE
 import com.sseotdabwa.buyornot.feature.upload.navigation.navigateToUpload
 import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
 
@@ -106,11 +107,10 @@ fun BuyOrNotNavHost(
                     tab = HomeTab.MY_FEED,
                     navOptions =
                         androidx.navigation.navOptions {
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = false
+                            popUpTo(UPLOAD_ROUTE) {
+                                inclusive = true
                             }
                             launchSingleTop = true
-                            restoreState = false
                         },
                 )
             },

@@ -37,6 +37,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotAlertDialog
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotButtonDefaults
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
@@ -132,6 +134,31 @@ fun HomeScreen(
 ) {
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
     var isFabExpanded by remember { mutableStateOf(false) }
+
+    if (uiState.showBlockDialog && uiState.blockingNickname != null) {
+        BuyOrNotAlertDialog(
+            onDismissRequest = { onIntent(HomeIntent.DismissBlockDialog) },
+            title = "이 글의 사용자를 차단하시겠어요?",
+            subText = "${uiState.blockingNickname}님의 투표를 볼 수 없어요.",
+            confirmText = "차단하기",
+            dismissText = "취소",
+            onConfirm = { onIntent(HomeIntent.OnBlockConfirmed) },
+            onDismiss = { onIntent(HomeIntent.DismissBlockDialog) },
+        )
+    }
+
+    if (uiState.showDeleteDialog && uiState.deletingFeedId != null) {
+        BuyOrNotAlertDialog(
+            onDismissRequest = { onIntent(HomeIntent.DismissDeleteDialog) },
+            title = "정말 삭제하시겠어요?",
+            subText = "투표 데이터가 모두 사라지며, 복구할 수 없어요.",
+            confirmText = "삭제",
+            dismissText = "취소",
+            onConfirm = { onIntent(HomeIntent.OnDeleteConfirmed(uiState.deletingFeedId)) },
+            onDismiss = { onIntent(HomeIntent.DismissDeleteDialog) },
+            confirmButtonColors = BuyOrNotButtonDefaults.destructiveButtonColors(),
+        )
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -377,10 +404,12 @@ private fun HomeFeedList(
                         FeedItemCard(
                             feed = filteredFeeds[index],
                             voterProfileImageUrl = uiState.voterProfileImageUrl,
+                            isGuest = uiState.userType == UserType.GUEST,
                             modifier = Modifier.padding(20.dp).animateItem(),
                             onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
-                            onDelete = { id -> onIntent(HomeIntent.OnDeleteClicked(id)) },
+                            onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
                             onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
+                            onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
                         )
                     }
 
@@ -468,10 +497,12 @@ private fun FilterChipRow(
 private fun FeedItemCard(
     feed: FeedItem,
     voterProfileImageUrl: String,
+    isGuest: Boolean,
     modifier: Modifier = Modifier,
     onVote: (String, Int) -> Unit,
     onDelete: (String) -> Unit,
     onReport: (String) -> Unit,
+    onBlock: (String) -> Unit,
 ) {
     Column {
         FeedCard(
@@ -496,6 +527,8 @@ private fun FeedItemCard(
             },
             onDeleteClick = { onDelete(feed.id) },
             onReportClick = { onReport(feed.id) },
+            onBlockClick = { onBlock(feed.id) },
+            showMoreButton = !isGuest,
         )
 
         BuyOrNotDivider(

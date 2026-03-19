@@ -9,6 +9,7 @@ import com.sseotdabwa.buyornot.core.ui.webview.navigateToFeedBack
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToTerms
 import com.sseotdabwa.buyornot.feature.mypage.ui.AccountSettingRoute
+import com.sseotdabwa.buyornot.feature.mypage.ui.BlockedAccountsRoute
 import com.sseotdabwa.buyornot.feature.mypage.ui.MyPageRoute
 import com.sseotdabwa.buyornot.feature.mypage.ui.PolicyRoute
 import com.sseotdabwa.buyornot.feature.mypage.ui.WithdrawalRoute
@@ -25,6 +26,8 @@ sealed class MyPageScreens(
     object Policy : MyPageScreens("policy")
 
     object Withdrawal : MyPageScreens("withdrawal")
+
+    object BlockedAccounts : MyPageScreens("blocked_accounts")
 }
 
 fun NavController.navigateToMyPage() {
@@ -43,6 +46,10 @@ fun NavController.navigateToWithdrawal() {
     this.navigate(MyPageScreens.Withdrawal.route)
 }
 
+fun NavController.navigateToBlockedAccounts() {
+    this.navigate(MyPageScreens.BlockedAccounts.route)
+}
+
 fun NavGraphBuilder.myPageGraph(
     navController: NavHostController,
     versionName: String,
@@ -57,6 +64,7 @@ fun NavGraphBuilder.myPageGraph(
                 versionName = versionName,
                 onBackClick = navController::popBackStack,
                 onAccountSettingClick = navController::navigateToAccountSetting,
+                onBlockedAccountsClick = navController::navigateToBlockedAccounts,
                 onPolicyClick = navController::navigateToPolicy,
                 onFeedbackClick = navController::navigateToFeedBack,
             )
@@ -82,6 +90,12 @@ fun NavGraphBuilder.myPageGraph(
             WithdrawalRoute(
                 onBackClick = navController::popBackStack,
                 onNavigateToLogin = onNavigateToLogin,
+            )
+        }
+
+        composable(MyPageScreens.BlockedAccounts.route) {
+            BlockedAccountsRoute(
+                onBackClick = navController::popBackStack,
             )
         }
     }

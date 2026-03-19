@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
@@ -42,7 +43,10 @@ class NotificationDetailViewModel @Inject constructor(
             userPreferencesRepository.userPreferences
                 .collect { preferences ->
                     updateState {
-                        it.copy(voterProfileImageUrl = preferences.profileImageUrl)
+                        it.copy(
+                            voterProfileImageUrl = preferences.profileImageUrl,
+                            isGuest = preferences.userType == UserType.GUEST,
+                        )
                     }
                 }
         }
@@ -51,8 +55,16 @@ class NotificationDetailViewModel @Inject constructor(
     override fun handleIntent(intent: NotificationDetailIntent) {
         when (intent) {
             NotificationDetailIntent.OnRefresh -> loadDetail()
-            NotificationDetailIntent.OnDeleteClicked -> handleDelete()
+            NotificationDetailIntent.ShowDeleteDialog -> updateState { it.copy(showDeleteDialog = true) }
+            NotificationDetailIntent.DismissDeleteDialog -> updateState { it.copy(showDeleteDialog = false) }
+            NotificationDetailIntent.OnDeleteConfirmed -> {
+                updateState { it.copy(showDeleteDialog = false) }
+                handleDelete()
+            }
             NotificationDetailIntent.OnReportClicked -> handleReport()
+            NotificationDetailIntent.ShowBlockDialog -> updateState { it.copy(showBlockDialog = true) }
+            NotificationDetailIntent.DismissBlockDialog -> updateState { it.copy(showBlockDialog = false) }
+            NotificationDetailIntent.OnBlockConfirmed -> handleBlockConfirmed()
         }
     }
 
@@ -93,7 +105,7 @@ class NotificationDetailViewModel @Inject constructor(
                 sendSideEffect(
                     NotificationDetailSideEffect.ShowSnackbar(
                         message = "삭제가 완료되었습니다.",
-                        icon = BuyOrNotIcons.CheckCircle,
+                        icon = null,
                     ),
                 )
                 sendSideEffect(NotificationDetailSideEffect.NavigateBack)
@@ -102,6 +114,39 @@ class NotificationDetailViewModel @Inject constructor(
                 sendSideEffect(
                     NotificationDetailSideEffect.ShowSnackbar(
                         message = "삭제에 실패했습니다.",
+                        icon = null,
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun handleBlockConfirmed() {
+        updateState { it.copy(showBlockDialog = false) }
+        val userId =
+            uiState.value.feed
+                ?.author
+                ?.userId ?: return
+        val nickname =
+            uiState.value.feed
+                ?.author
+                ?.nickname
+        viewModelScope.launch {
+            runCatchingCancellable {
+                userRepository.blockUser(userId)
+            }.onSuccess {
+                sendSideEffect(
+                    NotificationDetailSideEffect.ShowSnackbar(
+                        message = "${nickname}님이 차단되었어요.",
+                        icon = null,
+                    ),
+                )
+                sendSideEffect(NotificationDetailSideEffect.NavigateBack)
+            }.onFailure { e ->
+                Log.e(TAG, "Failed to block user: $userId", e)
+                sendSideEffect(
+                    NotificationDetailSideEffect.ShowSnackbar(
+                        message = "차단에 실패했습니다.",
                         icon = null,
                     ),
                 )
