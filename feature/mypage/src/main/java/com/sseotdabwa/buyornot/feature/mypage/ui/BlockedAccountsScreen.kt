@@ -1,10 +1,6 @@
 package com.sseotdabwa.buyornot.feature.mypage.ui
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,23 +9,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,8 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
-import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
-import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotButtonDefaults
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -190,95 +180,14 @@ private fun BlockedUser(
             )
         }
 
-        if (isBlocked) {
-            UnblockButton(onClick = onUnblockClick)
-        } else {
-            BlockButton(onClick = onBlockClick)
-        }
-    }
-}
-
-@Composable
-private fun UnblockButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-) {
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val colors = BuyOrNotButtonDefaults.primaryButtonColors()
-
-    val containerColor by animateColorAsState(
-        targetValue =
-            when {
-                isPressed -> colors.pressedContainer
-                isHovered -> colors.hoverContainer
-                else -> colors.defaultContainer
-            },
-        label = "unblockButtonContainerColor",
-    )
-
-    Button(
-        onClick = onClick,
-        modifier = modifier.height(36.dp),
-        interactionSource = interactionSource,
-        shape = RoundedCornerShape(12.dp),
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = containerColor,
-                contentColor = colors.content,
-                disabledContainerColor = colors.disabledContainer,
-                disabledContentColor = colors.disabledContent,
-            ),
-        contentPadding = PaddingValues(horizontal = 12.dp),
-    ) {
-        Text(
-            text = "차단해제",
-            style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+        BuyOrNotChip(
+            text = if (isBlocked) "차단해제" else "차단하기",
+            isSelected = isBlocked,
+            onClick = if (isBlocked) onUnblockClick else onBlockClick,
         )
     }
 }
 
-@Composable
-private fun BlockButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-) {
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val colors = BuyOrNotButtonDefaults.neutralButtonColors(ButtonSize.Small)
-
-    val containerColor by animateColorAsState(
-        targetValue =
-            when {
-                isPressed -> colors.pressedContainer
-                isHovered -> colors.hoverContainer
-                else -> colors.defaultContainer
-            },
-        label = "blockButtonContainerColor",
-    )
-
-    Button(
-        onClick = onClick,
-        modifier = modifier.height(36.dp),
-        interactionSource = interactionSource,
-        shape = RoundedCornerShape(12.dp),
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = containerColor,
-                contentColor = colors.content,
-                disabledContainerColor = colors.disabledContainer,
-                disabledContentColor = colors.disabledContent,
-            ),
-        contentPadding = PaddingValues(horizontal = 12.dp),
-    ) {
-        Text(
-            text = "차단하기",
-            style = BuyOrNotTheme.typography.subTitleS5SemiBold,
-        )
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
