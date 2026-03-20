@@ -41,12 +41,19 @@ jobs:
         run: ./gradlew ktlintCheck
         continue-on-error: true
 
-      - name: Auto-fix with ktlintFormat
-        if: steps.ktlint.outcome == 'failure'
+      - name: Fail with guide message (fork PR)
+        if: steps.ktlint.outcome == 'failure' && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::error::ktlint 검사에 실패했습니다. Fork PR은 자동 포맷팅이 지원되지 않습니다."
+          echo "::error::로컬에서 ./gradlew ktlintFormat 실행 후 다시 push 해주세요."
+          exit 1
+
+      - name: Auto-fix with ktlintFormat (internal branch only)
+        if: steps.ktlint.outcome == 'failure' && github.event.pull_request.head.repo.full_name == github.repository
         run: ./gradlew ktlintFormat
 
-      - name: Commit and push ktlint fixes
-        if: steps.ktlint.outcome == 'failure'
+      - name: Commit and push ktlint fixes (internal branch only)
+        if: steps.ktlint.outcome == 'failure' && github.event.pull_request.head.repo.full_name == github.repository
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -62,6 +69,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fail if ktlint had errors
-        if: steps.ktlint.outcome == 'failure'
+      - name: Fail if ktlint had errors (internal branch only)
+        if: steps.ktlint.outcome == 'failure' && github.event.pull_request.head.repo.full_name == github.repository
         run: exit 1
