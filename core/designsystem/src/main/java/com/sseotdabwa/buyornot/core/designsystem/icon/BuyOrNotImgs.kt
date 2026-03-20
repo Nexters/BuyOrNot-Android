@@ -33,6 +33,8 @@ object BuyOrNotImgs {
     val Error = ImgsResource(R.drawable.img_error)
 
     val NoNotification = ImgsResource(R.drawable.img_no_bell)
+
+    val NoBlockedUser = ImgsResource(R.drawable.img_blocked_user_empty)
 }
 
 /**

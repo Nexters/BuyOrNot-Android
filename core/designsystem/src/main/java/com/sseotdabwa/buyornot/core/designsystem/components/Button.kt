@@ -78,6 +78,17 @@ object BuyOrNotButtonDefaults {
         }
 
     @Composable
+    fun destructiveButtonColors() =
+        BuyOrNotButtonColors(
+            defaultContainer = BuyOrNotTheme.colors.red100,
+            hoverContainer = BuyOrNotTheme.colors.red100,
+            pressedContainer = BuyOrNotTheme.colors.red100,
+            disabledContainer = BuyOrNotTheme.colors.gray200,
+            content = BuyOrNotTheme.colors.gray0,
+            disabledContent = BuyOrNotTheme.colors.gray600,
+        )
+
+    @Composable
     fun secondaryOutlinedButtonColors() =
         BuyOrNotButtonColors(
             defaultContainer = BuyOrNotTheme.colors.gray0,
@@ -142,6 +153,7 @@ fun PrimaryButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     size: ButtonSize = ButtonSize.Large,
+    colors: BuyOrNotButtonColors = BuyOrNotButtonDefaults.primaryButtonColors(),
     onClick: () -> Unit,
 ) {
     val height =
@@ -160,7 +172,7 @@ fun PrimaryButton(
         enabled = enabled,
         height = height,
         shape = RoundedCornerShape(cornerRadius),
-        buttonColors = BuyOrNotButtonDefaults.primaryButtonColors(),
+        buttonColors = colors,
         contentPadding = PaddingValues(horizontal = 24.dp), // 시안에 맞게 패딩 조절
         interactionSource = interactionSource,
     ) {

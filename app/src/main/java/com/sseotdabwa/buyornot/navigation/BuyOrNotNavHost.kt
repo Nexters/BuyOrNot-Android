@@ -12,6 +12,7 @@ import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToTerms
 import com.sseotdabwa.buyornot.core.ui.webview.webViewScreen
+import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateForceToLogin
@@ -26,6 +27,7 @@ import com.sseotdabwa.buyornot.feature.mypage.navigation.navigateToMyPage
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotification
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotificationDetail
 import com.sseotdabwa.buyornot.feature.notification.navigation.notificationGraph
+import com.sseotdabwa.buyornot.feature.upload.navigation.UPLOAD_ROUTE
 import com.sseotdabwa.buyornot.feature.upload.navigation.navigateToUpload
 import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
 
@@ -79,7 +81,7 @@ fun BuyOrNotNavHost(
                 navController.navigateToHome(
                     navOptions =
                         androidx.navigation.navOptions {
-                            popUpTo(SPLASH_ROUTE) { inclusive = true }
+                            popUpTo(AUTH_ROUTE) { inclusive = true }
                             launchSingleTop = true
                         },
                 )
@@ -105,11 +107,10 @@ fun BuyOrNotNavHost(
                     tab = HomeTab.MY_FEED,
                     navOptions =
                         androidx.navigation.navOptions {
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = false
+                            popUpTo(UPLOAD_ROUTE) {
+                                inclusive = true
                             }
                             launchSingleTop = true
-                            restoreState = false
                         },
                 )
             },
