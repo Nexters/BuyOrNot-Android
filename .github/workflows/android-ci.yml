@@ -10,6 +10,7 @@ on:
 jobs:
   ktlint:
     runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
 
     steps:
       - name: Checkout repository
@@ -37,4 +38,38 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run ktlint check
+        id: ktlint
         run: ./gradlew ktlintCheck
+        continue-on-error: true
+
+      - name: Fail with guide message (fork PR)
+        if: steps.ktlint.outcome == 'failure' && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::error::ktlint 검사에 실패했습니다. Fork PR은 자동 포맷팅이 지원되지 않습니다."
+          echo "::error::로컬에서 ./gradlew ktlintFormat 실행 후 다시 push 해주세요."
+          exit 1
+
+      - name: Auto-fix with ktlintFormat (internal branch only)
+        if: steps.ktlint.outcome == 'failure' && github.event.pull_request.head.repo.full_name == github.repository
+        run: ./gradlew ktlintFormat
+
+      - name: Commit and push ktlint fixes (internal branch only)
+        if: steps.ktlint.outcome == 'failure' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          ISSUE=$(echo "$BRANCH" | grep -oP '#\d+' | head -1)
+          if [ -n "$ISSUE" ]; then
+            MSG="chore/${ISSUE}: ktlint 포맷팅"
+          else
+            MSG="chore: ktlint 포맷팅"
+          fi
+          git diff --quiet || (git add -A && git commit -m "$MSG")
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fail if ktlint had errors (internal branch only)
+        if: steps.ktlint.outcome == 'failure' && github.event.pull_request.head.repo.full_name == github.repository
+        run: exit 1
