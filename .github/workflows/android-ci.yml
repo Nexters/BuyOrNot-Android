@@ -37,4 +37,31 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run ktlint check
+        id: ktlint
         run: ./gradlew ktlintCheck
+        continue-on-error: true
+
+      - name: Auto-fix with ktlintFormat
+        if: steps.ktlint.outcome == 'failure'
+        run: ./gradlew ktlintFormat
+
+      - name: Commit and push ktlint fixes
+        if: steps.ktlint.outcome == 'failure'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          ISSUE=$(echo "$BRANCH" | grep -oP '#\d+' | head -1)
+          if [ -n "$ISSUE" ]; then
+            MSG="chore/${ISSUE}: ktlint 포맷팅"
+          else
+            MSG="chore: ktlint 포맷팅"
+          fi
+          git diff --quiet || (git add -A && git commit -m "$MSG")
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fail if ktlint had errors
+        if: steps.ktlint.outcome == 'failure'
+        run: exit 1
