@@ -32,8 +32,7 @@ class HomeViewModel @Inject constructor(
     private var isUserIdLoaded = false
 
     init {
-        observeUserPreferences()
-        loadInitialData()
+        observeUserPreferences(); loadInitialData()
     }
 
     private fun observeUserPreferences() {
