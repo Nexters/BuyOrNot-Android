@@ -49,8 +49,7 @@ fun NotificationDetailRoute(
     onBackClick: () -> Unit,
     viewModel: NotificationDetailViewModel = hiltViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle(); val snackbarHostState = remember { SnackbarHostState() }
 
     // SideEffect 처리
     LaunchedEffect(Unit) {
