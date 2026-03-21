@@ -52,7 +52,7 @@ fun BuyOrNotAlertDialog(
                 ) {
                     Text(
                         text = title,
-                        style = BuyOrNotTheme.typography.titleT2Bold,
+                        style = BuyOrNotTheme.typography.titleT1Bold,
                         color = BuyOrNotTheme.colors.gray900,
                     )
 
@@ -60,7 +60,7 @@ fun BuyOrNotAlertDialog(
 
                     Text(
                         text = subText,
-                        style = BuyOrNotTheme.typography.bodyB3Medium,
+                        style = BuyOrNotTheme.typography.bodyB4Medium,
                         color = BuyOrNotTheme.colors.gray700,
                     )
                 }
