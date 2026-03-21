@@ -66,7 +66,7 @@ jobs:
             MSG="chore: ktlint 포맷팅"
           fi
           git diff --quiet || (git add -A && git commit -m "$MSG")
-          git push
+          git push origin HEAD:${GITHUB_HEAD_REF}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
