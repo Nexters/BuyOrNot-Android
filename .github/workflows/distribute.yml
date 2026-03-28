@@ -76,34 +76,24 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
-      - name: Resolve distribution arguments
-        id: dist_args
-        run: |
-          ARGS=""
-          TESTERS="${{ github.event.inputs.testers }}"
-          GROUPS="${{ github.event.inputs.groups }}"
-          if [ -n "$TESTERS" ]; then
-            ARGS="$ARGS -PfirebaseAppDistributionTesters=$TESTERS"
-          fi
-          if [ -n "$GROUPS" ]; then
-            ARGS="$ARGS -PfirebaseAppDistributionGroups=$GROUPS"
-          fi
-          echo "args=$ARGS" >> $GITHUB_OUTPUT
-
       - name: Build & Distribute (Debug)
         if: github.event.inputs.build_type == 'debug'
         run: |
           ./gradlew assembleDebug appDistributionUploadDebug \
-            "-PfirebaseAppDistributionReleaseNotes=${{ steps.notes.outputs.value }}" \
-            ${{ steps.dist_args.outputs.args }}
+            "-PfirebaseAppDistributionReleaseNotes=$RELEASE_NOTES" \
+            "-PfirebaseAppDistributionTesters=${{ github.event.inputs.testers }}" \
+            "-PfirebaseAppDistributionGroups=${{ github.event.inputs.groups }}"
         env:
           GOOGLE_APPLICATION_CREDENTIALS: app/firebase-service-account.json
+          RELEASE_NOTES: ${{ steps.notes.outputs.value }}
 
       - name: Build & Distribute (Release)
         if: github.event.inputs.build_type == 'release'
         run: |
           ./gradlew assembleRelease appDistributionUploadRelease \
-            "-PfirebaseAppDistributionReleaseNotes=${{ steps.notes.outputs.value }}" \
-            ${{ steps.dist_args.outputs.args }}
+            "-PfirebaseAppDistributionReleaseNotes=$RELEASE_NOTES" \
+            "-PfirebaseAppDistributionTesters=${{ github.event.inputs.testers }}" \
+            "-PfirebaseAppDistributionGroups=${{ github.event.inputs.groups }}"
         env:
           GOOGLE_APPLICATION_CREDENTIALS: app/firebase-service-account.json
+          RELEASE_NOTES: ${{ steps.notes.outputs.value }}
