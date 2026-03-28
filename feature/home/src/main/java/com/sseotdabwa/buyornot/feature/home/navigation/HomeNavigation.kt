@@ -1,5 +1,11 @@
 package com.sseotdabwa.buyornot.feature.home.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
@@ -27,6 +33,24 @@ fun NavGraphBuilder.homeScreen(
                     nullable = true
                 },
             ),
+        enterTransition = {
+            slideInVertically(
+                initialOffsetY = { (it * 0.15f).toInt() },
+                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+            ) + fadeIn(animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing))
+        },
+        exitTransition = {
+            fadeOut(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing))
+        },
+        popEnterTransition = {
+            fadeIn(animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing))
+        },
+        popExitTransition = {
+            slideOutVertically(
+                targetOffsetY = { (it * 0.15f).toInt() },
+                animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+            ) + fadeOut(animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing))
+        },
     ) { backStackEntry ->
         val tabName = backStackEntry.arguments?.getString("tab")
         val initialTab =
