@@ -88,7 +88,6 @@ fun BuyOrNotBottomSheet(
         modifier =
             Modifier
                 .padding(horizontal = 14.dp),
-        //  기존 하단 패딩 제거?
         sheetState = sheetState,
         shape = sheetShape,
         containerColor = Color.Transparent, // 배경 투명하게 -> Spacer
