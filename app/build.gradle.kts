@@ -18,6 +18,12 @@ val localProperties =
         }
     }
 
+fun gradlePropertyOrNull(key: String): String? = providers.gradleProperty(key).orNull?.takeUnless { it.isBlank() }
+
+val firebaseDistributionTesters = gradlePropertyOrNull("firebaseAppDistributionTesters")
+val firebaseDistributionGroups = gradlePropertyOrNull("firebaseAppDistributionGroups")
+val firebaseDistributionReleaseNotes = gradlePropertyOrNull("firebaseAppDistributionReleaseNotes")
+
 android {
     namespace = "com.sseotdabwa.buyornot"
 
@@ -62,7 +68,9 @@ android {
             signingConfig = signingConfigs.getByName("release")
             firebaseAppDistribution {
                 artifactType = "APK"
-                // 테스터 그룹은 Firebase Console에서 관리하거나 워크플로우의 -Pgroups 로 전달
+                firebaseDistributionReleaseNotes?.let { releaseNotes = it }
+                firebaseDistributionTesters?.let { testers = it }
+                firebaseDistributionGroups?.let { groups = it }
             }
         }
         release {
@@ -75,6 +83,9 @@ android {
             signingConfig = signingConfigs.getByName("release")
             firebaseAppDistribution {
                 artifactType = "APK"
+                firebaseDistributionReleaseNotes?.let { releaseNotes = it }
+                firebaseDistributionTesters?.let { testers = it }
+                firebaseDistributionGroups?.let { groups = it }
             }
         }
     }
