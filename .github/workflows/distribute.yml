@@ -67,7 +67,11 @@ jobs:
           if [ -z "$NOTE" ]; then
             NOTE="$(git log -1 --format='%s (%h)')"
           fi
-          echo "value=$NOTE" >> $GITHUB_OUTPUT
+          {
+            echo "value<<EOF"
+            echo "$NOTE"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Resolve distribution arguments
         id: dist_args
