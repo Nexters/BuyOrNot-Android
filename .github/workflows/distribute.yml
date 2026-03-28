@@ -1,0 +1,106 @@
+name: Firebase App Distribution
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: '배포할 빌드 타입'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+      release_notes:
+        description: '릴리스 노트 (비워두면 최신 커밋 메시지 사용)'
+        required: false
+        default: ''
+      testers:
+        description: '테스터 이메일 (쉼표 구분, 예: a@example.com,b@example.com)'
+        required: false
+        default: ''
+      groups:
+        description: 'Firebase Console 테스터 그룹 별칭 (쉼표 구분, 예: qa-team,beta-testers)'
+        required: false
+        default: ''
+
+jobs:
+  distribute:
+    name: Build & Distribute (${{ github.event.inputs.build_type }})
+    runs-on: ubuntu-latest
+    concurrency:
+      group: distribute-${{ github.event.inputs.build_type }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configure Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Create local.properties
+        run: |
+          echo "signed.store.file=keystore.jks" >> local.properties
+          echo "signed.store.password=${{ secrets.SIGNED_STORE_PASSWORD }}" >> local.properties
+          echo "signed.key.alias=${{ secrets.SIGNED_KEY_ALIAS }}" >> local.properties
+          echo "signed.key.password=${{ secrets.SIGNED_KEY_PASSWORD }}" >> local.properties
+          echo "debug.base.url=${{ secrets.DEBUG_BASE_URL }}" >> local.properties
+          echo "release.base.url=${{ secrets.RELEASE_BASE_URL }}" >> local.properties
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
+
+      - name: Decode Firebase Service Account
+        run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > app/firebase-service-account.json
+
+      - name: Resolve release notes
+        id: notes
+        run: |
+          NOTE="${{ github.event.inputs.release_notes }}"
+          if [ -z "$NOTE" ]; then
+            NOTE="$(git log -1 --format='%s (%h)')"
+          fi
+          {
+            echo "value<<EOF"
+            echo "$NOTE"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Resolve distribution arguments
+        id: dist_args
+        run: |
+          ARGS=""
+          TESTERS="${{ github.event.inputs.testers }}"
+          GROUPS="${{ github.event.inputs.groups }}"
+          if [ -n "$TESTERS" ]; then
+            ARGS="$ARGS -PfirebaseAppDistributionTesters=$TESTERS"
+          fi
+          if [ -n "$GROUPS" ]; then
+            ARGS="$ARGS -PfirebaseAppDistributionGroups=$GROUPS"
+          fi
+          echo "args=$ARGS" >> $GITHUB_OUTPUT
+
+      - name: Distribute (Debug)
+        if: github.event.inputs.build_type == 'debug'
+        run: |
+          ./gradlew appDistributionUploadDebug \
+            "-PfirebaseAppDistributionReleaseNotes=${{ steps.notes.outputs.value }}" \
+            ${{ steps.dist_args.outputs.args }}
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: app/firebase-service-account.json
+
+      - name: Distribute (Release)
+        if: github.event.inputs.build_type == 'release'
+        run: |
+          ./gradlew appDistributionUploadRelease \
+            "-PfirebaseAppDistributionReleaseNotes=${{ steps.notes.outputs.value }}" \
+            ${{ steps.dist_args.outputs.args }}
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: app/firebase-service-account.json
