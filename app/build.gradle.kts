@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.firebase.appdistribution)
 }
 
 val localProperties =
@@ -58,6 +59,10 @@ android {
     buildTypes {
         debug {
             signingConfig = signingConfigs.getByName("release")
+            firebaseAppDistribution {
+                artifactType = "APK"
+                // 테스터 그룹은 Firebase Console에서 관리하거나 워크플로우의 -Pgroups 로 전달
+            }
         }
         release {
             isMinifyEnabled = true
@@ -67,6 +72,9 @@ android {
                 "proguard-rules.pro",
             )
             signingConfig = signingConfigs.getByName("release")
+            firebaseAppDistribution {
+                artifactType = "APK"
+            }
         }
     }
 

@@ -44,6 +44,7 @@ lottie = "6.7.1"
 firebaseBom = "34.9.0"
 googleServices = "4.4.2"
 firebaseCrashlytics = "3.0.3"
+firebaseAppDistribution = "5.1.1"
 
 # Code Quality
 ktlint = "14.0.1"
@@ -137,3 +138,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlytics" }
+firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppDistribution" }
