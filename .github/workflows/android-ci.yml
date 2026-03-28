@@ -35,6 +35,7 @@ jobs:
           echo "signed.key.password=${{ secrets.SIGNED_KEY_PASSWORD }}" >> local.properties
           echo "debug.base.url=${{ secrets.DEBUG_BASE_URL }}" >> local.properties
           echo "release.base.url=${{ secrets.RELEASE_BASE_URL }}" >> local.properties
+          echo "google.webClientId=${{ secrets.GOOGLE_WEB_CLIENT_ID }}" >> local.properties
 
       - name: Decode Keystore
         run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
