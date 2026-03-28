@@ -87,19 +87,19 @@ jobs:
           fi
           echo "args=$ARGS" >> $GITHUB_OUTPUT
 
-      - name: Distribute (Debug)
+      - name: Build & Distribute (Debug)
         if: github.event.inputs.build_type == 'debug'
         run: |
-          ./gradlew appDistributionUploadDebug \
+          ./gradlew assembleDebug appDistributionUploadDebug \
             "-PfirebaseAppDistributionReleaseNotes=${{ steps.notes.outputs.value }}" \
             ${{ steps.dist_args.outputs.args }}
         env:
           GOOGLE_APPLICATION_CREDENTIALS: app/firebase-service-account.json
 
-      - name: Distribute (Release)
+      - name: Build & Distribute (Release)
         if: github.event.inputs.build_type == 'release'
         run: |
-          ./gradlew appDistributionUploadRelease \
+          ./gradlew assembleRelease appDistributionUploadRelease \
             "-PfirebaseAppDistributionReleaseNotes=${{ steps.notes.outputs.value }}" \
             ${{ steps.dist_args.outputs.args }}
         env:
