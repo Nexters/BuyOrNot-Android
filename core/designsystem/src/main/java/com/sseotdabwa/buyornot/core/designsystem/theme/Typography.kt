@@ -180,25 +180,25 @@ internal val Typography =
             baseTextStyle.copy(
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp,
-                lineHeight = (16 * 1.4f).sp,
+                lineHeight = (16 * 1.5f).sp,
             ),
         paragraphP2Medium =
             baseTextStyle.copy(
                 fontWeight = FontWeight.Medium,
                 fontSize = 15.sp,
-                lineHeight = (15 * 1.4f).sp,
+                lineHeight = (15 * 1.5f).sp,
             ),
         paragraphP3Medium =
             baseTextStyle.copy(
                 fontWeight = FontWeight.Medium,
                 fontSize = 14.sp,
-                lineHeight = (14 * 1.4f).sp,
+                lineHeight = (14 * 1.5f).sp,
             ),
         paragraphP4Medium =
             baseTextStyle.copy(
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.sp,
-                lineHeight = (13 * 1.4f).sp,
+                lineHeight = (13 * 1.5f).sp,
             ),
         paragraphP1Regular =
             baseTextStyle.copy(
