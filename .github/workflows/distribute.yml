@@ -55,7 +55,7 @@ jobs:
           echo "release.base.url=${{ secrets.RELEASE_BASE_URL }}" >> local.properties
 
       - name: Decode Keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
 
       - name: Decode Firebase Service Account
         run: echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_BASE64 }}" | base64 --decode > app/firebase-service-account.json
