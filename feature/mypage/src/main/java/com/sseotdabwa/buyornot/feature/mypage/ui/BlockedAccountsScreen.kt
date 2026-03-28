@@ -107,16 +107,12 @@ fun BlockedAccountsScreen(
         )
 
         if (blockedUsers.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                BuyOrNotEmptyView(
-                    title = "차단된 사용자가 없어요",
-                    description = "사용자를 차단하면 투표를 볼 수 없어요.",
-                    image = BuyOrNotImgs.NoBlockedUser.resId,
-                )
-            }
+            BuyOrNotEmptyView(
+                modifier = Modifier.padding(top = 160.dp),
+                title = "차단된 사용자가 없어요",
+                description = "사용자를 차단하면 투표를 볼 수 없어요.",
+                image = BuyOrNotImgs.NoBlockedUser.resId,
+            )
         } else {
             LazyColumn(
                 contentPadding = PaddingValues(vertical = 16.dp),
