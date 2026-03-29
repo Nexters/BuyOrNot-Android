@@ -100,3 +100,32 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: app/firebase-service-account.json
           RELEASE_NOTES: ${{ steps.notes.outputs.value }}
+
+      - name: Notify Discord
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" = "success" ]; then
+            COLOR=3066993
+            TITLE="✅ 배포 성공"
+          else
+            COLOR=15158332
+            TITLE="❌ 배포 실패"
+          fi
+          curl -s -X POST \
+            "${{ secrets.DISCORD_WEBHOOK_URL }}?thread_id=1472574231303684147" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"$TITLE\",
+                \"color\": $COLOR,
+                \"fields\": [
+                  { \"name\": \"빌드 타입\", \"value\": \"${{ github.event.inputs.build_type }}\", \"inline\": true },
+                  { \"name\": \"브랜치\", \"value\": \"${{ github.ref_name }}\", \"inline\": true },
+                  { \"name\": \"실행자\", \"value\": \"${{ github.actor }}\", \"inline\": true },
+                  { \"name\": \"릴리스 노트\", \"value\": \"$RELEASE_NOTES\" }
+                ]
+              }]
+            }"
+        env:
+          RELEASE_NOTES: ${{ steps.notes.outputs.value }}
