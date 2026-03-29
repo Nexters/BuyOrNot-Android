@@ -55,7 +55,7 @@ fun NavGraphBuilder.homeScreen(
         val tabName = backStackEntry.arguments?.getString("tab")
         val initialTab =
             when (tabName) {
-                "REVIEW" -> HomeTab.MY_FEED
+                HomeTab.MY_FEED.name -> HomeTab.MY_FEED
                 else -> HomeTab.FEED
             }
 
