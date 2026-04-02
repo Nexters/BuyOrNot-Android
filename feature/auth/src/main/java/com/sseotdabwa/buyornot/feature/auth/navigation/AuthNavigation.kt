@@ -30,11 +30,13 @@ const val AUTH_ROUTE = "auth"
 fun NavGraphBuilder.splashScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToHome: () -> Unit,
+    onFinish: () -> Unit,
 ) {
     composable(route = SPLASH_ROUTE) {
         SplashRoute(
             onNavigateToLogin = onNavigateToLogin,
             onNavigateToHome = onNavigateToHome,
+            onFinish = onFinish,
         )
     }
 }

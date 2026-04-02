@@ -1,9 +1,5 @@
 package com.sseotdabwa.buyornot.ui
 
-import android.content.ActivityNotFoundException
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -14,13 +10,11 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotAlertDialog
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
@@ -38,14 +32,12 @@ import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
  * 네비게이션과 하단 네비게이션 바를 포함한 앱의 전체 구조를 정의합니다.
  * 스플래시 및 로그인 화면에서는 하단 바가 표시되지 않습니다.
  *
- *
  * 전체 화면이 필요하면 → bottomBarPadding() 함수의 리스트에 라우트 추가
- *
  * 일반 화면이면 → 아무 것도 하지 않아도 자동으로 패딩 적용
  *
  * @param authEventBus 인증 관련 이벤트 버스
  * @param onBackPressed 홈 화면에서 뒤로가기 시 앱 종료를 위한 콜백
- * @param onFinish 앱 강제 종료를 위한 콜백 (강제 업데이트 시 "종료" 버튼)
+ * @param onFinish 앱 종료 콜백 (강제 업데이트 시 "종료" 버튼)
  * @param viewModel 앱 공통 ViewModel
  */
 @Composable
@@ -61,8 +53,6 @@ fun BuyOrNotApp(
     val currentDestination = navBackStackEntry?.destination
 
     val isFirstRun by viewModel.isFirstRun.collectAsStateWithLifecycle()
-    val updateDialogType by viewModel.updateDialogType.collectAsStateWithLifecycle()
-    val context = LocalContext.current
 
     // 홈 화면에서 뒤로가기 시 앱 종료
     BackHandler(enabled = currentDestination?.route == HOME_ROUTE) {
@@ -81,32 +71,6 @@ fun BuyOrNotApp(
         }
     }
 
-    when (updateDialogType) {
-        UpdateDialogType.Force -> {
-            BuyOrNotAlertDialog(
-                onDismissRequest = { },
-                title = "업데이트가 필요해요",
-                subText = "앱을 계속 사용하려면 최신 버전으로 업데이트해 주세요.",
-                confirmText = "업데이트",
-                dismissText = "종료",
-                onConfirm = { openPlayStore(context) },
-                onDismiss = { onFinish() },
-            )
-        }
-        UpdateDialogType.Soft -> {
-            BuyOrNotAlertDialog(
-                onDismissRequest = { viewModel.dismissSoftUpdate() },
-                title = "새로운 버전이 있어요",
-                subText = "더 나은 경험을 위해 업데이트를 권장합니다.",
-                confirmText = "업데이트",
-                dismissText = "나중에",
-                onConfirm = { openPlayStore(context) },
-                onDismiss = { viewModel.dismissSoftUpdate() },
-            )
-        }
-        UpdateDialogType.None -> Unit
-    }
-
     CompositionLocalProvider(LocalSnackbarState provides snackbarState) {
         Scaffold(
             containerColor = BuyOrNotTheme.colors.gray0,
@@ -115,28 +79,13 @@ fun BuyOrNotApp(
             BuyOrNotNavHost(
                 navController = navController,
                 authEventBus = authEventBus,
+                onFinish = onFinish,
                 modifier =
                     Modifier
                         .consumeWindowInsets(innerPadding)
                         .bottomBarPadding(currentDestination, innerPadding),
             )
         }
-    }
-}
-
-private fun openPlayStore(context: Context) {
-    val packageName = context.packageName
-    try {
-        context.startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName")),
-        )
-    } catch (e: ActivityNotFoundException) {
-        context.startActivity(
-            Intent(
-                Intent.ACTION_VIEW,
-                Uri.parse("https://play.google.com/store/apps/details?id=$packageName"),
-            ),
-        )
     }
 }
 

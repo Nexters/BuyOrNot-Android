@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.core.data.datasource
 
+import android.util.Log
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.sseotdabwa.buyornot.domain.model.AppUpdateInfo
@@ -31,13 +32,23 @@ class RemoteConfigDataSourceImpl
                     ),
                 ).await()
 
-            remoteConfig.fetchAndActivate().await()
+            val activated = remoteConfig.fetchAndActivate().await()
+            Log.d(TAG, "fetchAndActivate: activated=$activated")
 
             val latestVersion = remoteConfig.getLong(KEY_LATEST_VERSION).toInt()
             val minimumVersion = remoteConfig.getLong(KEY_MINIMUM_VERSION).toInt()
             val strategyRaw = remoteConfig.getString(KEY_UPDATE_STRATEGY)
             val updateStrategy =
                 runCatching { UpdateStrategy.valueOf(strategyRaw) }.getOrDefault(UpdateStrategy.NONE)
+
+            Log.d(
+                TAG,
+                "Remote Config values — " +
+                    "latestVersion=$latestVersion, " +
+                    "minimumVersion=$minimumVersion, " +
+                    "strategyRaw=$strategyRaw, " +
+                    "resolvedStrategy=$updateStrategy",
+            )
 
             return AppUpdateInfo(
                 latestVersion = latestVersion,
@@ -47,6 +58,7 @@ class RemoteConfigDataSourceImpl
         }
 
         companion object {
+            private const val TAG = "RemoteConfig"
             private const val KEY_LATEST_VERSION = "android_latest_version"
             private const val KEY_MINIMUM_VERSION = "android_minimum_version"
             private const val KEY_UPDATE_STRATEGY = "android_update_strategy"

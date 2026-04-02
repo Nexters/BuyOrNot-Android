@@ -42,6 +42,7 @@ import com.sseotdabwa.buyornot.feature.upload.navigation.uploadScreen
 fun BuyOrNotNavHost(
     navController: NavHostController,
     authEventBus: AuthEventBus,
+    onFinish: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarState = LocalSnackbarState.current
@@ -74,6 +75,7 @@ fun BuyOrNotNavHost(
                         },
                 )
             },
+            onFinish = onFinish,
         )
 
         authScreen(
