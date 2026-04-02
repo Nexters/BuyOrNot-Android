@@ -51,9 +51,10 @@ class SplashViewModel
         private fun checkTokenAndNavigate() {
             viewModelScope.launch {
                 // 토큰 체크 + 업데이트 체크 병렬 실행
-                val updateInfoDeferred = async {
-                    runCatching { appUpdateRepository.getAppUpdateInfo() }.getOrNull()
-                }
+                val updateInfoDeferred =
+                    async {
+                        runCatching { appUpdateRepository.getAppUpdateInfo() }.getOrNull()
+                    }
 
                 val hasValidToken =
                     try {
@@ -68,9 +69,10 @@ class SplashViewModel
 
                 // 업데이트 다이얼로그 타입 결정
                 val updateInfo = updateInfoDeferred.await()
-                val currentVersion = PackageInfoCompat
-                    .getLongVersionCode(context.packageManager.getPackageInfo(context.packageName, 0))
-                    .toInt()
+                val currentVersion =
+                    PackageInfoCompat
+                        .getLongVersionCode(context.packageManager.getPackageInfo(context.packageName, 0))
+                        .toInt()
                 val dialogType = determineDialogType(currentVersion, updateInfo)
 
                 Log.d(TAG, "currentVersion=$currentVersion, dialogType=$dialogType, updateInfo=$updateInfo")

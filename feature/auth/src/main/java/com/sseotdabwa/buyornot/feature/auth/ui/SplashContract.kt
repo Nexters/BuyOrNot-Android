@@ -4,7 +4,9 @@ import androidx.compose.runtime.Immutable
 
 sealed interface UpdateDialogType {
     data object None : UpdateDialogType
+
     data object Soft : UpdateDialogType
+
     data object Force : UpdateDialogType
 }
 
