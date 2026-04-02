@@ -32,7 +32,10 @@ class RemoteConfigDataSourceImpl
                     ),
                 ).await()
 
-            val activated = remoteConfig.fetchAndActivate().await()
+            val activated =
+                runCatching { remoteConfig.fetchAndActivate().await() }
+                    .onFailure { Log.w(TAG, "fetchAndActivate failed, using cached/default values", it) }
+                    .getOrDefault(false)
             Log.d(TAG, "fetchAndActivate: activated=$activated")
 
             val latestVersion = remoteConfig.getLong(KEY_LATEST_VERSION).toInt()
