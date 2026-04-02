@@ -117,8 +117,11 @@ class SplashViewModel
 
         private fun dismissSoftUpdate() {
             viewModelScope.launch {
-                appPreferencesRepository.updateLastSoftUpdateShownTime(System.currentTimeMillis())
-                updateState { it.copy(updateDialogType = UpdateDialogType.None) }
+                try {
+                    appPreferencesRepository.updateLastSoftUpdateShownTime(System.currentTimeMillis())
+                } finally {
+                    updateState { it.copy(updateDialogType = UpdateDialogType.None) }
+                }
             }
         }
     }
