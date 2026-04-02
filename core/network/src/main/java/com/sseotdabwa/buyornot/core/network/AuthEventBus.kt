@@ -10,13 +10,11 @@ enum class AuthEvent {
 }
 
 @Singleton
-class AuthEventBus
-    @Inject
-    constructor() {
-        private val _events = MutableSharedFlow<AuthEvent>()
-        val events = _events.asSharedFlow()
+class AuthEventBus @Inject constructor() {
+    private val _events = MutableSharedFlow<AuthEvent>()
+    val events = _events.asSharedFlow()
 
-        suspend fun emit(event: AuthEvent) {
-            _events.emit(event)
-        }
+    suspend fun emit(event: AuthEvent) {
+        _events.emit(event)
     }
+}

@@ -10,22 +10,20 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class BuyOrNotViewModel
-    @Inject
-    constructor(
-        private val appPreferencesRepository: AppPreferencesRepository,
-    ) : ViewModel() {
-        val isFirstRun =
-            appPreferencesRepository.isFirstRun
-                .stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5000),
-                    initialValue = false,
-                )
+class BuyOrNotViewModel @Inject constructor(
+    private val appPreferencesRepository: AppPreferencesRepository,
+) : ViewModel() {
+    val isFirstRun =
+        appPreferencesRepository.isFirstRun
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = false,
+            )
 
-        fun updateIsFirstRun(isFirstRun: Boolean) {
-            viewModelScope.launch {
-                appPreferencesRepository.updateIsFirstRun(isFirstRun)
-            }
+    fun updateIsFirstRun(isFirstRun: Boolean) {
+        viewModelScope.launch {
+            appPreferencesRepository.updateIsFirstRun(isFirstRun)
         }
     }
+}
