@@ -24,6 +24,11 @@ interface AppPreferencesDataSource {
     val isFirstRun: Flow<Boolean>
 
     /**
+     * 소프트 업데이트 다이얼로그 마지막 노출 시각 (epoch millis)을 Flow로 제공
+     */
+    val lastSoftUpdateShownTime: Flow<Long>
+
+    /**
      * 알림 권한 요청 이력 업데이트
      */
     suspend fun updateNotificationPermissionRequested(requested: Boolean)
@@ -32,4 +37,9 @@ interface AppPreferencesDataSource {
      * 최초 실행 여부 업데이트
      */
     suspend fun updateIsFirstRun(isFirstRun: Boolean)
+
+    /**
+     * 소프트 업데이트 다이얼로그 마지막 노출 시각 업데이트
+     */
+    suspend fun updateLastSoftUpdateShownTime(timeMillis: Long)
 }
