@@ -14,24 +14,23 @@ class RemoteConfigDataSourceImpl
     constructor() : RemoteConfigDataSource {
         private val remoteConfig: FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
 
-        init {
+        override suspend fun fetchAppUpdateConfig(): AppUpdateInfo {
             val settings =
                 FirebaseRemoteConfigSettings
                     .Builder()
                     .setMinimumFetchIntervalInSeconds(FETCH_INTERVAL_SECONDS)
                     .build()
 
-            remoteConfig.setConfigSettingsAsync(settings)
-            remoteConfig.setDefaultsAsync(
-                mapOf(
-                    KEY_LATEST_VERSION to DEFAULT_VERSION,
-                    KEY_MINIMUM_VERSION to DEFAULT_VERSION,
-                    KEY_UPDATE_STRATEGY to UpdateStrategy.NONE.name,
-                ),
-            )
-        }
+            remoteConfig.setConfigSettingsAsync(settings).await()
+            remoteConfig
+                .setDefaultsAsync(
+                    mapOf(
+                        KEY_LATEST_VERSION to DEFAULT_VERSION,
+                        KEY_MINIMUM_VERSION to DEFAULT_VERSION,
+                        KEY_UPDATE_STRATEGY to UpdateStrategy.NONE.name,
+                    ),
+                ).await()
 
-        override suspend fun fetchAppUpdateConfig(): AppUpdateInfo {
             remoteConfig.fetchAndActivate().await()
 
             val latestVersion = remoteConfig.getLong(KEY_LATEST_VERSION).toInt()
