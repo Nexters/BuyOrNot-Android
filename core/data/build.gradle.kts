@@ -18,6 +18,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.config)
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 }
