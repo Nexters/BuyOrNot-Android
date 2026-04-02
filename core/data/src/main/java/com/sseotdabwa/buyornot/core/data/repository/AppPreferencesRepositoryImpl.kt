@@ -18,11 +18,18 @@ class AppPreferencesRepositoryImpl @Inject constructor(
     override val isFirstRun: Flow<Boolean> =
         appPreferencesDataSource.isFirstRun
 
+    override val lastSoftUpdateShownTime: Flow<Long> =
+        appPreferencesDataSource.lastSoftUpdateShownTime
+
     override suspend fun updateNotificationPermissionRequested(requested: Boolean) {
         appPreferencesDataSource.updateNotificationPermissionRequested(requested)
     }
 
     override suspend fun updateIsFirstRun(isFirstRun: Boolean) {
         appPreferencesDataSource.updateIsFirstRun(isFirstRun)
+    }
+
+    override suspend fun updateLastSoftUpdateShownTime(timeMillis: Long) {
+        appPreferencesDataSource.updateLastSoftUpdateShownTime(timeMillis)
     }
 }
