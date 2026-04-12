@@ -77,7 +77,7 @@ import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import java.text.DecimalFormat
 
 @Composable
-fun UploadScreen(
+fun UploadRoute(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
     onNavigateToHomeReview: () -> Unit = {},
@@ -90,18 +90,12 @@ fun UploadScreen(
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { sideEffect ->
             when (sideEffect) {
-                is UploadSideEffect.ShowSnackbar -> {
-                    snackbarState.show(sideEffect.message)
-                }
-
+                is UploadSideEffect.ShowSnackbar -> snackbarState.show(sideEffect.message)
                 is UploadSideEffect.NavigateBack -> onNavigateBack()
                 is UploadSideEffect.NavigateToHomeReview -> onNavigateToHomeReview()
             }
         }
     }
-
-    val decimalFormat = remember { DecimalFormat("#,###") }
-    val scrollState = rememberScrollState()
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
@@ -109,6 +103,26 @@ fun UploadScreen(
         ) { uri: Uri? ->
             viewModel.handleIntent(UploadIntent.SelectImage(uri))
         }
+
+    UploadScreen(
+        modifier = modifier,
+        uiState = uiState,
+        onIntent = viewModel::handleIntent,
+        onPickImage = { galleryLauncher.launch("image/*") },
+        onSubmit = { viewModel.handleIntent(UploadIntent.Submit(context)) },
+    )
+}
+
+@Composable
+fun UploadScreen(
+    uiState: UploadUiState,
+    onIntent: (UploadIntent) -> Unit,
+    onPickImage: () -> Unit,
+    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val decimalFormat = remember { DecimalFormat("#,###") }
+    val scrollState = rememberScrollState()
 
     val isSubmitEnabled by remember {
         derivedStateOf {
@@ -121,9 +135,9 @@ fun UploadScreen(
 
     BackHandler {
         if (uiState.hasInput) {
-            if (!uiState.showExitDialog) viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
+            if (!uiState.showExitDialog) onIntent(UploadIntent.UpdateExitDialogVisibility(true))
         } else {
-            viewModel.handleIntent(UploadIntent.NavigateBack)
+            onIntent(UploadIntent.NavigateBack)
         }
     }
 
@@ -137,9 +151,9 @@ fun UploadScreen(
     ) {
         BackTopBar {
             if (uiState.hasInput) {
-                viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
+                onIntent(UploadIntent.UpdateExitDialogVisibility(true))
             } else {
-                viewModel.handleIntent(UploadIntent.NavigateBack)
+                onIntent(UploadIntent.NavigateBack)
             }
         }
 
@@ -152,7 +166,7 @@ fun UploadScreen(
         ) {
             CategorySelectorRow(
                 selectedCategory = uiState.category?.displayName,
-                onCategoryClick = { viewModel.handleIntent(UploadIntent.UpdateCategorySheetVisibility(true)) },
+                onCategoryClick = { onIntent(UploadIntent.UpdateCategorySheetVisibility(true)) },
             )
 
             HorizontalDivider(
@@ -166,7 +180,7 @@ fun UploadScreen(
                 priceRaw = uiState.price,
                 decimalFormat = decimalFormat,
                 onPriceChange = { digits, textFieldValue ->
-                    viewModel.handleIntent(UploadIntent.UpdatePrice(digits, textFieldValue))
+                    onIntent(UploadIntent.UpdatePrice(digits, textFieldValue))
                 },
             )
 
@@ -179,15 +193,15 @@ fun UploadScreen(
 
             ContentInputField(
                 content = uiState.content,
-                onContentChange = { viewModel.handleIntent(UploadIntent.UpdateContent(it)) },
+                onContentChange = { onIntent(UploadIntent.UpdateContent(it)) },
             )
 
             Spacer(modifier = Modifier.height(10.dp))
 
             ImagePickerRow(
                 selectedImageUri = uiState.selectedImageUri,
-                onPickImage = { galleryLauncher.launch("image/*") },
-                onRemoveImage = { viewModel.handleIntent(UploadIntent.SelectImage(null)) },
+                onPickImage = onPickImage,
+                onRemoveImage = { onIntent(UploadIntent.SelectImage(null)) },
             )
         }
 
@@ -208,9 +222,8 @@ fun UploadScreen(
                 text = "투표 게시!",
                 enabled = isSubmitEnabled,
                 size = ButtonSize.Small,
-            ) {
-                viewModel.handleIntent(UploadIntent.Submit(context))
-            }
+                onClick = onSubmit,
+            )
         }
     }
 
@@ -222,28 +235,28 @@ fun UploadScreen(
             onOptionClick = { displayName ->
                 val category = uiState.categories.find { it.displayName == displayName }
                 if (category != null) {
-                    viewModel.handleIntent(UploadIntent.UpdateCategory(category))
+                    onIntent(UploadIntent.UpdateCategory(category))
                 }
             },
             onDismissRequest = {
-                viewModel.handleIntent(UploadIntent.UpdateCategorySheetVisibility(false))
+                onIntent(UploadIntent.UpdateCategorySheetVisibility(false))
             },
         )
     }
 
     if (uiState.showExitDialog) {
         BuyOrNotAlertDialog(
-            onDismissRequest = { viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(false)) },
+            onDismissRequest = { onIntent(UploadIntent.UpdateExitDialogVisibility(false)) },
             title = "다음에 등록할까요?",
             subText = "지금까지 쓴 내용은 저장되지 않아요.",
             confirmText = "유지하기",
             dismissText = "나가기",
             onConfirm = {
-                viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(false))
+                onIntent(UploadIntent.UpdateExitDialogVisibility(false))
             },
             onDismiss = {
-                viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(false))
-                viewModel.handleIntent(UploadIntent.NavigateBack)
+                onIntent(UploadIntent.UpdateExitDialogVisibility(false))
+                onIntent(UploadIntent.NavigateBack)
             },
         )
     }
@@ -568,11 +581,9 @@ fun Modifier.customShadow(
     offsetX: Dp = 40.dp,
     offsetY: Dp = 4.dp,
 ) = this.drawBehind {
-    // 1. 전달받은 Shape로부터 현재 사이즈에 맞는 Outline을 생성합니다.
     val outline = shape.createOutline(size, layoutDirection, this)
     val path =
         Path().apply {
-            // Outline을 Path 형태로 변환합니다.
             addOutline(outline)
         }
 
@@ -580,7 +591,6 @@ fun Modifier.customShadow(
         val paint =
             Paint().asFrameworkPaint().apply {
                 this.color = android.graphics.Color.TRANSPARENT
-                // 설정된 Offset과 Blur(Spread)를 적용합니다.
                 setShadowLayer(
                     blur.toPx(),
                     offsetX.toPx(),
@@ -588,7 +598,6 @@ fun Modifier.customShadow(
                     color.toArgb(),
                 )
             }
-        // Compose Path를 Native Path로 변환하여 그림자를 그립니다.
         canvas.nativeCanvas.drawPath(path.asAndroidPath(), paint)
     }
 }
@@ -597,6 +606,11 @@ fun Modifier.customShadow(
 @Composable
 private fun UploadScreenPreview() {
     BuyOrNotTheme {
-        UploadScreen()
+        UploadScreen(
+            uiState = UploadUiState(),
+            onIntent = {},
+            onPickImage = {},
+            onSubmit = {},
+        )
     }
 }
