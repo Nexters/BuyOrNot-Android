@@ -192,6 +192,8 @@ fun UploadScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             ContentInputField(
+                title = uiState.title,
+                onTitleChange = { onIntent(UploadIntent.UpdateTitle(it)) },
                 content = uiState.content,
                 onContentChange = { onIntent(UploadIntent.UpdateContent(it)) },
             )
@@ -374,12 +376,37 @@ private fun PriceInputField(
 
 @Composable
 private fun ContentInputField(
+    title: String,
+    onTitleChange: (String) -> Unit,
     content: String,
     onContentChange: (String) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
+        BasicTextField(
+            value = title,
+            onValueChange = { if (it.length <= 40) onTitleChange(it) },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle =
+                BuyOrNotTheme.typography.titleT2Bold.copy(
+                    color = BuyOrNotTheme.colors.gray900,
+                ),
+            singleLine = true,
+            decorationBox = { innerTextField ->
+                if (title.isEmpty()) {
+                    Text(
+                        text = "제목",
+                        style = BuyOrNotTheme.typography.titleT2Bold,
+                        color = BuyOrNotTheme.colors.gray600,
+                    )
+                }
+                innerTextField()
+            },
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         BasicTextField(
             value = content,
             onValueChange = { if (it.length <= 100) onContentChange(it) },

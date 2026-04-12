@@ -17,6 +17,7 @@ class UploadViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
 ) : BaseViewModel<UploadUiState, UploadIntent, UploadSideEffect>(UploadUiState()) {
     companion object {
+        private const val MAX_TITLE_LENGTH = 40
         private const val MAX_CONTENT_LENGTH = 100
     }
 
@@ -30,6 +31,11 @@ class UploadViewModel @Inject constructor(
                 updateState {
                     it.copy(price = intent.digits, priceFieldValue = intent.textFieldValue)
                 }
+            is UploadIntent.UpdateTitle -> {
+                if (intent.title.length <= MAX_TITLE_LENGTH) {
+                    updateState { it.copy(title = intent.title) }
+                }
+            }
             is UploadIntent.UpdateContent -> {
                 if (intent.content.length <= MAX_CONTENT_LENGTH) {
                     updateState { it.copy(content = intent.content) }
