@@ -12,7 +12,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -141,6 +143,7 @@ fun NotificationDetailScreen(
 
                 uiState.feed != null -> {
                     val feed = uiState.feed
+                    var showLinkTooltip by remember { mutableStateOf(true) }
 
                     Column(
                         modifier =
@@ -183,6 +186,7 @@ fun NotificationDetailScreen(
                             showMoreButton = !uiState.isGuest,
                             productLink = feed.productLink,
                             onLinkClick = onLinkClick,
+                            showProductLinkTooltip = showLinkTooltip && feed.productLink != null,
                         )
                     }
                 }

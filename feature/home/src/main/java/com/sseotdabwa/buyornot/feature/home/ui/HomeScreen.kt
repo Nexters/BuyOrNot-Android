@@ -328,6 +328,12 @@ private fun HomeFeedList(
     val filteredFeeds = uiState.feeds
     val listState = rememberLazyListState()
 
+    var showLinkTooltip by remember { mutableStateOf(true) }
+    val tooltipTargetIndex =
+        remember(filteredFeeds) {
+            filteredFeeds.indexOfFirst { it.productLink != null }
+        }
+
     // 무한 스크롤 구현: 리스트 끝에 도달하면 다음 페이지 로드
     LaunchedEffect(listState, uiState.hasNextPage, uiState.isNextPageLoading) {
         snapshotFlow {
@@ -411,6 +417,7 @@ private fun HomeFeedList(
                             voterProfileImageUrl = uiState.voterProfileImageUrl,
                             isGuest = uiState.userType == UserType.GUEST,
                             modifier = Modifier.animateItem(),
+                            showProductLinkTooltip = showLinkTooltip && index == tooltipTargetIndex,
                             onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
                             onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
                             onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
@@ -505,6 +512,7 @@ private fun FeedItemCard(
     voterProfileImageUrl: String,
     isGuest: Boolean,
     modifier: Modifier = Modifier,
+    showProductLinkTooltip: Boolean = false,
     onVote: (String, Int) -> Unit,
     onDelete: (String) -> Unit,
     onReport: (String) -> Unit,
@@ -539,6 +547,7 @@ private fun FeedItemCard(
             showMoreButton = !isGuest,
             productLink = feed.productLink,
             onLinkClick = onLinkClick,
+            showProductLinkTooltip = showProductLinkTooltip,
         )
 
         BuyOrNotDivider(

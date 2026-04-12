@@ -82,6 +82,7 @@ fun FeedCard(
     showMoreButton: Boolean = true,
     productLink: String? = null,
     onLinkClick: (url: String) -> Unit = {},
+    showProductLinkTooltip: Boolean = false,
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
@@ -132,6 +133,7 @@ fun FeedCard(
                 imageAspectRatio = imageAspectRatio,
                 price = price,
                 productLink = productLink,
+                showTooltip = showProductLinkTooltip,
                 onFullscreenClick = { page -> fullScreenImageIndex = page },
                 onLinkClick = onLinkClick,
             )
@@ -285,6 +287,7 @@ private fun FeedImageCarousel(
     imageAspectRatio: ImageAspectRatio,
     price: String,
     productLink: String?,
+    showTooltip: Boolean,
     onFullscreenClick: (pageIndex: Int) -> Unit,
     onLinkClick: (url: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -342,13 +345,19 @@ private fun FeedImageCarousel(
                 )
 
                 if (page == 0 && productLink != null) {
-                    LinkButton(
+                    Column(
                         modifier =
                             Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(top = 14.dp, end = 14.dp),
-                        onClick = { onLinkClick(productLink) },
-                    )
+                        horizontalAlignment = Alignment.End,
+                    ) {
+                        LinkButton(onClick = { onLinkClick(productLink) })
+
+                        if (showTooltip) {
+                            FeedCardToolTip()
+                        }
+                    }
                 }
 
                 Text(
@@ -673,6 +682,7 @@ private fun FeedCardSquareInteractivePreview() {
             onDeleteClick = {},
             onReportClick = {},
             productLink = "",
+            showProductLinkTooltip = true,
         )
     }
 }
