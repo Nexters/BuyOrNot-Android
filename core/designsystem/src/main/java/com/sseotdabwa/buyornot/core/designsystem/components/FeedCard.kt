@@ -182,7 +182,10 @@ private fun FeedCardHeader(
     var showMenu by remember { mutableStateOf(false) }
 
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -340,7 +343,10 @@ private fun FeedImageCarousel(
 
                 if (page == 0 && productLink != null) {
                     LinkButton(
-                        modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 14.dp),
+                        modifier =
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(top = 14.dp, end = 14.dp),
                         onClick = { onLinkClick(productLink) },
                     )
                 }
@@ -557,24 +563,29 @@ private fun LinkButton(
     onClick: () -> Unit,
 ) {
     Box(
-        modifier =
-            modifier
-                .background(
-                    color = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.3f),
-                    shape = RoundedCornerShape(26.dp),
-                ).clip(RoundedCornerShape(26.dp))
-                .padding(
-                    horizontal = 10.dp,
-                    vertical = 6.dp,
-                ).clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
+        modifier = modifier.size(40.dp),
+        contentAlignment = Alignment.TopCenter,
     ) {
-        Icon(
-            imageVector = BuyOrNotIcons.Link.asImageVector(),
-            contentDescription = "Link",
-            modifier = Modifier.size(18.dp),
-            tint = BuyOrNotTheme.colors.gray0,
-        )
+        Box(
+            modifier =
+                Modifier
+                    .background(
+                        color = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(26.dp),
+                    ).clip(RoundedCornerShape(26.dp))
+                    .padding(
+                        horizontal = 10.dp,
+                        vertical = 6.dp,
+                    ).clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = BuyOrNotIcons.Link.asImageVector(),
+                contentDescription = "Link",
+                modifier = Modifier.size(18.dp),
+                tint = BuyOrNotTheme.colors.gray0,
+            )
+        }
     }
 }
 
