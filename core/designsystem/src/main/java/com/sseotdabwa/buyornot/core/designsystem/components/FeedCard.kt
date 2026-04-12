@@ -58,6 +58,7 @@ fun FeedCard(
     nickname: String,
     category: String,
     createdAt: String,
+    title: String,
     content: String,
     productImageUrl: String,
     price: String, // 이미지에 있는 가격 정보 추가
@@ -177,23 +178,24 @@ fun FeedCard(
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // 2. 피드 내용 & 이미지
-        Column(
-            modifier =
-                Modifier
-                    .background(
-                        color = BuyOrNotTheme.colors.gray100,
-                        shape = RoundedCornerShape(16.dp),
-                    ).clip(RoundedCornerShape(16.dp))
-                    .padding(16.dp),
-        ) {
+        Column {
+            Text(
+                text = title,
+                modifier = Modifier.padding(horizontal = 4.dp),
+                style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+                color = BuyOrNotTheme.colors.gray900,
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = content,
                 modifier = Modifier.padding(horizontal = 4.dp),
                 style = BuyOrNotTheme.typography.bodyB4Medium,
-                color = BuyOrNotTheme.colors.gray900,
+                color = BuyOrNotTheme.colors.gray800,
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -477,6 +479,7 @@ private fun FeedCardSquareInteractivePreview() {
             nickname = "결정장애",
             category = "뷰티",
             createdAt = "10분 전",
+            title = "립스틱 살까요?",
             content = "이 립스틱 색상 어때요? 평소에 안 바르던 색인데 도전해볼까 고민중이에요!",
             productImageUrl = "https://picsum.photos/seed/product1/800/800",
             price = "35,000",
@@ -510,6 +513,7 @@ private fun FeedCardPortraitInteractivePreview() {
             nickname = "패션피플",
             category = "의류",
             createdAt = "2시간 전",
+            title = "이 원피스 어때요?",
             content = "이 원피스 4:5 비율로 보면 더 예쁜 것 같아요! 세로로 긴 옷 사진은 이 비율이 딱이에요.",
             productImageUrl = "https://picsum.photos/seed/product2/800/1000",
             price = "89,000",
