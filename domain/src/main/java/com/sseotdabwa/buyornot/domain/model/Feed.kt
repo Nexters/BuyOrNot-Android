@@ -5,6 +5,7 @@ package com.sseotdabwa.buyornot.domain.model
  */
 data class Feed(
     val feedId: Long,
+    val title: String,
     val content: String,
     val price: String,
     val category: FeedCategory,
@@ -13,7 +14,7 @@ data class Feed(
     val totalCount: Int,
     val feedStatus: FeedStatus,
     val s3ObjectKey: String,
-    val viewUrl: String,
+    val viewUrls: List<String>,
     val imageWidth: Int,
     val imageHeight: Int,
     val author: Author,

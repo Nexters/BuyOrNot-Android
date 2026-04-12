@@ -146,13 +146,14 @@ fun NotificationDetailScreen(
                                 .verticalScroll(rememberScrollState()),
                     ) {
                         FeedCard(
-                            modifier = Modifier.padding(20.dp),
+                            modifier = Modifier.padding(vertical = 26.dp),
                             profileImageUrl = feed.author.profileImage ?: "",
                             nickname = feed.author.nickname,
                             category = feed.category.displayName,
                             createdAt = TimeUtils.formatRelativeTime(feed.createdAt),
+                            title = feed.title,
                             content = feed.content,
-                            productImageUrl = feed.viewUrl,
+                            productImageUrls = feed.viewUrls,
                             price = feed.price,
                             imageAspectRatio =
                                 if (feed.imageWidth > 0 && feed.imageHeight > 0) {
@@ -196,6 +197,7 @@ private fun NotificationDetailScreenPreview() {
                     feed =
                         Feed(
                             feedId = 1L,
+                            title = "",
                             content = "이거 어때요? 투표 결과가 궁금해요!",
                             price = "35,000",
                             category = FeedCategory.BOOK,
@@ -204,7 +206,7 @@ private fun NotificationDetailScreenPreview() {
                             totalCount = 100,
                             feedStatus = FeedStatus.CLOSED,
                             s3ObjectKey = "",
-                            viewUrl = "https://picsum.photos/800/800",
+                            viewUrls = listOf("https://picsum.photos/800/800"),
                             imageWidth = 800,
                             imageHeight = 800,
                             author =

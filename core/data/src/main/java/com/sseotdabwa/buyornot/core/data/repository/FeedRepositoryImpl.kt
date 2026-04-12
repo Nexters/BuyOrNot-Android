@@ -149,6 +149,7 @@ private fun FeedListResponse.toDomain(): FeedList =
 private fun FeedItemDto.toDomain(): Feed =
     Feed(
         feedId = feedId,
+        title = "",
         content = content,
         price = String.format(java.util.Locale.KOREA, "%,d", price),
         category = category.toFeedCategory(),
@@ -157,7 +158,7 @@ private fun FeedItemDto.toDomain(): Feed =
         totalCount = totalCount,
         feedStatus = feedStatus.toFeedStatus(),
         s3ObjectKey = s3ObjectKey,
-        viewUrl = viewUrl,
+        viewUrls = listOf(viewUrl),
         imageWidth = imageWidth,
         imageHeight = imageHeight,
         author = author.toDomain(),

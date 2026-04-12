@@ -506,13 +506,14 @@ private fun FeedItemCard(
 ) {
     Column {
         FeedCard(
-            modifier = modifier,
+            modifier = modifier.padding(vertical = 26.dp),
             profileImageUrl = feed.profileImageUrl,
             nickname = feed.nickname,
             category = feed.category,
             createdAt = feed.createdAt,
+            title = feed.title,
             content = feed.content,
-            productImageUrl = feed.productImageUrl,
+            productImageUrls = feed.productImageUrls,
             price = feed.price,
             imageAspectRatio = feed.imageAspectRatio,
             isVoteEnded = feed.isVoteEnded,
