@@ -7,7 +7,7 @@ import com.sseotdabwa.buyornot.domain.model.FeedCategory
 
 data class UploadUiState(
     val isLoading: Boolean = false,
-    val selectedImageUri: Uri? = null,
+    val selectedImageUris: List<Uri> = emptyList(),
     val category: FeedCategory? = null,
     val price: String = "",
     val priceFieldValue: TextFieldValue = TextFieldValue(""),
@@ -20,7 +20,7 @@ data class UploadUiState(
 ) {
     val hasInput: Boolean
         get() =
-            selectedImageUri != null ||
+            selectedImageUris.isNotEmpty() ||
                 category != null ||
                 price.isNotEmpty() ||
                 link.isNotEmpty() ||
@@ -50,8 +50,12 @@ sealed interface UploadIntent {
         val content: String,
     ) : UploadIntent
 
-    data class SelectImage(
-        val uri: Uri?,
+    data class AddImage(
+        val uri: Uri,
+    ) : UploadIntent
+
+    data class RemoveImage(
+        val uri: Uri,
     ) : UploadIntent
 
     data class Submit(

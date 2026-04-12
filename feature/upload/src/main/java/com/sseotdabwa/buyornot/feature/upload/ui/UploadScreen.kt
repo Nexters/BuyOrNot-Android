@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -34,7 +35,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -52,12 +52,10 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -101,14 +99,16 @@ fun UploadRoute(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.GetContent(),
         ) { uri: Uri? ->
-            viewModel.handleIntent(UploadIntent.SelectImage(uri))
+            if (uri != null) viewModel.handleIntent(UploadIntent.AddImage(uri))
         }
 
     UploadScreen(
         modifier = modifier,
         uiState = uiState,
         onIntent = viewModel::handleIntent,
-        onPickImage = { galleryLauncher.launch("image/*") },
+        onPickImage = {
+            if (uiState.selectedImageUris.size < 3) galleryLauncher.launch("image/*")
+        },
         onSubmit = { viewModel.handleIntent(UploadIntent.Submit(context)) },
     )
 }
@@ -124,14 +124,16 @@ fun UploadScreen(
     val decimalFormat = remember { DecimalFormat("#,###") }
     val scrollState = rememberScrollState()
 
-    val isSubmitEnabled by remember {
-        derivedStateOf {
+    val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+
+    val isSubmitEnabled =
+        remember(uiState) {
             uiState.category != null &&
                 uiState.price.isNotEmpty() &&
-                uiState.selectedImageUri != null &&
+                uiState.title.isNotEmpty() &&
+                uiState.selectedImageUris.isNotEmpty() &&
                 !uiState.isLoading
         }
-    }
 
     BackHandler {
         if (uiState.hasInput) {
@@ -212,9 +214,9 @@ fun UploadScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             ImagePickerRow(
-                selectedImageUri = uiState.selectedImageUri,
+                selectedImageUris = uiState.selectedImageUris,
                 onPickImage = onPickImage,
-                onRemoveImage = { onIntent(UploadIntent.SelectImage(null)) },
+                onRemoveImage = { uri -> onIntent(UploadIntent.RemoveImage(uri)) },
             )
         }
 
@@ -222,13 +224,32 @@ fun UploadScreen(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-            horizontalArrangement = Arrangement.End,
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = if (isImeVisible) Arrangement.SpaceBetween else Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (isSubmitEnabled) {
-                ToolTip()
-                Spacer(modifier = Modifier.width(6.dp))
+            if (isImeVisible) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = BuyOrNotIcons.Camera.asImageVector(),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = BuyOrNotTheme.colors.gray800,
+                    )
+                    Text(
+                        text = "${uiState.selectedImageUris.size}/3",
+                        style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+                        color = BuyOrNotTheme.colors.gray800,
+                    )
+                }
+            } else {
+                if (isSubmitEnabled) {
+                    ToolTip()
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
             }
 
             CapsuleButton(
@@ -336,7 +357,7 @@ private fun LinkInputField(
             decorationBox = { innerTextField ->
                 if (link.isEmpty()) {
                     Text(
-                        text = "상품 링크를 입력해주세요",
+                        text = "상품 링크 (선택)",
                         style = BuyOrNotTheme.typography.subTitleS3SemiBold,
                         color = BuyOrNotTheme.colors.gray600,
                     )
@@ -496,22 +517,23 @@ private fun ContentInputField(
 
 @Composable
 private fun ImagePickerRow(
-    selectedImageUri: Uri?,
+    selectedImageUris: List<Uri>,
     onPickImage: () -> Unit,
-    onRemoveImage: () -> Unit,
+    onRemoveImage: (Uri) -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CameraButton(
-            selectedCount = if (selectedImageUri != null) 1 else 0,
+            selectedCount = selectedImageUris.size,
+            enabled = selectedImageUris.size < 3,
             onClick = onPickImage,
         )
 
-        selectedImageUri?.let {
+        selectedImageUris.forEach { uri ->
             SelectedImagePreview(
-                imageUri = it,
-                onRemove = onRemoveImage,
+                imageUri = uri,
+                onRemove = { onRemoveImage(uri) },
             )
         }
     }
@@ -520,6 +542,7 @@ private fun ImagePickerRow(
 @Composable
 private fun CameraButton(
     selectedCount: Int,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     Surface(
@@ -527,6 +550,7 @@ private fun CameraButton(
         shape = RoundedCornerShape(12.dp),
         color = BuyOrNotTheme.colors.gray100,
         onClick = onClick,
+        enabled = enabled,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -543,28 +567,9 @@ private fun CameraButton(
                 tint = BuyOrNotTheme.colors.gray600,
             )
             Text(
-                text =
-                    buildAnnotatedString {
-                        withStyle(
-                            style =
-                                SpanStyle(
-                                    color =
-                                        if (selectedCount > 0) {
-                                            BuyOrNotTheme.colors.gray800
-                                        } else {
-                                            BuyOrNotTheme.colors.gray600
-                                        },
-                                ),
-                        ) {
-                            append("$selectedCount")
-                        }
-                        withStyle(
-                            style = SpanStyle(color = BuyOrNotTheme.colors.gray600),
-                        ) {
-                            append("/1")
-                        }
-                    },
+                text = "$selectedCount/3",
                 style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+                color = BuyOrNotTheme.colors.gray600,
             )
         }
     }

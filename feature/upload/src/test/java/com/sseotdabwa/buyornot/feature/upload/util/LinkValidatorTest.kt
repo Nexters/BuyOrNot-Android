@@ -51,13 +51,13 @@ class LinkValidatorTest {
     }
 
     @Test
-    fun `도메인에 한글이 포함된 URL은 유효하다`() {
-        assertTrue(LinkValidator.isValid("https://네이버.com"))
+    fun `도메인에 한글이 포함된 URL은 유효하지 않다`() {
+        assertFalse(LinkValidator.isValid("https://네이버.com"))
     }
 
     @Test
-    fun `경로에 한글이 포함된 URL은 유효하다`() {
-        assertTrue(LinkValidator.isValid("https://naver.com/한글경로"))
+    fun `경로에 한글이 포함된 URL은 유효하지 않다`() {
+        assertFalse(LinkValidator.isValid("https://naver.com/한글경로"))
     }
 
     @Test

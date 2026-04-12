@@ -18,6 +18,7 @@ class UploadViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
 ) : BaseViewModel<UploadUiState, UploadIntent, UploadSideEffect>(UploadUiState()) {
     companion object {
+        private const val MAX_IMAGE_COUNT = 3
         private const val MAX_TITLE_LENGTH = 40
         private const val MAX_CONTENT_LENGTH = 100
     }
@@ -44,7 +45,15 @@ class UploadViewModel @Inject constructor(
                     updateState { it.copy(content = intent.content) }
                 }
             }
-            is UploadIntent.SelectImage -> updateState { it.copy(selectedImageUri = intent.uri) }
+            is UploadIntent.AddImage -> {
+                if (currentState.selectedImageUris.size < MAX_IMAGE_COUNT) {
+                    updateState { it.copy(selectedImageUris = it.selectedImageUris + intent.uri) }
+                }
+            }
+            is UploadIntent.RemoveImage ->
+                updateState {
+                    it.copy(selectedImageUris = it.selectedImageUris.filter { uri -> uri != intent.uri })
+                }
             is UploadIntent.Submit -> submitFeed(intent.context)
             is UploadIntent.UpdateCategorySheetVisibility ->
                 updateState {
@@ -71,7 +80,7 @@ class UploadViewModel @Inject constructor(
             return
         }
 
-        val uri = currentState.selectedImageUri ?: return
+        val uri = currentState.selectedImageUris.firstOrNull() ?: return
         val category = currentState.category ?: return
         val price = currentState.price.toIntOrNull() ?: return
         val content = currentState.content
