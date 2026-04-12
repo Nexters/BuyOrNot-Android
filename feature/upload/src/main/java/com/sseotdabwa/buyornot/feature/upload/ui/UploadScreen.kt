@@ -123,7 +123,7 @@ fun UploadScreen(
         if (uiState.hasInput) {
             if (!uiState.showExitDialog) viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
         } else {
-            onNavigateBack()
+            viewModel.handleIntent(UploadIntent.NavigateBack)
         }
     }
 
@@ -139,7 +139,7 @@ fun UploadScreen(
             if (uiState.hasInput) {
                 viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
             } else {
-                onNavigateBack()
+                viewModel.handleIntent(UploadIntent.NavigateBack)
             }
         }
 
@@ -243,7 +243,7 @@ fun UploadScreen(
             },
             onDismiss = {
                 viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(false))
-                onNavigateBack()
+                viewModel.handleIntent(UploadIntent.NavigateBack)
             },
         )
     }

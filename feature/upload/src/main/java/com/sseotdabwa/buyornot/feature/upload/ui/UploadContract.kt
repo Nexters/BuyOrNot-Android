@@ -49,6 +49,8 @@ sealed interface UploadIntent {
     data class UpdateExitDialogVisibility(
         val isVisible: Boolean,
     ) : UploadIntent
+
+    data object NavigateBack : UploadIntent
 }
 
 sealed interface UploadSideEffect {

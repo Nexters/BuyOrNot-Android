@@ -45,6 +45,12 @@ class UploadViewModel @Inject constructor(
                 updateState {
                     it.copy(showExitDialog = intent.isVisible)
                 }
+            UploadIntent.NavigateBack -> {
+                updateState {
+                    it.copy(showExitDialog = false, showCategorySheet = false)
+                }
+                sendSideEffect(UploadSideEffect.NavigateBack)
+            }
         }
     }
 

@@ -1,5 +1,8 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -83,69 +86,82 @@ fun BuyOrNotBottomSheet(
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        modifier =
-            Modifier
-                .padding(horizontal = 14.dp),
-        //  기존 하단 패딩 제거?
-        sheetState = sheetState,
-        shape = sheetShape,
-        containerColor = Color.Transparent, // 배경 투명하게 -> Spacer
-        tonalElevation = 0.dp,
-        scrimColor = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.5f),
-        dragHandle = null,
-    ) {
-        // 실제 보이는 시트 컨테이너
-        Column(
-            modifier = Modifier.fillMaxWidth(),
+    val dimColor = BuyOrNotTheme.colors.gray1000
+    val dimVisible = sheetState.targetValue != SheetValue.Hidden || sheetState.currentValue != SheetValue.Hidden
+    val dimAlpha by animateFloatAsState(
+        targetValue = if (dimVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "scrimAlpha",
+    )
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawRect(color = dimColor, alpha = (dimAlpha * 0.5f).coerceIn(0f, 1f))
+        }
+
+        ModalBottomSheet(
+            onDismissRequest = onDismissRequest,
+            modifier =
+                Modifier
+                    .padding(horizontal = 14.dp),
+            sheetState = sheetState,
+            shape = sheetShape,
+            containerColor = Color.Transparent, // 배경 투명하게 -> Spacer
+            tonalElevation = 0.dp,
+            scrimColor = Color.Transparent,
+            dragHandle = null,
         ) {
+            // 실제 보이는 시트 컨테이너
             Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = BuyOrNotTheme.colors.gray0,
-                            shape = sheetShape,
-                        ).then(
-                            if (isHalfExpandedOnly) {
-                                Modifier.heightIn(max = screenHeight / 2f)
-                            } else {
-                                Modifier
-                            },
-                        ),
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                // 드래그 핸들
-                Box(
+                Column(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp),
+                            .background(
+                                color = BuyOrNotTheme.colors.gray0,
+                                shape = sheetShape,
+                            ).then(
+                                if (isHalfExpandedOnly) {
+                                    Modifier.heightIn(max = screenHeight / 2f)
+                                } else {
+                                    Modifier
+                                },
+                            ),
                 ) {
-                    Spacer(
+                    // 드래그 핸들
+                    Box(
                         modifier =
                             Modifier
-                                .align(Alignment.Center)
-                                .width(40.dp)
-                                .height(4.dp)
-                                .background(
-                                    color = Color(0xFFD9D9D9),
-                                    shape = RoundedCornerShape(18.dp),
-                                ),
-                    )
+                                .fillMaxWidth()
+                                .padding(top = 10.dp),
+                    ) {
+                        Spacer(
+                            modifier =
+                                Modifier
+                                    .align(Alignment.Center)
+                                    .width(40.dp)
+                                    .height(4.dp)
+                                    .background(
+                                        color = Color(0xFFD9D9D9),
+                                        shape = RoundedCornerShape(18.dp),
+                                    ),
+                        )
+                    }
+
+                    // 콘텐츠
+                    content(hideSheetWithAnimation)
                 }
 
-                // 콘텐츠
-                content(hideSheetWithAnimation)
+                Spacer(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding() // 시스템 네비게이션 바 대응
+                            .height(20.dp), // 하단에서 띄우고 싶은 만큼 높이 설정
+                )
             }
-
-            Spacer(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding() // 시스템 네비게이션 바 대응
-                        .height(20.dp), // 하단에서 띄우고 싶은 만큼 높이 설정
-            )
         }
     }
 }

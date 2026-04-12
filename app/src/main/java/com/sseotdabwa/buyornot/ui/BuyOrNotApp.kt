@@ -32,19 +32,19 @@ import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
  * 네비게이션과 하단 네비게이션 바를 포함한 앱의 전체 구조를 정의합니다.
  * 스플래시 및 로그인 화면에서는 하단 바가 표시되지 않습니다.
  *
- *
  * 전체 화면이 필요하면 → bottomBarPadding() 함수의 리스트에 라우트 추가
- *
  * 일반 화면이면 → 아무 것도 하지 않아도 자동으로 패딩 적용
  *
  * @param authEventBus 인증 관련 이벤트 버스
  * @param onBackPressed 홈 화면에서 뒤로가기 시 앱 종료를 위한 콜백
+ * @param onFinish 앱 종료 콜백 (강제 업데이트 시 "종료" 버튼)
  * @param viewModel 앱 공통 ViewModel
  */
 @Composable
 fun BuyOrNotApp(
     authEventBus: AuthEventBus,
     onBackPressed: () -> Unit = {},
+    onFinish: () -> Unit = {},
     viewModel: BuyOrNotViewModel = hiltViewModel(),
 ) {
     val navController = rememberNavController()
@@ -79,6 +79,7 @@ fun BuyOrNotApp(
             BuyOrNotNavHost(
                 navController = navController,
                 authEventBus = authEventBus,
+                onFinish = onFinish,
                 modifier =
                     Modifier
                         .consumeWindowInsets(innerPadding)

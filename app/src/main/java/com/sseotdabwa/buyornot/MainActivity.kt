@@ -36,6 +36,7 @@ class MainActivity : ComponentActivity() {
                 BuyOrNotApp(
                     authEventBus = authEventBus,
                     onBackPressed = { finish() },
+                    onFinish = { finishAffinity() },
                 )
             }
         }

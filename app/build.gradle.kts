@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.firebase.appdistribution)
 }
 
 val localProperties =
@@ -17,13 +18,19 @@ val localProperties =
         }
     }
 
+fun gradlePropertyOrNull(key: String): String? = providers.gradleProperty(key).orNull?.takeUnless { it.isBlank() }
+
+val firebaseDistributionTesters = gradlePropertyOrNull("firebaseAppDistributionTesters")
+val firebaseDistributionGroups = gradlePropertyOrNull("firebaseAppDistributionGroups")
+val firebaseDistributionReleaseNotes = gradlePropertyOrNull("firebaseAppDistributionReleaseNotes")
+
 android {
     namespace = "com.sseotdabwa.buyornot"
 
     defaultConfig {
         applicationId = "com.sseotdabwa.buyornot"
-        versionCode = 4
-        versionName = "0.1.0"
+        versionCode = 5
+        versionName = "0.2.0"
 
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${localProperties.getProperty("kakao.nativeAppKey", "")}\"")
         manifestPlaceholders["NATIVE_APP_KEY"] = localProperties.getProperty("kakao.nativeAppKey", "")
@@ -57,7 +64,16 @@ android {
 
     buildTypes {
         debug {
+            applicationIdSuffix = ".dev"
             signingConfig = signingConfigs.getByName("release")
+            buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${localProperties.getProperty("kakao.nativeAppKeyDebug", "")}\"")
+            manifestPlaceholders["NATIVE_APP_KEY"] = localProperties.getProperty("kakao.nativeAppKeyDebug", "")
+            firebaseAppDistribution {
+                artifactType = "APK"
+                firebaseDistributionReleaseNotes?.let { releaseNotes = it }
+                firebaseDistributionTesters?.let { testers = it }
+                firebaseDistributionGroups?.let { groups = it }
+            }
         }
         release {
             isMinifyEnabled = true
@@ -67,6 +83,12 @@ android {
                 "proguard-rules.pro",
             )
             signingConfig = signingConfigs.getByName("release")
+            firebaseAppDistribution {
+                artifactType = "APK"
+                firebaseDistributionReleaseNotes?.let { releaseNotes = it }
+                firebaseDistributionTesters?.let { testers = it }
+                firebaseDistributionGroups?.let { groups = it }
+            }
         }
     }
 
