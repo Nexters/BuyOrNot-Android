@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
-import android.R.attr.text
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,123 +65,40 @@ fun FeedCard(
     title: String,
     content: String,
     productImageUrls: List<String>,
-    price: String, // 이미지에 있는 가격 정보 추가
-    imageAspectRatio: ImageAspectRatio = ImageAspectRatio.SQUARE, // 이미지 비율 (기본값: 1:1)
-    isVoteEnded: Boolean, // 투표 종료 여부
-    userVotedOptionIndex: Int? = null, // 사용자가 투표한 옵션 인덱스 (null: 투표 안함, 0: 사!, 1: 애매..)
+    price: String,
+    imageAspectRatio: ImageAspectRatio = ImageAspectRatio.SQUARE,
+    isVoteEnded: Boolean,
+    userVotedOptionIndex: Int? = null,
     buyVoteCount: Int,
     maybeVoteCount: Int,
     totalVoteCount: Int,
-    onVote: (Int) -> Unit, // 투표 옵션 인덱스 (0: 사!, 1: 애매..)
-    isOwner: Boolean = false, // 본인 글인지 여부
-    voterProfileImageUrl: String = "", // 사용자가 투표한 경우의 프로필 이미지 URL
-    onDeleteClick: () -> Unit = {}, // 삭제 클릭 콜백 추가
-    onReportClick: () -> Unit = {}, // 신고 클릭 콜백 추가
-    onBlockClick: () -> Unit = {}, // 차단 클릭 콜백 추가
+    onVote: (Int) -> Unit,
+    isOwner: Boolean = false,
+    voterProfileImageUrl: String = "",
+    onDeleteClick: () -> Unit = {},
+    onReportClick: () -> Unit = {},
+    onBlockClick: () -> Unit = {},
     showMoreButton: Boolean = true,
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
     val maybePercentage = if (totalVoteCount > 0) (maybeVoteCount * 100 / totalVoteCount) else 0
 
-    var showMenu by remember { mutableStateOf(false) }
     var fullScreenImageIndex by remember { mutableStateOf<Int?>(null) }
     val pagerState = rememberPagerState(pageCount = { productImageUrls.size })
 
     Column(modifier = modifier) {
-        val isInPreviewMode = LocalInspectionMode.current
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (isInPreviewMode) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(BuyOrNotTheme.colors.gray400),
-                    )
-                } else {
-                    AsyncImage(
-                        model = profileImageUrl,
-                        contentDescription = null,
-                        modifier =
-                            Modifier
-                                .size(32.dp)
-                                .clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                    )
-                }
-                Spacer(modifier = Modifier.width(10.dp))
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = nickname,
-                            style = BuyOrNotTheme.typography.bodyB6Medium,
-                            color = BuyOrNotTheme.colors.gray800,
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = BuyOrNotIcons.ArrowRight.asImageVector(),
-                            contentDescription = "Arrow Right",
-                            tint = BuyOrNotTheme.colors.gray600,
-                            modifier = Modifier.size(10.dp),
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = category,
-                            style = BuyOrNotTheme.typography.bodyB6Medium,
-                            color = BuyOrNotTheme.colors.gray800,
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = createdAt,
-                        style = BuyOrNotTheme.typography.bodyB7Medium,
-                        color = BuyOrNotTheme.colors.gray600,
-                    )
-                }
-            }
-            if (showMoreButton) {
-                Box {
-                    Icon(
-                        imageVector = BuyOrNotIcons.More.asImageVector(),
-                        contentDescription = "More",
-                        modifier =
-                            Modifier
-                                .size(20.dp)
-                                .clickable { showMenu = true },
-                        tint = BuyOrNotTheme.colors.gray500,
-                    )
-                    val ownerMenuItems =
-                        listOf(
-                            "삭제하기" to {
-                                showMenu = false
-                                onDeleteClick()
-                            },
-                        )
-                    val userMenuItems =
-                        listOf(
-                            "신고하기" to {
-                                showMenu = false
-                                onReportClick()
-                            },
-                            "차단하기" to {
-                                showMenu = false
-                                onBlockClick()
-                            },
-                        )
-                    if (showMenu) {
-                        ActionPopup(
-                            items = if (isOwner) ownerMenuItems else userMenuItems,
-                            onDismiss = { showMenu = false },
-                        )
-                    }
-                }
-            }
-        }
+        FeedCardHeader(
+            profileImageUrl = profileImageUrl,
+            nickname = nickname,
+            category = category,
+            createdAt = createdAt,
+            isOwner = isOwner,
+            showMoreButton = showMoreButton,
+            onDeleteClick = onDeleteClick,
+            onReportClick = onReportClick,
+            onBlockClick = onBlockClick,
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -206,167 +123,27 @@ fun FeedCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            HorizontalPager(
-                state = pagerState,
-                contentPadding = PaddingValues(horizontal = 20.dp),
-                pageSpacing = 10.dp,
-            ) { page ->
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(imageAspectRatio.ratio)
-                            .clip(RoundedCornerShape(16.dp)),
-                ) {
-                    if (isInPreviewMode) {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .background(BuyOrNotTheme.colors.gray0),
-                        )
-                    } else {
-                        AsyncImage(
-                            model = productImageUrls[page],
-                            contentDescription = "Product Image",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop,
-                        )
-                    }
-
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .drawBehind {
-                                    drawRect(
-                                        brush =
-                                            Brush.verticalGradient(
-                                                colors =
-                                                    listOf(
-                                                        Color.Transparent,
-                                                        Color(0xFF191919).copy(alpha = 0.3f),
-                                                    ),
-                                                endY = size.height,
-                                                startY = size.height * 0.64f,
-                                            ),
-                                    )
-                                },
-                    )
-
-                    // 이미지 확장 버튼 (원본 크기)
-                    FullscreenButton(
-                        modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 14.dp),
-                        onClick = { fullScreenImageIndex = page },
-                    )
-
-                    // 가격 태그 (좌측 하단)
-                    Text(
-                        text = stringResource(R.string.feed_card_price_format, price),
-                        modifier =
-                            Modifier
-                                .align(Alignment.BottomStart)
-                                .padding(start = 14.dp, bottom = 16.dp),
-                        color = BuyOrNotTheme.colors.gray0,
-                        style = BuyOrNotTheme.typography.titleT1Bold,
-                    )
-                }
-            }
+            FeedImageCarousel(
+                productImageUrls = productImageUrls,
+                pagerState = pagerState,
+                imageAspectRatio = imageAspectRatio,
+                price = price,
+                onFullscreenClick = { page -> fullScreenImageIndex = page },
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                // 5. 투표 영역 (VoteOption 또는 VoteProgressItem)
-                // 사용자가 투표했거나 투표가 종료되었으면 결과 표시
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    if (hasVoted || isVoteEnded) {
-                        // 투표 완료 또는 종료: VoteProgressItem으로 결과 표시
-                        VoteProgressItem(
-                            text = stringResource(R.string.feed_card_vote_buy),
-                            percentage = buyPercentage / 100f,
-                            percentageText = "$buyPercentage%",
-                            progressBarColor = BuyOrNotTheme.colors.gray900,
-                            shouldInvertTextColor = true,
-                            leadingContent =
-                                if (userVotedOptionIndex == 0) {
-                                    {
-                                        AsyncImage(
-                                            model = voterProfileImageUrl,
-                                            contentDescription = null,
-                                            modifier =
-                                                Modifier
-                                                    .height(20.dp)
-                                                    .width(20.dp)
-                                                    .clip(CircleShape),
-                                            contentScale = ContentScale.Crop,
-                                        )
-                                    }
-                                } else {
-                                    null
-                                },
-                        )
-                        VoteProgressItem(
-                            text = stringResource(R.string.feed_card_vote_maybe),
-                            percentage = maybePercentage / 100f,
-                            percentageText = "$maybePercentage%",
-                            textColor = BuyOrNotTheme.colors.gray700,
-                            percentageTextColor = BuyOrNotTheme.colors.gray700,
-                            leadingContent =
-                                if (userVotedOptionIndex == 1) {
-                                    {
-                                        AsyncImage(
-                                            model = voterProfileImageUrl,
-                                            contentDescription = null,
-                                            modifier =
-                                                Modifier
-                                                    .height(20.dp)
-                                                    .width(20.dp)
-                                                    .clip(CircleShape),
-                                            contentScale = ContentScale.Crop,
-                                        )
-                                    }
-                                } else {
-                                    null
-                                },
-                        )
-                    } else {
-                        // 투표 진행중: VoteOption으로 투표 가능
-                        VoteOption(
-                            text = stringResource(R.string.feed_card_vote_buy),
-                            onClick = { onVote(0) },
-                        )
-                        VoteOption(
-                            text = stringResource(R.string.feed_card_vote_maybe),
-                            onClick = { onVote(1) },
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // 6. 하단 상태 정보
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    val statusText =
-                        if (isVoteEnded) {
-                            stringResource(R.string.feed_card_vote_status_ended)
-                        } else {
-                            stringResource(R.string.feed_card_vote_status_ongoing)
-                        }
-                    Text(
-                        text =
-                            stringResource(
-                                R.string.feed_card_vote_count_format,
-                                totalVoteCount,
-                                statusText,
-                            ),
-                        modifier = Modifier.padding(start = 6.dp),
-                        style = BuyOrNotTheme.typography.bodyB7Medium,
-                        color = BuyOrNotTheme.colors.gray600,
-                    )
-                }
-            }
+            FeedVoteSection(
+                hasVoted = hasVoted,
+                isVoteEnded = isVoteEnded,
+                userVotedOptionIndex = userVotedOptionIndex,
+                buyPercentage = buyPercentage,
+                maybePercentage = maybePercentage,
+                totalVoteCount = totalVoteCount,
+                voterProfileImageUrl = voterProfileImageUrl,
+                onVote = onVote,
+                modifier = Modifier.padding(horizontal = 20.dp),
+            )
         }
     }
 
@@ -383,9 +160,289 @@ fun FeedCard(
     }
 }
 
-/**
- * 피드 이미지 확대 오버레이 컴포넌트
- */
+@Composable
+private fun FeedCardHeader(
+    profileImageUrl: String,
+    nickname: String,
+    category: String,
+    createdAt: String,
+    isOwner: Boolean,
+    showMoreButton: Boolean,
+    onDeleteClick: () -> Unit,
+    onReportClick: () -> Unit,
+    onBlockClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isInPreviewMode = LocalInspectionMode.current
+    var showMenu by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (isInPreviewMode) {
+                Box(
+                    modifier =
+                        Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(BuyOrNotTheme.colors.gray400),
+                )
+            } else {
+                AsyncImage(
+                    model = profileImageUrl,
+                    contentDescription = null,
+                    modifier =
+                        Modifier
+                            .size(32.dp)
+                            .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = nickname,
+                        style = BuyOrNotTheme.typography.bodyB6Medium,
+                        color = BuyOrNotTheme.colors.gray800,
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = BuyOrNotIcons.ArrowRight.asImageVector(),
+                        contentDescription = "Arrow Right",
+                        tint = BuyOrNotTheme.colors.gray600,
+                        modifier = Modifier.size(10.dp),
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = category,
+                        style = BuyOrNotTheme.typography.bodyB6Medium,
+                        color = BuyOrNotTheme.colors.gray800,
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = createdAt,
+                    style = BuyOrNotTheme.typography.bodyB7Medium,
+                    color = BuyOrNotTheme.colors.gray600,
+                )
+            }
+        }
+        if (showMoreButton) {
+            Box {
+                Icon(
+                    imageVector = BuyOrNotIcons.More.asImageVector(),
+                    contentDescription = "More",
+                    modifier =
+                        Modifier
+                            .size(20.dp)
+                            .clickable { showMenu = true },
+                    tint = BuyOrNotTheme.colors.gray500,
+                )
+                val ownerMenuItems =
+                    listOf(
+                        "삭제하기" to {
+                            showMenu = false
+                            onDeleteClick()
+                        },
+                    )
+                val userMenuItems =
+                    listOf(
+                        "신고하기" to {
+                            showMenu = false
+                            onReportClick()
+                        },
+                        "차단하기" to {
+                            showMenu = false
+                            onBlockClick()
+                        },
+                    )
+                if (showMenu) {
+                    ActionPopup(
+                        items = if (isOwner) ownerMenuItems else userMenuItems,
+                        onDismiss = { showMenu = false },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeedImageCarousel(
+    productImageUrls: List<String>,
+    pagerState: PagerState,
+    imageAspectRatio: ImageAspectRatio,
+    price: String,
+    onFullscreenClick: (pageIndex: Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isInPreviewMode = LocalInspectionMode.current
+
+    Box(modifier = modifier) {
+        HorizontalPager(
+            state = pagerState,
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            pageSpacing = 10.dp,
+        ) { page ->
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(imageAspectRatio.ratio)
+                        .clip(RoundedCornerShape(16.dp)),
+            ) {
+                if (isInPreviewMode) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .background(BuyOrNotTheme.colors.gray0),
+                    )
+                } else {
+                    AsyncImage(
+                        model = productImageUrls[page],
+                        contentDescription = "Product Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
+
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .drawBehind {
+                                drawRect(
+                                    brush =
+                                        Brush.verticalGradient(
+                                            colors =
+                                                listOf(
+                                                    Color.Transparent,
+                                                    Color(0xFF191919).copy(alpha = 0.3f),
+                                                ),
+                                            endY = size.height,
+                                            startY = size.height * 0.64f,
+                                        ),
+                                )
+                            },
+                )
+
+                FullscreenButton(
+                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 14.dp),
+                    onClick = { onFullscreenClick(page) },
+                )
+
+                Text(
+                    text = stringResource(R.string.feed_card_price_format, price),
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 14.dp, bottom = 16.dp),
+                    color = BuyOrNotTheme.colors.gray0,
+                    style = BuyOrNotTheme.typography.titleT1Bold,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeedVoteSection(
+    hasVoted: Boolean,
+    isVoteEnded: Boolean,
+    userVotedOptionIndex: Int?,
+    buyPercentage: Int,
+    maybePercentage: Int,
+    totalVoteCount: Int,
+    voterProfileImageUrl: String,
+    onVote: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (hasVoted || isVoteEnded) {
+                VoteProgressItem(
+                    text = stringResource(R.string.feed_card_vote_buy),
+                    percentage = buyPercentage / 100f,
+                    percentageText = "$buyPercentage%",
+                    progressBarColor = BuyOrNotTheme.colors.gray900,
+                    shouldInvertTextColor = true,
+                    leadingContent =
+                        if (userVotedOptionIndex == 0) {
+                            {
+                                AsyncImage(
+                                    model = voterProfileImageUrl,
+                                    contentDescription = null,
+                                    modifier =
+                                        Modifier
+                                            .height(20.dp)
+                                            .width(20.dp)
+                                            .clip(CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                )
+                            }
+                        } else {
+                            null
+                        },
+                )
+                VoteProgressItem(
+                    text = stringResource(R.string.feed_card_vote_maybe),
+                    percentage = maybePercentage / 100f,
+                    percentageText = "$maybePercentage%",
+                    textColor = BuyOrNotTheme.colors.gray700,
+                    percentageTextColor = BuyOrNotTheme.colors.gray700,
+                    leadingContent =
+                        if (userVotedOptionIndex == 1) {
+                            {
+                                AsyncImage(
+                                    model = voterProfileImageUrl,
+                                    contentDescription = null,
+                                    modifier =
+                                        Modifier
+                                            .height(20.dp)
+                                            .width(20.dp)
+                                            .clip(CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                )
+                            }
+                        } else {
+                            null
+                        },
+                )
+            } else {
+                VoteOption(
+                    text = stringResource(R.string.feed_card_vote_buy),
+                    onClick = { onVote(0) },
+                )
+                VoteOption(
+                    text = stringResource(R.string.feed_card_vote_maybe),
+                    onClick = { onVote(1) },
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val statusText =
+                if (isVoteEnded) {
+                    stringResource(R.string.feed_card_vote_status_ended)
+                } else {
+                    stringResource(R.string.feed_card_vote_status_ongoing)
+                }
+            Text(
+                text = stringResource(R.string.feed_card_vote_count_format, totalVoteCount, statusText),
+                modifier = Modifier.padding(start = 6.dp),
+                style = BuyOrNotTheme.typography.bodyB7Medium,
+                color = BuyOrNotTheme.colors.gray600,
+            )
+        }
+    }
+}
+
 @Composable
 private fun FullScreenImageOverlay(
     imageUrl: String,
