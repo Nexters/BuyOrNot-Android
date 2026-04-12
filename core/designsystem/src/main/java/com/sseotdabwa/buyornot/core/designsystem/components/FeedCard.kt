@@ -46,6 +46,7 @@ import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.shape.TopArrowBubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 enum class ImageAspectRatio(
@@ -574,6 +575,54 @@ private fun LinkButton(
             modifier = Modifier.size(18.dp),
             tint = BuyOrNotTheme.colors.gray0,
         )
+    }
+}
+
+@Composable
+fun FeedCardToolTip(modifier: Modifier = Modifier) {
+    val tooltipShape =
+        remember {
+            TopArrowBubbleShape(
+                cornerRadius = 10.dp,
+                arrowWidth = 10.dp,
+                arrowHeight = 5.dp,
+                arrowOffsetFromRight = 24.dp,
+            )
+        }
+
+    Row(
+        modifier =
+            modifier
+                .background(
+                    color = Color(0xCC3A3C3E),
+                    shape = tooltipShape,
+                ).padding(top = 15.dp, bottom = 10.dp)
+                .padding(horizontal = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "상품 링크를 확인해보세요!",
+            style = BuyOrNotTheme.typography.bodyB5Medium,
+            color = BuyOrNotTheme.colors.gray0,
+        )
+    }
+}
+
+@Preview(
+    name = "FeedCardToolTip",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+)
+@Composable
+private fun FeedCardToolTipPreview() {
+    BuyOrNotTheme {
+        Box(
+            modifier = Modifier.padding(24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            FeedCardToolTip()
+        }
     }
 }
 
