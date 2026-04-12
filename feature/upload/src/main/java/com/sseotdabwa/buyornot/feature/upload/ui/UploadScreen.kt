@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -95,11 +96,13 @@ fun UploadRoute(
         }
     }
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     val galleryLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent(),
-        ) { uri: Uri? ->
-            if (uri != null) viewModel.handleIntent(UploadIntent.AddImage(uri))
+            contract = ActivityResultContracts.GetMultipleContents(),
+        ) { uris: List<Uri> ->
+            if (uris.isNotEmpty()) viewModel.handleIntent(UploadIntent.AddImages(uris))
         }
 
     UploadScreen(
@@ -109,7 +112,10 @@ fun UploadRoute(
         onPickImage = {
             if (uiState.selectedImageUris.size < 3) galleryLauncher.launch("image/*")
         },
-        onSubmit = { viewModel.handleIntent(UploadIntent.Submit(context)) },
+        onSubmit = {
+            keyboardController?.hide()
+            viewModel.handleIntent(UploadIntent.Submit(context))
+        },
     )
 }
 

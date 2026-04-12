@@ -50,8 +50,8 @@ sealed interface UploadIntent {
         val content: String,
     ) : UploadIntent
 
-    data class AddImage(
-        val uri: Uri,
+    data class AddImages(
+        val uris: List<Uri>,
     ) : UploadIntent
 
     data class RemoveImage(
