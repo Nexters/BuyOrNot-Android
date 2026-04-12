@@ -345,17 +345,21 @@ private fun FeedImageCarousel(
                 )
 
                 if (page == 0 && productLink != null) {
-                    Column(
+                    Box(
                         modifier =
                             Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(top = 14.dp, end = 14.dp),
-                        horizontalAlignment = Alignment.End,
+                                .padding(top = 16.dp, end = 6.dp),
+                        contentAlignment = Alignment.TopEnd,
                     ) {
-                        LinkButton(onClick = { onLinkClick(productLink) })
+                        LinkButton(
+                            modifier = Modifier.padding(end = 10.dp),
+                            onClick = { onLinkClick(productLink) },
+                        )
 
                         if (showTooltip) {
-                            FeedCardToolTip()
+                            // 시각적 버튼 높이(30dp) + 간격(6dp) = 36dp
+                            FeedCardToolTip(modifier = Modifier.padding(top = 36.dp))
                         }
                     }
                 }
@@ -606,7 +610,7 @@ fun FeedCardToolTip(modifier: Modifier = Modifier) {
                 cornerRadius = 10.dp,
                 arrowWidth = 10.dp,
                 arrowHeight = 5.dp,
-                arrowOffsetFromRight = 24.dp,
+                arrowOffsetFromRight = 30.dp,
             )
         }
 
@@ -616,7 +620,7 @@ fun FeedCardToolTip(modifier: Modifier = Modifier) {
                 .background(
                     color = Color(0xCC3A3C3E),
                     shape = tooltipShape,
-                ).padding(top = 15.dp, bottom = 10.dp)
+                ).padding(top = 13.dp, bottom = 8.dp)
                 .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
