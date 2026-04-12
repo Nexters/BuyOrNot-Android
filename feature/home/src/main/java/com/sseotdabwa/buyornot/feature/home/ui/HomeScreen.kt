@@ -405,7 +405,7 @@ private fun HomeFeedList(
                             feed = filteredFeeds[index],
                             voterProfileImageUrl = uiState.voterProfileImageUrl,
                             isGuest = uiState.userType == UserType.GUEST,
-                            modifier = Modifier.padding(20.dp).animateItem(),
+                            modifier = Modifier.animateItem(),
                             onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
                             onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
                             onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },

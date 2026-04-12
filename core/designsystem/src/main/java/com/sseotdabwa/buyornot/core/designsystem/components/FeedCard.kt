@@ -1,11 +1,13 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
+import android.R.attr.text
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -15,6 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -60,7 +64,7 @@ fun FeedCard(
     createdAt: String,
     title: String,
     content: String,
-    productImageUrl: String,
+    productImageUrls: List<String>,
     price: String, // 이미지에 있는 가격 정보 추가
     imageAspectRatio: ImageAspectRatio = ImageAspectRatio.SQUARE, // 이미지 비율 (기본값: 1:1)
     isVoteEnded: Boolean, // 투표 종료 여부
@@ -81,12 +85,13 @@ fun FeedCard(
     val maybePercentage = if (totalVoteCount > 0) (maybeVoteCount * 100 / totalVoteCount) else 0
 
     var showMenu by remember { mutableStateOf(false) }
-    var showFullScreen by remember { mutableStateOf(false) }
+    var fullScreenImageIndex by remember { mutableStateOf<Int?>(null) }
+    val pagerState = rememberPagerState(pageCount = { productImageUrls.size })
 
     Column(modifier = modifier) {
         val isInPreviewMode = LocalInspectionMode.current
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -180,189 +185,199 @@ fun FeedCard(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 2. 피드 내용 & 이미지
         Column {
-            Text(
-                text = title,
-                modifier = Modifier.padding(horizontal = 4.dp),
-                style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                color = BuyOrNotTheme.colors.gray900,
-            )
+            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                Text(
+                    text = title,
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+                    color = BuyOrNotTheme.colors.gray900,
+                )
 
-            Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = content,
-                modifier = Modifier.padding(horizontal = 4.dp),
-                style = BuyOrNotTheme.typography.bodyB4Medium,
-                color = BuyOrNotTheme.colors.gray800,
-            )
+                Text(
+                    text = content,
+                    modifier = Modifier.padding(horizontal = 4.dp),
+                    style = BuyOrNotTheme.typography.bodyB4Medium,
+                    color = BuyOrNotTheme.colors.gray800,
+                )
+            }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // 상품 이미지 박스
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(imageAspectRatio.ratio)
-                        .clip(RoundedCornerShape(16.dp)),
-            ) {
-                if (isInPreviewMode) {
+            HorizontalPager(
+                state = pagerState,
+                contentPadding = PaddingValues(horizontal = 20.dp),
+                pageSpacing = 10.dp,
+            ) { page ->
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(imageAspectRatio.ratio)
+                            .clip(RoundedCornerShape(16.dp)),
+                ) {
+                    if (isInPreviewMode) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .background(BuyOrNotTheme.colors.gray0),
+                        )
+                    } else {
+                        AsyncImage(
+                            model = productImageUrls[page],
+                            contentDescription = "Product Image",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop,
+                        )
+                    }
+
                     Box(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .background(BuyOrNotTheme.colors.gray0),
+                                .drawBehind {
+                                    drawRect(
+                                        brush =
+                                            Brush.verticalGradient(
+                                                colors =
+                                                    listOf(
+                                                        Color.Transparent,
+                                                        Color(0xFF191919).copy(alpha = 0.3f),
+                                                    ),
+                                                endY = size.height,
+                                                startY = size.height * 0.64f,
+                                            ),
+                                    )
+                                },
                     )
-                } else {
-                    AsyncImage(
-                        model = productImageUrl,
-                        contentDescription = "Product Image",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop,
+
+                    // 이미지 확장 버튼 (원본 크기)
+                    FullscreenButton(
+                        modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 14.dp),
+                        onClick = { fullScreenImageIndex = page },
+                    )
+
+                    // 가격 태그 (좌측 하단)
+                    Text(
+                        text = stringResource(R.string.feed_card_price_format, price),
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(start = 14.dp, bottom = 16.dp),
+                        color = BuyOrNotTheme.colors.gray0,
+                        style = BuyOrNotTheme.typography.titleT1Bold,
                     )
                 }
-
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .drawBehind {
-                                drawRect(
-                                    brush =
-                                        Brush.verticalGradient(
-                                            colors =
-                                                listOf(
-                                                    Color.Transparent,
-                                                    Color(0xFF191919).copy(alpha = 0.3f),
-                                                ),
-                                            endY = size.height,
-                                            startY = size.height * 0.64f,
-                                        ),
-                                )
-                            },
-                )
-
-                // 이미지 확장 버튼 (원본 크기)
-                FullscreenButton(
-                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 14.dp),
-                    onClick = {
-                        showFullScreen = true
-                    },
-                )
-
-                // 가격 태그 (좌측 하단)
-                Text(
-                    text = stringResource(R.string.feed_card_price_format, price),
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(
-                                start = 14.dp,
-                                bottom = 16.dp,
-                            ),
-                    color = BuyOrNotTheme.colors.gray0,
-                    style = BuyOrNotTheme.typography.titleT1Bold,
-                )
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // 5. 투표 영역 (VoteOption 또는 VoteProgressItem)
-            // 사용자가 투표했거나 투표가 종료되었으면 결과 표시
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (hasVoted || isVoteEnded) {
-                    // 투표 완료 또는 종료: VoteProgressItem으로 결과 표시
-                    VoteProgressItem(
-                        text = stringResource(R.string.feed_card_vote_buy),
-                        percentage = buyPercentage / 100f,
-                        percentageText = "$buyPercentage%",
-                        progressBarColor = BuyOrNotTheme.colors.gray900,
-                        shouldInvertTextColor = true,
-                        leadingContent =
-                            if (userVotedOptionIndex == 0) {
-                                {
-                                    AsyncImage(
-                                        model = voterProfileImageUrl,
-                                        contentDescription = null,
-                                        modifier =
-                                            Modifier
-                                                .height(20.dp)
-                                                .width(20.dp)
-                                                .clip(CircleShape),
-                                        contentScale = ContentScale.Crop,
-                                    )
-                                }
-                            } else {
-                                null
-                            },
-                    )
-                    VoteProgressItem(
-                        text = stringResource(R.string.feed_card_vote_maybe),
-                        percentage = maybePercentage / 100f,
-                        percentageText = "$maybePercentage%",
-                        textColor = BuyOrNotTheme.colors.gray700,
-                        percentageTextColor = BuyOrNotTheme.colors.gray700,
-                        leadingContent =
-                            if (userVotedOptionIndex == 1) {
-                                {
-                                    AsyncImage(
-                                        model = voterProfileImageUrl,
-                                        contentDescription = null,
-                                        modifier =
-                                            Modifier
-                                                .height(20.dp)
-                                                .width(20.dp)
-                                                .clip(CircleShape),
-                                        contentScale = ContentScale.Crop,
-                                    )
-                                }
-                            } else {
-                                null
-                            },
-                    )
-                } else {
-                    // 투표 진행중: VoteOption으로 투표 가능
-                    VoteOption(
-                        text = stringResource(R.string.feed_card_vote_buy),
-                        onClick = { onVote(0) },
-                    )
-                    VoteOption(
-                        text = stringResource(R.string.feed_card_vote_maybe),
-                        onClick = { onVote(1) },
+            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                // 5. 투표 영역 (VoteOption 또는 VoteProgressItem)
+                // 사용자가 투표했거나 투표가 종료되었으면 결과 표시
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (hasVoted || isVoteEnded) {
+                        // 투표 완료 또는 종료: VoteProgressItem으로 결과 표시
+                        VoteProgressItem(
+                            text = stringResource(R.string.feed_card_vote_buy),
+                            percentage = buyPercentage / 100f,
+                            percentageText = "$buyPercentage%",
+                            progressBarColor = BuyOrNotTheme.colors.gray900,
+                            shouldInvertTextColor = true,
+                            leadingContent =
+                                if (userVotedOptionIndex == 0) {
+                                    {
+                                        AsyncImage(
+                                            model = voterProfileImageUrl,
+                                            contentDescription = null,
+                                            modifier =
+                                                Modifier
+                                                    .height(20.dp)
+                                                    .width(20.dp)
+                                                    .clip(CircleShape),
+                                            contentScale = ContentScale.Crop,
+                                        )
+                                    }
+                                } else {
+                                    null
+                                },
+                        )
+                        VoteProgressItem(
+                            text = stringResource(R.string.feed_card_vote_maybe),
+                            percentage = maybePercentage / 100f,
+                            percentageText = "$maybePercentage%",
+                            textColor = BuyOrNotTheme.colors.gray700,
+                            percentageTextColor = BuyOrNotTheme.colors.gray700,
+                            leadingContent =
+                                if (userVotedOptionIndex == 1) {
+                                    {
+                                        AsyncImage(
+                                            model = voterProfileImageUrl,
+                                            contentDescription = null,
+                                            modifier =
+                                                Modifier
+                                                    .height(20.dp)
+                                                    .width(20.dp)
+                                                    .clip(CircleShape),
+                                            contentScale = ContentScale.Crop,
+                                        )
+                                    }
+                                } else {
+                                    null
+                                },
+                        )
+                    } else {
+                        // 투표 진행중: VoteOption으로 투표 가능
+                        VoteOption(
+                            text = stringResource(R.string.feed_card_vote_buy),
+                            onClick = { onVote(0) },
+                        )
+                        VoteOption(
+                            text = stringResource(R.string.feed_card_vote_maybe),
+                            onClick = { onVote(1) },
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // 6. 하단 상태 정보
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val statusText =
+                        if (isVoteEnded) {
+                            stringResource(R.string.feed_card_vote_status_ended)
+                        } else {
+                            stringResource(R.string.feed_card_vote_status_ongoing)
+                        }
+                    Text(
+                        text =
+                            stringResource(
+                                R.string.feed_card_vote_count_format,
+                                totalVoteCount,
+                                statusText,
+                            ),
+                        modifier = Modifier.padding(start = 6.dp),
+                        style = BuyOrNotTheme.typography.bodyB7Medium,
+                        color = BuyOrNotTheme.colors.gray600,
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 6. 하단 상태 정보
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val statusText =
-                    if (isVoteEnded) {
-                        stringResource(R.string.feed_card_vote_status_ended)
-                    } else {
-                        stringResource(R.string.feed_card_vote_status_ongoing)
-                    }
-                Text(
-                    text = stringResource(R.string.feed_card_vote_count_format, totalVoteCount, statusText),
-                    modifier = Modifier.padding(start = 6.dp),
-                    style = BuyOrNotTheme.typography.bodyB7Medium,
-                    color = BuyOrNotTheme.colors.gray600,
-                )
             }
         }
     }
 
-    if (showFullScreen) {
+    fullScreenImageIndex?.let { index ->
         Popup(
-            onDismissRequest = { showFullScreen = false },
+            onDismissRequest = { fullScreenImageIndex = null },
             properties = PopupProperties(focusable = true, excludeFromSystemGesture = false),
         ) {
             FullScreenImageOverlay(
-                imageUrl = productImageUrl,
-                onDismiss = { showFullScreen = false },
+                imageUrl = productImageUrls[index],
+                onDismiss = { fullScreenImageIndex = null },
             )
         }
     }
@@ -404,6 +419,36 @@ private fun FullScreenImageOverlay(
                 contentDescription = "Close",
                 tint = Color.White,
                 modifier = Modifier.size(20.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PageIndicator(
+    pageCount: Int,
+    currentPage: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        repeat(pageCount) { index ->
+            Box(
+                modifier =
+                    Modifier
+                        .size(if (index == currentPage) 7.dp else 5.dp)
+                        .background(
+                            color =
+                                if (index == currentPage) {
+                                    BuyOrNotTheme.colors.gray0
+                                } else {
+                                    BuyOrNotTheme.colors.gray0.copy(alpha = 0.5f)
+                                },
+                            shape = CircleShape,
+                        ),
             )
         }
     }
@@ -481,7 +526,12 @@ private fun FeedCardSquareInteractivePreview() {
             createdAt = "10분 전",
             title = "립스틱 살까요?",
             content = "이 립스틱 색상 어때요? 평소에 안 바르던 색인데 도전해볼까 고민중이에요!",
-            productImageUrl = "https://picsum.photos/seed/product1/800/800",
+            productImageUrls =
+                listOf(
+                    "https://picsum.photos/seed/product1/800/800",
+                    "https://picsum.photos/seed/product2/800/800",
+                    "https://picsum.photos/seed/product3/800/800",
+                ),
             price = "35,000",
             imageAspectRatio = ImageAspectRatio.SQUARE,
             isVoteEnded = false,
@@ -515,7 +565,10 @@ private fun FeedCardPortraitInteractivePreview() {
             createdAt = "2시간 전",
             title = "이 원피스 어때요?",
             content = "이 원피스 4:5 비율로 보면 더 예쁜 것 같아요! 세로로 긴 옷 사진은 이 비율이 딱이에요.",
-            productImageUrl = "https://picsum.photos/seed/product2/800/1000",
+            productImageUrls =
+                listOf(
+                    "https://picsum.photos/seed/product2/800/1000",
+                ),
             price = "89,000",
             imageAspectRatio = ImageAspectRatio.PORTRAIT,
             isVoteEnded = false,
