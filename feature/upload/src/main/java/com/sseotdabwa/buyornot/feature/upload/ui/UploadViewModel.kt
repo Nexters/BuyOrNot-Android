@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
+import com.sseotdabwa.buyornot.feature.upload.util.LinkValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -31,6 +32,8 @@ class UploadViewModel @Inject constructor(
                 updateState {
                     it.copy(price = intent.digits, priceFieldValue = intent.textFieldValue)
                 }
+            is UploadIntent.UpdateLink ->
+                updateState { it.copy(link = intent.link) }
             is UploadIntent.UpdateTitle -> {
                 if (intent.title.length <= MAX_TITLE_LENGTH) {
                     updateState { it.copy(title = intent.title) }
@@ -62,6 +65,11 @@ class UploadViewModel @Inject constructor(
 
     private fun submitFeed(context: Context) {
         if (currentState.isLoading) return
+
+        if (!LinkValidator.isValid(currentState.link)) {
+            sendSideEffect(UploadSideEffect.ShowSnackbar("링크 주소를 다시 확인해 주세요."))
+            return
+        }
 
         val uri = currentState.selectedImageUri ?: return
         val category = currentState.category ?: return

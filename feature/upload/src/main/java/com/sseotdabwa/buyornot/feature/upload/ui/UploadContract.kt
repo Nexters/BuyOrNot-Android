@@ -11,6 +11,7 @@ data class UploadUiState(
     val category: FeedCategory? = null,
     val price: String = "",
     val priceFieldValue: TextFieldValue = TextFieldValue(""),
+    val link: String = "",
     val title: String = "",
     val content: String = "",
     val showCategorySheet: Boolean = false,
@@ -18,7 +19,13 @@ data class UploadUiState(
     val categories: List<FeedCategory> = FeedCategory.entries,
 ) {
     val hasInput: Boolean
-        get() = selectedImageUri != null || category != null || price.isNotEmpty() || title.isNotEmpty() || content.isNotEmpty()
+        get() =
+            selectedImageUri != null ||
+                category != null ||
+                price.isNotEmpty() ||
+                link.isNotEmpty() ||
+                title.isNotEmpty() ||
+                content.isNotEmpty()
 }
 
 sealed interface UploadIntent {
@@ -29,6 +36,10 @@ sealed interface UploadIntent {
     data class UpdatePrice(
         val digits: String,
         val textFieldValue: TextFieldValue,
+    ) : UploadIntent
+
+    data class UpdateLink(
+        val link: String,
     ) : UploadIntent
 
     data class UpdateTitle(

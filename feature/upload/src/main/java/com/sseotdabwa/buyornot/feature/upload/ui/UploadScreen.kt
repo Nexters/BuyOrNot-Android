@@ -174,6 +174,17 @@ fun UploadScreen(
                 color = BuyOrNotTheme.colors.gray100,
             )
 
+            LinkInputField(
+                modifier = Modifier.padding(vertical = 18.dp),
+                link = uiState.link,
+                onLinkChange = { onIntent(UploadIntent.UpdateLink(it)) },
+            )
+
+            HorizontalDivider(
+                thickness = 2.dp,
+                color = BuyOrNotTheme.colors.gray100,
+            )
+
             PriceInputField(
                 modifier = Modifier.padding(vertical = 18.dp),
                 priceFieldValue = uiState.priceFieldValue,
@@ -290,6 +301,48 @@ private fun CategorySelectorRow(
             modifier = Modifier.clickable { onCategoryClick() },
             style = BuyOrNotTheme.typography.subTitleS3SemiBold,
             color = if (selectedCategory != null) BuyOrNotTheme.colors.gray800 else BuyOrNotTheme.colors.gray600,
+        )
+    }
+}
+
+@Composable
+private fun LinkInputField(
+    link: String,
+    onLinkChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = BuyOrNotIcons.Link.asImageVector(),
+            contentDescription = "Link",
+            modifier = Modifier.size(18.dp),
+            tint = BuyOrNotTheme.colors.gray600,
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+
+        BasicTextField(
+            value = link,
+            onValueChange = onLinkChange,
+            modifier = Modifier.fillMaxWidth(),
+            textStyle =
+                BuyOrNotTheme.typography.subTitleS3SemiBold.copy(
+                    color = BuyOrNotTheme.colors.gray800,
+                ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+            singleLine = true,
+            decorationBox = { innerTextField ->
+                if (link.isEmpty()) {
+                    Text(
+                        text = "상품 링크를 입력해주세요",
+                        style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+                        color = BuyOrNotTheme.colors.gray600,
+                    )
+                }
+                innerTextField()
+            },
         )
     }
 }
