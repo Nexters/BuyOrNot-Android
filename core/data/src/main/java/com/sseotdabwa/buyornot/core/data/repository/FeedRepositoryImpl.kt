@@ -165,6 +165,7 @@ private fun FeedItemDto.toDomain(): Feed =
         createdAt = createdAt,
         hasVoted = hasVoted ?: false,
         myVoteChoice = myVoteChoice?.toVoteChoice(),
+        productLink = "https://littlemoom.notion.site/buy-or-not-service-term?pvs=143",
     )
 
 private fun String.toFeedCategory(): FeedCategory =

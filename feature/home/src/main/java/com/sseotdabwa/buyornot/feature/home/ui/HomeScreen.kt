@@ -77,6 +77,7 @@ fun HomeRoute(
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
+    onLinkClick: (url: String) -> Unit = {},
     initialTab: HomeTab = HomeTab.FEED,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -115,6 +116,7 @@ fun HomeRoute(
         onNotificationClick = onNotificationClick,
         onProfileClick = onProfileClick,
         onUploadClick = onUploadClick,
+        onLinkClick = onLinkClick,
         onIntent = viewModel::handleIntent,
     )
 }
@@ -130,6 +132,7 @@ fun HomeScreen(
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
+    onLinkClick: (url: String) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
@@ -180,6 +183,7 @@ fun HomeScreen(
                 onNotificationClick = onNotificationClick,
                 onProfileClick = onProfileClick,
                 onUploadClick = onUploadClick,
+                onLinkClick = onLinkClick,
             )
 
             FabDimOverlay(
@@ -317,6 +321,7 @@ private fun HomeFeedList(
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
     onUploadClick: () -> Unit,
+    onLinkClick: (url: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // ViewModel에서 이미 탭과 필터에 따라 필터링된 피드를 제공
@@ -410,6 +415,7 @@ private fun HomeFeedList(
                             onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
                             onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
                             onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
+                            onLinkClick = onLinkClick,
                         )
                     }
 
@@ -503,6 +509,7 @@ private fun FeedItemCard(
     onDelete: (String) -> Unit,
     onReport: (String) -> Unit,
     onBlock: (String) -> Unit,
+    onLinkClick: (url: String) -> Unit,
 ) {
     Column {
         FeedCard(
@@ -530,6 +537,8 @@ private fun FeedItemCard(
             onReportClick = { onReport(feed.id) },
             onBlockClick = { onBlock(feed.id) },
             showMoreButton = !isGuest,
+            productLink = feed.productLink,
+            onLinkClick = onLinkClick,
         )
 
         BuyOrNotDivider(

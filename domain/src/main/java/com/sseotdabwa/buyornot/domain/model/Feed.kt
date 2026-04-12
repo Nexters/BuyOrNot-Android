@@ -21,6 +21,7 @@ data class Feed(
     val createdAt: String,
     val hasVoted: Boolean,
     val myVoteChoice: VoteChoice?,
+    val productLink: String? = null,
 )
 
 /**

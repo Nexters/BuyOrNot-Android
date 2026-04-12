@@ -43,6 +43,7 @@ data class FeedItem(
     val totalVoteCount: Int,
     val isOwner: Boolean,
     val authorUserId: Long,
+    val productLink: String? = null,
 )
 
 /**

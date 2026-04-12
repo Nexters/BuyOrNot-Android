@@ -528,6 +528,7 @@ class HomeViewModel @Inject constructor(
             totalVoteCount = totalCount,
             isOwner = isOwner,
             authorUserId = author.userId,
+            productLink = productLink,
         )
     }
 }

@@ -47,6 +47,7 @@ import com.sseotdabwa.buyornot.domain.model.VoteChoice
 @Composable
 fun NotificationDetailRoute(
     onBackClick: () -> Unit,
+    onLinkClick: (url: String) -> Unit = {},
     viewModel: NotificationDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -72,6 +73,7 @@ fun NotificationDetailRoute(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
+        onLinkClick = onLinkClick,
         onIntent = viewModel::handleIntent,
     )
 }
@@ -81,6 +83,7 @@ fun NotificationDetailScreen(
     uiState: NotificationDetailUiState,
     onBackClick: () -> Unit,
     onIntent: (NotificationDetailIntent) -> Unit,
+    onLinkClick: (url: String) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     if (uiState.showBlockDialog) {
@@ -178,6 +181,8 @@ fun NotificationDetailScreen(
                             onReportClick = { onIntent(NotificationDetailIntent.OnReportClicked) },
                             onBlockClick = { onIntent(NotificationDetailIntent.ShowBlockDialog) },
                             showMoreButton = !uiState.isGuest,
+                            productLink = feed.productLink,
+                            onLinkClick = onLinkClick,
                         )
                     }
                 }

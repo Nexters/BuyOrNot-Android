@@ -79,6 +79,8 @@ fun FeedCard(
     onReportClick: () -> Unit = {},
     onBlockClick: () -> Unit = {},
     showMoreButton: Boolean = true,
+    productLink: String? = null,
+    onLinkClick: (url: String) -> Unit = {},
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
@@ -128,7 +130,9 @@ fun FeedCard(
                 pagerState = pagerState,
                 imageAspectRatio = imageAspectRatio,
                 price = price,
+                productLink = productLink,
                 onFullscreenClick = { page -> fullScreenImageIndex = page },
+                onLinkClick = onLinkClick,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -276,7 +280,9 @@ private fun FeedImageCarousel(
     pagerState: PagerState,
     imageAspectRatio: ImageAspectRatio,
     price: String,
+    productLink: String?,
     onFullscreenClick: (pageIndex: Int) -> Unit,
+    onLinkClick: (url: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isInPreviewMode = LocalInspectionMode.current
@@ -292,7 +298,8 @@ private fun FeedImageCarousel(
                     Modifier
                         .fillMaxWidth()
                         .aspectRatio(imageAspectRatio.ratio)
-                        .clip(RoundedCornerShape(16.dp)),
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { onFullscreenClick(page) },
             ) {
                 if (isInPreviewMode) {
                     Box(
@@ -330,10 +337,12 @@ private fun FeedImageCarousel(
                             },
                 )
 
-                FullscreenButton(
-                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 14.dp),
-                    onClick = { onFullscreenClick(page) },
-                )
+                if (page == 0 && productLink != null) {
+                    LinkButton(
+                        modifier = Modifier.align(Alignment.TopEnd).padding(top = 14.dp, end = 14.dp),
+                        onClick = { onLinkClick(productLink) },
+                    )
+                }
 
                 Text(
                     text = stringResource(R.string.feed_card_price_format, price),
@@ -542,26 +551,28 @@ private fun VoteOption(
 }
 
 @Composable
-private fun FullscreenButton(
+private fun LinkButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Box(
         modifier =
             modifier
-                .size(30.dp)
                 .background(
-                    color = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(8.dp),
-                ).clip(RoundedCornerShape(8.dp))
-                .clickable(onClick = onClick),
+                    color = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.3f),
+                    shape = RoundedCornerShape(26.dp),
+                ).clip(RoundedCornerShape(26.dp))
+                .padding(
+                    horizontal = 10.dp,
+                    vertical = 6.dp,
+                ).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = BuyOrNotIcons.Expand.asImageVector(),
-            contentDescription = "Fullscreen",
+            imageVector = BuyOrNotIcons.Link.asImageVector(),
+            contentDescription = "Link",
             modifier = Modifier.size(18.dp),
-            tint = BuyOrNotTheme.colors.gray300,
+            tint = BuyOrNotTheme.colors.gray0,
         )
     }
 }
@@ -601,6 +612,7 @@ private fun FeedCardSquareInteractivePreview() {
             },
             onDeleteClick = {},
             onReportClick = {},
+            productLink = "",
         )
     }
 }

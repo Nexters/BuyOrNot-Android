@@ -11,6 +11,7 @@ import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToTerms
+import com.sseotdabwa.buyornot.core.ui.webview.navigateToWebView
 import com.sseotdabwa.buyornot.core.ui.webview.webViewScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.AUTH_ROUTE
 import com.sseotdabwa.buyornot.feature.auth.navigation.SPLASH_ROUTE
@@ -97,10 +98,12 @@ fun BuyOrNotNavHost(
             onNotificationClick = navController::navigateToNotification,
             onProfileClick = navController::navigateToMyPage,
             onUploadClick = navController::navigateToUpload,
+            onLinkClick = { url -> navController.navigateToWebView("상품 링크", url) },
         )
         notificationGraph(
             onBackClick = navController::popBackStack,
             onNotificationClick = navController::navigateToNotificationDetail,
+            onLinkClick = { url -> navController.navigateToWebView("상품 링크", url) },
         )
         uploadScreen(
             onNavigateBack = navController::popBackStack,
