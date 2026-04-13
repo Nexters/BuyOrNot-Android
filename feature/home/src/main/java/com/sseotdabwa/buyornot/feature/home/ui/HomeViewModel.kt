@@ -135,9 +135,12 @@ class HomeViewModel @Inject constructor(
         updateState {
             it.copy(
                 selectedTab = tab,
+                selectedCategories = emptySet(),
+                selectedFilter = FilterChip.ALL,
                 isLoading = true,
                 hasError = false,
                 feeds = emptyList(),
+                allFeeds = emptyList(),
                 hasNextPage = false,
                 nextCursor = null,
                 isNextPageLoading = false,
@@ -170,15 +173,10 @@ class HomeViewModel @Inject constructor(
                 } else {
                     state.selectedCategories + category
                 }
-            val filtered =
-                if (updated.isEmpty()) {
-                    state.allFeeds
-                } else {
-                    state.allFeeds.filter { feed ->
-                        updated.any { it.displayName == feed.category }
-                    }
-                }
-            state.copy(selectedCategories = updated, feeds = filtered)
+            state.copy(
+                selectedCategories = updated,
+                feeds = applyCategories(state.allFeeds, updated),
+            )
         }
     }
 
@@ -215,9 +213,12 @@ class HomeViewModel @Inject constructor(
                         feed.toFeedItem(isOwner)
                     }
 
+                val newAllFeeds = currentState.allFeeds + newItems
+
                 updateState {
                     it.copy(
-                        feeds = it.feeds + newItems,
+                        allFeeds = newAllFeeds,
+                        feeds = applyCategories(newAllFeeds, it.selectedCategories),
                         isNextPageLoading = false,
                         hasNextPage = feedList.hasNext,
                         nextCursor = feedList.nextCursor,
@@ -427,7 +428,14 @@ class HomeViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             if (clearFeeds) {
-                updateState { it.copy(isLoading = true, hasError = false, feeds = emptyList()) }
+                updateState {
+                    it.copy(
+                        isLoading = true,
+                        hasError = false,
+                        feeds = emptyList(),
+                        allFeeds = emptyList(),
+                    )
+                }
             } else {
                 updateState { it.copy(hasError = false) }
             }
@@ -445,14 +453,15 @@ class HomeViewModel @Inject constructor(
                     HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
                 }
             }.onSuccess { feedList ->
-                val feeds =
+                val newFeeds =
                     feedList.feeds.map { feed ->
                         val isOwner = currentUserId != null && feed.author.userId == currentUserId
                         feed.toFeedItem(isOwner)
                     }
                 updateState {
                     it.copy(
-                        feeds = feeds,
+                        allFeeds = newFeeds,
+                        feeds = applyCategories(newFeeds, it.selectedCategories),
                         isLoading = false,
                         hasError = false,
                         hasNextPage = feedList.hasNext,
@@ -484,14 +493,15 @@ class HomeViewModel @Inject constructor(
                     HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
                 }
             }.onSuccess { feedList ->
-                val feeds =
+                val refreshedFeeds =
                     feedList.feeds.map { feed ->
                         val isOwner = currentUserId != null && feed.author.userId == currentUserId
                         feed.toFeedItem(isOwner)
                     }
                 updateState {
                     it.copy(
-                        feeds = feeds,
+                        allFeeds = refreshedFeeds,
+                        feeds = applyCategories(refreshedFeeds, it.selectedCategories),
                         isRefreshing = false,
                         hasNextPage = feedList.hasNext,
                         nextCursor = feedList.nextCursor,
@@ -503,6 +513,22 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    /**
+     * allFeeds에 카테고리 필터를 로컬 적용한다.
+     * categories가 비어있으면 전체 반환 (전체 = 아무것도 선택 안 됨).
+     */
+    private fun applyCategories(
+        feeds: List<FeedItem>,
+        categories: Set<FeedCategory>,
+    ): List<FeedItem> =
+        if (categories.isEmpty()) {
+            feeds
+        } else {
+            feeds.filter { feed ->
+                categories.any { it.displayName == feed.category }
+            }
+        }
 
     /**
      * FilterChip을 API feedStatus 파라미터로 변환
