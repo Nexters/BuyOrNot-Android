@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -508,6 +507,7 @@ private fun FilterChipRow(
             onOptionClick = { option ->
                 val filter = FilterChip.entries.first { it.label == option }
                 onFilterSelected(filter)
+                showSortSheet = false
             },
             onDismissRequest = { showSortSheet = false },
         )
@@ -522,7 +522,6 @@ private fun FilterChipRow(
         item {
             IconButton(
                 onClick = { showSortSheet = true },
-                modifier = Modifier.size(32.dp),
             ) {
                 Icon(
                     imageVector = BuyOrNotIcons.Sort.asImageVector(),
@@ -536,7 +535,10 @@ private fun FilterChipRow(
             }
         }
 
-        items(FeedCategory.entries.size) { index ->
+        items(
+            count = FeedCategory.entries.size,
+            key = { index -> FeedCategory.entries[index].name },
+        ) { index ->
             val category = FeedCategory.entries[index]
             BuyOrNotChip(
                 text = category.displayName,
