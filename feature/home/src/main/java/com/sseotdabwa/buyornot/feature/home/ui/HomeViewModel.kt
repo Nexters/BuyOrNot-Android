@@ -330,7 +330,12 @@ class HomeViewModel @Inject constructor(
             runCatchingCancellable {
                 feedRepository.deleteFeed(feedId.toLong())
             }.onSuccess {
-                updateState { it.copy(feeds = it.feeds.filter { feed -> feed.id != feedId }) }
+                updateState {
+                    it.copy(
+                        allFeeds = it.allFeeds.filter { feed -> feed.id != feedId },
+                        feeds = it.feeds.filter { feed -> feed.id != feedId },
+                    )
+                }
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = "삭제가 완료되었습니다.",
@@ -374,7 +379,12 @@ class HomeViewModel @Inject constructor(
                         icon = null,
                     ),
                 )
-                updateState { it.copy(feeds = it.feeds.filter { feed -> feed.authorUserId != userId }) }
+                updateState {
+                    it.copy(
+                        allFeeds = it.allFeeds.filter { feed -> feed.authorUserId != userId },
+                        feeds = it.feeds.filter { feed -> feed.authorUserId != userId },
+                    )
+                }
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to block user: $userId", e)
                 sendSideEffect(
