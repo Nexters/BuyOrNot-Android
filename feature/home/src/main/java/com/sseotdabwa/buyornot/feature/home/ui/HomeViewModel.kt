@@ -163,16 +163,23 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun handleCategoryToggled(category: FeedCategory) {
-        val current = currentState.selectedCategories
-        val updated = if (category in current) current - category else current + category
-        val filtered = if (updated.isEmpty()) {
-            currentState.allFeeds
-        } else {
-            currentState.allFeeds.filter { feed ->
-                updated.any { it.displayName == feed.category }
-            }
+        updateState { state ->
+            val updated =
+                if (category in state.selectedCategories) {
+                    state.selectedCategories - category
+                } else {
+                    state.selectedCategories + category
+                }
+            val filtered =
+                if (updated.isEmpty()) {
+                    state.allFeeds
+                } else {
+                    state.allFeeds.filter { feed ->
+                        updated.any { it.displayName == feed.category }
+                    }
+                }
+            state.copy(selectedCategories = updated, feeds = filtered)
         }
-        updateState { it.copy(selectedCategories = updated, feeds = filtered) }
     }
 
     private fun handleNextPage() {
