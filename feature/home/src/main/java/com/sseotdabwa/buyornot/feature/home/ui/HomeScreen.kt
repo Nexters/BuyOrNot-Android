@@ -15,11 +15,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -52,10 +55,12 @@ import com.sseotdabwa.buyornot.core.designsystem.components.FabOption
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCard
 import com.sseotdabwa.buyornot.core.designsystem.components.GuestTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.HomeTopBar
+import com.sseotdabwa.buyornot.core.designsystem.components.OptionSheet
 import com.sseotdabwa.buyornot.core.designsystem.components.showBuyOrNotSnackBar
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.UserType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -385,6 +390,8 @@ private fun HomeFeedList(
             item {
                 Spacer(modifier = Modifier.height(16.dp))
                 FilterChipRow(
+                    selectedCategories = uiState.selectedCategories,
+                    onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
                     selectedFilter = uiState.selectedFilter,
                     onFilterSelected = { onIntent(HomeIntent.OnFilterSelected(it)) },
                 )
@@ -481,23 +488,60 @@ private fun HomeFeedList(
 
 /**
  * 필터 칩 행 컴포넌트
+ * - 맨 좌측: 정렬 아이콘 (클릭 시 투표 상태 OptionSheet 표시)
+ * - 이후: FeedCategory 카테고리 칩 (다중 선택, 없으면 전체)
  */
 @Composable
 private fun FilterChipRow(
+    selectedCategories: Set<FeedCategory>,
+    onCategoryToggled: (FeedCategory) -> Unit,
     selectedFilter: FilterChip,
     onFilterSelected: (FilterChip) -> Unit,
 ) {
+    var showSortSheet by remember { mutableStateOf(false) }
+
+    if (showSortSheet) {
+        OptionSheet(
+            title = "투표 상태",
+            options = FilterChip.entries.map { it.label },
+            selectedOption = selectedFilter.label,
+            onOptionClick = { option ->
+                val filter = FilterChip.entries.first { it.label == option }
+                onFilterSelected(filter)
+            },
+            onDismissRequest = { showSortSheet = false },
+        )
+    }
+
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        items(FilterChip.entries.size) { index ->
-            val chip = FilterChip.entries[index]
+        item {
+            IconButton(
+                onClick = { showSortSheet = true },
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(
+                    imageVector = BuyOrNotIcons.Sort.asImageVector(),
+                    contentDescription = "투표 상태 필터",
+                    tint = if (selectedFilter != FilterChip.ALL) {
+                        BuyOrNotTheme.colors.gray900
+                    } else {
+                        BuyOrNotTheme.colors.gray500
+                    },
+                )
+            }
+        }
+
+        items(FeedCategory.entries.size) { index ->
+            val category = FeedCategory.entries[index]
             BuyOrNotChip(
-                text = chip.label,
-                isSelected = selectedFilter == chip,
-                onClick = { onFilterSelected(chip) },
+                text = category.displayName,
+                isSelected = category in selectedCategories,
+                onClick = { onCategoryToggled(category) },
             )
         }
     }
