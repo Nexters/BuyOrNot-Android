@@ -8,6 +8,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.Feed
+import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
@@ -124,6 +125,7 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.LoadFeeds -> loadFeeds()
             is HomeIntent.LoadNextPage -> handleNextPage()
             is HomeIntent.Refresh -> handleRefresh()
+            is HomeIntent.OnCategoryToggled -> handleCategoryToggled(intent.category)
         }
     }
 
@@ -158,6 +160,19 @@ class HomeViewModel @Inject constructor(
 
     private fun handleBannerDismiss() {
         updateState { it.copy(isBannerVisible = false) }
+    }
+
+    private fun handleCategoryToggled(category: FeedCategory) {
+        val current = currentState.selectedCategories
+        val updated = if (category in current) current - category else current + category
+        val filtered = if (updated.isEmpty()) {
+            currentState.allFeeds
+        } else {
+            currentState.allFeeds.filter { feed ->
+                updated.any { it.displayName == feed.category }
+            }
+        }
+        updateState { it.copy(selectedCategories = updated, feeds = filtered) }
     }
 
     private fun handleNextPage() {

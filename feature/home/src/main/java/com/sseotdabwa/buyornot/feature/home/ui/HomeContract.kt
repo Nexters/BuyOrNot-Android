@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.home.ui
 import androidx.compose.runtime.Immutable
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.UserType
 
 /**
@@ -67,6 +68,8 @@ data class HomeUiState(
     val selectedFilter: FilterChip = FilterChip.ALL,
     val isBannerVisible: Boolean = true,
     val voterProfileImageUrl: String = "",
+    val allFeeds: List<FeedItem> = emptyList(),
+    val selectedCategories: Set<FeedCategory> = emptySet(),
     val feeds: List<FeedItem> = emptyList(),
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
@@ -127,6 +130,10 @@ sealed interface HomeIntent {
     data object DismissBlockDialog : HomeIntent
 
     data object OnBlockConfirmed : HomeIntent
+
+    data class OnCategoryToggled(
+        val category: FeedCategory,
+    ) : HomeIntent
 }
 
 /**
