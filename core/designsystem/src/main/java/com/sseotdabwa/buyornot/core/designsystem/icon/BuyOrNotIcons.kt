@@ -52,6 +52,7 @@ object BuyOrNotIcons {
     val NoVote = IconResource(R.drawable.ic_no_vote)
 
     val Won = IconResource(R.drawable.ic_won)
+    val Sort = IconResource(R.drawable.ic_sort)
 }
 
 /**
