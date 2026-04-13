@@ -252,7 +252,13 @@ class HomeViewModel @Inject constructor(
         }
 
         // 1. 낙관적 업데이트 (Optimistic Update)
-        updateState { it.copy(feeds = optimisticVoteUpdate(it.feeds, feedId, optionIndex)) }
+        updateState { state ->
+            val newAllFeeds = optimisticVoteUpdate(state.allFeeds, feedId, optionIndex)
+            state.copy(
+                allFeeds = newAllFeeds,
+                feeds = applyCategories(newAllFeeds, state.selectedCategories),
+            )
+        }
 
         viewModelScope.launch {
             val choice = if (optionIndex == 0) VoteChoice.YES else VoteChoice.NO
@@ -264,32 +270,34 @@ class HomeViewModel @Inject constructor(
                 }
             }.onSuccess { voteResult ->
                 // 2. 최종 업데이트: 서버 응답으로 확정
-                updateState {
-                    it.copy(
-                        feeds =
-                            it.feeds.map { feed ->
-                                if (feed.id == feedId) {
-                                    feed.copy(
-                                        userVotedOptionIndex = optionIndex,
-                                        buyVoteCount = voteResult.yesCount,
-                                        maybeVoteCount = voteResult.noCount,
-                                        totalVoteCount = voteResult.totalCount,
-                                    )
-                                } else {
-                                    feed
-                                }
-                            },
+                updateState { state ->
+                    val newAllFeeds = state.allFeeds.map { feed ->
+                        if (feed.id == feedId) {
+                            feed.copy(
+                                userVotedOptionIndex = optionIndex,
+                                buyVoteCount = voteResult.yesCount,
+                                maybeVoteCount = voteResult.noCount,
+                                totalVoteCount = voteResult.totalCount,
+                            )
+                        } else {
+                            feed
+                        }
+                    }
+                    state.copy(
+                        allFeeds = newAllFeeds,
+                        feeds = applyCategories(newAllFeeds, state.selectedCategories),
                     )
                 }
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
                 // 3. 롤백 (Rollback): 해당 피드만 원복, 나머지 동시 변경사항 보존
-                updateState {
-                    it.copy(
-                        feeds =
-                            it.feeds.map { feed ->
-                                if (feed.id == feedId) targetFeed else feed
-                            },
+                updateState { state ->
+                    val newAllFeeds = state.allFeeds.map { feed ->
+                        if (feed.id == feedId) targetFeed else feed
+                    }
+                    state.copy(
+                        allFeeds = newAllFeeds,
+                        feeds = applyCategories(newAllFeeds, state.selectedCategories),
                     )
                 }
 
