@@ -126,6 +126,8 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.LoadNextPage -> handleNextPage()
             is HomeIntent.Refresh -> handleRefresh()
             is HomeIntent.OnCategoryToggled -> handleCategoryToggled(intent.category)
+            is HomeIntent.ShowSortSheet -> updateState { it.copy(showSortSheet = true) }
+            is HomeIntent.DismissSortSheet -> updateState { it.copy(showSortSheet = false) }
         }
     }
 

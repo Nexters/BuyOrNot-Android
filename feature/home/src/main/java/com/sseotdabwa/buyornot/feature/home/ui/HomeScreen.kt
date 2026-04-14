@@ -361,133 +361,153 @@ private fun HomeFeedList(
         onRefresh = { onIntent(HomeIntent.Refresh) },
         modifier = modifier.fillMaxSize(),
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = contentPadding,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            item {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // 항상 노출되는 고정 헤더 영역 (TopBar + Tab)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = contentPadding.calculateTopPadding())
+                    .background(BuyOrNotTheme.colors.gray0),
+            ) {
                 HomeTopBarSection(
                     userType = uiState.userType,
                     onLoginClick = onLoginClick,
                     onNotificationClick = onNotificationClick,
                     onProfileClick = onProfileClick,
                 )
-            }
-
-            stickyHeader {
                 HomeTabSection(
                     userType = uiState.userType,
                     selectedTab = uiState.selectedTab,
                     onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
-                    modifier = Modifier.background(BuyOrNotTheme.colors.gray0),
                 )
             }
 
-            // 공통 필터 칩 영역
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                FilterChipRow(
-                    selectedCategories = uiState.selectedCategories,
-                    onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
-                    selectedFilter = uiState.selectedFilter,
-                    onFilterSelected = { onIntent(HomeIntent.OnFilterSelected(it)) },
-                )
+            // 스크롤 가능한 피드 목록
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // 스크롤 시 숨겨지는 필터 칩 영역
+                item {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    FilterChipRow(
+                        selectedCategories = uiState.selectedCategories,
+                        onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
+                        selectedFilter = uiState.selectedFilter,
+                        onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
                 // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
                 if (filteredFeeds.isNotEmpty() && uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    HomeBanner(
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                        onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
-                        onClick = onUploadClick,
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    BuyOrNotDivider(
-                        size = BuyOrNotDividerSize.Small,
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                    )
-                }
-            }
-
-            when {
-                // 1. 데이터가 있으면 로딩 여부와 상관없이 최우선 노출
-                filteredFeeds.isNotEmpty() -> {
-                    // 피드 리스트 및 배너 노출 로직 (기존과 동일)
-                    items(filteredFeeds.size, key = { index -> filteredFeeds[index].id }) { index ->
-                        FeedItemCard(
-                            feed = filteredFeeds[index],
-                            voterProfileImageUrl = uiState.voterProfileImageUrl,
-                            isGuest = uiState.userType == UserType.GUEST,
-                            modifier = Modifier.animateItem(),
-                            showProductLinkTooltip = showLinkTooltip && index == tooltipTargetIndex,
-                            onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
-                            onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
-                            onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
-                            onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
-                            onLinkClick = onLinkClick,
+                    item {
+                        HomeBanner(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
+                            onClick = onUploadClick,
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        BuyOrNotDivider(
+                            size = BuyOrNotDividerSize.Small,
+                            modifier = Modifier.padding(horizontal = 20.dp),
                         )
                     }
+                }
 
-                    // 다음 페이지 로딩 중일 때 표시
-                    if (uiState.isNextPageLoading) {
-                        item {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 16.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator(
-                                    color = BuyOrNotTheme.colors.gray900,
-                                    strokeWidth = 2.dp,
-                                )
+                when {
+                    // 1. 데이터가 있으면 로딩 여부와 상관없이 최우선 노출
+                    filteredFeeds.isNotEmpty() -> {
+                        items(filteredFeeds.size, key = { index -> filteredFeeds[index].id }) { index ->
+                            FeedItemCard(
+                                feed = filteredFeeds[index],
+                                voterProfileImageUrl = uiState.voterProfileImageUrl,
+                                isGuest = uiState.userType == UserType.GUEST,
+                                modifier = Modifier.animateItem(),
+                                showProductLinkTooltip = showLinkTooltip && index == tooltipTargetIndex,
+                                onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
+                                onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
+                                onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
+                                onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
+                                onLinkClick = onLinkClick,
+                            )
+                        }
+
+                        // 다음 페이지 로딩 중일 때 표시
+                        if (uiState.isNextPageLoading) {
+                            item {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 16.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = BuyOrNotTheme.colors.gray900,
+                                        strokeWidth = 2.dp,
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                // 2. 로딩 중인 단계 (로딩이 끝나기 전까지는 Result를 판단하지 않음)
-                uiState.isLoading -> {
-                    item {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
+                    // 2. 로딩 중인 단계 (로딩이 끝나기 전까지는 Result를 판단하지 않음)
+                    uiState.isLoading -> {
+                        item {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
+                            }
+                        }
+                    }
+
+                    // 3. 로딩이 끝난 단계 (isLoading == false)
+                    uiState.hasError -> {
+                        // 통신 실패로 로딩이 끝난 경우
+                        item {
+                            BuyOrNotErrorView(
+                                modifier = Modifier.padding(top = 80.dp),
+                                message = "피드를 불러오지 못했어요",
+                                onRefreshClick = { onIntent(HomeIntent.LoadFeeds) },
+                            )
+                        }
+                    }
+
+                    else -> {
+                        // 통신은 성공(hasError false)했지만 데이터가 없는 경우
+                        item {
+                            HomeFeedEmptyView(
+                                modifier = Modifier.padding(top = 80.dp),
+                            )
                         }
                     }
                 }
-
-                // 3. 로딩이 끝난 단계 (isLoading == false)
-                uiState.hasError -> {
-                    // 통신 실패로 로딩이 끝난 경우
-                    item {
-                        BuyOrNotErrorView(
-                            modifier = Modifier.padding(top = 80.dp),
-                            message = "피드를 불러오지 못했어요",
-                            onRefreshClick = { onIntent(HomeIntent.LoadFeeds) },
-                        )
-                    }
-                }
-
-                else -> {
-                    // [요청사항] 통신은 성공(hasError false)했지만 데이터가 없는 경우
-                    item {
-                        HomeFeedEmptyView(
-                            modifier = Modifier.padding(top = 80.dp),
-                        )
-                    }
-                }
             }
+        }
+
+        // 투표 상태 필터 시트 (PullToRefreshBox 최상단 → full-screen dim 적용)
+        if (uiState.showSortSheet) {
+            OptionSheet(
+                title = "투표 상태",
+                options = FilterChip.entries.map { it.label },
+                selectedOption = uiState.selectedFilter.label,
+                onOptionClick = { option ->
+                    val filter = FilterChip.entries.first { it.label == option }
+                    onIntent(HomeIntent.OnFilterSelected(filter))
+                },
+                onDismissRequest = { onIntent(HomeIntent.DismissSortSheet) },
+            )
         }
     }
 }
 
 /**
  * 필터 칩 행 컴포넌트
- * - 맨 좌측: 정렬 아이콘 (클릭 시 투표 상태 OptionSheet 표시)
+ * - 맨 좌측: 정렬 아이콘 (클릭 시 투표 상태 OptionSheet 표시 요청)
  * - 이후: FeedCategory 카테고리 칩 (다중 선택, 없으면 전체)
  */
 @Composable
@@ -495,24 +515,8 @@ private fun FilterChipRow(
     selectedCategories: Set<FeedCategory>,
     onCategoryToggled: (FeedCategory) -> Unit,
     selectedFilter: FilterChip,
-    onFilterSelected: (FilterChip) -> Unit,
+    onShowSortSheet: () -> Unit,
 ) {
-    var showSortSheet by remember { mutableStateOf(false) }
-
-    if (showSortSheet) {
-        OptionSheet(
-            title = "투표 상태",
-            options = FilterChip.entries.map { it.label },
-            selectedOption = selectedFilter.label,
-            onOptionClick = { option ->
-                val filter = FilterChip.entries.first { it.label == option }
-                onFilterSelected(filter)
-                showSortSheet = false
-            },
-            onDismissRequest = { showSortSheet = false },
-        )
-    }
-
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 20.dp),
@@ -521,7 +525,7 @@ private fun FilterChipRow(
     ) {
         item {
             IconButton(
-                onClick = { showSortSheet = true },
+                onClick = onShowSortSheet,
             ) {
                 Icon(
                     imageVector = BuyOrNotIcons.Sort.asImageVector(),

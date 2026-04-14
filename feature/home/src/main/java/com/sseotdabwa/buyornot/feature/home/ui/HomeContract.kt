@@ -82,6 +82,7 @@ data class HomeUiState(
     val showBlockDialog: Boolean = false,
     val blockingNickname: String? = null,
     val blockingUserId: Long? = null,
+    val showSortSheet: Boolean = false,
 )
 
 /**
@@ -134,6 +135,10 @@ sealed interface HomeIntent {
     data class OnCategoryToggled(
         val category: FeedCategory,
     ) : HomeIntent
+
+    data object ShowSortSheet : HomeIntent
+
+    data object DismissSortSheet : HomeIntent
 }
 
 /**
