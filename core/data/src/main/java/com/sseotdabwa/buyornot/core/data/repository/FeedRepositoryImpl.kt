@@ -1,10 +1,12 @@
 package com.sseotdabwa.buyornot.core.data.repository
 
 import com.sseotdabwa.buyornot.core.network.api.FeedApiService
+import com.sseotdabwa.buyornot.core.network.dto.request.FeedImageRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.FeedRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.VoteRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.AuthorDto
+import com.sseotdabwa.buyornot.core.network.dto.response.FeedImageDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.VoteResponse
@@ -12,6 +14,7 @@ import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
 import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
+import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
@@ -29,9 +32,10 @@ class FeedRepositoryImpl @Inject constructor(
         cursor: Long?,
         size: Int,
         feedStatus: String?,
+        category: String?,
     ): FeedList =
         feedApiService
-            .getFeedList(cursor, size, feedStatus)
+            .getFeedList(cursor, size, feedStatus, category)
             .getOrThrow()
             .toDomain()
 
@@ -87,9 +91,9 @@ class FeedRepositoryImpl @Inject constructor(
         category: FeedCategory,
         price: Int,
         content: String,
-        s3ObjectKey: String,
-        imageWidth: Int,
-        imageHeight: Int,
+        images: List<FeedImage>,
+        title: String?,
+        link: String?,
     ): Long =
         feedApiService
             .createFeed(
@@ -97,9 +101,16 @@ class FeedRepositoryImpl @Inject constructor(
                     category = category.name,
                     price = price,
                     content = content,
-                    s3ObjectKey = s3ObjectKey,
-                    imageWidth = imageWidth,
-                    imageHeight = imageHeight,
+                    images =
+                        images.map { image ->
+                            FeedImageRequest(
+                                s3ObjectKey = image.s3ObjectKey,
+                                imageWidth = image.imageWidth,
+                                imageHeight = image.imageHeight,
+                            )
+                        },
+                    title = title,
+                    link = link,
                 ),
             ).getOrThrow()
             .feedId
@@ -149,7 +160,7 @@ private fun FeedListResponse.toDomain(): FeedList =
 private fun FeedItemDto.toDomain(): Feed =
     Feed(
         feedId = feedId,
-        title = "",
+        title = title ?: "",
         content = content,
         price = String.format(java.util.Locale.KOREA, "%,d", price),
         category = category.toFeedCategory(),
@@ -157,15 +168,20 @@ private fun FeedItemDto.toDomain(): Feed =
         noCount = noCount,
         totalCount = totalCount,
         feedStatus = feedStatus.toFeedStatus(),
-        s3ObjectKey = s3ObjectKey,
-        viewUrls = listOf(viewUrl),
-        imageWidth = imageWidth,
-        imageHeight = imageHeight,
+        images = images.map { it.toDomain() },
         author = author.toDomain(),
         createdAt = createdAt,
         hasVoted = hasVoted ?: false,
         myVoteChoice = myVoteChoice?.toVoteChoice(),
-        productLink = "https://littlemoom.notion.site/buy-or-not-service-term?pvs=143",
+        productLink = link,
+    )
+
+private fun FeedImageDto.toDomain(): FeedImage =
+    FeedImage(
+        s3ObjectKey = s3ObjectKey,
+        imageUrl = imageUrl,
+        imageWidth = imageWidth,
+        imageHeight = imageHeight,
     )
 
 private fun String.toFeedCategory(): FeedCategory =

@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.domain.repository
 
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
+import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
@@ -28,6 +29,7 @@ interface FeedRepository {
         cursor: Long? = null,
         size: Int = 20,
         feedStatus: String? = null,
+        category: String? = null,
     ): FeedList
 
     /**
@@ -67,9 +69,9 @@ interface FeedRepository {
         category: FeedCategory,
         price: Int,
         content: String,
-        s3ObjectKey: String,
-        imageWidth: Int,
-        imageHeight: Int,
+        images: List<FeedImage>,
+        title: String? = null,
+        link: String? = null,
     ): Long
 
     /**

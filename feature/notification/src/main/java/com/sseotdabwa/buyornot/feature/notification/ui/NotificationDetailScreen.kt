@@ -34,6 +34,7 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
+import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 
@@ -161,11 +162,9 @@ fun NotificationDetailScreen(
                             content = feed.content,
                             productImageUrls = feed.viewUrls,
                             price = feed.price,
-                            imageAspectRatio =
-                                if (feed.imageWidth > 0 && feed.imageHeight > 0) {
-                                    if (feed.imageHeight > feed.imageWidth) ImageAspectRatio.PORTRAIT else ImageAspectRatio.SQUARE
-                                } else {
-                                    ImageAspectRatio.SQUARE
+                            imageAspectRatios =
+                                feed.images.map { image ->
+                                    if (image.imageHeight > image.imageWidth) ImageAspectRatio.PORTRAIT else ImageAspectRatio.SQUARE
                                 },
                             isVoteEnded = feed.feedStatus == FeedStatus.CLOSED,
                             userVotedOptionIndex =
@@ -214,10 +213,15 @@ private fun NotificationDetailScreenPreview() {
                             noCount = 20,
                             totalCount = 100,
                             feedStatus = FeedStatus.CLOSED,
-                            s3ObjectKey = "",
-                            viewUrls = listOf("https://picsum.photos/800/800"),
-                            imageWidth = 800,
-                            imageHeight = 800,
+                            images =
+                                listOf(
+                                    FeedImage(
+                                        s3ObjectKey = "",
+                                        imageUrl = "https://picsum.photos/800/800",
+                                        imageWidth = 800,
+                                        imageHeight = 800,
+                                    ),
+                                ),
                             author =
                                 Author(
                                     userId = 1L,

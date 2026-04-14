@@ -36,7 +36,7 @@ data class FeedItem(
     val content: String,
     val productImageUrls: List<String>,
     val price: String,
-    val imageAspectRatio: ImageAspectRatio,
+    val imageAspectRatios: List<ImageAspectRatio>,
     val isVoteEnded: Boolean,
     val userVotedOptionIndex: Int?,
     val buyVoteCount: Int,

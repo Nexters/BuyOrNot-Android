@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -67,7 +68,7 @@ fun FeedCard(
     content: String,
     productImageUrls: List<String>,
     price: String,
-    imageAspectRatio: ImageAspectRatio = ImageAspectRatio.SQUARE,
+    imageAspectRatios: List<ImageAspectRatio> = listOf(ImageAspectRatio.SQUARE),
     isVoteEnded: Boolean,
     userVotedOptionIndex: Int? = null,
     buyVoteCount: Int,
@@ -130,7 +131,7 @@ fun FeedCard(
             FeedImageCarousel(
                 productImageUrls = productImageUrls,
                 pagerState = pagerState,
-                imageAspectRatio = imageAspectRatio,
+                imageAspectRatios = imageAspectRatios,
                 price = price,
                 productLink = productLink,
                 showTooltip = showProductLinkTooltip,
@@ -284,7 +285,7 @@ private fun FeedCardHeader(
 private fun FeedImageCarousel(
     productImageUrls: List<String>,
     pagerState: PagerState,
-    imageAspectRatio: ImageAspectRatio,
+    imageAspectRatios: List<ImageAspectRatio>,
     price: String,
     productLink: String?,
     showTooltip: Boolean,
@@ -293,18 +294,20 @@ private fun FeedImageCarousel(
     modifier: Modifier = Modifier,
 ) {
     val isInPreviewMode = LocalInspectionMode.current
+    val currentAspectRatio = imageAspectRatios.getOrElse(pagerState.currentPage) { ImageAspectRatio.SQUARE }
 
     Box(modifier = modifier) {
         HorizontalPager(
             state = pagerState,
             contentPadding = PaddingValues(horizontal = 20.dp),
             pageSpacing = 10.dp,
+            modifier = Modifier.animateContentSize(),
         ) { page ->
             Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .aspectRatio(imageAspectRatio.ratio)
+                        .aspectRatio(currentAspectRatio.ratio)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable { onFullscreenClick(page) },
             ) {
@@ -674,7 +677,7 @@ private fun FeedCardSquareInteractivePreview() {
                     "https://picsum.photos/seed/product3/800/800",
                 ),
             price = "35,000",
-            imageAspectRatio = ImageAspectRatio.SQUARE,
+            imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
             isVoteEnded = false,
             userVotedOptionIndex = userVotedOption,
             buyVoteCount = 20,
@@ -713,7 +716,7 @@ private fun FeedCardPortraitInteractivePreview() {
                     "https://picsum.photos/seed/product2/800/1000",
                 ),
             price = "89,000",
-            imageAspectRatio = ImageAspectRatio.PORTRAIT,
+            imageAspectRatios = listOf(ImageAspectRatio.PORTRAIT),
             isVoteEnded = false,
             userVotedOptionIndex = userVotedOption,
             buyVoteCount = 45,

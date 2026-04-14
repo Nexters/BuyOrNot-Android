@@ -273,18 +273,19 @@ class HomeViewModel @Inject constructor(
             }.onSuccess { voteResult ->
                 // 2. 최종 업데이트: 서버 응답으로 확정
                 updateState { state ->
-                    val newAllFeeds = state.allFeeds.map { feed ->
-                        if (feed.id == feedId) {
-                            feed.copy(
-                                userVotedOptionIndex = optionIndex,
-                                buyVoteCount = voteResult.yesCount,
-                                maybeVoteCount = voteResult.noCount,
-                                totalVoteCount = voteResult.totalCount,
-                            )
-                        } else {
-                            feed
+                    val newAllFeeds =
+                        state.allFeeds.map { feed ->
+                            if (feed.id == feedId) {
+                                feed.copy(
+                                    userVotedOptionIndex = optionIndex,
+                                    buyVoteCount = voteResult.yesCount,
+                                    maybeVoteCount = voteResult.noCount,
+                                    totalVoteCount = voteResult.totalCount,
+                                )
+                            } else {
+                                feed
+                            }
                         }
-                    }
                     state.copy(
                         allFeeds = newAllFeeds,
                         feeds = applyCategories(newAllFeeds, state.selectedCategories),
@@ -294,9 +295,10 @@ class HomeViewModel @Inject constructor(
                 Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
                 // 3. 롤백 (Rollback): 해당 피드만 원복, 나머지 동시 변경사항 보존
                 updateState { state ->
-                    val newAllFeeds = state.allFeeds.map { feed ->
-                        if (feed.id == feedId) targetFeed else feed
-                    }
+                    val newAllFeeds =
+                        state.allFeeds.map { feed ->
+                            if (feed.id == feedId) targetFeed else feed
+                        }
                     state.copy(
                         allFeeds = newAllFeeds,
                         feeds = applyCategories(newAllFeeds, state.selectedCategories),
@@ -564,13 +566,9 @@ class HomeViewModel @Inject constructor(
      * Domain Feed를 UI FeedItem으로 변환
      */
     private fun Feed.toFeedItem(isOwner: Boolean): FeedItem {
-        val aspectRatio =
-            if (imageWidth == imageHeight) {
-                ImageAspectRatio.SQUARE
-            } else if (imageHeight > imageWidth) {
-                ImageAspectRatio.PORTRAIT
-            } else {
-                ImageAspectRatio.SQUARE
+        val aspectRatios =
+            images.map { image ->
+                if (image.imageHeight > image.imageWidth) ImageAspectRatio.PORTRAIT else ImageAspectRatio.SQUARE
             }
 
         return FeedItem(
@@ -583,7 +581,7 @@ class HomeViewModel @Inject constructor(
             content = content,
             productImageUrls = viewUrls,
             price = price,
-            imageAspectRatio = aspectRatio,
+            imageAspectRatios = aspectRatios,
             isVoteEnded = feedStatus == FeedStatus.CLOSED,
             userVotedOptionIndex =
                 when (myVoteChoice) {

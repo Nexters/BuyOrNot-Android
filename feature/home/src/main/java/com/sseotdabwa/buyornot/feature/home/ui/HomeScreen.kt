@@ -364,10 +364,11 @@ private fun HomeFeedList(
         Column(modifier = Modifier.fillMaxSize()) {
             // 항상 노출되는 고정 헤더 영역 (TopBar + Tab)
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = contentPadding.calculateTopPadding())
-                    .background(BuyOrNotTheme.colors.gray0),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = contentPadding.calculateTopPadding())
+                        .background(BuyOrNotTheme.colors.gray0),
             ) {
                 HomeTopBarSection(
                     userType = uiState.userType,
@@ -385,9 +386,10 @@ private fun HomeFeedList(
             // 스크롤 가능한 피드 목록
             LazyColumn(
                 state = listState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                 contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -530,11 +532,12 @@ private fun FilterChipRow(
                 Icon(
                     imageVector = BuyOrNotIcons.Sort.asImageVector(),
                     contentDescription = "투표 상태 필터",
-                    tint = if (selectedFilter != FilterChip.ALL) {
-                        BuyOrNotTheme.colors.gray900
-                    } else {
-                        BuyOrNotTheme.colors.gray500
-                    },
+                    tint =
+                        if (selectedFilter != FilterChip.ALL) {
+                            BuyOrNotTheme.colors.gray900
+                        } else {
+                            BuyOrNotTheme.colors.gray500
+                        },
                 )
             }
         }
@@ -580,7 +583,7 @@ private fun FeedItemCard(
             content = feed.content,
             productImageUrls = feed.productImageUrls,
             price = feed.price,
-            imageAspectRatio = feed.imageAspectRatio,
+            imageAspectRatios = feed.imageAspectRatios,
             isVoteEnded = feed.isVoteEnded,
             userVotedOptionIndex = feed.userVotedOptionIndex,
             buyVoteCount = feed.buyVoteCount,

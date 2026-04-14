@@ -7,6 +7,7 @@ import android.provider.OpenableColumns
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.feature.upload.util.LinkValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -80,7 +81,8 @@ class UploadViewModel @Inject constructor(
             return
         }
 
-        val uri = currentState.selectedImageUris.firstOrNull() ?: return
+        val uris = currentState.selectedImageUris
+        if (uris.isEmpty()) return
         val category = currentState.category ?: return
         val price = currentState.price.toIntOrNull() ?: return
         val content = currentState.content
@@ -89,24 +91,31 @@ class UploadViewModel @Inject constructor(
             updateState { it.copy(isLoading = true) }
 
             runCatchingCancellable {
-                val (width, height) = getImageDimensions(context, uri)
-
-                val contentType = context.contentResolver.getType(uri) ?: "image/jpeg"
-                val fileName = getFileName(context, uri) ?: "upload_image.jpg"
-
-                val uploadInfo = feedRepository.getPresignedUrl(fileName, contentType)
-
-                val inputStream = context.contentResolver.openInputStream(uri)
-                val bytes = inputStream?.use { it.readBytes() } ?: throw Exception("파일을 읽을 수 없습니다.")
-                feedRepository.uploadImage(uploadInfo.uploadUrl, bytes, contentType)
+                val feedImages =
+                    uris.map { uri ->
+                        val (width, height) = getImageDimensions(context, uri)
+                        val contentType = context.contentResolver.getType(uri) ?: "image/jpeg"
+                        val fileName = getFileName(context, uri) ?: "upload_image.jpg"
+                        val uploadInfo = feedRepository.getPresignedUrl(fileName, contentType)
+                        val bytes =
+                            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                                ?: throw Exception("파일을 읽을 수 없습니다.")
+                        feedRepository.uploadImage(uploadInfo.uploadUrl, bytes, contentType)
+                        FeedImage(
+                            s3ObjectKey = uploadInfo.s3ObjectKey,
+                            imageUrl = uploadInfo.viewUrl,
+                            imageWidth = width,
+                            imageHeight = height,
+                        )
+                    }
 
                 feedRepository.createFeed(
                     category = category,
                     price = price,
                     content = content,
-                    s3ObjectKey = uploadInfo.s3ObjectKey,
-                    imageWidth = width,
-                    imageHeight = height,
+                    images = feedImages,
+                    title = currentState.title.takeIf { it.isNotBlank() },
+                    link = currentState.link.takeIf { it.isNotBlank() },
                 )
             }.onSuccess {
                 updateState { it.copy(isLoading = false) }
