@@ -35,6 +35,8 @@ object BuyOrNotImgs {
     val NoNotification = ImgsResource(R.drawable.img_no_bell)
 
     val NoBlockedUser = ImgsResource(R.drawable.img_blocked_user_empty)
+
+    val MyFeedEmpty = ImgsResource(R.drawable.img_my_feed_empty)
 }
 
 /**

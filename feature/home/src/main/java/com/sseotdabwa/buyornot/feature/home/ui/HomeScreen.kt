@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.home.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -25,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,10 +40,13 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotAlertDialog
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotButtonDefaults
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
@@ -56,9 +62,11 @@ import com.sseotdabwa.buyornot.core.designsystem.components.FabOption
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCard
 import com.sseotdabwa.buyornot.core.designsystem.components.GuestTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.HomeTopBar
+import com.sseotdabwa.buyornot.core.designsystem.components.NeutralButton
 import com.sseotdabwa.buyornot.core.designsystem.components.OptionSheet
 import com.sseotdabwa.buyornot.core.designsystem.components.showBuyOrNotSnackBar
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
+import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
@@ -144,6 +152,7 @@ fun HomeScreen(
 ) {
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
     var isFabExpanded by remember { mutableStateOf(false) }
+    val isEmptyViewVisible = uiState.feeds.isEmpty() && !uiState.isLoading && !uiState.hasError
 
     if (uiState.showBlockDialog && uiState.blockingNickname != null) {
         BuyOrNotAlertDialog(
@@ -174,11 +183,13 @@ fun HomeScreen(
         Scaffold(
             snackbarHost = { BuyOrNotSnackBarHost(snackbarHostState) },
             floatingActionButton = {
-                HomeFab(
-                    expanded = isFabExpanded,
-                    onExpandedChange = { isFabExpanded = it },
-                    onUploadClick = onUploadClick,
-                )
+                if (!isEmptyViewVisible) {
+                    HomeFab(
+                        expanded = isFabExpanded,
+                        onExpandedChange = { isFabExpanded = it },
+                        onUploadClick = onUploadClick,
+                    )
+                }
             },
             containerColor = BuyOrNotTheme.colors.gray0,
         ) { innerPadding ->
@@ -488,6 +499,7 @@ private fun HomeFeedList(
                         item {
                             HomeFeedEmptyView(
                                 modifier = Modifier.padding(top = 80.dp),
+                                onUploadClick = onUploadClick,
                             )
                         }
                     }
@@ -653,13 +665,37 @@ private fun FeedItemCard(
 }
 
 @Composable
-fun HomeFeedEmptyView(modifier: Modifier = Modifier) {
-    BuyOrNotEmptyView(
+fun HomeFeedEmptyView(
+    onUploadClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
         modifier = modifier,
-        title = "아직 올린 투표가 없어요",
-        description = "고민되는 상품의 투표를 올려보세요!",
-        image = BuyOrNotIcons.NoVote.resId,
-    )
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Image(
+            painter = painterResource(id = BuyOrNotImgs.MyFeedEmpty.resId),
+            contentDescription = null,
+            modifier = Modifier.size(140.dp),
+            contentScale = ContentScale.Fit,
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text(
+            text = "첫번째 투표를 올려보세요!",
+            style = BuyOrNotTheme.typography.titleT1Bold,
+            color = BuyOrNotTheme.colors.gray800,
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        NeutralButton(
+            text = "투표 등록하기",
+            size = ButtonSize.Small,
+            onClick = onUploadClick,
+        )
+    }
 }
 
 @Preview(name = "HomeScreen Preview", showBackground = false)
@@ -667,7 +703,22 @@ fun HomeFeedEmptyView(modifier: Modifier = Modifier) {
 private fun HomeScreenPreview() {
     BuyOrNotTheme {
         HomeScreen(
-            uiState = HomeUiState(),
+            uiState = HomeUiState(userType = UserType.SOCIAL),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(name = "HomeScreen - Empty Feed", showBackground = true)
+@Composable
+private fun HomeScreenEmptyFeedPreview() {
+    BuyOrNotTheme {
+        HomeScreen(
+            uiState = HomeUiState(
+                isLoading = false,
+                userType = UserType.SOCIAL,
+                feeds = emptyList(),
+            ),
             onIntent = {},
         )
     }
