@@ -47,8 +47,9 @@ class UploadViewModel @Inject constructor(
                 }
             }
             is UploadIntent.AddImages -> {
+                val existing = currentState.selectedImageUris.toSet()
                 val remaining = MAX_IMAGE_COUNT - currentState.selectedImageUris.size
-                val toAdd = intent.uris.take(remaining)
+                val toAdd = intent.uris.filter { it !in existing }.take(remaining)
                 updateState { it.copy(selectedImageUris = it.selectedImageUris + toAdd) }
             }
             is UploadIntent.RemoveImage ->
