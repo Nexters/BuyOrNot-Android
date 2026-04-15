@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -63,6 +65,7 @@ import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.UserType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 
 /**
  * 홈 화면 루트 컴포저블
@@ -521,7 +524,30 @@ private fun FilterChipRow(
     selectedFilter: FilterChip,
     onShowSortSheet: () -> Unit,
 ) {
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    // LazyRow 내 index 기준:
+    //   0 → 정렬 아이콘 버튼
+    //   1 → "전체" 칩
+    //   2 + i → FeedCategory.entries[i] 칩
+    fun scrollToCenter(index: Int) {
+        coroutineScope.launch {
+            val layoutInfo = listState.layoutInfo
+            val visibleItem = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
+            if (visibleItem != null) {
+                val viewportWidth = layoutInfo.viewportSize.width
+                val itemCenter = visibleItem.offset + visibleItem.size / 2
+                val scrollDelta = (itemCenter - viewportWidth / 2).toFloat()
+                listState.animateScrollBy(scrollDelta)
+            } else {
+                listState.animateScrollToItem(index)
+            }
+        }
+    }
+
     LazyRow(
+        state = listState,
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -548,7 +574,10 @@ private fun FilterChipRow(
             BuyOrNotChip(
                 text = "전체",
                 isSelected = selectedCategories.isEmpty(),
-                onClick = onAllCategorySelected,
+                onClick = {
+                    onAllCategorySelected()
+                    scrollToCenter(1)
+                },
             )
         }
 
@@ -560,7 +589,10 @@ private fun FilterChipRow(
             BuyOrNotChip(
                 text = category.displayName,
                 isSelected = category in selectedCategories,
-                onClick = { onCategoryToggled(category) },
+                onClick = {
+                    onCategoryToggled(category)
+                    scrollToCenter(2 + index)
+                },
             )
         }
     }
