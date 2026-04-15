@@ -4,6 +4,8 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +32,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -91,8 +95,19 @@ fun FeedCard(
 
     var fullScreenImageIndex by remember { mutableStateOf<Int?>(null) }
     val pagerState = rememberPagerState(pageCount = { productImageUrls.size })
+    var tooltipVisible by remember(showProductLinkTooltip) { mutableStateOf(showProductLinkTooltip) }
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.pointerInput(tooltipVisible) {
+            if (tooltipVisible) {
+                awaitEachGesture {
+                    // Initial pass: 자식 클릭 이벤트를 소비하지 않고 관찰만 함
+                    awaitFirstDown(pass = PointerEventPass.Initial)
+                    tooltipVisible = false
+                }
+            }
+        },
+    ) {
         FeedCardHeader(
             profileImageUrl = profileImageUrl,
             nickname = nickname,
@@ -136,7 +151,7 @@ fun FeedCard(
                 imageAspectRatios = imageAspectRatios,
                 price = price,
                 productLink = productLink,
-                showTooltip = showProductLinkTooltip,
+                showTooltip = tooltipVisible,
                 onFullscreenClick = { page -> fullScreenImageIndex = page },
                 onLinkClick = onLinkClick,
             )
