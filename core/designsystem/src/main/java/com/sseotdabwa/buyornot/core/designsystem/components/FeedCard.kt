@@ -109,14 +109,16 @@ fun FeedCard(
 
         Column {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                Text(
-                    text = title,
-                    modifier = Modifier.padding(horizontal = 4.dp),
-                    style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                    color = BuyOrNotTheme.colors.gray900,
-                )
+                if (title.isNotEmpty()) {
+                    Text(
+                        text = title,
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                        style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+                        color = BuyOrNotTheme.colors.gray900,
+                    )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
 
                 Text(
                     text = content,
