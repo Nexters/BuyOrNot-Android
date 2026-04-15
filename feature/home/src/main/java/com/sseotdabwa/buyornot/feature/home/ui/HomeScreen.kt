@@ -676,9 +676,10 @@ fun HomeFeedEmptyView(
         Image(
             painter = painterResource(id = BuyOrNotImgs.MyFeedEmpty.resId),
             contentDescription = null,
-            modifier = Modifier
-                .width(240.dp)
-                .height(180.dp),
+            modifier =
+                Modifier
+                    .width(240.dp)
+                    .height(180.dp),
             contentScale = ContentScale.Fit,
         )
 
