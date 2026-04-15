@@ -52,7 +52,6 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotButtonDefaul
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
-import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotErrorView
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTab
@@ -714,11 +713,12 @@ private fun HomeScreenPreview() {
 private fun HomeScreenEmptyFeedPreview() {
     BuyOrNotTheme {
         HomeScreen(
-            uiState = HomeUiState(
-                isLoading = false,
-                userType = UserType.SOCIAL,
-                feeds = emptyList(),
-            ),
+            uiState =
+                HomeUiState(
+                    isLoading = false,
+                    userType = UserType.SOCIAL,
+                    feeds = emptyList(),
+                ),
             onIntent = {},
         )
     }

@@ -32,14 +32,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
@@ -98,15 +98,16 @@ fun FeedCard(
     var tooltipVisible by remember(showProductLinkTooltip) { mutableStateOf(showProductLinkTooltip) }
 
     Column(
-        modifier = modifier.pointerInput(tooltipVisible) {
-            if (tooltipVisible) {
-                awaitEachGesture {
-                    // Initial pass: 자식 클릭 이벤트를 소비하지 않고 관찰만 함
-                    awaitFirstDown(pass = PointerEventPass.Initial)
-                    tooltipVisible = false
+        modifier =
+            modifier.pointerInput(tooltipVisible) {
+                if (tooltipVisible) {
+                    awaitEachGesture {
+                        // Initial pass: 자식 클릭 이벤트를 소비하지 않고 관찰만 함
+                        awaitFirstDown(pass = PointerEventPass.Initial)
+                        tooltipVisible = false
+                    }
                 }
-            }
-        },
+            },
     ) {
         FeedCardHeader(
             profileImageUrl = profileImageUrl,
