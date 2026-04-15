@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.upload.ui
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -100,7 +101,7 @@ fun UploadRoute(
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetMultipleContents(),
+            contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3),
         ) { uris: List<Uri> ->
             if (uris.isNotEmpty()) viewModel.handleIntent(UploadIntent.AddImages(uris))
         }
@@ -110,7 +111,9 @@ fun UploadRoute(
         uiState = uiState,
         onIntent = viewModel::handleIntent,
         onPickImage = {
-            if (uiState.selectedImageUris.size < 3) galleryLauncher.launch("image/*")
+            if (uiState.selectedImageUris.size < 3) {
+                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
         },
         onSubmit = {
             keyboardController?.hide()
