@@ -398,6 +398,7 @@ private fun HomeFeedList(
                     Spacer(modifier = Modifier.height(10.dp))
                     FilterChipRow(
                         selectedCategories = uiState.selectedCategories,
+                        onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
                         onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
                         selectedFilter = uiState.selectedFilter,
                         onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
@@ -515,6 +516,7 @@ private fun HomeFeedList(
 @Composable
 private fun FilterChipRow(
     selectedCategories: Set<FeedCategory>,
+    onAllCategorySelected: () -> Unit,
     onCategoryToggled: (FeedCategory) -> Unit,
     selectedFilter: FilterChip,
     onShowSortSheet: () -> Unit,
@@ -540,6 +542,14 @@ private fun FilterChipRow(
                         },
                 )
             }
+        }
+
+        item {
+            BuyOrNotChip(
+                text = "전체",
+                isSelected = selectedCategories.isEmpty(),
+                onClick = onAllCategorySelected,
+            )
         }
 
         items(

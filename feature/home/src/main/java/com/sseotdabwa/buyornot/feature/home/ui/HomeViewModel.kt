@@ -126,6 +126,10 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.LoadNextPage -> handleNextPage()
             is HomeIntent.Refresh -> handleRefresh()
             is HomeIntent.OnCategoryToggled -> handleCategoryToggled(intent.category)
+            is HomeIntent.OnAllCategorySelected -> {
+                updateState { it.copy(selectedCategories = emptySet()) }
+                loadFeeds()
+            }
             is HomeIntent.ShowSortSheet -> updateState { it.copy(showSortSheet = true) }
             is HomeIntent.DismissSortSheet -> updateState { it.copy(showSortSheet = false) }
         }
@@ -175,11 +179,9 @@ class HomeViewModel @Inject constructor(
                 } else {
                     state.selectedCategories + category
                 }
-            state.copy(
-                selectedCategories = updated,
-                feeds = applyCategories(state.allFeeds, updated),
-            )
+            state.copy(selectedCategories = updated)
         }
+        loadFeeds()
     }
 
     private fun handleNextPage() {
@@ -190,12 +192,15 @@ class HomeViewModel @Inject constructor(
             val requestedTab = currentState.selectedTab
             val requestedFilter = currentState.selectedFilter
 
+            val requestedCategories = currentState.selectedCategories
+            val requestedCategory = if (requestedCategories.size == 1) requestedCategories.first().name else null
             runCatchingCancellable {
                 when (requestedTab) {
                     HomeTab.FEED ->
                         feedRepository.getFeedList(
                             cursor = currentState.nextCursor,
                             feedStatus = requestedFilter.toFeedStatus(),
+                            category = requestedCategory,
                         )
                     HomeTab.MY_FEED ->
                         feedRepository.getMyFeeds(
@@ -470,8 +475,10 @@ class HomeViewModel @Inject constructor(
 
                 val currentTab = tab ?: uiState.value.selectedTab
                 val feedStatus = uiState.value.selectedFilter.toFeedStatus()
+                val selectedCategories = uiState.value.selectedCategories
+                val category = if (selectedCategories.size == 1) selectedCategories.first().name else null
                 when (currentTab) {
-                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = feedStatus)
+                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = feedStatus, category = category)
                     HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
                 }
             }.onSuccess { feedList ->
@@ -509,9 +516,11 @@ class HomeViewModel @Inject constructor(
 
             val currentTab = currentState.selectedTab
             val feedStatus = currentState.selectedFilter.toFeedStatus()
+            val selectedCategories = currentState.selectedCategories
+            val category = if (selectedCategories.size == 1) selectedCategories.first().name else null
             runCatchingCancellable {
                 when (currentTab) {
-                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = feedStatus)
+                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = feedStatus, category = category)
                     HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
                 }
             }.onSuccess { feedList ->

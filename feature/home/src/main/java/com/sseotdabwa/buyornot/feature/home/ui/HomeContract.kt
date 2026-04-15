@@ -136,6 +136,8 @@ sealed interface HomeIntent {
         val category: FeedCategory,
     ) : HomeIntent
 
+    data object OnAllCategorySelected : HomeIntent
+
     data object ShowSortSheet : HomeIntent
 
     data object DismissSortSheet : HomeIntent
