@@ -49,9 +49,10 @@ class UploadViewModel @Inject constructor(
             is UploadIntent.AddImages -> {
                 val existing = currentState.selectedImageUris.toSet()
                 val remaining = MAX_IMAGE_COUNT - currentState.selectedImageUris.size
-                val deduped = intent.uris.filter { it !in existing }
+                val incoming = intent.uris.distinct()
+                val deduped = incoming.filter { it !in existing }
                 val toAdd = deduped.take(remaining)
-                val hasDuplicates = deduped.size < intent.uris.size
+                val hasDuplicates = incoming.size < intent.uris.size || deduped.size < incoming.size
                 val hasOverflow = toAdd.size < deduped.size
                 updateState { it.copy(selectedImageUris = it.selectedImageUris + toAdd) }
                 when {
