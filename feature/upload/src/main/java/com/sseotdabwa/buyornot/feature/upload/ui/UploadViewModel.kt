@@ -85,7 +85,10 @@ class UploadViewModel @Inject constructor(
     private fun submitFeed(context: Context) {
         if (currentState.isLoading) return
 
-        if (!LinkValidator.isValid(currentState.link)) {
+        val title = currentState.title.takeIf { it.isNotBlank() }
+        val link = currentState.link.takeIf { it.isNotBlank() }
+
+        if (!LinkValidator.isValid(link.orEmpty())) {
             sendSideEffect(UploadSideEffect.ShowSnackbar("링크 주소를 다시 확인해 주세요."))
             return
         }
@@ -123,8 +126,8 @@ class UploadViewModel @Inject constructor(
                     price = price,
                     content = content,
                     images = feedImages,
-                    title = currentState.title.takeIf { it.isNotBlank() },
-                    link = currentState.link.takeIf { it.isNotBlank() },
+                    title = title,
+                    link = link,
                 )
             }.onSuccess {
                 updateState { it.copy(isLoading = false) }
