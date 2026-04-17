@@ -38,7 +38,10 @@ class TopArrowBubbleShape(
                 )
 
                 // 상단 우측에 위를 향하는 삼각형 꼬리
-                val arrowCenterX = size.width - arrowOffsetPx
+                val arrowCenterX = (size.width - arrowOffsetPx).coerceIn(
+                    minimumValue = cornerRadiusPx + arrowWidthPx / 2,
+                    maximumValue = size.width - cornerRadiusPx - arrowWidthPx / 2,
+                )
                 moveTo(arrowCenterX - arrowWidthPx / 2, arrowHeightPx)
                 lineTo(arrowCenterX, 0f)
                 lineTo(arrowCenterX + arrowWidthPx / 2, arrowHeightPx)
