@@ -366,7 +366,7 @@ private fun FeedImageCarousel(
                             },
                 )
 
-                if (page == 0 && productLink != null) {
+                if (page == 0 && !productLink.isNullOrEmpty()) {
                     Box(
                         modifier =
                             Modifier
