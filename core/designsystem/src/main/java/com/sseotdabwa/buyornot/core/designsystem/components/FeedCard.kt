@@ -701,7 +701,7 @@ private fun FeedCardSquareInteractivePreview() {
             },
             onDeleteClick = {},
             onReportClick = {},
-            productLink = "",
+            productLink = "link",
             showProductLinkTooltip = true,
         )
     }
