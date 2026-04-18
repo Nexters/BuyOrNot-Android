@@ -85,8 +85,8 @@ class UploadViewModel @Inject constructor(
     private fun submitFeed(context: Context) {
         if (currentState.isLoading) return
 
-        val title = currentState.title.takeIf { it.isNotBlank() }
-        val link = currentState.link.takeIf { it.isNotBlank() }
+        val title = currentState.title.trim().takeIf { it.isNotBlank() }
+        val link = currentState.link.trim().takeIf { it.isNotBlank() }
 
         if (!LinkValidator.isValid(link.orEmpty())) {
             sendSideEffect(UploadSideEffect.ShowSnackbar("링크 주소를 다시 확인해 주세요."))
