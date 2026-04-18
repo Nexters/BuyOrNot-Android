@@ -102,10 +102,17 @@ class UploadViewModel @Inject constructor(
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
 
+            val dimensionMap = uris.associateWith { getImageDimensions(context, it) }
+            if (dimensionMap.values.any { (w, h) -> w <= 0 || h <= 0 }) {
+                updateState { it.copy(isLoading = false) }
+                sendSideEffect(UploadSideEffect.ShowSnackbar("이미지를 읽을 수 없습니다."))
+                return@launch
+            }
+
             runCatchingCancellable {
                 val feedImages =
                     uris.map { uri ->
-                        val (width, height) = getImageDimensions(context, uri)
+                        val (width, height) = dimensionMap.getValue(uri)
                         val contentType = context.contentResolver.getType(uri) ?: "image/jpeg"
                         val fileName = getFileName(context, uri) ?: "upload_image.jpg"
                         val uploadInfo = feedRepository.getPresignedUrl(fileName, contentType)
