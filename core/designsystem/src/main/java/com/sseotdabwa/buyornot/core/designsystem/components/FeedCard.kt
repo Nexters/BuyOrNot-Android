@@ -4,8 +4,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,8 +36,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
@@ -97,18 +93,7 @@ fun FeedCard(
     val pagerState = rememberPagerState(pageCount = { productImageUrls.size })
     var tooltipVisible by remember(showProductLinkTooltip) { mutableStateOf(showProductLinkTooltip) }
 
-    Column(
-        modifier =
-            modifier.pointerInput(tooltipVisible) {
-                if (tooltipVisible) {
-                    awaitEachGesture {
-                        // Initial pass: 자식 클릭 이벤트를 소비하지 않고 관찰만 함
-                        awaitFirstDown(pass = PointerEventPass.Initial)
-                        tooltipVisible = false
-                    }
-                }
-            },
-    ) {
+    Column(modifier = modifier) {
         FeedCardHeader(
             profileImageUrl = profileImageUrl,
             nickname = nickname,
@@ -153,6 +138,7 @@ fun FeedCard(
                 price = price,
                 productLink = productLink,
                 showTooltip = tooltipVisible,
+                onTooltipDismiss = { tooltipVisible = false },
                 onFullscreenClick = { page -> fullScreenImageIndex = page },
                 onLinkClick = onLinkClick,
             )
@@ -307,6 +293,7 @@ private fun FeedImageCarousel(
     price: String,
     productLink: String?,
     showTooltip: Boolean,
+    onTooltipDismiss: () -> Unit,
     onFullscreenClick: (pageIndex: Int) -> Unit,
     onLinkClick: (url: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -381,7 +368,10 @@ private fun FeedImageCarousel(
 
                         if (showTooltip) {
                             // 시각적 버튼 높이(30dp) + 간격(6dp) = 36dp
-                            FeedCardToolTip(modifier = Modifier.padding(top = 36.dp))
+                            FeedCardToolTip(
+                                modifier = Modifier.padding(top = 36.dp),
+                                onDismiss = onTooltipDismiss,
+                            )
                         }
                     }
                 }
@@ -625,7 +615,10 @@ private fun LinkButton(
 }
 
 @Composable
-fun FeedCardToolTip(modifier: Modifier = Modifier) {
+fun FeedCardToolTip(
+    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit = {},
+) {
     val tooltipShape =
         remember {
             TopArrowBubbleShape(
@@ -642,7 +635,8 @@ fun FeedCardToolTip(modifier: Modifier = Modifier) {
                 .background(
                     color = Color(0xCC3A3C3E),
                     shape = tooltipShape,
-                ).padding(top = 13.dp, bottom = 8.dp)
+                ).clickable(onClick = onDismiss)
+                .padding(top = 13.dp, bottom = 8.dp)
                 .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
