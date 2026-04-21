@@ -55,7 +55,7 @@ interface FeedApiService {
      * @param size 페이지 크기 (기본값 20, 최대 50)
      * @param feedStatus 피드 상태 필터 (OPEN, CLOSED / 미지정 시 전체)
      */
-    @GET("/api/v1/users/me/feeds")
+    @GET("/api/v2/users/me/feeds")
     suspend fun getMyFeeds(
         @Query("cursor") cursor: Long? = null,
         @Query("size") size: Int = 20,
