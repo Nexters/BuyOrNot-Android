@@ -32,7 +32,7 @@ class FeedRepositoryImpl @Inject constructor(
         cursor: Long?,
         size: Int,
         feedStatus: String?,
-        category: String?,
+        category: List<String>?,
     ): FeedList =
         feedApiService
             .getFeedList(cursor, size, feedStatus, category)

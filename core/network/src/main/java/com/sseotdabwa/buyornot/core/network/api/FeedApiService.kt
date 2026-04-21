@@ -35,7 +35,7 @@ interface FeedApiService {
         @Query("cursor") cursor: Long? = null,
         @Query("size") size: Int = 20,
         @Query("feedStatus") feedStatus: String? = null,
-        @Query("category") category: String? = null,
+        @Query("category") category: List<String>? = null,
     ): BaseResponse<FeedListResponse>
 
     /**

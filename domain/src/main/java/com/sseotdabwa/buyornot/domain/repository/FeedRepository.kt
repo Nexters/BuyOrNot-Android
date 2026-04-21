@@ -29,7 +29,7 @@ interface FeedRepository {
         cursor: Long? = null,
         size: Int = 20,
         feedStatus: String? = null,
-        category: String? = null,
+        category: List<String>? = null,
     ): FeedList
 
     /**
