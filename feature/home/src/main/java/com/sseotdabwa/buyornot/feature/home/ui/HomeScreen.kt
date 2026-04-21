@@ -498,7 +498,7 @@ private fun HomeFeedList(
                         // 통신은 성공(hasError false)했지만 데이터가 없는 경우
                         item {
                             HomeFeedEmptyView(
-                                modifier = Modifier.padding(top = 80.dp),
+                                modifier = Modifier.padding(top = 120.dp),
                                 onUploadClick = onUploadClick,
                             )
                         }

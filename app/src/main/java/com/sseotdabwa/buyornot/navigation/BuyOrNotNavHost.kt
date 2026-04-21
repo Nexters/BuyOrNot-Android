@@ -93,7 +93,7 @@ fun BuyOrNotNavHost(
             onPrivacyClick = navController::navigateToPrivacyPolicy,
         )
 
-        homeScreen(
+         homeScreen(
             onLoginClick = navController::navigateForceToLogin,
             onNotificationClick = navController::navigateToNotification,
             onProfileClick = navController::navigateToMyPage,
