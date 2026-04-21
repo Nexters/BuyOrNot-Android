@@ -105,7 +105,7 @@ fun WithdrawalScreen(
             Text(
                 text = "${uiState.userProfile?.nickname ?: "..."}님,\n살까말까를 떠나시나요?",
                 style = BuyOrNotTheme.typography.headingH3Bold,
-                color = BuyOrNotTheme.colors.gray900,
+                color = BuyOrNotTheme.colors.gray950,
             )
 
             Spacer(modifier = Modifier.height(20.dp))

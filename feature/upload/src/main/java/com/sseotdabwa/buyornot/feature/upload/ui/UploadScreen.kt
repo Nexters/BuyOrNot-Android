@@ -473,7 +473,7 @@ private fun ContentInputField(
             modifier = Modifier.fillMaxWidth(),
             textStyle =
                 BuyOrNotTheme.typography.titleT2Bold.copy(
-                    color = BuyOrNotTheme.colors.gray900,
+                    color = BuyOrNotTheme.colors.gray950,
                 ),
             singleLine = true,
             decorationBox = { innerTextField ->
@@ -499,7 +499,7 @@ private fun ContentInputField(
                     .heightIn(min = 84.dp),
             textStyle =
                 BuyOrNotTheme.typography.paragraphP2Medium.copy(
-                    color = BuyOrNotTheme.colors.gray900,
+                    color = BuyOrNotTheme.colors.gray950,
                 ),
             decorationBox = { innerTextField ->
                 if (content.isEmpty()) {

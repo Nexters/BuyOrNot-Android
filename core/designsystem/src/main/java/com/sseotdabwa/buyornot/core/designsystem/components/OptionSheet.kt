@@ -76,7 +76,7 @@ fun OptionSheet(
                 Text(
                     text = title,
                     style = BuyOrNotTheme.typography.subTitleS1SemiBold,
-                    color = BuyOrNotTheme.colors.gray900,
+                    color = BuyOrNotTheme.colors.gray950,
                     modifier =
                         Modifier
                             .padding(horizontal = 24.dp)
@@ -159,7 +159,7 @@ private fun OptionItem(
                 },
             color =
                 if (isSelected) {
-                    BuyOrNotTheme.colors.gray900
+                    BuyOrNotTheme.colors.gray950
                 } else {
                     BuyOrNotTheme.colors.gray700
                 },
@@ -169,7 +169,7 @@ private fun OptionItem(
             Icon(
                 imageVector = BuyOrNotIcons.Check.asImageVector(),
                 contentDescription = "Check",
-                tint = BuyOrNotTheme.colors.gray900,
+                tint = BuyOrNotTheme.colors.gray950,
             )
         }
     }

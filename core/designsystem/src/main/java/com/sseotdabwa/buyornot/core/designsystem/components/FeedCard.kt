@@ -115,7 +115,7 @@ fun FeedCard(
                         text = title,
                         modifier = Modifier.padding(horizontal = 4.dp),
                         style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                        color = BuyOrNotTheme.colors.gray900,
+                        color = BuyOrNotTheme.colors.gray950,
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
@@ -409,7 +409,7 @@ private fun FeedVoteSection(
                     text = stringResource(R.string.feed_card_vote_buy),
                     percentage = buyPercentage / 100f,
                     percentageText = "$buyPercentage%",
-                    progressBarColor = BuyOrNotTheme.colors.gray900,
+                    progressBarColor = BuyOrNotTheme.colors.gray950,
                     shouldInvertTextColor = true,
                     leadingContent =
                         if (userVotedOptionIndex == 0) {
@@ -577,7 +577,7 @@ private fun VoteOption(
                     vertical = 14.dp,
                 ),
             style = BuyOrNotTheme.typography.subTitleS4SemiBold,
-            color = BuyOrNotTheme.colors.gray900,
+            color = BuyOrNotTheme.colors.gray950,
         )
     }
 }

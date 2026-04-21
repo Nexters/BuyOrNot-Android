@@ -13,7 +13,7 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 @Composable
 internal fun SettingItem(
     title: String,
-    textColor: Color = BuyOrNotTheme.colors.gray900,
+    textColor: Color = BuyOrNotTheme.colors.gray950,
     onClick: () -> Unit,
 ) {
     Surface(

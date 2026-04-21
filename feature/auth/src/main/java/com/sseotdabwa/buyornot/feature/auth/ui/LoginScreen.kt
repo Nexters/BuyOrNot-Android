@@ -154,7 +154,7 @@ private fun LoginInteractionSection(
         Text(
             text = "현명한 소비를 위한\n집단지성 비교 방법",
             style = BuyOrNotTheme.typography.headingH1SemiBold,
-            color = BuyOrNotTheme.colors.gray900,
+            color = BuyOrNotTheme.colors.gray950,
             textAlign = TextAlign.Center,
         )
 
@@ -164,7 +164,7 @@ private fun LoginInteractionSection(
             text = "구글 계정으로 시작하기",
             iconResId = BuyOrNotIcons.GoogleLogo.resId,
             containerColor = Color.White,
-            contentColor = BuyOrNotTheme.colors.gray900,
+            contentColor = BuyOrNotTheme.colors.gray950,
             hasBorder = true,
             enabled = !isLoading,
             onClick = onGoogleLoginClick,

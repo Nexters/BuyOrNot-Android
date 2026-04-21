@@ -131,7 +131,7 @@ fun NotificationDetailScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
+                        CircularProgressIndicator(color = BuyOrNotTheme.colors.gray950)
                     }
                 }
 

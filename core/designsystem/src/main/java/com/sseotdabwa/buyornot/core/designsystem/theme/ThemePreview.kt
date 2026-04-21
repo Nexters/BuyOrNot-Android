@@ -49,13 +49,13 @@ private fun ColorCatalogPreview() {
             Text(
                 text = "Black & Gray",
                 style = BuyOrNotTheme.typography.headingH2Bold,
-                color = BuyOrNotTheme.colors.gray900,
+                color = BuyOrNotTheme.colors.gray950,
             )
             Spacer(modifier = Modifier.height(16.dp))
 
             ColorItem("black", BuyOrNotTheme.colors.black, "#000000")
             ColorItem("gray1000", BuyOrNotTheme.colors.gray1000, "#1A1C20")
-            ColorItem("gray900", BuyOrNotTheme.colors.gray900, "#2A3038")
+            ColorItem("gray900", BuyOrNotTheme.colors.gray950, "#2A3038")
             ColorItem("gray800", BuyOrNotTheme.colors.gray800, "#565D6D")
             ColorItem("gray700", BuyOrNotTheme.colors.gray700, "#868B94")
             ColorItem("gray600", BuyOrNotTheme.colors.gray600, "#B1B3BB")
@@ -73,7 +73,7 @@ private fun ColorCatalogPreview() {
             Text(
                 text = "Chromatic",
                 style = BuyOrNotTheme.typography.headingH2Bold,
-                color = BuyOrNotTheme.colors.gray900,
+                color = BuyOrNotTheme.colors.gray950,
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -209,7 +209,7 @@ private fun TypographySection(
         Text(
             text = title,
             style = BuyOrNotTheme.typography.headingH2Bold,
-            color = BuyOrNotTheme.colors.gray900,
+            color = BuyOrNotTheme.colors.gray950,
         )
         Spacer(modifier = Modifier.height(12.dp))
         content()
@@ -281,7 +281,7 @@ private fun CombinedCatalogPreview() {
             Text(
                 text = "Quick Color Samples",
                 style = BuyOrNotTheme.typography.headingH2Bold,
-                color = BuyOrNotTheme.colors.gray900,
+                color = BuyOrNotTheme.colors.gray950,
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -301,7 +301,7 @@ private fun CombinedCatalogPreview() {
             Text(
                 text = "Quick Typography Samples",
                 style = BuyOrNotTheme.typography.headingH2Bold,
-                color = BuyOrNotTheme.colors.gray900,
+                color = BuyOrNotTheme.colors.gray950,
             )
             Spacer(modifier = Modifier.height(16.dp))
 

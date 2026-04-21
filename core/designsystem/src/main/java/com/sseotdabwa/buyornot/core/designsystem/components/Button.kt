@@ -46,7 +46,7 @@ object BuyOrNotButtonDefaults {
     @Composable
     fun primaryButtonColors() =
         BuyOrNotButtonColors(
-            defaultContainer = BuyOrNotTheme.colors.gray900,
+            defaultContainer = BuyOrNotTheme.colors.gray950,
             hoverContainer = BuyOrNotTheme.colors.gray800,
             pressedContainer = BuyOrNotTheme.colors.gray1000,
             disabledContainer = BuyOrNotTheme.colors.gray200,

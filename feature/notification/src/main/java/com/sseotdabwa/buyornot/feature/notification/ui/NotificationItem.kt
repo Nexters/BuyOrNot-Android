@@ -107,7 +107,7 @@ fun NotificationItem(
             Text(
                 text = state.message,
                 style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                color = BuyOrNotTheme.colors.gray900,
+                color = BuyOrNotTheme.colors.gray950,
             )
         }
     }

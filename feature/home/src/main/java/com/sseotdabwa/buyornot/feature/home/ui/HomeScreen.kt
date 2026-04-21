@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -465,7 +464,7 @@ private fun HomeFeedList(
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     CircularProgressIndicator(
-                                        color = BuyOrNotTheme.colors.gray900,
+                                        color = BuyOrNotTheme.colors.gray950,
                                         strokeWidth = 2.dp,
                                     )
                                 }
@@ -477,7 +476,7 @@ private fun HomeFeedList(
                     uiState.isLoading -> {
                         item {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
+                                CircularProgressIndicator(color = BuyOrNotTheme.colors.gray950)
                             }
                         }
                     }
@@ -574,7 +573,7 @@ private fun FilterChipRow(
                     contentDescription = "투표 상태 필터",
                     tint =
                         if (selectedFilter != FilterChip.ALL) {
-                            BuyOrNotTheme.colors.gray900
+                            BuyOrNotTheme.colors.gray950
                         } else {
                             BuyOrNotTheme.colors.gray500
                         },

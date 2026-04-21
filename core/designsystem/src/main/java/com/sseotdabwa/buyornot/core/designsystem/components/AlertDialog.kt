@@ -53,7 +53,7 @@ fun BuyOrNotAlertDialog(
                     Text(
                         text = title,
                         style = BuyOrNotTheme.typography.titleT1Bold,
-                        color = BuyOrNotTheme.colors.gray900,
+                        color = BuyOrNotTheme.colors.gray950,
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))

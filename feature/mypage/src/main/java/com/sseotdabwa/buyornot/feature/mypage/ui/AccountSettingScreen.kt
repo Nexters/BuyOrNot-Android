@@ -140,7 +140,7 @@ private fun EmailItem(email: String) {
         Text(
             text = "이메일",
             style = BuyOrNotTheme.typography.paragraphP1Medium,
-            color = BuyOrNotTheme.colors.gray900,
+            color = BuyOrNotTheme.colors.gray950,
         )
 
         Text(
