@@ -55,7 +55,8 @@ private fun ColorCatalogPreview() {
 
             ColorItem("black", BuyOrNotTheme.colors.black, "#000000")
             ColorItem("gray1000", BuyOrNotTheme.colors.gray1000, "#1A1C20")
-            ColorItem("gray900", BuyOrNotTheme.colors.gray950, "#2A3038")
+            ColorItem("gray950", BuyOrNotTheme.colors.gray950, "#2A3038")
+            ColorItem("gray900", BuyOrNotTheme.colors.gray900, "#3F4346")
             ColorItem("gray800", BuyOrNotTheme.colors.gray800, "#565D6D")
             ColorItem("gray700", BuyOrNotTheme.colors.gray700, "#868B94")
             ColorItem("gray600", BuyOrNotTheme.colors.gray600, "#B1B3BB")
