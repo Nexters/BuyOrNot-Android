@@ -8,6 +8,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.Feed
+import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
@@ -124,6 +125,13 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.LoadFeeds -> loadFeeds()
             is HomeIntent.LoadNextPage -> handleNextPage()
             is HomeIntent.Refresh -> handleRefresh()
+            is HomeIntent.OnCategoryToggled -> handleCategoryToggled(intent.category)
+            is HomeIntent.OnAllCategorySelected -> {
+                updateState { it.copy(selectedCategories = emptySet()) }
+                loadFeeds()
+            }
+            is HomeIntent.ShowSortSheet -> updateState { it.copy(showSortSheet = true) }
+            is HomeIntent.DismissSortSheet -> updateState { it.copy(showSortSheet = false) }
         }
     }
 
@@ -133,9 +141,12 @@ class HomeViewModel @Inject constructor(
         updateState {
             it.copy(
                 selectedTab = tab,
+                selectedCategories = emptySet(),
+                selectedFilter = FilterChip.ALL,
                 isLoading = true,
                 hasError = false,
                 feeds = emptyList(),
+                allFeeds = emptyList(),
                 hasNextPage = false,
                 nextCursor = null,
                 isNextPageLoading = false,
@@ -160,6 +171,19 @@ class HomeViewModel @Inject constructor(
         updateState { it.copy(isBannerVisible = false) }
     }
 
+    private fun handleCategoryToggled(category: FeedCategory) {
+        updateState { state ->
+            val updated =
+                if (category in state.selectedCategories) {
+                    state.selectedCategories - category
+                } else {
+                    state.selectedCategories + category
+                }
+            state.copy(selectedCategories = updated)
+        }
+        loadFeeds()
+    }
+
     private fun handleNextPage() {
         if (currentState.isNextPageLoading || !currentState.hasNextPage) return
 
@@ -168,12 +192,15 @@ class HomeViewModel @Inject constructor(
             val requestedTab = currentState.selectedTab
             val requestedFilter = currentState.selectedFilter
 
+            val requestedCategories = currentState.selectedCategories
+            val requestedCategory = requestedCategories.map { it.name }.takeIf { it.isNotEmpty() }
             runCatchingCancellable {
                 when (requestedTab) {
                     HomeTab.FEED ->
                         feedRepository.getFeedList(
                             cursor = currentState.nextCursor,
                             feedStatus = requestedFilter.toFeedStatus(),
+                            category = requestedCategory,
                         )
                     HomeTab.MY_FEED ->
                         feedRepository.getMyFeeds(
@@ -193,9 +220,12 @@ class HomeViewModel @Inject constructor(
                         feed.toFeedItem(isOwner)
                     }
 
+                val newAllFeeds = currentState.allFeeds + newItems
+
                 updateState {
                     it.copy(
-                        feeds = it.feeds + newItems,
+                        allFeeds = newAllFeeds,
+                        feeds = applyCategories(newAllFeeds, it.selectedCategories),
                         isNextPageLoading = false,
                         hasNextPage = feedList.hasNext,
                         nextCursor = feedList.nextCursor,
@@ -229,7 +259,13 @@ class HomeViewModel @Inject constructor(
         }
 
         // 1. 낙관적 업데이트 (Optimistic Update)
-        updateState { it.copy(feeds = optimisticVoteUpdate(it.feeds, feedId, optionIndex)) }
+        updateState { state ->
+            val newAllFeeds = optimisticVoteUpdate(state.allFeeds, feedId, optionIndex)
+            state.copy(
+                allFeeds = newAllFeeds,
+                feeds = applyCategories(newAllFeeds, state.selectedCategories),
+            )
+        }
 
         viewModelScope.launch {
             val choice = if (optionIndex == 0) VoteChoice.YES else VoteChoice.NO
@@ -241,32 +277,36 @@ class HomeViewModel @Inject constructor(
                 }
             }.onSuccess { voteResult ->
                 // 2. 최종 업데이트: 서버 응답으로 확정
-                updateState {
-                    it.copy(
-                        feeds =
-                            it.feeds.map { feed ->
-                                if (feed.id == feedId) {
-                                    feed.copy(
-                                        userVotedOptionIndex = optionIndex,
-                                        buyVoteCount = voteResult.yesCount,
-                                        maybeVoteCount = voteResult.noCount,
-                                        totalVoteCount = voteResult.totalCount,
-                                    )
-                                } else {
-                                    feed
-                                }
-                            },
+                updateState { state ->
+                    val newAllFeeds =
+                        state.allFeeds.map { feed ->
+                            if (feed.id == feedId) {
+                                feed.copy(
+                                    userVotedOptionIndex = optionIndex,
+                                    buyVoteCount = voteResult.yesCount,
+                                    maybeVoteCount = voteResult.noCount,
+                                    totalVoteCount = voteResult.totalCount,
+                                )
+                            } else {
+                                feed
+                            }
+                        }
+                    state.copy(
+                        allFeeds = newAllFeeds,
+                        feeds = applyCategories(newAllFeeds, state.selectedCategories),
                     )
                 }
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
                 // 3. 롤백 (Rollback): 해당 피드만 원복, 나머지 동시 변경사항 보존
-                updateState {
-                    it.copy(
-                        feeds =
-                            it.feeds.map { feed ->
-                                if (feed.id == feedId) targetFeed else feed
-                            },
+                updateState { state ->
+                    val newAllFeeds =
+                        state.allFeeds.map { feed ->
+                            if (feed.id == feedId) targetFeed else feed
+                        }
+                    state.copy(
+                        allFeeds = newAllFeeds,
+                        feeds = applyCategories(newAllFeeds, state.selectedCategories),
                     )
                 }
 
@@ -307,7 +347,12 @@ class HomeViewModel @Inject constructor(
             runCatchingCancellable {
                 feedRepository.deleteFeed(feedId.toLong())
             }.onSuccess {
-                updateState { it.copy(feeds = it.feeds.filter { feed -> feed.id != feedId }) }
+                updateState {
+                    it.copy(
+                        allFeeds = it.allFeeds.filter { feed -> feed.id != feedId },
+                        feeds = it.feeds.filter { feed -> feed.id != feedId },
+                    )
+                }
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = "삭제가 완료되었습니다.",
@@ -351,7 +396,12 @@ class HomeViewModel @Inject constructor(
                         icon = null,
                     ),
                 )
-                updateState { it.copy(feeds = it.feeds.filter { feed -> feed.authorUserId != userId }) }
+                updateState {
+                    it.copy(
+                        allFeeds = it.allFeeds.filter { feed -> feed.authorUserId != userId },
+                        feeds = it.feeds.filter { feed -> feed.authorUserId != userId },
+                    )
+                }
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to block user: $userId", e)
                 sendSideEffect(
@@ -405,7 +455,14 @@ class HomeViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             if (clearFeeds) {
-                updateState { it.copy(isLoading = true, hasError = false, feeds = emptyList()) }
+                updateState {
+                    it.copy(
+                        isLoading = true,
+                        hasError = false,
+                        feeds = emptyList(),
+                        allFeeds = emptyList(),
+                    )
+                }
             } else {
                 updateState { it.copy(hasError = false) }
             }
@@ -418,19 +475,22 @@ class HomeViewModel @Inject constructor(
 
                 val currentTab = tab ?: uiState.value.selectedTab
                 val feedStatus = uiState.value.selectedFilter.toFeedStatus()
+                val selectedCategories = uiState.value.selectedCategories
+                val category = selectedCategories.map { it.name }.takeIf { it.isNotEmpty() }
                 when (currentTab) {
-                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = feedStatus)
+                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = feedStatus, category = category)
                     HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
                 }
             }.onSuccess { feedList ->
-                val feeds =
+                val newFeeds =
                     feedList.feeds.map { feed ->
                         val isOwner = currentUserId != null && feed.author.userId == currentUserId
                         feed.toFeedItem(isOwner)
                     }
                 updateState {
                     it.copy(
-                        feeds = feeds,
+                        allFeeds = newFeeds,
+                        feeds = applyCategories(newFeeds, it.selectedCategories),
                         isLoading = false,
                         hasError = false,
                         hasNextPage = feedList.hasNext,
@@ -456,20 +516,23 @@ class HomeViewModel @Inject constructor(
 
             val currentTab = currentState.selectedTab
             val feedStatus = currentState.selectedFilter.toFeedStatus()
+            val selectedCategories = currentState.selectedCategories
+            val category = selectedCategories.map { it.name }.takeIf { it.isNotEmpty() }
             runCatchingCancellable {
                 when (currentTab) {
-                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = feedStatus)
+                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = feedStatus, category = category)
                     HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
                 }
             }.onSuccess { feedList ->
-                val feeds =
+                val refreshedFeeds =
                     feedList.feeds.map { feed ->
                         val isOwner = currentUserId != null && feed.author.userId == currentUserId
                         feed.toFeedItem(isOwner)
                     }
                 updateState {
                     it.copy(
-                        feeds = feeds,
+                        allFeeds = refreshedFeeds,
+                        feeds = applyCategories(refreshedFeeds, it.selectedCategories),
                         isRefreshing = false,
                         hasNextPage = feedList.hasNext,
                         nextCursor = feedList.nextCursor,
@@ -481,6 +544,22 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    /**
+     * allFeeds에 카테고리 필터를 로컬 적용한다.
+     * categories가 비어있으면 전체 반환 (전체 = 아무것도 선택 안 됨).
+     */
+    private fun applyCategories(
+        feeds: List<FeedItem>,
+        categories: Set<FeedCategory>,
+    ): List<FeedItem> =
+        if (categories.isEmpty()) {
+            feeds
+        } else {
+            feeds.filter { feed ->
+                categories.any { it.displayName == feed.category }
+            }
+        }
 
     /**
      * FilterChip을 API feedStatus 파라미터로 변환
@@ -496,13 +575,9 @@ class HomeViewModel @Inject constructor(
      * Domain Feed를 UI FeedItem으로 변환
      */
     private fun Feed.toFeedItem(isOwner: Boolean): FeedItem {
-        val aspectRatio =
-            if (imageWidth == imageHeight) {
-                ImageAspectRatio.SQUARE
-            } else if (imageHeight > imageWidth) {
-                ImageAspectRatio.PORTRAIT
-            } else {
-                ImageAspectRatio.SQUARE
+        val aspectRatios =
+            images.map { image ->
+                if (image.imageHeight > image.imageWidth) ImageAspectRatio.PORTRAIT else ImageAspectRatio.SQUARE
             }
 
         return FeedItem(
@@ -511,10 +586,11 @@ class HomeViewModel @Inject constructor(
             nickname = author.nickname,
             category = category.displayName,
             createdAt = TimeUtils.formatRelativeTime(createdAt),
+            title = title,
             content = content,
-            productImageUrl = viewUrl,
+            productImageUrls = viewUrls,
             price = price,
-            imageAspectRatio = aspectRatio,
+            imageAspectRatios = aspectRatios,
             isVoteEnded = feedStatus == FeedStatus.CLOSED,
             userVotedOptionIndex =
                 when (myVoteChoice) {
@@ -527,6 +603,7 @@ class HomeViewModel @Inject constructor(
             totalVoteCount = totalCount,
             isOwner = isOwner,
             authorUserId = author.userId,
+            productLink = productLink,
         )
     }
 }

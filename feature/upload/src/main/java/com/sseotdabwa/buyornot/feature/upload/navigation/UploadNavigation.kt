@@ -4,7 +4,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
-import com.sseotdabwa.buyornot.feature.upload.ui.UploadScreen
+import com.sseotdabwa.buyornot.feature.upload.ui.UploadRoute
 
 const val UPLOAD_ROUTE = "upload"
 
@@ -17,7 +17,7 @@ fun NavGraphBuilder.uploadScreen(
     onNavigateToHomeReview: () -> Unit = {},
 ) {
     composable(route = UPLOAD_ROUTE) {
-        UploadScreen(
+        UploadRoute(
             onNavigateBack = onNavigateBack,
             onNavigateToHomeReview = onNavigateToHomeReview,
         )

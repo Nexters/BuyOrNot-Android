@@ -14,6 +14,18 @@ data class FeedListResponse(
 )
 
 @Serializable
+data class FeedImageDto(
+    @SerialName("s3ObjectKey")
+    val s3ObjectKey: String,
+    @SerialName("imageUrl")
+    val imageUrl: String,
+    @SerialName("imageWidth")
+    val imageWidth: Int,
+    @SerialName("imageHeight")
+    val imageHeight: Int,
+)
+
+@Serializable
 data class FeedItemDto(
     @SerialName("feedId")
     val feedId: Long,
@@ -31,14 +43,12 @@ data class FeedItemDto(
     val totalCount: Int,
     @SerialName("feedStatus")
     val feedStatus: String,
-    @SerialName("s3ObjectKey")
-    val s3ObjectKey: String,
-    @SerialName("viewUrl")
-    val viewUrl: String,
-    @SerialName("imageWidth")
-    val imageWidth: Int,
-    @SerialName("imageHeight")
-    val imageHeight: Int,
+    @SerialName("images")
+    val images: List<FeedImageDto>,
+    @SerialName("link")
+    val link: String? = null,
+    @SerialName("title")
+    val title: String? = null,
     @SerialName("author")
     val author: AuthorDto,
     @SerialName("createdAt")

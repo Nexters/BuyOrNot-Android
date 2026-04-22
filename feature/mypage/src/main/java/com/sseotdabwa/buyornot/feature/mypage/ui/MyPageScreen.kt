@@ -138,7 +138,7 @@ fun MyPageScreen(
                 Text(
                     text = uiState.userProfile?.nickname ?: "...",
                     style = BuyOrNotTheme.typography.subTitleS1SemiBold,
-                    color = BuyOrNotTheme.colors.gray900,
+                    color = BuyOrNotTheme.colors.gray950,
                 )
             }
 

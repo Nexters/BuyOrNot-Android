@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +59,10 @@ fun OptionSheet(
         isHalfExpandedOnly = true,
         sheetShape = sheetShape,
     ) { hideSheet ->
+        val listState = rememberLazyListState()
+        val isOverflowing by remember {
+            derivedStateOf { listState.canScrollForward || listState.canScrollBackward }
+        }
         Box(
             modifier = Modifier.clip(sheetShape),
         ) {
@@ -70,7 +76,7 @@ fun OptionSheet(
                 Text(
                     text = title,
                     style = BuyOrNotTheme.typography.subTitleS1SemiBold,
-                    color = BuyOrNotTheme.colors.gray900,
+                    color = BuyOrNotTheme.colors.gray950,
                     modifier =
                         Modifier
                             .padding(horizontal = 24.dp)
@@ -81,8 +87,9 @@ fun OptionSheet(
 
                 // 옵션 목록 영역
                 LazyColumn(
+                    state = listState,
                     verticalArrangement = Arrangement.spacedBy(18.dp),
-                    contentPadding = PaddingValues(bottom = 48.dp),
+                    contentPadding = PaddingValues(bottom = if (isOverflowing) 48.dp else 0.dp),
                 ) {
                     items(
                         count = options.size,
@@ -103,23 +110,25 @@ fun OptionSheet(
                 }
             }
 
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(70.dp)
-                        .background(
-                            brush =
-                                Brush.verticalGradient(
-                                    colors =
-                                        listOf(
-                                            Color.Transparent, // 시작점 (위): 투명
-                                            BuyOrNotTheme.colors.gray0, // 끝점 (아래): 배경색
-                                        ),
-                                ),
-                        ),
-            )
+            if (isOverflowing) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(70.dp)
+                            .background(
+                                brush =
+                                    Brush.verticalGradient(
+                                        colors =
+                                            listOf(
+                                                Color.Transparent, // 시작점 (위): 투명
+                                                BuyOrNotTheme.colors.gray0, // 끝점 (아래): 배경색
+                                            ),
+                                    ),
+                            ),
+                )
+            }
         }
     }
 }
@@ -150,7 +159,7 @@ private fun OptionItem(
                 },
             color =
                 if (isSelected) {
-                    BuyOrNotTheme.colors.gray900
+                    BuyOrNotTheme.colors.gray950
                 } else {
                     BuyOrNotTheme.colors.gray700
                 },
@@ -160,7 +169,7 @@ private fun OptionItem(
             Icon(
                 imageVector = BuyOrNotIcons.Check.asImageVector(),
                 contentDescription = "Check",
-                tint = BuyOrNotTheme.colors.gray900,
+                tint = BuyOrNotTheme.colors.gray950,
             )
         }
     }

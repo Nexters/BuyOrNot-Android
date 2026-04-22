@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.upload.ui
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -34,7 +36,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -52,12 +53,11 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -77,7 +77,7 @@ import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import java.text.DecimalFormat
 
 @Composable
-fun UploadScreen(
+fun UploadRoute(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
     onNavigateToHomeReview: () -> Unit = {},
@@ -90,40 +90,65 @@ fun UploadScreen(
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { sideEffect ->
             when (sideEffect) {
-                is UploadSideEffect.ShowSnackbar -> {
-                    snackbarState.show(sideEffect.message)
-                }
-
+                is UploadSideEffect.ShowSnackbar -> snackbarState.show(sideEffect.message)
                 is UploadSideEffect.NavigateBack -> onNavigateBack()
                 is UploadSideEffect.NavigateToHomeReview -> onNavigateToHomeReview()
             }
         }
     }
 
-    val decimalFormat = remember { DecimalFormat("#,###") }
-    val scrollState = rememberScrollState()
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent(),
-        ) { uri: Uri? ->
-            viewModel.handleIntent(UploadIntent.SelectImage(uri))
+            contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3),
+        ) { uris: List<Uri> ->
+            if (uris.isNotEmpty()) viewModel.handleIntent(UploadIntent.AddImages(uris))
         }
 
-    val isSubmitEnabled by remember {
-        derivedStateOf {
+    UploadScreen(
+        modifier = modifier,
+        uiState = uiState,
+        onIntent = viewModel::handleIntent,
+        onPickImage = {
+            if (uiState.selectedImageUris.size < 3) {
+                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        },
+        onSubmit = {
+            keyboardController?.hide()
+            viewModel.handleIntent(UploadIntent.Submit(context))
+        },
+    )
+}
+
+@Composable
+fun UploadScreen(
+    uiState: UploadUiState,
+    onIntent: (UploadIntent) -> Unit,
+    onPickImage: () -> Unit,
+    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val decimalFormat = remember { DecimalFormat("#,###") }
+    val scrollState = rememberScrollState()
+
+    val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+
+    val isSubmitEnabled =
+        remember(uiState) {
             uiState.category != null &&
                 uiState.price.isNotEmpty() &&
-                uiState.selectedImageUri != null &&
+                uiState.title.isNotEmpty() &&
+                uiState.selectedImageUris.isNotEmpty() &&
                 !uiState.isLoading
         }
-    }
 
     BackHandler {
         if (uiState.hasInput) {
-            if (!uiState.showExitDialog) viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
+            if (!uiState.showExitDialog) onIntent(UploadIntent.UpdateExitDialogVisibility(true))
         } else {
-            viewModel.handleIntent(UploadIntent.NavigateBack)
+            onIntent(UploadIntent.NavigateBack)
         }
     }
 
@@ -137,9 +162,9 @@ fun UploadScreen(
     ) {
         BackTopBar {
             if (uiState.hasInput) {
-                viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(true))
+                onIntent(UploadIntent.UpdateExitDialogVisibility(true))
             } else {
-                viewModel.handleIntent(UploadIntent.NavigateBack)
+                onIntent(UploadIntent.NavigateBack)
             }
         }
 
@@ -152,7 +177,18 @@ fun UploadScreen(
         ) {
             CategorySelectorRow(
                 selectedCategory = uiState.category?.displayName,
-                onCategoryClick = { viewModel.handleIntent(UploadIntent.UpdateCategorySheetVisibility(true)) },
+                onCategoryClick = { onIntent(UploadIntent.UpdateCategorySheetVisibility(true)) },
+            )
+
+            HorizontalDivider(
+                thickness = 2.dp,
+                color = BuyOrNotTheme.colors.gray100,
+            )
+
+            LinkInputField(
+                modifier = Modifier.padding(vertical = 18.dp),
+                link = uiState.link,
+                onLinkChange = { onIntent(UploadIntent.UpdateLink(it)) },
             )
 
             HorizontalDivider(
@@ -166,7 +202,7 @@ fun UploadScreen(
                 priceRaw = uiState.price,
                 decimalFormat = decimalFormat,
                 onPriceChange = { digits, textFieldValue ->
-                    viewModel.handleIntent(UploadIntent.UpdatePrice(digits, textFieldValue))
+                    onIntent(UploadIntent.UpdatePrice(digits, textFieldValue))
                 },
             )
 
@@ -178,16 +214,18 @@ fun UploadScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             ContentInputField(
+                title = uiState.title,
+                onTitleChange = { onIntent(UploadIntent.UpdateTitle(it)) },
                 content = uiState.content,
-                onContentChange = { viewModel.handleIntent(UploadIntent.UpdateContent(it)) },
+                onContentChange = { onIntent(UploadIntent.UpdateContent(it)) },
             )
 
             Spacer(modifier = Modifier.height(10.dp))
 
             ImagePickerRow(
-                selectedImageUri = uiState.selectedImageUri,
-                onPickImage = { galleryLauncher.launch("image/*") },
-                onRemoveImage = { viewModel.handleIntent(UploadIntent.SelectImage(null)) },
+                selectedImageUris = uiState.selectedImageUris,
+                onPickImage = onPickImage,
+                onRemoveImage = { uri -> onIntent(UploadIntent.RemoveImage(uri)) },
             )
         }
 
@@ -195,22 +233,40 @@ fun UploadScreen(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
-            horizontalArrangement = Arrangement.End,
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = if (isImeVisible) Arrangement.SpaceBetween else Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (isSubmitEnabled) {
-                ToolTip()
-                Spacer(modifier = Modifier.width(6.dp))
+            if (isImeVisible) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = BuyOrNotIcons.Camera.asImageVector(),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = BuyOrNotTheme.colors.gray800,
+                    )
+                    Text(
+                        text = "${uiState.selectedImageUris.size}/3",
+                        style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+                        color = BuyOrNotTheme.colors.gray800,
+                    )
+                }
+            } else {
+                if (isSubmitEnabled) {
+                    ToolTip()
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
             }
 
             CapsuleButton(
                 text = "투표 게시!",
                 enabled = isSubmitEnabled,
                 size = ButtonSize.Small,
-            ) {
-                viewModel.handleIntent(UploadIntent.Submit(context))
-            }
+                onClick = onSubmit,
+            )
         }
     }
 
@@ -222,28 +278,28 @@ fun UploadScreen(
             onOptionClick = { displayName ->
                 val category = uiState.categories.find { it.displayName == displayName }
                 if (category != null) {
-                    viewModel.handleIntent(UploadIntent.UpdateCategory(category))
+                    onIntent(UploadIntent.UpdateCategory(category))
                 }
             },
             onDismissRequest = {
-                viewModel.handleIntent(UploadIntent.UpdateCategorySheetVisibility(false))
+                onIntent(UploadIntent.UpdateCategorySheetVisibility(false))
             },
         )
     }
 
     if (uiState.showExitDialog) {
         BuyOrNotAlertDialog(
-            onDismissRequest = { viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(false)) },
+            onDismissRequest = { onIntent(UploadIntent.UpdateExitDialogVisibility(false)) },
             title = "다음에 등록할까요?",
             subText = "지금까지 쓴 내용은 저장되지 않아요.",
             confirmText = "유지하기",
             dismissText = "나가기",
             onConfirm = {
-                viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(false))
+                onIntent(UploadIntent.UpdateExitDialogVisibility(false))
             },
             onDismiss = {
-                viewModel.handleIntent(UploadIntent.UpdateExitDialogVisibility(false))
-                viewModel.handleIntent(UploadIntent.NavigateBack)
+                onIntent(UploadIntent.UpdateExitDialogVisibility(false))
+                onIntent(UploadIntent.NavigateBack)
             },
         )
     }
@@ -275,6 +331,48 @@ private fun CategorySelectorRow(
             modifier = Modifier.clickable { onCategoryClick() },
             style = BuyOrNotTheme.typography.subTitleS3SemiBold,
             color = if (selectedCategory != null) BuyOrNotTheme.colors.gray800 else BuyOrNotTheme.colors.gray600,
+        )
+    }
+}
+
+@Composable
+private fun LinkInputField(
+    link: String,
+    onLinkChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = BuyOrNotIcons.Link.asImageVector(),
+            contentDescription = "Link",
+            modifier = Modifier.size(18.dp),
+            tint = BuyOrNotTheme.colors.gray600,
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+
+        BasicTextField(
+            value = link,
+            onValueChange = onLinkChange,
+            modifier = Modifier.fillMaxWidth(),
+            textStyle =
+                BuyOrNotTheme.typography.subTitleS3SemiBold.copy(
+                    color = BuyOrNotTheme.colors.gray800,
+                ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
+            singleLine = true,
+            decorationBox = { innerTextField ->
+                if (link.isEmpty()) {
+                    Text(
+                        text = "상품 링크 (선택)",
+                        style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+                        color = BuyOrNotTheme.colors.gray600,
+                    )
+                }
+                innerTextField()
+            },
         )
     }
 }
@@ -361,12 +459,37 @@ private fun PriceInputField(
 
 @Composable
 private fun ContentInputField(
+    title: String,
+    onTitleChange: (String) -> Unit,
     content: String,
     onContentChange: (String) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
+        BasicTextField(
+            value = title,
+            onValueChange = { if (it.length <= 40) onTitleChange(it) },
+            modifier = Modifier.fillMaxWidth(),
+            textStyle =
+                BuyOrNotTheme.typography.titleT2Bold.copy(
+                    color = BuyOrNotTheme.colors.gray950,
+                ),
+            singleLine = true,
+            decorationBox = { innerTextField ->
+                if (title.isEmpty()) {
+                    Text(
+                        text = "제목",
+                        style = BuyOrNotTheme.typography.titleT2Bold,
+                        color = BuyOrNotTheme.colors.gray600,
+                    )
+                }
+                innerTextField()
+            },
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         BasicTextField(
             value = content,
             onValueChange = { if (it.length <= 100) onContentChange(it) },
@@ -376,7 +499,7 @@ private fun ContentInputField(
                     .heightIn(min = 84.dp),
             textStyle =
                 BuyOrNotTheme.typography.paragraphP2Medium.copy(
-                    color = BuyOrNotTheme.colors.gray900,
+                    color = BuyOrNotTheme.colors.gray950,
                 ),
             decorationBox = { innerTextField ->
                 if (content.isEmpty()) {
@@ -403,22 +526,23 @@ private fun ContentInputField(
 
 @Composable
 private fun ImagePickerRow(
-    selectedImageUri: Uri?,
+    selectedImageUris: List<Uri>,
     onPickImage: () -> Unit,
-    onRemoveImage: () -> Unit,
+    onRemoveImage: (Uri) -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CameraButton(
-            selectedCount = if (selectedImageUri != null) 1 else 0,
+            selectedCount = selectedImageUris.size,
+            enabled = selectedImageUris.size < 3,
             onClick = onPickImage,
         )
 
-        selectedImageUri?.let {
+        selectedImageUris.forEach { uri ->
             SelectedImagePreview(
-                imageUri = it,
-                onRemove = onRemoveImage,
+                imageUri = uri,
+                onRemove = { onRemoveImage(uri) },
             )
         }
     }
@@ -427,6 +551,7 @@ private fun ImagePickerRow(
 @Composable
 private fun CameraButton(
     selectedCount: Int,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     Surface(
@@ -434,6 +559,7 @@ private fun CameraButton(
         shape = RoundedCornerShape(12.dp),
         color = BuyOrNotTheme.colors.gray100,
         onClick = onClick,
+        enabled = enabled,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -450,28 +576,9 @@ private fun CameraButton(
                 tint = BuyOrNotTheme.colors.gray600,
             )
             Text(
-                text =
-                    buildAnnotatedString {
-                        withStyle(
-                            style =
-                                SpanStyle(
-                                    color =
-                                        if (selectedCount > 0) {
-                                            BuyOrNotTheme.colors.gray800
-                                        } else {
-                                            BuyOrNotTheme.colors.gray600
-                                        },
-                                ),
-                        ) {
-                            append("$selectedCount")
-                        }
-                        withStyle(
-                            style = SpanStyle(color = BuyOrNotTheme.colors.gray600),
-                        ) {
-                            append("/1")
-                        }
-                    },
+                text = "$selectedCount/3",
                 style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+                color = BuyOrNotTheme.colors.gray600,
             )
         }
     }
@@ -568,11 +675,9 @@ fun Modifier.customShadow(
     offsetX: Dp = 40.dp,
     offsetY: Dp = 4.dp,
 ) = this.drawBehind {
-    // 1. 전달받은 Shape로부터 현재 사이즈에 맞는 Outline을 생성합니다.
     val outline = shape.createOutline(size, layoutDirection, this)
     val path =
         Path().apply {
-            // Outline을 Path 형태로 변환합니다.
             addOutline(outline)
         }
 
@@ -580,7 +685,6 @@ fun Modifier.customShadow(
         val paint =
             Paint().asFrameworkPaint().apply {
                 this.color = android.graphics.Color.TRANSPARENT
-                // 설정된 Offset과 Blur(Spread)를 적용합니다.
                 setShadowLayer(
                     blur.toPx(),
                     offsetX.toPx(),
@@ -588,7 +692,6 @@ fun Modifier.customShadow(
                     color.toArgb(),
                 )
             }
-        // Compose Path를 Native Path로 변환하여 그림자를 그립니다.
         canvas.nativeCanvas.drawPath(path.asAndroidPath(), paint)
     }
 }
@@ -597,6 +700,11 @@ fun Modifier.customShadow(
 @Composable
 private fun UploadScreenPreview() {
     BuyOrNotTheme {
-        UploadScreen()
+        UploadScreen(
+            uiState = UploadUiState(),
+            onIntent = {},
+            onPickImage = {},
+            onSubmit = {},
+        )
     }
 }

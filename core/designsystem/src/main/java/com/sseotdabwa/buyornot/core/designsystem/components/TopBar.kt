@@ -109,7 +109,7 @@ fun BackTopBarWithTitle(
             Text(
                 text = title,
                 style = BuyOrNotTheme.typography.titleT1Bold,
-                color = BuyOrNotTheme.colors.gray900,
+                color = BuyOrNotTheme.colors.gray950,
             )
         },
     )

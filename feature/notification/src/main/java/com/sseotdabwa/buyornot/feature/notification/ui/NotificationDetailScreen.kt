@@ -12,7 +12,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,6 +34,7 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
+import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 
@@ -47,6 +50,7 @@ import com.sseotdabwa.buyornot.domain.model.VoteChoice
 @Composable
 fun NotificationDetailRoute(
     onBackClick: () -> Unit,
+    onLinkClick: (url: String) -> Unit = {},
     viewModel: NotificationDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -72,6 +76,7 @@ fun NotificationDetailRoute(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
+        onLinkClick = onLinkClick,
         onIntent = viewModel::handleIntent,
     )
 }
@@ -81,6 +86,7 @@ fun NotificationDetailScreen(
     uiState: NotificationDetailUiState,
     onBackClick: () -> Unit,
     onIntent: (NotificationDetailIntent) -> Unit,
+    onLinkClick: (url: String) -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     if (uiState.showBlockDialog) {
@@ -125,7 +131,7 @@ fun NotificationDetailScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator(color = BuyOrNotTheme.colors.gray900)
+                        CircularProgressIndicator(color = BuyOrNotTheme.colors.gray950)
                     }
                 }
 
@@ -138,6 +144,7 @@ fun NotificationDetailScreen(
 
                 uiState.feed != null -> {
                     val feed = uiState.feed
+                    var showLinkTooltip by remember { mutableStateOf(true) }
 
                     Column(
                         modifier =
@@ -146,19 +153,18 @@ fun NotificationDetailScreen(
                                 .verticalScroll(rememberScrollState()),
                     ) {
                         FeedCard(
-                            modifier = Modifier.padding(20.dp),
+                            modifier = Modifier.padding(vertical = 26.dp),
                             profileImageUrl = feed.author.profileImage ?: "",
                             nickname = feed.author.nickname,
                             category = feed.category.displayName,
                             createdAt = TimeUtils.formatRelativeTime(feed.createdAt),
+                            title = feed.title,
                             content = feed.content,
-                            productImageUrl = feed.viewUrl,
+                            productImageUrls = feed.viewUrls,
                             price = feed.price,
-                            imageAspectRatio =
-                                if (feed.imageWidth > 0 && feed.imageHeight > 0) {
-                                    if (feed.imageHeight > feed.imageWidth) ImageAspectRatio.PORTRAIT else ImageAspectRatio.SQUARE
-                                } else {
-                                    ImageAspectRatio.SQUARE
+                            imageAspectRatios =
+                                feed.images.map { image ->
+                                    if (image.imageHeight > image.imageWidth) ImageAspectRatio.PORTRAIT else ImageAspectRatio.SQUARE
                                 },
                             isVoteEnded = feed.feedStatus == FeedStatus.CLOSED,
                             userVotedOptionIndex =
@@ -177,6 +183,9 @@ fun NotificationDetailScreen(
                             onReportClick = { onIntent(NotificationDetailIntent.OnReportClicked) },
                             onBlockClick = { onIntent(NotificationDetailIntent.ShowBlockDialog) },
                             showMoreButton = !uiState.isGuest,
+                            productLink = feed.productLink,
+                            onLinkClick = onLinkClick,
+                            showProductLinkTooltip = showLinkTooltip && feed.productLink != null,
                         )
                     }
                 }
@@ -196,6 +205,7 @@ private fun NotificationDetailScreenPreview() {
                     feed =
                         Feed(
                             feedId = 1L,
+                            title = "",
                             content = "이거 어때요? 투표 결과가 궁금해요!",
                             price = "35,000",
                             category = FeedCategory.BOOK,
@@ -203,10 +213,15 @@ private fun NotificationDetailScreenPreview() {
                             noCount = 20,
                             totalCount = 100,
                             feedStatus = FeedStatus.CLOSED,
-                            s3ObjectKey = "",
-                            viewUrl = "https://picsum.photos/800/800",
-                            imageWidth = 800,
-                            imageHeight = 800,
+                            images =
+                                listOf(
+                                    FeedImage(
+                                        s3ObjectKey = "",
+                                        imageUrl = "https://picsum.photos/800/800",
+                                        imageWidth = 800,
+                                        imageHeight = 800,
+                                    ),
+                                ),
                             author =
                                 Author(
                                     userId = 1L,

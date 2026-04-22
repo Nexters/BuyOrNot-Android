@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.home.ui
 import androidx.compose.runtime.Immutable
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.UserType
 
 /**
@@ -31,10 +32,11 @@ data class FeedItem(
     val nickname: String,
     val category: String,
     val createdAt: String,
+    val title: String,
     val content: String,
-    val productImageUrl: String,
+    val productImageUrls: List<String>,
     val price: String,
-    val imageAspectRatio: ImageAspectRatio,
+    val imageAspectRatios: List<ImageAspectRatio>,
     val isVoteEnded: Boolean,
     val userVotedOptionIndex: Int?,
     val buyVoteCount: Int,
@@ -42,6 +44,7 @@ data class FeedItem(
     val totalVoteCount: Int,
     val isOwner: Boolean,
     val authorUserId: Long,
+    val productLink: String? = null,
 )
 
 /**
@@ -65,6 +68,8 @@ data class HomeUiState(
     val selectedFilter: FilterChip = FilterChip.ALL,
     val isBannerVisible: Boolean = true,
     val voterProfileImageUrl: String = "",
+    val allFeeds: List<FeedItem> = emptyList(),
+    val selectedCategories: Set<FeedCategory> = emptySet(),
     val feeds: List<FeedItem> = emptyList(),
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
@@ -77,6 +82,7 @@ data class HomeUiState(
     val showBlockDialog: Boolean = false,
     val blockingNickname: String? = null,
     val blockingUserId: Long? = null,
+    val showSortSheet: Boolean = false,
 )
 
 /**
@@ -125,6 +131,16 @@ sealed interface HomeIntent {
     data object DismissBlockDialog : HomeIntent
 
     data object OnBlockConfirmed : HomeIntent
+
+    data class OnCategoryToggled(
+        val category: FeedCategory,
+    ) : HomeIntent
+
+    data object OnAllCategorySelected : HomeIntent
+
+    data object ShowSortSheet : HomeIntent
+
+    data object DismissSortSheet : HomeIntent
 }
 
 /**

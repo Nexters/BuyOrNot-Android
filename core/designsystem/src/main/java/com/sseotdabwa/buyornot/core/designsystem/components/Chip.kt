@@ -42,7 +42,7 @@ fun BuyOrNotChip(
     val backgroundColor by animateColorAsState(
         targetValue =
             when {
-                isSelected -> BuyOrNotTheme.colors.gray900 // Selected
+                isSelected -> BuyOrNotTheme.colors.gray950 // Selected
                 isPressed || isHovered -> BuyOrNotTheme.colors.gray300 // Hover/Pressed
                 else -> BuyOrNotTheme.colors.gray200 // Unselected
             },

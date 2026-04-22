@@ -14,7 +14,7 @@ internal const val TERMS_URL = "https://littlemoom.notion.site/buy-or-not-servic
 internal const val PRIVACY_URL = "https://littlemoom.notion.site/buy-or-not-privacy-term?pvs=143"
 internal const val FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLScG0GStvzog1HVZjAP9OpHl85azcez2OdAr7YwrI7rvCqInsg/viewform"
 
-private fun NavController.navigateToWebView(
+fun NavController.navigateToWebView(
     title: String,
     url: String,
 ) {

@@ -9,7 +9,8 @@ internal val LightColorScheme =
         // Black & Gray
         black = Color(0xFF000000),
         gray1000 = Color(0xFF1A1C20),
-        gray900 = Color(0xFF2A3038),
+        gray950 = Color(0xFF2A3038),
+        gray900 = Color(0xFF3F4346),
         gray800 = Color(0xFF565D6D),
         gray700 = Color(0xFF868B94),
         gray600 = Color(0xFFB1B3BB),
@@ -32,6 +33,7 @@ data class BuyOrNotColorScheme(
     // Black & Gray
     val black: Color,
     val gray1000: Color,
+    val gray950: Color,
     val gray900: Color,
     val gray800: Color,
     val gray700: Color,
@@ -56,6 +58,7 @@ val LocalColorScheme =
             // Black & Gray
             black = Color.Unspecified,
             gray1000 = Color.Unspecified,
+            gray950 = Color.Unspecified,
             gray900 = Color.Unspecified,
             gray800 = Color.Unspecified,
             gray700 = Color.Unspecified,

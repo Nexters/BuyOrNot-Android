@@ -32,6 +32,7 @@ object BuyOrNotIcons {
     val Expand = IconResource(R.drawable.ic_expand)
     val Check = IconResource(R.drawable.ic_check)
     val Clock = IconResource(R.drawable.ic_clock)
+    val Sort = IconResource(R.drawable.ic_sort)
 
     // 네비게이션 아이콘
     val ArrowLeft = IconResource(R.drawable.ic_arrow_left)
@@ -41,6 +42,7 @@ object BuyOrNotIcons {
     // 기능 아이콘
     val CheckCircle = IconResource(R.drawable.ic_check_circle)
     val Camera = IconResource(R.drawable.ic_camera)
+    val Link = IconResource(R.drawable.ic_link)
     val Vote = IconResource(R.drawable.ic_vote)
     val VoteDone = IconResource(R.drawable.ic_vote_done)
     val Bag = IconResource(R.drawable.ic_bag)

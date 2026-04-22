@@ -30,11 +30,12 @@ interface FeedApiService {
      * @param size 페이지 크기 (기본값 20, 최대 50)
      * @param feedStatus 피드 상태 필터 (OPEN, CLOSED / 미지정 시 전체)
      */
-    @GET("/api/v1/feeds")
+    @GET("/api/v2/feeds")
     suspend fun getFeedList(
         @Query("cursor") cursor: Long? = null,
         @Query("size") size: Int = 20,
         @Query("feedStatus") feedStatus: String? = null,
+        @Query("category") category: List<String>? = null,
     ): BaseResponse<FeedListResponse>
 
     /**
@@ -42,7 +43,7 @@ interface FeedApiService {
      *
      * @param feedId 조회할 피드 ID
      */
-    @GET("/api/v1/feeds/{feedId}")
+    @GET("/api/v2/feeds/{feedId}")
     suspend fun getFeed(
         @Path("feedId") feedId: Long,
     ): BaseResponse<FeedItemDto>
@@ -54,7 +55,7 @@ interface FeedApiService {
      * @param size 페이지 크기 (기본값 20, 최대 50)
      * @param feedStatus 피드 상태 필터 (OPEN, CLOSED / 미지정 시 전체)
      */
-    @GET("/api/v1/users/me/feeds")
+    @GET("/api/v2/users/me/feeds")
     suspend fun getMyFeeds(
         @Query("cursor") cursor: Long? = null,
         @Query("size") size: Int = 20,
@@ -78,7 +79,7 @@ interface FeedApiService {
         @Body body: RequestBody,
     ): Response<Unit>
 
-    @POST("/api/v1/feeds")
+    @POST("/api/v2/feeds")
     suspend fun createFeed(
         @Body request: FeedRequest,
     ): BaseResponse<FeedResponse>

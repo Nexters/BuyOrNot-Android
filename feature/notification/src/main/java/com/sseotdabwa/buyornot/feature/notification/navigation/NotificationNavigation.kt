@@ -15,6 +15,7 @@ const val NOTIFICATION_DETAIL_ROUTE = "notification_detail"
 fun NavGraphBuilder.notificationGraph(
     onBackClick: () -> Unit,
     onNotificationClick: (Long, Long) -> Unit,
+    onLinkClick: (url: String) -> Unit = {},
 ) {
     composable(route = NOTIFICATION_ROUTE) {
         NotificationRoute(
@@ -33,6 +34,7 @@ fun NavGraphBuilder.notificationGraph(
     ) {
         NotificationDetailRoute(
             onBackClick = onBackClick,
+            onLinkClick = onLinkClick,
         )
     }
 }

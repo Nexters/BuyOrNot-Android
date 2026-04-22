@@ -12,4 +12,7 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.ui)
     implementation(libs.coil.compose)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
 }
