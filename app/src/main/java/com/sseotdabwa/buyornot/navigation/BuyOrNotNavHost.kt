@@ -98,12 +98,12 @@ fun BuyOrNotNavHost(
             onNotificationClick = navController::navigateToNotification,
             onProfileClick = navController::navigateToMyPage,
             onUploadClick = navController::navigateToUpload,
-            onLinkClick = { url -> navController.navigateToWebView("상품 링크", url) },
+            onLinkClick = { url -> navController.navigateToWebView("", url) },
         )
         notificationGraph(
             onBackClick = navController::popBackStack,
             onNotificationClick = navController::navigateToNotificationDetail,
-            onLinkClick = { url -> navController.navigateToWebView("상품 링크", url) },
+            onLinkClick = { url -> navController.navigateToWebView("", url) },
         )
         uploadScreen(
             onNavigateBack = navController::popBackStack,
