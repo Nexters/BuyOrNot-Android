@@ -344,6 +344,8 @@ private fun HomeFeedList(
     // ViewModel에서 이미 탭과 필터에 따라 필터링된 피드를 제공
     val filteredFeeds = uiState.feeds
     val listState = rememberLazyListState()
+    val isEmptyViewVisible = filteredFeeds.isEmpty() && !uiState.isLoading && !uiState.hasError
+    val isMyFeedEmpty = uiState.selectedTab == HomeTab.MY_FEED && isEmptyViewVisible
 
     var showLinkTooltip by remember { mutableStateOf(true) }
     val tooltipTargetIndex =
@@ -406,17 +408,19 @@ private fun HomeFeedList(
                 contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // 스크롤 시 숨겨지는 필터 칩 영역
-                item {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    FilterChipRow(
-                        selectedCategories = uiState.selectedCategories,
-                        onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
-                        onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
-                        selectedFilter = uiState.selectedFilter,
-                        onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
+                // 스크롤 시 숨겨지는 필터 칩 영역 (내 투표 빈 상태일 때는 미노출)
+                if (!isMyFeedEmpty) {
+                    item {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        FilterChipRow(
+                            selectedCategories = uiState.selectedCategories,
+                            onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
+                            onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
+                            selectedFilter = uiState.selectedFilter,
+                            onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
                 }
 
                 // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
@@ -496,10 +500,20 @@ private fun HomeFeedList(
                     else -> {
                         // 통신은 성공(hasError false)했지만 데이터가 없는 경우
                         item {
-                            HomeFeedEmptyView(
-                                modifier = Modifier.padding(top = 120.dp),
-                                onUploadClick = onUploadClick,
-                            )
+                            if (uiState.selectedTab == HomeTab.MY_FEED) {
+                                HomeFeedEmptyView(
+                                    modifier = Modifier.padding(top = 140.dp),
+                                    title = "아직 올린 투표가 없어요",
+                                    description = "고민되는 상품의 투표를 올려보세요!",
+                                    onUploadClick = onUploadClick,
+                                )
+                            } else {
+                                HomeFeedEmptyView(
+                                    modifier = Modifier.padding(top = 120.dp),
+                                    title = "첫번째 투표를 올려보세요!",
+                                    onUploadClick = onUploadClick,
+                                )
+                            }
                         }
                     }
                 }
@@ -665,8 +679,10 @@ private fun FeedItemCard(
 
 @Composable
 fun HomeFeedEmptyView(
+    title: String,
     onUploadClick: () -> Unit,
     modifier: Modifier = Modifier,
+    description: String? = null,
 ) {
     Column(
         modifier = modifier,
@@ -685,10 +701,19 @@ fun HomeFeedEmptyView(
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "첫번째 투표를 올려보세요!",
+            text = title,
             style = BuyOrNotTheme.typography.titleT1Bold,
             color = BuyOrNotTheme.colors.gray800,
         )
+
+        if (description != null) {
+            Text(
+                modifier = Modifier.padding(top = 6.dp),
+                text = description,
+                style = BuyOrNotTheme.typography.bodyB5Medium,
+                color = BuyOrNotTheme.colors.gray600,
+            )
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -711,7 +736,7 @@ private fun HomeScreenPreview() {
     }
 }
 
-@Preview(name = "HomeScreen - Empty Feed", showBackground = true)
+@Preview(name = "HomeScreen - 투표 피드 빈 상태", showBackground = true)
 @Composable
 private fun HomeScreenEmptyFeedPreview() {
     BuyOrNotTheme {
@@ -721,6 +746,24 @@ private fun HomeScreenEmptyFeedPreview() {
                     isLoading = false,
                     userType = UserType.SOCIAL,
                     feeds = emptyList(),
+                    selectedTab = HomeTab.FEED,
+                ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(name = "HomeScreen - 내 투표 빈 상태", showBackground = true)
+@Composable
+private fun HomeScreenEmptyMyFeedPreview() {
+    BuyOrNotTheme {
+        HomeScreen(
+            uiState =
+                HomeUiState(
+                    isLoading = false,
+                    userType = UserType.SOCIAL,
+                    feeds = emptyList(),
+                    selectedTab = HomeTab.MY_FEED,
                 ),
             onIntent = {},
         )
