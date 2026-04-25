@@ -6,9 +6,12 @@ import androidx.compose.animation.core.TwoWayConverter
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.rememberTransformableState
-import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,6 +38,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -46,6 +51,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 private const val MAX_SCALE = 3f
 
@@ -159,30 +165,11 @@ private fun ZoomableImage(
     var offset by remember { mutableStateOf(Offset.Zero) }
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
     var imageIntrinsicSize by remember { mutableStateOf(Size.Unspecified) }
-    var hasPinched by remember { mutableStateOf(false) }
+    var pinchVersion by remember { mutableIntStateOf(0) }
     val scope = rememberCoroutineScope()
 
-    val transformState =
-        rememberTransformableState { zoomChange, panChange, _ ->
-            if (zoomChange != 1f) hasPinched = true
-            val newScale = (scale * zoomChange).coerceIn(1f, MAX_SCALE)
-            scale = newScale
-            val rawOffset = if (newScale > 1f) offset + panChange else Offset.Zero
-            offset = computeMaxOffset(
-                containerWidth = containerSize.width,
-                containerHeight = containerSize.height,
-                imageWidth = imageIntrinsicSize.width,
-                imageHeight = imageIntrinsicSize.height,
-                scale = newScale,
-            )?.let { (maxX, maxY) ->
-                Offset(rawOffset.x.coerceIn(-maxX, maxX), rawOffset.y.coerceIn(-maxY, maxY))
-            } ?: rawOffset
-            onZoomChanged(newScale > 1f)
-        }
-
-    LaunchedEffect(transformState.isTransformInProgress) {
-        if (!transformState.isTransformInProgress && hasPinched) {
-            hasPinched = false
+    LaunchedEffect(pinchVersion) {
+        if (pinchVersion > 0) {
             animateResetZoom(
                 currentScale = scale,
                 currentOffset = offset,
@@ -198,11 +185,49 @@ private fun ZoomableImage(
             Modifier
                 .fillMaxSize()
                 .onSizeChanged { containerSize = it }
-                .transformable(
-                    state = transformState,
-                    canPan = { scale > 1f },
-                    lockRotationOnZoomPan = true,
-                ).pointerInput(Unit) {
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false)
+                        var didPinch = false
+
+                        do {
+                            val event = awaitPointerEvent()
+                            val zoom = event.calculateZoom()
+                            val pan = event.calculatePan()
+                            val centroid = event.calculateCentroid(useCurrent = false)
+
+                            if (abs(zoom - 1f) > 0.0001f || pan != Offset.Zero) {
+                                if (abs(zoom - 1f) > 0.0001f) didPinch = true
+
+                                val newScale = (scale * zoom).coerceIn(1f, MAX_SCALE)
+                                val rawOffset =
+                                    computeFocalOffset(
+                                        currentOffset = offset,
+                                        centroid = centroid,
+                                        containerWidth = containerSize.width,
+                                        containerHeight = containerSize.height,
+                                        currentScale = scale,
+                                        newScale = newScale,
+                                        pan = pan,
+                                    )
+                                scale = newScale
+                                offset = computeMaxOffset(
+                                    containerWidth = containerSize.width,
+                                    containerHeight = containerSize.height,
+                                    imageWidth = imageIntrinsicSize.width,
+                                    imageHeight = imageIntrinsicSize.height,
+                                    scale = newScale,
+                                )?.let { (maxX, maxY) ->
+                                    Offset(rawOffset.x.coerceIn(-maxX, maxX), rawOffset.y.coerceIn(-maxY, maxY))
+                                } ?: rawOffset
+                                onZoomChanged(newScale > 1f)
+                                event.changes.forEach { if (it.positionChanged()) it.consume() }
+                            }
+                        } while (event.changes.any { it.pressed })
+
+                        if (didPinch) pinchVersion++
+                    }
+                }.pointerInput(Unit) {
                     detectTapGestures(
                         onDoubleTap = {
                             scope.launch {
