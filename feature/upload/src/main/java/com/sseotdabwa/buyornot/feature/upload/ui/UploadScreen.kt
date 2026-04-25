@@ -56,8 +56,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -369,8 +371,15 @@ private fun LinkInputField(
             decorationBox = { innerTextField ->
                 if (link.isEmpty()) {
                     Text(
-                        text = "상품 링크 (선택)",
-                        style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+                        text =
+                            buildAnnotatedString {
+                                withStyle(BuyOrNotTheme.typography.subTitleS3SemiBold.toSpanStyle()) {
+                                    append("상품 링크 ")
+                                }
+                                withStyle(BuyOrNotTheme.typography.subTitleS5SemiBold.toSpanStyle()) {
+                                    append("(선택)")
+                                }
+                            },
                         color = BuyOrNotTheme.colors.gray600,
                     )
                 }
