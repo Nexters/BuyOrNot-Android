@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,7 +44,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -583,6 +590,11 @@ private fun FilterChipRow(
 ) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+    val isChipOverlapping by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+        }
+    }
 
     // LazyRow 내 index 기준:
     //   0 → "전체" 칩
@@ -615,7 +627,36 @@ private fun FilterChipRow(
 
         LazyRow(
             state = listState,
-            modifier = Modifier.weight(1f),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .graphicsLayer { alpha = 0.99f }
+                    .drawWithContent {
+                        drawContent()
+                        if (isChipOverlapping) {
+                            val fadeWidth = 32.dp.toPx()
+                            val fadeHeight = 38.dp.toPx()
+                            drawRect(
+                                brush =
+                                    Brush.horizontalGradient(
+                                        colorStops =
+                                            arrayOf(
+                                                0f to Color.Transparent,
+                                                0.5f to Color.Black.copy(alpha = 0.74f),
+                                                1f to Color.Black,
+                                            ),
+                                        endX = fadeWidth,
+                                    ),
+                                topLeft =
+                                    Offset(
+                                        x = 0f,
+                                        y = (size.height - fadeHeight) / 2f,
+                                    ),
+                                size = Size(fadeWidth, fadeHeight),
+                                blendMode = BlendMode.DstIn,
+                            )
+                        }
+                    },
             contentPadding = PaddingValues(horizontal = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
