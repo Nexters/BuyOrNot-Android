@@ -71,6 +71,21 @@ internal fun computeMaxOffset(
     return Pair(maxX, maxY)
 }
 
+internal fun computeFocalOffset(
+    currentOffset: Offset,
+    centroid: Offset,
+    containerWidth: Int,
+    containerHeight: Int,
+    currentScale: Float,
+    newScale: Float,
+    pan: Offset,
+): Offset {
+    if (newScale <= 1f) return Offset.Zero
+    val actualZoom = if (currentScale > 0f) newScale / currentScale else newScale
+    val centroidFromCenter = centroid - Offset(containerWidth / 2f, containerHeight / 2f)
+    return centroidFromCenter * (1 - actualZoom) + currentOffset * actualZoom + pan
+}
+
 @Composable
 fun ImageViewerScreen(
     imageUrls: List<String>,
