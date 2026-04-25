@@ -196,7 +196,7 @@ private fun ZoomableImage(
                             val pan = event.calculatePan()
                             val centroid = event.calculateCentroid(useCurrent = false)
 
-                            if (abs(zoom - 1f) > 0.0001f || pan != Offset.Zero) {
+                            if (abs(zoom - 1f) > 0.0001f || (pan != Offset.Zero && scale > 1f)) {
                                 if (abs(zoom - 1f) > 0.0001f) didPinch = true
 
                                 val newScale = (scale * zoom).coerceIn(1f, MAX_SCALE)
