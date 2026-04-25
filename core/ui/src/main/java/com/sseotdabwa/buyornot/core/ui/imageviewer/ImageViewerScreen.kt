@@ -30,12 +30,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
@@ -138,18 +141,32 @@ private fun ZoomableImage(
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
+    var containerSize by remember { mutableStateOf(IntSize.Zero) }
+    var imageIntrinsicSize by remember { mutableStateOf(Size.Unspecified) }
+    var hasPinched by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val transformState =
         rememberTransformableState { zoomChange, panChange, _ ->
+            if (zoomChange != 1f) hasPinched = true
             val newScale = (scale * zoomChange).coerceIn(1f, MAX_SCALE)
             scale = newScale
-            offset = if (newScale > 1f) offset + panChange else Offset.Zero
+            val rawOffset = if (newScale > 1f) offset + panChange else Offset.Zero
+            offset = computeMaxOffset(
+                containerWidth = containerSize.width,
+                containerHeight = containerSize.height,
+                imageWidth = imageIntrinsicSize.width,
+                imageHeight = imageIntrinsicSize.height,
+                scale = newScale,
+            )?.let { (maxX, maxY) ->
+                Offset(rawOffset.x.coerceIn(-maxX, maxX), rawOffset.y.coerceIn(-maxY, maxY))
+            } ?: rawOffset
             onZoomChanged(newScale > 1f)
         }
 
     LaunchedEffect(transformState.isTransformInProgress) {
-        if (!transformState.isTransformInProgress && scale <= 1f) {
+        if (!transformState.isTransformInProgress && hasPinched) {
+            hasPinched = false
             val scaleAnim = Animatable(scale)
             val offsetAnim =
                 Animatable(
@@ -170,6 +187,7 @@ private fun ZoomableImage(
         modifier =
             Modifier
                 .fillMaxSize()
+                .onSizeChanged { containerSize = it }
                 .transformable(
                     state = transformState,
                     canPan = { scale > 1f },
@@ -221,6 +239,14 @@ private fun ZoomableImage(
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit,
+                onSuccess = { state ->
+                    val drawable = state.result.drawable
+                    imageIntrinsicSize =
+                        Size(
+                            drawable.intrinsicWidth.toFloat(),
+                            drawable.intrinsicHeight.toFloat(),
+                        )
+                },
             )
         }
     }
