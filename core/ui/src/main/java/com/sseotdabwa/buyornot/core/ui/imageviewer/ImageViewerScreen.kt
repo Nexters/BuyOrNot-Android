@@ -44,6 +44,7 @@ import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 private const val MAX_SCALE = 3f
@@ -167,18 +168,12 @@ private fun ZoomableImage(
     LaunchedEffect(transformState.isTransformInProgress) {
         if (!transformState.isTransformInProgress && hasPinched) {
             hasPinched = false
-            val scaleAnim = Animatable(scale)
-            val offsetAnim =
-                Animatable(
-                    initialValue = offset,
-                    typeConverter =
-                        TwoWayConverter(
-                            convertToVector = { AnimationVector2D(it.x, it.y) },
-                            convertFromVector = { Offset(it.v1, it.v2) },
-                        ),
-                )
-            launch { scaleAnim.animateTo(1f, spring()) { scale = value } }
-            launch { offsetAnim.animateTo(Offset.Zero, spring()) { offset = value } }
+            animateResetZoom(
+                currentScale = scale,
+                currentOffset = offset,
+                onScaleChange = { scale = it },
+                onOffsetChange = { offset = it },
+            )
             onZoomChanged(false)
         }
     }
@@ -197,21 +192,16 @@ private fun ZoomableImage(
                         onDoubleTap = {
                             scope.launch {
                                 if (scale > 1f) {
-                                    val scaleAnim = Animatable(scale)
-                                    val offsetAnim =
-                                        Animatable(
-                                            initialValue = offset,
-                                            typeConverter =
-                                                TwoWayConverter(
-                                                    convertToVector = { AnimationVector2D(it.x, it.y) },
-                                                    convertFromVector = { Offset(it.v1, it.v2) },
-                                                ),
-                                        )
-                                    launch { scaleAnim.animateTo(1f, spring()) { scale = value } }
-                                    launch { offsetAnim.animateTo(Offset.Zero, spring()) { offset = value } }
+                                    animateResetZoom(
+                                        currentScale = scale,
+                                        currentOffset = offset,
+                                        onScaleChange = { scale = it },
+                                        onOffsetChange = { offset = it },
+                                    )
                                     onZoomChanged(false)
                                 } else {
                                     scale = 2f
+                                    offset = Offset.Zero
                                     onZoomChanged(true)
                                 }
                             }
@@ -249,6 +239,28 @@ private fun ZoomableImage(
                 },
             )
         }
+    }
+}
+
+private suspend fun animateResetZoom(
+    currentScale: Float,
+    currentOffset: Offset,
+    onScaleChange: (Float) -> Unit,
+    onOffsetChange: (Offset) -> Unit,
+) {
+    coroutineScope {
+        val scaleAnim = Animatable(currentScale)
+        val offsetAnim =
+            Animatable(
+                initialValue = currentOffset,
+                typeConverter =
+                    TwoWayConverter(
+                        convertToVector = { AnimationVector2D(it.x, it.y) },
+                        convertFromVector = { Offset(it.v1, it.v2) },
+                    ),
+            )
+        launch { scaleAnim.animateTo(1f, spring()) { onScaleChange(value) } }
+        launch { offsetAnim.animateTo(Offset.Zero, spring()) { onOffsetChange(value) } }
     }
 }
 
