@@ -473,7 +473,7 @@ private fun HomeFeedList(
                 // 2. 로딩 중인 단계
                 uiState.isLoading -> {
                     item {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = BuyOrNotTheme.colors.gray950)
                         }
                     }
