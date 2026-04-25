@@ -273,10 +273,7 @@ private fun HomeTabSection(
             }
         }
 
-        BuyOrNotDivider(
-            size = BuyOrNotDividerSize.Small,
-            modifier = Modifier.padding(horizontal = 20.dp),
-        )
+        BuyOrNotDivider(size = BuyOrNotDividerSize.Small)
     }
 }
 
