@@ -97,4 +97,37 @@ class FocalOffsetTest {
             )
         assertOffsetEquals(Offset(100f, 60f), result)
     }
+
+    // newScale < 1f (예: 0.5f) 도 Offset.Zero 반환 — <= 1f 경계 하한 검증
+    @Test
+    fun `newScale below 1f returns zero`() {
+        val result =
+            computeFocalOffset(
+                currentOffset = Offset(100f, 50f),
+                centroid = Offset(200f, 200f),
+                containerWidth = 400,
+                containerHeight = 400,
+                currentScale = 1f,
+                newScale = 0.5f,
+                pan = Offset.Zero,
+            )
+        assertOffsetEquals(Offset.Zero, result)
+    }
+
+    // actualZoom = 1 (currentScale == newScale, scale > 1f) 이면 결과 = currentOffset + pan
+    // c = Zero (centroid=중앙), actualZoom=1 → result = Zero*(1-1) + (50,30)*1 + (10,5) = (60,35)
+    @Test
+    fun `no zoom with pan returns offset plus pan`() {
+        val result =
+            computeFocalOffset(
+                currentOffset = Offset(50f, 30f),
+                centroid = Offset(200f, 200f),
+                containerWidth = 400,
+                containerHeight = 400,
+                currentScale = 2f,
+                newScale = 2f,
+                pan = Offset(10f, 5f),
+            )
+        assertOffsetEquals(Offset(60f, 35f), result)
+    }
 }
