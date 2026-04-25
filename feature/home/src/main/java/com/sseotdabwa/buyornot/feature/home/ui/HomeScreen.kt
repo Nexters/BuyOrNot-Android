@@ -28,8 +28,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -58,6 +56,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotErrorView
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotIconChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTab
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTabRow
@@ -611,20 +610,17 @@ private fun FilterChipRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         item {
-            IconButton(
+            BuyOrNotIconChip(
+                imageVector = BuyOrNotIcons.Sort.asImageVector(),
+                contentDescription = "투표 상태 필터",
                 onClick = onShowSortSheet,
-            ) {
-                Icon(
-                    imageVector = BuyOrNotIcons.Sort.asImageVector(),
-                    contentDescription = "투표 상태 필터",
-                    tint =
-                        if (selectedFilter != FilterChip.ALL) {
-                            BuyOrNotTheme.colors.gray950
-                        } else {
-                            BuyOrNotTheme.colors.gray500
-                        },
-                )
-            }
+                tint =
+                    if (selectedFilter != FilterChip.ALL) {
+                        BuyOrNotTheme.colors.gray950
+                    } else {
+                        BuyOrNotTheme.colors.gray500
+                    },
+            )
         }
 
         item {
