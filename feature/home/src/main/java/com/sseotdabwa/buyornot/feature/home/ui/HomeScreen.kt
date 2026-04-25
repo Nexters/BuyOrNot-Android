@@ -3,6 +3,8 @@ package com.sseotdabwa.buyornot.feature.home.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -72,6 +74,7 @@ import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.UserType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 
 /**
@@ -341,7 +344,6 @@ private fun HomeFeedList(
     onLinkClick: (url: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // ViewModel에서 이미 탭과 필터에 따라 필터링된 피드를 제공
     val filteredFeeds = uiState.feeds
     val listState = rememberLazyListState()
     val isEmptyViewVisible = filteredFeeds.isEmpty() && !uiState.isLoading && !uiState.hasError
@@ -353,6 +355,26 @@ private fun HomeFeedList(
             filteredFeeds.indexOfFirst { it.productLink != null }
         }
 
+    // 스크롤 방향 감지: 위로 스크롤하면 헤더 노출, 아래로 스크롤하면 헤더 숨김
+    var isHeaderVisible by remember { mutableStateOf(true) }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .scan(Pair(0, 0) to Pair(0, 0)) { (_, prev), curr -> prev to curr }
+            .collect { (prev, curr) ->
+                val (prevIndex, prevOffset) = prev
+                val (currIndex, currOffset) = curr
+                isHeaderVisible =
+                    when {
+                        currIndex == 0 && currOffset == 0 -> true
+                        currIndex < prevIndex -> true
+                        currIndex > prevIndex -> false
+                        currOffset < prevOffset -> true
+                        currOffset > prevOffset -> false
+                        else -> isHeaderVisible
+                    }
+            }
+    }
+
     // 무한 스크롤 구현: 리스트 끝에 도달하면 다음 페이지 로드
     LaunchedEffect(listState, uiState.hasNextPage, uiState.isNextPageLoading) {
         snapshotFlow {
@@ -361,7 +383,6 @@ private fun HomeFeedList(
                 ?.index
         }.filter { lastVisibleIndex ->
             val totalItemsCount = listState.layoutInfo.totalItemsCount
-            // 전체 아이템 수에서 3개 전쯤에 도달하면 미리 로드 (0-based index)
             lastVisibleIndex != null && lastVisibleIndex >= totalItemsCount - 3
         }.distinctUntilChanged()
             .collect {
@@ -376,135 +397,147 @@ private fun HomeFeedList(
         onRefresh = { onIntent(HomeIntent.Refresh) },
         modifier = modifier.fillMaxSize(),
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = contentPadding,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            // TopBar: 스크롤 시 자연스럽게 사라짐
-            item {
-                HomeTopBarSection(
-                    userType = uiState.userType,
-                    onLoginClick = onLoginClick,
-                    onNotificationClick = onNotificationClick,
-                    onProfileClick = onProfileClick,
-                )
-            }
+        Column(modifier = Modifier.fillMaxSize()) {
+            // 고정 헤더 영역 (TopBar + FilterChipRow는 스크롤 방향에 따라 표시/숨김, Tab은 항상 고정)
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = contentPadding.calculateTopPadding())
+                        .background(BuyOrNotTheme.colors.gray0),
+            ) {
+                AnimatedVisibility(
+                    visible = isHeaderVisible,
+                    enter = slideInVertically { -it },
+                    exit = slideOutVertically { -it },
+                ) {
+                    Column {
+                        HomeTopBarSection(
+                            userType = uiState.userType,
+                            onLoginClick = onLoginClick,
+                            onNotificationClick = onNotificationClick,
+                            onProfileClick = onProfileClick,
+                        )
+                        if (!isMyFeedEmpty) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            FilterChipRow(
+                                selectedCategories = uiState.selectedCategories,
+                                onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
+                                onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
+                                selectedFilter = uiState.selectedFilter,
+                                onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
+                    }
+                }
 
-            // Tab: 항상 상단 고정
-            stickyHeader {
                 HomeTabSection(
                     userType = uiState.userType,
                     selectedTab = uiState.selectedTab,
                     onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
-                    modifier = Modifier.background(BuyOrNotTheme.colors.gray0),
                 )
             }
 
-            // FilterChipRow: 스크롤 시 자연스럽게 사라짐 (내 투표 빈 상태일 때는 미노출)
-            if (!isMyFeedEmpty) {
-                item {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    FilterChipRow(
-                        selectedCategories = uiState.selectedCategories,
-                        onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
-                        onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
-                        selectedFilter = uiState.selectedFilter,
-                        onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                }
-            }
-
-            // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
-            if (filteredFeeds.isNotEmpty() && uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
-                item {
-                    HomeBanner(
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                        onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
-                        onClick = onUploadClick,
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    BuyOrNotDivider(
-                        size = BuyOrNotDividerSize.Small,
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                    )
-                }
-            }
-
-            when {
-                // 1. 데이터가 있으면 로딩 여부와 상관없이 최우선 노출
-                filteredFeeds.isNotEmpty() -> {
-                    items(filteredFeeds.size, key = { index -> filteredFeeds[index].id }) { index ->
-                        FeedItemCard(
-                            feed = filteredFeeds[index],
-                            voterProfileImageUrl = uiState.voterProfileImageUrl,
-                            isGuest = uiState.userType == UserType.GUEST,
-                            modifier = Modifier.animateItem(),
-                            showProductLinkTooltip = showLinkTooltip && index == tooltipTargetIndex,
-                            onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
-                            onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
-                            onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
-                            onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
-                            onLinkClick = onLinkClick,
+            // 스크롤 가능한 피드 목록
+            LazyColumn(
+                state = listState,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
+                if (filteredFeeds.isNotEmpty() && uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
+                    item {
+                        HomeBanner(
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                            onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
+                            onClick = onUploadClick,
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        BuyOrNotDivider(
+                            size = BuyOrNotDividerSize.Small,
+                            modifier = Modifier.padding(horizontal = 20.dp),
                         )
                     }
+                }
 
-                    // 다음 페이지 로딩 중일 때 표시
-                    if (uiState.isNextPageLoading) {
-                        item {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 16.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator(
-                                    color = BuyOrNotTheme.colors.gray950,
-                                    strokeWidth = 2.dp,
-                                )
+                when {
+                    // 1. 데이터가 있으면 로딩 여부와 상관없이 최우선 노출
+                    filteredFeeds.isNotEmpty() -> {
+                        items(filteredFeeds.size, key = { index -> filteredFeeds[index].id }) { index ->
+                            FeedItemCard(
+                                feed = filteredFeeds[index],
+                                voterProfileImageUrl = uiState.voterProfileImageUrl,
+                                isGuest = uiState.userType == UserType.GUEST,
+                                modifier = Modifier.animateItem(),
+                                showProductLinkTooltip = showLinkTooltip && index == tooltipTargetIndex,
+                                onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
+                                onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
+                                onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
+                                onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
+                                onLinkClick = onLinkClick,
+                            )
+                        }
+
+                        // 다음 페이지 로딩 중일 때 표시
+                        if (uiState.isNextPageLoading) {
+                            item {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 16.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = BuyOrNotTheme.colors.gray950,
+                                        strokeWidth = 2.dp,
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                // 2. 로딩 중인 단계
-                uiState.isLoading -> {
-                    item {
-                        Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = BuyOrNotTheme.colors.gray950)
+                    // 2. 로딩 중인 단계
+                    uiState.isLoading -> {
+                        item {
+                            Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(color = BuyOrNotTheme.colors.gray950)
+                            }
                         }
                     }
-                }
 
-                // 3. 에러
-                uiState.hasError -> {
-                    item {
-                        BuyOrNotErrorView(
-                            modifier = Modifier.padding(top = 80.dp),
-                            message = "피드를 불러오지 못했어요",
-                            onRefreshClick = { onIntent(HomeIntent.LoadFeeds) },
-                        )
+                    // 3. 에러
+                    uiState.hasError -> {
+                        item {
+                            BuyOrNotErrorView(
+                                modifier = Modifier.padding(top = 80.dp),
+                                message = "피드를 불러오지 못했어요",
+                                onRefreshClick = { onIntent(HomeIntent.LoadFeeds) },
+                            )
+                        }
                     }
-                }
 
-                else -> {
-                    item {
-                        if (uiState.selectedTab == HomeTab.MY_FEED) {
-                            HomeFeedEmptyView(
-                                modifier = Modifier.padding(top = 140.dp),
-                                title = "아직 올린 투표가 없어요",
-                                description = "고민되는 상품의 투표를 올려보세요!",
-                                onUploadClick = onUploadClick,
-                            )
-                        } else {
-                            HomeFeedEmptyView(
-                                modifier = Modifier.padding(top = 120.dp),
-                                title = "첫번째 투표를 올려보세요!",
-                                onUploadClick = onUploadClick,
-                            )
+                    else -> {
+                        item {
+                            if (uiState.selectedTab == HomeTab.MY_FEED) {
+                                HomeFeedEmptyView(
+                                    modifier = Modifier.padding(top = 140.dp),
+                                    title = "아직 올린 투표가 없어요",
+                                    description = "고민되는 상품의 투표를 올려보세요!",
+                                    onUploadClick = onUploadClick,
+                                )
+                            } else {
+                                HomeFeedEmptyView(
+                                    modifier = Modifier.padding(top = 120.dp),
+                                    title = "첫번째 투표를 올려보세요!",
+                                    onUploadClick = onUploadClick,
+                                )
+                            }
                         }
                     }
                 }
