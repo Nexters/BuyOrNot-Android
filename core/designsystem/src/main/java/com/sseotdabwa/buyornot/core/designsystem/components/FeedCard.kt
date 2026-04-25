@@ -376,15 +376,17 @@ private fun FeedImageCarousel(
                     }
                 }
 
-                Text(
-                    text = stringResource(R.string.feed_card_price_format, price),
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(start = 14.dp, bottom = 16.dp),
-                    color = BuyOrNotTheme.colors.gray0,
-                    style = BuyOrNotTheme.typography.titleT1Bold,
-                )
+                if (page == 0) {
+                    Text(
+                        text = stringResource(R.string.feed_card_price_format, price),
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(start = 14.dp, bottom = 16.dp),
+                        color = BuyOrNotTheme.colors.gray0,
+                        style = BuyOrNotTheme.typography.titleT1Bold,
+                    )
+                }
             }
         }
     }
