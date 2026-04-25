@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -584,9 +585,8 @@ private fun FilterChipRow(
     val coroutineScope = rememberCoroutineScope()
 
     // LazyRow 내 index 기준:
-    //   0 → 정렬 아이콘 버튼
-    //   1 → "전체" 칩
-    //   2 + i → FeedCategory.entries[i] 칩
+    //   0 → "전체" 칩
+    //   1 + i → FeedCategory.entries[i] 칩
     fun scrollToCenter(index: Int) {
         coroutineScope.launch {
             val layoutInfo = listState.layoutInfo
@@ -602,51 +602,49 @@ private fun FilterChipRow(
         }
     }
 
-    LazyRow(
-        state = listState,
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        item {
-            BuyOrNotIconChip(
-                imageVector = BuyOrNotIcons.Sort.asImageVector(),
-                contentDescription = "투표 상태 필터",
-                onClick = onShowSortSheet,
-                tint =
-                    if (selectedFilter != FilterChip.ALL) {
-                        BuyOrNotTheme.colors.gray950
-                    } else {
-                        BuyOrNotTheme.colors.gray500
+        BuyOrNotIconChip(
+            imageVector = BuyOrNotIcons.Sort.asImageVector(),
+            contentDescription = "투표 상태 필터",
+            onClick = onShowSortSheet,
+            modifier = Modifier.padding(start = 20.dp),
+        )
+
+        LazyRow(
+            state = listState,
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            item {
+                BuyOrNotChip(
+                    text = "전체",
+                    isSelected = selectedCategories.isEmpty(),
+                    onClick = {
+                        onAllCategorySelected()
+                        scrollToCenter(0)
                     },
-            )
-        }
+                )
+            }
 
-        item {
-            BuyOrNotChip(
-                text = "전체",
-                isSelected = selectedCategories.isEmpty(),
-                onClick = {
-                    onAllCategorySelected()
-                    scrollToCenter(1)
-                },
-            )
-        }
-
-        items(
-            count = FeedCategory.entries.size,
-            key = { index -> FeedCategory.entries[index].name },
-        ) { index ->
-            val category = FeedCategory.entries[index]
-            BuyOrNotChip(
-                text = category.displayName,
-                isSelected = category in selectedCategories,
-                onClick = {
-                    onCategoryToggled(category)
-                    scrollToCenter(2 + index)
-                },
-            )
+            items(
+                count = FeedCategory.entries.size,
+                key = { index -> FeedCategory.entries[index].name },
+            ) { index ->
+                val category = FeedCategory.entries[index]
+                BuyOrNotChip(
+                    text = category.displayName,
+                    isSelected = category in selectedCategories,
+                    onClick = {
+                        onCategoryToggled(category)
+                        scrollToCenter(1 + index)
+                    },
+                )
+            }
         }
     }
 }

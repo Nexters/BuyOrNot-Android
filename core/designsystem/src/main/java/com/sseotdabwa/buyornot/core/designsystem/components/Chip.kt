@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -25,6 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
+import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,7 +51,7 @@ fun BuyOrNotChip(
             when {
                 isSelected -> BuyOrNotTheme.colors.gray950 // Selected
                 isPressed || isHovered -> BuyOrNotTheme.colors.gray300 // Hover/Pressed
-                else -> BuyOrNotTheme.colors.gray200 // Unselected
+                else -> BuyOrNotTheme.colors.gray0 // Unselected
             },
         label = "backgroundColor",
     )
@@ -57,7 +60,7 @@ fun BuyOrNotChip(
         targetValue =
             when {
                 isSelected -> BuyOrNotTheme.colors.gray0
-                else -> BuyOrNotTheme.colors.gray700
+                else -> BuyOrNotTheme.colors.gray950
             },
         label = "contentColor",
     )
@@ -69,6 +72,11 @@ fun BuyOrNotChip(
             BuyOrNotTheme.typography.bodyB5Medium
         }
 
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected) Color.Transparent else BuyOrNotTheme.colors.gray300,
+        label = "borderColor",
+    )
+
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Surface(
             modifier = modifier,
@@ -76,6 +84,7 @@ fun BuyOrNotChip(
             shape = CircleShape,
             color = backgroundColor,
             contentColor = contentColor,
+            border = BorderStroke(width = 1.dp, color = borderColor),
             interactionSource = interactionSource,
         ) {
             Box(
@@ -97,29 +106,18 @@ fun BuyOrNotIconChip(
     imageVector: ImageVector,
     contentDescription: String,
     onClick: () -> Unit,
-    tint: Color = BuyOrNotTheme.colors.gray700,
+    tint: Color = BuyOrNotTheme.colors.gray950,
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    val backgroundColor by animateColorAsState(
-        targetValue =
-            if (isPressed || isHovered) {
-                BuyOrNotTheme.colors.gray300
-            } else {
-                BuyOrNotTheme.colors.gray200
-            },
-        label = "backgroundColor",
-    )
 
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
         Surface(
             modifier = modifier,
             onClick = onClick,
             shape = CircleShape,
-            color = backgroundColor,
+            color = BuyOrNotTheme.colors.gray0,
+            border = BorderStroke(width = 1.dp, color = BuyOrNotTheme.colors.gray300),
             interactionSource = interactionSource,
         ) {
             Box(
@@ -147,6 +145,18 @@ fun BuyOrNotChipPreview() {
             text = "Selected Chip",
             isSelected = isSelected,
             onClick = { isSelected = !isSelected },
+        )
+    }
+}
+
+@Preview(name = "IconChip Preview")
+@Composable
+fun BuyOrNotIconChipPreview() {
+    BuyOrNotTheme {
+        BuyOrNotIconChip(
+            imageVector = BuyOrNotIcons.Sort.asImageVector(),
+            contentDescription = "정렬 칩",
+            onClick = {},
         )
     }
 }
