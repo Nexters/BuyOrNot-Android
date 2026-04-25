@@ -49,6 +49,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.shape.TopArrowBubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 
 enum class ImageAspectRatio(
     val ratio: Float,
@@ -637,7 +638,7 @@ fun FeedCardToolTip(
                 .background(
                     color = Color(0xCC3A3C3E),
                     shape = tooltipShape,
-                ).clickable(onClick = onDismiss)
+                ).nonRippleClickable(onClick = onDismiss)
                 .padding(top = 13.dp, bottom = 8.dp)
                 .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
