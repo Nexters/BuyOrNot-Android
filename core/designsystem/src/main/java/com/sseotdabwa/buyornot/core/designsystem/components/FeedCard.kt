@@ -598,7 +598,7 @@ private fun LinkButton(
             modifier =
                 Modifier
                     .background(
-                        color = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.3f),
+                        color = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.4f),
                         shape = RoundedCornerShape(26.dp),
                     ).clip(RoundedCornerShape(26.dp))
                     .padding(
