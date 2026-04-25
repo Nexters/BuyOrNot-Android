@@ -105,6 +105,7 @@ fun HomeRoute(
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     initialTab: HomeTab = HomeTab.FEED,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -144,6 +145,7 @@ fun HomeRoute(
         onProfileClick = onProfileClick,
         onUploadClick = onUploadClick,
         onLinkClick = onLinkClick,
+        onImageClick = onImageClick,
         onIntent = viewModel::handleIntent,
     )
 }
@@ -160,6 +162,7 @@ fun HomeScreen(
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
@@ -214,6 +217,7 @@ fun HomeScreen(
                 onProfileClick = onProfileClick,
                 onUploadClick = onUploadClick,
                 onLinkClick = onLinkClick,
+                onImageClick = onImageClick,
             )
 
             FabDimOverlay(
@@ -349,6 +353,7 @@ private fun HomeFeedList(
     onProfileClick: () -> Unit,
     onUploadClick: () -> Unit,
     onLinkClick: (url: String) -> Unit,
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val filteredFeeds = uiState.feeds
@@ -492,6 +497,7 @@ private fun HomeFeedList(
                                 onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
                                 onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
                                 onLinkClick = onLinkClick,
+                                onImageClick = onImageClick,
                             )
                         }
 
@@ -702,6 +708,7 @@ private fun FeedItemCard(
     onReport: (String) -> Unit,
     onBlock: (String) -> Unit,
     onLinkClick: (url: String) -> Unit,
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
     Column {
         FeedCard(
@@ -732,6 +739,7 @@ private fun FeedItemCard(
             productLink = feed.productLink,
             onLinkClick = onLinkClick,
             showProductLinkTooltip = showProductLinkTooltip,
+            onImageClick = onImageClick,
         )
 
         BuyOrNotDivider(

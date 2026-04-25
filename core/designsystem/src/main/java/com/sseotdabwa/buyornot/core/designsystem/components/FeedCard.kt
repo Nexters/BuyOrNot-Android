@@ -43,8 +43,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
@@ -87,12 +85,12 @@ fun FeedCard(
     productLink: String? = null,
     onLinkClick: (url: String) -> Unit = {},
     showProductLinkTooltip: Boolean = false,
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
     val maybePercentage = if (totalVoteCount > 0) (maybeVoteCount * 100 / totalVoteCount) else 0
 
-    var fullScreenImageIndex by remember { mutableStateOf<Int?>(null) }
     val pagerState = rememberPagerState(pageCount = { productImageUrls.size })
     var tooltipVisible by remember(showProductLinkTooltip) { mutableStateOf(showProductLinkTooltip) }
 
@@ -142,7 +140,7 @@ fun FeedCard(
                 productLink = productLink,
                 showTooltip = tooltipVisible,
                 onTooltipDismiss = { tooltipVisible = false },
-                onFullscreenClick = { page -> fullScreenImageIndex = page },
+                onFullscreenClick = { page -> onImageClick(productImageUrls, page) },
                 onLinkClick = onLinkClick,
             )
 
@@ -158,18 +156,6 @@ fun FeedCard(
                 voterProfileImageUrl = voterProfileImageUrl,
                 onVote = onVote,
                 modifier = Modifier.padding(horizontal = 20.dp),
-            )
-        }
-    }
-
-    fullScreenImageIndex?.let { index ->
-        Popup(
-            onDismissRequest = { fullScreenImageIndex = null },
-            properties = PopupProperties(focusable = true, excludeFromSystemGesture = false),
-        ) {
-            FullScreenImageOverlay(
-                imageUrl = productImageUrls[index],
-                onDismiss = { fullScreenImageIndex = null },
             )
         }
     }
@@ -492,44 +478,6 @@ private fun FeedVoteSection(
                 modifier = Modifier.padding(start = 6.dp),
                 style = BuyOrNotTheme.typography.bodyB7Medium,
                 color = BuyOrNotTheme.colors.gray600,
-            )
-        }
-    }
-}
-
-@Composable
-private fun FullScreenImageOverlay(
-    imageUrl: String,
-    onDismiss: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .clickable { onDismiss() },
-    ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = "Expanded Image",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit,
-        )
-
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = 10.dp, top = 10.dp)
-                    .size(40.dp)
-                    .clickable { onDismiss() },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = BuyOrNotIcons.Close.asImageVector(),
-                contentDescription = "Close",
-                tint = Color.White,
-                modifier = Modifier.size(20.dp),
             )
         }
     }

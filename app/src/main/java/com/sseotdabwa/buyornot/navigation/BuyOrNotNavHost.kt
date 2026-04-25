@@ -8,6 +8,8 @@ import androidx.navigation.compose.NavHost
 import com.sseotdabwa.buyornot.BuildConfig
 import com.sseotdabwa.buyornot.core.network.AuthEvent
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
+import com.sseotdabwa.buyornot.core.ui.imageviewer.imageViewerScreen
+import com.sseotdabwa.buyornot.core.ui.imageviewer.navigateToImageViewer
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToTerms
@@ -99,11 +101,13 @@ fun BuyOrNotNavHost(
             onProfileClick = navController::navigateToMyPage,
             onUploadClick = navController::navigateToUpload,
             onLinkClick = { url -> navController.navigateToWebView("", url) },
+            onImageClick = { urls, page -> navController.navigateToImageViewer(urls, page) },
         )
         notificationGraph(
             onBackClick = navController::popBackStack,
             onNotificationClick = navController::navigateToNotificationDetail,
             onLinkClick = { url -> navController.navigateToWebView("", url) },
+            onImageClick = { urls, page -> navController.navigateToImageViewer(urls, page) },
         )
         uploadScreen(
             onNavigateBack = navController::popBackStack,
@@ -124,6 +128,9 @@ fun BuyOrNotNavHost(
             navController = navController,
             versionName = BuildConfig.VERSION_NAME,
             onNavigateToLogin = navController::navigateForceToLogin,
+        )
+        imageViewerScreen(
+            onBackClick = navController::popBackStack,
         )
         webViewScreen(
             onBackClick = navController::popBackStack,
