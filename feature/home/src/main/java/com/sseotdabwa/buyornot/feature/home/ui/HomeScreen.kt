@@ -408,28 +408,15 @@ private fun HomeFeedList(
             ) {
                 AnimatedVisibility(
                     visible = isHeaderVisible,
-                    enter = slideInVertically { -it },
-                    exit = slideOutVertically { -it },
+                    enter = slideInVertically { -it } + fadeIn(),
+                    exit = slideOutVertically { -it } + fadeOut(),
                 ) {
-                    Column {
-                        HomeTopBarSection(
-                            userType = uiState.userType,
-                            onLoginClick = onLoginClick,
-                            onNotificationClick = onNotificationClick,
-                            onProfileClick = onProfileClick,
-                        )
-                        if (!isMyFeedEmpty) {
-                            Spacer(modifier = Modifier.height(10.dp))
-                            FilterChipRow(
-                                selectedCategories = uiState.selectedCategories,
-                                onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
-                                onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
-                                selectedFilter = uiState.selectedFilter,
-                                onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
-                            )
-                            Spacer(modifier = Modifier.height(10.dp))
-                        }
-                    }
+                    HomeTopBarSection(
+                        userType = uiState.userType,
+                        onLoginClick = onLoginClick,
+                        onNotificationClick = onNotificationClick,
+                        onProfileClick = onProfileClick,
+                    )
                 }
 
                 HomeTabSection(
@@ -437,6 +424,24 @@ private fun HomeFeedList(
                     selectedTab = uiState.selectedTab,
                     onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
                 )
+
+                AnimatedVisibility(
+                    visible = isHeaderVisible && !isMyFeedEmpty,
+                    enter = slideInVertically { -it } + fadeIn(),
+                    exit = slideOutVertically { -it } + fadeOut(),
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        FilterChipRow(
+                            selectedCategories = uiState.selectedCategories,
+                            onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
+                            onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
+                            selectedFilter = uiState.selectedFilter,
+                            onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
             }
 
             // 스크롤 가능한 피드 목록
