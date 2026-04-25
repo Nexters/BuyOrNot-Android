@@ -34,8 +34,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
@@ -385,7 +387,15 @@ private fun FeedImageCarousel(
                                 .align(Alignment.BottomStart)
                                 .padding(start = 14.dp, bottom = 16.dp),
                         color = BuyOrNotTheme.colors.gray0,
-                        style = BuyOrNotTheme.typography.titleT1Bold,
+                        style =
+                            BuyOrNotTheme.typography.headingH4Bold.copy(
+                                shadow =
+                                    Shadow(
+                                        color = Color.Black.copy(alpha = 0.3f),
+                                        offset = Offset(0f, 4f),
+                                        blurRadius = 4f,
+                                    ),
+                            ),
                     )
                 }
             }
@@ -520,36 +530,6 @@ private fun FullScreenImageOverlay(
                 contentDescription = "Close",
                 tint = Color.White,
                 modifier = Modifier.size(20.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun PageIndicator(
-    pageCount: Int,
-    currentPage: Int,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        repeat(pageCount) { index ->
-            Box(
-                modifier =
-                    Modifier
-                        .size(if (index == currentPage) 7.dp else 5.dp)
-                        .background(
-                            color =
-                                if (index == currentPage) {
-                                    BuyOrNotTheme.colors.gray0
-                                } else {
-                                    BuyOrNotTheme.colors.gray0.copy(alpha = 0.5f)
-                                },
-                            shape = CircleShape,
-                        ),
             )
         }
     }
