@@ -301,6 +301,8 @@ private fun FeedImageCarousel(
 ) {
     val isInPreviewMode = LocalInspectionMode.current
 
+    val firstAspectRatio = imageAspectRatios.firstOrNull() ?: ImageAspectRatio.SQUARE
+
     Box(modifier = modifier) {
         HorizontalPager(
             state = pagerState,
@@ -308,13 +310,11 @@ private fun FeedImageCarousel(
             pageSpacing = 10.dp,
             modifier = Modifier.animateContentSize(),
         ) { page ->
-            val pageAspectRatio = imageAspectRatios.getOrElse(page) { ImageAspectRatio.SQUARE }
-
             Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .aspectRatio(pageAspectRatio.ratio)
+                        .aspectRatio(firstAspectRatio.ratio)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable { onFullscreenClick(page) },
             ) {
