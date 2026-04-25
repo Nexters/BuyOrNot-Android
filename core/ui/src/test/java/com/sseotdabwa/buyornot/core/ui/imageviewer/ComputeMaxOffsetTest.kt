@@ -133,4 +133,30 @@ class ComputeMaxOffsetTest {
         assertEquals(400f, maxX, 0.01f)
         assertEquals(400f, maxY, 0.01f)
     }
+
+    @Test
+    fun `zero image width returns null`() {
+        val result =
+            computeMaxOffset(
+                containerWidth = 400,
+                containerHeight = 400,
+                imageWidth = 0f,
+                imageHeight = 400f,
+                scale = 2f,
+            )
+        assertEquals(null, result)
+    }
+
+    @Test
+    fun `negative image width returns null`() {
+        val result =
+            computeMaxOffset(
+                containerWidth = 400,
+                containerHeight = 400,
+                imageWidth = -1f,
+                imageHeight = 400f,
+                scale = 2f,
+            )
+        assertEquals(null, result)
+    }
 }
