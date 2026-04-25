@@ -84,3 +84,4 @@ lint/tmp/
 @gemini-skills/
 .gemini/logs/
 .gemini/cache/
+docs/superpowers/
