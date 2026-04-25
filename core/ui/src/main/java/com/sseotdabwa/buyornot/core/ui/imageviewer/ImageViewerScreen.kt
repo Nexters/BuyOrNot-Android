@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,8 +41,31 @@ import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import kotlinx.coroutines.launch
 
 private const val MAX_SCALE = 3f
+
+internal fun computeMaxOffset(
+    containerWidth: Int,
+    containerHeight: Int,
+    imageWidth: Float,
+    imageHeight: Float,
+    scale: Float,
+): Pair<Float, Float>? {
+    if (containerWidth == 0 ||
+        containerHeight == 0 ||
+        !imageWidth.isFinite() ||
+        !imageHeight.isFinite() ||
+        imageWidth <= 0f ||
+        imageHeight <= 0f
+    ) {
+        return null
+    }
+    val ratio = minOf(containerWidth.toFloat() / imageWidth, containerHeight.toFloat() / imageHeight)
+    val maxX = maxOf(0f, (imageWidth * ratio * scale - containerWidth) / 2)
+    val maxY = maxOf(0f, (imageHeight * ratio * scale - containerHeight) / 2)
+    return Pair(maxX, maxY)
+}
 
 @Composable
 fun ImageViewerScreen(
@@ -114,19 +138,7 @@ private fun ZoomableImage(
 ) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
-
-    val scaleAnim = remember { Animatable(1f) }
-    val offsetAnim =
-        remember {
-            Animatable(
-                initialValue = Offset.Zero,
-                typeConverter =
-                    TwoWayConverter(
-                        convertToVector = { AnimationVector2D(it.x, it.y) },
-                        convertFromVector = { Offset(it.v1, it.v2) },
-                    ),
-            )
-        }
+    val scope = rememberCoroutineScope()
 
     val transformState =
         rememberTransformableState { zoomChange, panChange, _ ->
@@ -136,19 +148,21 @@ private fun ZoomableImage(
             onZoomChanged(newScale > 1f)
         }
 
-    // 핀치 제스처 끝난 후 원래 위치로 복귀
     LaunchedEffect(transformState.isTransformInProgress) {
-        if (!transformState.isTransformInProgress) {
-            if (scale <= 1f) {
-                scaleAnim.animateTo(1f, spring())
-                offsetAnim.animateTo(Offset.Zero, spring())
-                scale = 1f
-                offset = Offset.Zero
-                onZoomChanged(false)
-            } else {
-                scaleAnim.snapTo(scale)
-                offsetAnim.snapTo(offset)
-            }
+        if (!transformState.isTransformInProgress && scale <= 1f) {
+            val scaleAnim = Animatable(scale)
+            val offsetAnim =
+                Animatable(
+                    initialValue = offset,
+                    typeConverter =
+                        TwoWayConverter(
+                            convertToVector = { AnimationVector2D(it.x, it.y) },
+                            convertFromVector = { Offset(it.v1, it.v2) },
+                        ),
+                )
+            launch { scaleAnim.animateTo(1f, spring()) { scale = value } }
+            launch { offsetAnim.animateTo(Offset.Zero, spring()) { offset = value } }
+            onZoomChanged(false)
         }
     }
 
@@ -163,22 +177,33 @@ private fun ZoomableImage(
                 ).pointerInput(Unit) {
                     detectTapGestures(
                         onDoubleTap = {
-                            if (scale > 1f) {
-                                scale = 1f
-                                offset = Offset.Zero
-                                onZoomChanged(false)
-                            } else {
-                                scale = 2f
-                                onZoomChanged(true)
+                            scope.launch {
+                                if (scale > 1f) {
+                                    val scaleAnim = Animatable(scale)
+                                    val offsetAnim =
+                                        Animatable(
+                                            initialValue = offset,
+                                            typeConverter =
+                                                TwoWayConverter(
+                                                    convertToVector = { AnimationVector2D(it.x, it.y) },
+                                                    convertFromVector = { Offset(it.v1, it.v2) },
+                                                ),
+                                        )
+                                    launch { scaleAnim.animateTo(1f, spring()) { scale = value } }
+                                    launch { offsetAnim.animateTo(Offset.Zero, spring()) { offset = value } }
+                                    onZoomChanged(false)
+                                } else {
+                                    scale = 2f
+                                    onZoomChanged(true)
+                                }
                             }
-                            scaleAnim.updateBounds(lowerBound = 1f, upperBound = MAX_SCALE)
                         },
                     )
                 }.graphicsLayer {
-                    scaleX = if (transformState.isTransformInProgress) scale else scaleAnim.value
-                    scaleY = if (transformState.isTransformInProgress) scale else scaleAnim.value
-                    translationX = if (transformState.isTransformInProgress) offset.x else offsetAnim.value.x
-                    translationY = if (transformState.isTransformInProgress) offset.y else offsetAnim.value.y
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = offset.x
+                    translationY = offset.y
                 },
         contentAlignment = Alignment.Center,
     ) {
