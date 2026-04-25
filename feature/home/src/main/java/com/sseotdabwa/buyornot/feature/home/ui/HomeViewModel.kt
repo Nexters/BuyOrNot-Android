@@ -245,16 +245,7 @@ class HomeViewModel @Inject constructor(
         val targetFeed = uiState.value.feeds.find { it.id == feedId } ?: return
 
         when {
-            targetFeed.isOwner -> {
-                sendSideEffect(
-                    HomeSideEffect.ShowSnackbar(
-                        message = "자신의 글에는 투표할 수 없습니다.",
-                        icon = null,
-                    ),
-                )
-                return
-            }
-            targetFeed.isVoteEnded -> return
+            targetFeed.isOwner || targetFeed.isVoteEnded -> return
             targetFeed.userVotedOptionIndex != null -> return
         }
 
