@@ -6,7 +6,7 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Surface
@@ -69,7 +69,7 @@ fun BuyOrNotChip(
         Surface(
             modifier = modifier,
             onClick = onClick,
-            shape = RoundedCornerShape(12.dp),
+            shape = CircleShape,
             color = backgroundColor,
             contentColor = contentColor,
             interactionSource = interactionSource,
