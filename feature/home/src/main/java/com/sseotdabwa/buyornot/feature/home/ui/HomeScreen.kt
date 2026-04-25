@@ -1,6 +1,9 @@
 package com.sseotdabwa.buyornot.feature.home.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseInCubic
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -408,8 +411,8 @@ private fun HomeFeedList(
             ) {
                 AnimatedVisibility(
                     visible = isHeaderVisible,
-                    enter = slideInVertically { -it } + fadeIn(),
-                    exit = slideOutVertically { -it } + fadeOut(),
+                    enter = slideInVertically(tween(300, easing = EaseOutCubic)) { -it } + fadeIn(tween(300)),
+                    exit = slideOutVertically(tween(200, easing = EaseInCubic)) { -it } + fadeOut(tween(200)),
                 ) {
                     HomeTopBarSection(
                         userType = uiState.userType,
@@ -427,8 +430,8 @@ private fun HomeFeedList(
 
                 AnimatedVisibility(
                     visible = isHeaderVisible && !isMyFeedEmpty,
-                    enter = slideInVertically { -it } + fadeIn(),
-                    exit = slideOutVertically { -it } + fadeOut(),
+                    enter = slideInVertically(tween(300, easing = EaseOutCubic)) { -it } + fadeIn(tween(300)),
+                    exit = slideOutVertically(tween(200, easing = EaseInCubic)) { -it } + fadeOut(tween(200)),
                 ) {
                     Column {
                         Spacer(modifier = Modifier.height(10.dp))
