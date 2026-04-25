@@ -245,7 +245,10 @@ fun UploadScreen(
                     Icon(
                         imageVector = BuyOrNotIcons.Camera.asImageVector(),
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+                        modifier =
+                            Modifier
+                                .size(18.dp)
+                                .clickable(onClick = onPickImage),
                         tint = BuyOrNotTheme.colors.gray800,
                     )
                     Text(
