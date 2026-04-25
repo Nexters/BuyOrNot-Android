@@ -234,15 +234,12 @@ fun NotificationScreen(
                     key = { it.id },
                 ) { notification ->
                     NotificationItem(
-                        state =
-                            NotificationState(
-                                id = notification.id,
-                                imageUrl = notification.imageUrl,
-                                label = notification.title,
-                                message = notification.description,
-                                time = notification.time,
-                                isRead = notification.isRead,
-                            ),
+                        id = notification.id,
+                        imageUrl = notification.imageUrl,
+                        label = notification.title,
+                        message = notification.description,
+                        time = notification.time,
+                        isRead = notification.isRead,
                         onClick = {
                             onIntent(NotificationIntent.OnNotificationClick(notification.id, notification.feedId))
                         },

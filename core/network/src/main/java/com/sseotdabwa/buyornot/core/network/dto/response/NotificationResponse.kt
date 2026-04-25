@@ -14,4 +14,5 @@ data class NotificationResponse(
     val resultPercent: Int,
     val resultLabel: String,
     val viewUrl: String,
+    val feedTitle: String?,
 )
