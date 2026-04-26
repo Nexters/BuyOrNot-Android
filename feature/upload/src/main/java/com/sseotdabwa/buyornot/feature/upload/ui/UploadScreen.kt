@@ -152,6 +152,8 @@ fun UploadRoute(
                     photoUri = uri
                     cameraLauncher.launch(uri)
                 }
+            } else {
+                snackbarState.show("카메라 권한을 허용해 주세요.")
             }
         }
 
