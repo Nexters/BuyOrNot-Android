@@ -1,6 +1,8 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
+import android.Manifest
 import android.net.Uri
+import android.os.Environment
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -37,7 +39,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,9 +65,14 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.core.content.PermissionChecker
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.sseotdabwa.buyornot.core.designsystem.components.ActionItem
+import com.sseotdabwa.buyornot.core.designsystem.components.ActionSheet
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotAlertDialog
@@ -74,6 +83,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.shape.BubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
+import java.io.File
 import java.text.DecimalFormat
 
 @Composable
@@ -99,6 +109,41 @@ fun UploadRoute(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
+
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture(),
+        ) { success ->
+            if (success) {
+                photoUri?.let { viewModel.handleIntent(UploadIntent.AddImages(listOf(it))) }
+            }
+            keyboardController?.hide()
+        }
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            if (granted) {
+                photoUri?.let { cameraLauncher.launch(it) }
+            }
+        }
+
+    val createPhotoUri: () -> Uri = {
+        val dir =
+            File(
+                context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                "BuyOrNot",
+            ).also { it.mkdirs() }
+        val file = File(dir, "temp_photo.jpg")
+        FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file,
+        )
+    }
+
     val galleryLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3),
@@ -113,7 +158,7 @@ fun UploadRoute(
         onIntent = viewModel::handleIntent,
         onPickImage = {
             if (uiState.selectedImageUris.size < 3) {
-                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                viewModel.handleIntent(UploadIntent.UpdatePhotoPickerSheetVisibility(true))
             }
         },
         onSubmit = {
@@ -121,6 +166,44 @@ fun UploadRoute(
             viewModel.handleIntent(UploadIntent.Submit(context))
         },
     )
+
+    if (uiState.showPhotoPickerSheet) {
+        ActionSheet(
+            actions =
+                listOf(
+                    ActionItem(
+                        icon = BuyOrNotIcons.Camera,
+                        text = "카메라로 직접 찍기",
+                        onClick = {
+                            val uri = createPhotoUri()
+                            photoUri = uri
+                            val hasCameraPermission =
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.CAMERA,
+                                ) == PermissionChecker.PERMISSION_GRANTED
+                            if (hasCameraPermission) {
+                                cameraLauncher.launch(uri)
+                            } else {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
+                        },
+                    ),
+                    ActionItem(
+                        icon = BuyOrNotIcons.Gallery,
+                        text = "앨범에서 사진 선택",
+                        onClick = {
+                            galleryLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                            )
+                        },
+                    ),
+                ),
+            onDismissRequest = {
+                viewModel.handleIntent(UploadIntent.UpdatePhotoPickerSheetVisibility(false))
+            },
+        )
+    }
 }
 
 @Composable
