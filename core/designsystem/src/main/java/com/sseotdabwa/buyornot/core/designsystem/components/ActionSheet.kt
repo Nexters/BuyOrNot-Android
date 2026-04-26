@@ -26,12 +26,29 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
+/**
+ * BottomSheet 액션 아이템 하나를 나타내는 데이터 클래스.
+ *
+ * @param icon 아이템 왼쪽에 표시할 아이콘
+ * @param text 아이템에 표시할 텍스트
+ * @param onClick 아이템 클릭 시 실행할 동작
+ */
 data class ActionItem(
     val icon: IconResource,
     val text: String,
     val onClick: () -> Unit,
 )
 
+/**
+ * 아이콘과 텍스트로 구성된 액션 목록을 BottomSheet로 표시하는 컴포넌트.
+ *
+ * 각 아이템을 탭하면 해당 액션을 실행하고 시트를 닫는다.
+ * 선택 상태 없이 액션 실행에만 특화되어 있으며, title과 오버플로우 그라데이션은 없다.
+ *
+ * @param actions 표시할 액션 아이템 목록
+ * @param onDismissRequest 시트를 닫을 때 호출되는 콜백
+ * @param sheetShape 시트의 모양 (기본값: 상단 모서리 26.dp 라운드)
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActionSheet(
