@@ -34,21 +34,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.shape.TopArrowBubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 
 enum class ImageAspectRatio(
     val ratio: Float,
@@ -84,12 +85,12 @@ fun FeedCard(
     productLink: String? = null,
     onLinkClick: (url: String) -> Unit = {},
     showProductLinkTooltip: Boolean = false,
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
     val maybePercentage = if (totalVoteCount > 0) (maybeVoteCount * 100 / totalVoteCount) else 0
 
-    var fullScreenImageIndex by remember { mutableStateOf<Int?>(null) }
     val pagerState = rememberPagerState(pageCount = { productImageUrls.size })
     var tooltipVisible by remember(showProductLinkTooltip) { mutableStateOf(showProductLinkTooltip) }
 
@@ -139,7 +140,7 @@ fun FeedCard(
                 productLink = productLink,
                 showTooltip = tooltipVisible,
                 onTooltipDismiss = { tooltipVisible = false },
-                onFullscreenClick = { page -> fullScreenImageIndex = page },
+                onFullscreenClick = { page -> onImageClick(productImageUrls, page) },
                 onLinkClick = onLinkClick,
             )
 
@@ -148,6 +149,7 @@ fun FeedCard(
             FeedVoteSection(
                 hasVoted = hasVoted,
                 isVoteEnded = isVoteEnded,
+                isOwner = isOwner,
                 userVotedOptionIndex = userVotedOptionIndex,
                 buyPercentage = buyPercentage,
                 maybePercentage = maybePercentage,
@@ -155,18 +157,6 @@ fun FeedCard(
                 voterProfileImageUrl = voterProfileImageUrl,
                 onVote = onVote,
                 modifier = Modifier.padding(horizontal = 20.dp),
-            )
-        }
-    }
-
-    fullScreenImageIndex?.let { index ->
-        Popup(
-            onDismissRequest = { fullScreenImageIndex = null },
-            properties = PopupProperties(focusable = true, excludeFromSystemGesture = false),
-        ) {
-            FullScreenImageOverlay(
-                imageUrl = productImageUrls[index],
-                onDismiss = { fullScreenImageIndex = null },
             )
         }
     }
@@ -300,6 +290,8 @@ private fun FeedImageCarousel(
 ) {
     val isInPreviewMode = LocalInspectionMode.current
 
+    val firstAspectRatio = imageAspectRatios.firstOrNull() ?: ImageAspectRatio.SQUARE
+
     Box(modifier = modifier) {
         HorizontalPager(
             state = pagerState,
@@ -307,13 +299,11 @@ private fun FeedImageCarousel(
             pageSpacing = 10.dp,
             modifier = Modifier.animateContentSize(),
         ) { page ->
-            val pageAspectRatio = imageAspectRatios.getOrElse(page) { ImageAspectRatio.SQUARE }
-
             Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .aspectRatio(pageAspectRatio.ratio)
+                        .aspectRatio(firstAspectRatio.ratio)
                         .clip(RoundedCornerShape(16.dp))
                         .clickable { onFullscreenClick(page) },
             ) {
@@ -376,15 +366,25 @@ private fun FeedImageCarousel(
                     }
                 }
 
-                Text(
-                    text = stringResource(R.string.feed_card_price_format, price),
-                    modifier =
-                        Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(start = 14.dp, bottom = 16.dp),
-                    color = BuyOrNotTheme.colors.gray0,
-                    style = BuyOrNotTheme.typography.titleT1Bold,
-                )
+                if (page == 0) {
+                    Text(
+                        text = stringResource(R.string.feed_card_price_format, price),
+                        modifier =
+                            Modifier
+                                .align(Alignment.BottomStart)
+                                .padding(start = 14.dp, bottom = 16.dp),
+                        color = BuyOrNotTheme.colors.gray0,
+                        style =
+                            BuyOrNotTheme.typography.headingH4Bold.copy(
+                                shadow =
+                                    Shadow(
+                                        color = Color.Black.copy(alpha = 0.3f),
+                                        offset = Offset(0f, 4f),
+                                        blurRadius = 4f,
+                                    ),
+                            ),
+                    )
+                }
             }
         }
     }
@@ -394,6 +394,7 @@ private fun FeedImageCarousel(
 private fun FeedVoteSection(
     hasVoted: Boolean,
     isVoteEnded: Boolean,
+    isOwner: Boolean,
     userVotedOptionIndex: Int?,
     buyPercentage: Int,
     maybePercentage: Int,
@@ -402,15 +403,20 @@ private fun FeedVoteSection(
     onVote: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isTie = buyPercentage == maybePercentage
+    val hasVotes = totalVoteCount > 0
+
     Column(modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (hasVoted || isVoteEnded) {
+            if (hasVoted || isVoteEnded || isOwner) {
                 VoteProgressItem(
                     text = stringResource(R.string.feed_card_vote_buy),
                     percentage = buyPercentage / 100f,
                     percentageText = "$buyPercentage%",
                     progressBarColor = BuyOrNotTheme.colors.gray950,
                     shouldInvertTextColor = true,
+                    textColor = if (isTie && !hasVotes) BuyOrNotTheme.colors.gray700 else BuyOrNotTheme.colors.gray800,
+                    percentageTextColor = if (isTie && !hasVotes) BuyOrNotTheme.colors.gray700 else BuyOrNotTheme.colors.gray950,
                     leadingContent =
                         if (userVotedOptionIndex == 0) {
                             {
@@ -433,8 +439,10 @@ private fun FeedVoteSection(
                     text = stringResource(R.string.feed_card_vote_maybe),
                     percentage = maybePercentage / 100f,
                     percentageText = "$maybePercentage%",
+                    progressBarColor = if (isTie && hasVotes) BuyOrNotTheme.colors.gray950 else BuyOrNotTheme.colors.gray400,
                     textColor = BuyOrNotTheme.colors.gray700,
-                    percentageTextColor = BuyOrNotTheme.colors.gray700,
+                    percentageTextColor = if (isTie && hasVotes) BuyOrNotTheme.colors.gray950 else BuyOrNotTheme.colors.gray700,
+                    shouldInvertTextColor = isTie && hasVotes,
                     leadingContent =
                         if (userVotedOptionIndex == 1) {
                             {
@@ -485,74 +493,6 @@ private fun FeedVoteSection(
 }
 
 @Composable
-private fun FullScreenImageOverlay(
-    imageUrl: String,
-    onDismiss: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(Color.Black)
-                .clickable { onDismiss() },
-    ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = "Expanded Image",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit,
-        )
-
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = 10.dp, top = 10.dp)
-                    .size(40.dp)
-                    .clickable { onDismiss() },
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = BuyOrNotIcons.Close.asImageVector(),
-                contentDescription = "Close",
-                tint = Color.White,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun PageIndicator(
-    pageCount: Int,
-    currentPage: Int,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        repeat(pageCount) { index ->
-            Box(
-                modifier =
-                    Modifier
-                        .size(if (index == currentPage) 7.dp else 5.dp)
-                        .background(
-                            color =
-                                if (index == currentPage) {
-                                    BuyOrNotTheme.colors.gray0
-                                } else {
-                                    BuyOrNotTheme.colors.gray0.copy(alpha = 0.5f)
-                                },
-                            shape = CircleShape,
-                        ),
-            )
-        }
-    }
-}
-
-@Composable
 private fun VoteOption(
     text: String,
     onClick: () -> Unit,
@@ -595,7 +535,7 @@ private fun LinkButton(
             modifier =
                 Modifier
                     .background(
-                        color = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.3f),
+                        color = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.4f),
                         shape = RoundedCornerShape(26.dp),
                     ).clip(RoundedCornerShape(26.dp))
                     .padding(
@@ -635,7 +575,7 @@ fun FeedCardToolTip(
                 .background(
                     color = Color(0xCC3A3C3E),
                     shape = tooltipShape,
-                ).clickable(onClick = onDismiss)
+                ).nonRippleClickable(onClick = onDismiss)
                 .padding(top = 13.dp, bottom = 8.dp)
                 .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),

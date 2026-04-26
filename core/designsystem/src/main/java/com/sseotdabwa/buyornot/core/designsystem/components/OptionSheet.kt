@@ -89,7 +89,7 @@ fun OptionSheet(
                 LazyColumn(
                     state = listState,
                     verticalArrangement = Arrangement.spacedBy(18.dp),
-                    contentPadding = PaddingValues(bottom = if (isOverflowing) 48.dp else 0.dp),
+                    contentPadding = PaddingValues(bottom = if (isOverflowing) 48.dp else 12.dp),
                 ) {
                     items(
                         count = options.size,

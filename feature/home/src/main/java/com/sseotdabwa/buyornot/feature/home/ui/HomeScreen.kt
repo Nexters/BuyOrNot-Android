@@ -1,8 +1,13 @@
 package com.sseotdabwa.buyornot.feature.home.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseInCubic
+import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,14 +29,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +44,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,6 +64,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotErrorView
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotIconChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTab
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTabRow
@@ -72,6 +84,7 @@ import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.UserType
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
 
 /**
@@ -92,6 +105,7 @@ fun HomeRoute(
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     initialTab: HomeTab = HomeTab.FEED,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -131,6 +145,7 @@ fun HomeRoute(
         onProfileClick = onProfileClick,
         onUploadClick = onUploadClick,
         onLinkClick = onLinkClick,
+        onImageClick = onImageClick,
         onIntent = viewModel::handleIntent,
     )
 }
@@ -147,6 +162,7 @@ fun HomeScreen(
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
@@ -201,6 +217,7 @@ fun HomeScreen(
                 onProfileClick = onProfileClick,
                 onUploadClick = onUploadClick,
                 onLinkClick = onLinkClick,
+                onImageClick = onImageClick,
             )
 
             FabDimOverlay(
@@ -260,10 +277,7 @@ private fun HomeTabSection(
             }
         }
 
-        BuyOrNotDivider(
-            size = BuyOrNotDividerSize.Small,
-            modifier = Modifier.padding(horizontal = 20.dp),
-        )
+        BuyOrNotDivider(size = BuyOrNotDividerSize.Small)
     }
 }
 
@@ -339,17 +353,39 @@ private fun HomeFeedList(
     onProfileClick: () -> Unit,
     onUploadClick: () -> Unit,
     onLinkClick: (url: String) -> Unit,
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // ViewModel에서 이미 탭과 필터에 따라 필터링된 피드를 제공
     val filteredFeeds = uiState.feeds
     val listState = rememberLazyListState()
+    val isEmptyViewVisible = filteredFeeds.isEmpty() && !uiState.isLoading && !uiState.hasError
+    val isMyFeedEmpty = uiState.selectedTab == HomeTab.MY_FEED && isEmptyViewVisible
 
     var showLinkTooltip by remember { mutableStateOf(true) }
     val tooltipTargetIndex =
         remember(filteredFeeds) {
             filteredFeeds.indexOfFirst { it.productLink != null }
         }
+
+    // 스크롤 방향 감지: 위로 스크롤하면 헤더 노출, 아래로 스크롤하면 헤더 숨김
+    var isHeaderVisible by remember { mutableStateOf(true) }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .scan(Pair(0, 0) to Pair(0, 0)) { (_, prev), curr -> prev to curr }
+            .collect { (prev, curr) ->
+                val (prevIndex, prevOffset) = prev
+                val (currIndex, currOffset) = curr
+                isHeaderVisible =
+                    when {
+                        currIndex == 0 && currOffset == 0 -> true
+                        currIndex < prevIndex -> true
+                        currIndex > prevIndex -> false
+                        currOffset < prevOffset -> true
+                        currOffset > prevOffset -> false
+                        else -> isHeaderVisible
+                    }
+            }
+    }
 
     // 무한 스크롤 구현: 리스트 끝에 도달하면 다음 페이지 로드
     LaunchedEffect(listState, uiState.hasNextPage, uiState.isNextPageLoading) {
@@ -359,7 +395,6 @@ private fun HomeFeedList(
                 ?.index
         }.filter { lastVisibleIndex ->
             val totalItemsCount = listState.layoutInfo.totalItemsCount
-            // 전체 아이템 수에서 3개 전쯤에 도달하면 미리 로드 (0-based index)
             lastVisibleIndex != null && lastVisibleIndex >= totalItemsCount - 3
         }.distinctUntilChanged()
             .collect {
@@ -375,7 +410,7 @@ private fun HomeFeedList(
         modifier = modifier.fillMaxSize(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // 항상 노출되는 고정 헤더 영역 (TopBar + Tab)
+            // 고정 헤더 영역 (TopBar + FilterChipRow는 스크롤 방향에 따라 표시/숨김, Tab은 항상 고정)
             Column(
                 modifier =
                     Modifier
@@ -383,17 +418,42 @@ private fun HomeFeedList(
                         .padding(top = contentPadding.calculateTopPadding())
                         .background(BuyOrNotTheme.colors.gray0),
             ) {
-                HomeTopBarSection(
-                    userType = uiState.userType,
-                    onLoginClick = onLoginClick,
-                    onNotificationClick = onNotificationClick,
-                    onProfileClick = onProfileClick,
-                )
+                AnimatedVisibility(
+                    visible = isHeaderVisible,
+                    enter = expandVertically(tween(300, easing = EaseOutCubic), expandFrom = Alignment.Top) + fadeIn(tween(300)),
+                    exit = shrinkVertically(tween(200, easing = EaseInCubic), shrinkTowards = Alignment.Top) + fadeOut(tween(200)),
+                ) {
+                    HomeTopBarSection(
+                        userType = uiState.userType,
+                        onLoginClick = onLoginClick,
+                        onNotificationClick = onNotificationClick,
+                        onProfileClick = onProfileClick,
+                    )
+                }
+
                 HomeTabSection(
                     userType = uiState.userType,
                     selectedTab = uiState.selectedTab,
                     onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
                 )
+
+                AnimatedVisibility(
+                    visible = isHeaderVisible && !isMyFeedEmpty,
+                    enter = expandVertically(tween(300, easing = EaseOutCubic), expandFrom = Alignment.Top) + fadeIn(tween(300)),
+                    exit = shrinkVertically(tween(200, easing = EaseInCubic), shrinkTowards = Alignment.Top) + fadeOut(tween(200)),
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        FilterChipRow(
+                            selectedCategories = uiState.selectedCategories,
+                            onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
+                            onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
+                            selectedFilter = uiState.selectedFilter,
+                            onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
             }
 
             // 스크롤 가능한 피드 목록
@@ -406,19 +466,6 @@ private fun HomeFeedList(
                 contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // 스크롤 시 숨겨지는 필터 칩 영역
-                item {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    FilterChipRow(
-                        selectedCategories = uiState.selectedCategories,
-                        onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
-                        onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
-                        selectedFilter = uiState.selectedFilter,
-                        onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                }
-
                 // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
                 if (filteredFeeds.isNotEmpty() && uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
                     item {
@@ -450,6 +497,7 @@ private fun HomeFeedList(
                                 onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
                                 onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
                                 onLinkClick = onLinkClick,
+                                onImageClick = onImageClick,
                             )
                         }
 
@@ -472,18 +520,17 @@ private fun HomeFeedList(
                         }
                     }
 
-                    // 2. 로딩 중인 단계 (로딩이 끝나기 전까지는 Result를 판단하지 않음)
+                    // 2. 로딩 중인 단계
                     uiState.isLoading -> {
                         item {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Box(modifier = Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
                                 CircularProgressIndicator(color = BuyOrNotTheme.colors.gray950)
                             }
                         }
                     }
 
-                    // 3. 로딩이 끝난 단계 (isLoading == false)
+                    // 3. 에러
                     uiState.hasError -> {
-                        // 통신 실패로 로딩이 끝난 경우
                         item {
                             BuyOrNotErrorView(
                                 modifier = Modifier.padding(top = 80.dp),
@@ -494,12 +541,21 @@ private fun HomeFeedList(
                     }
 
                     else -> {
-                        // 통신은 성공(hasError false)했지만 데이터가 없는 경우
                         item {
-                            HomeFeedEmptyView(
-                                modifier = Modifier.padding(top = 120.dp),
-                                onUploadClick = onUploadClick,
-                            )
+                            if (uiState.selectedTab == HomeTab.MY_FEED) {
+                                HomeFeedEmptyView(
+                                    modifier = Modifier.padding(top = 140.dp),
+                                    title = "아직 올린 투표가 없어요",
+                                    description = "고민되는 상품의 투표를 올려보세요!",
+                                    onUploadClick = onUploadClick,
+                                )
+                            } else {
+                                HomeFeedEmptyView(
+                                    modifier = Modifier.padding(top = 120.dp),
+                                    title = "첫번째 투표를 올려보세요!",
+                                    onUploadClick = onUploadClick,
+                                )
+                            }
                         }
                     }
                 }
@@ -537,11 +593,15 @@ private fun FilterChipRow(
 ) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+    val isChipOverlapping by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+        }
+    }
 
     // LazyRow 내 index 기준:
-    //   0 → 정렬 아이콘 버튼
-    //   1 → "전체" 칩
-    //   2 + i → FeedCategory.entries[i] 칩
+    //   0 → "전체" 칩
+    //   1 + i → FeedCategory.entries[i] 칩
     fun scrollToCenter(index: Int) {
         coroutineScope.launch {
             val layoutInfo = listState.layoutInfo
@@ -557,54 +617,78 @@ private fun FilterChipRow(
         }
     }
 
-    LazyRow(
-        state = listState,
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        item {
-            IconButton(
-                onClick = onShowSortSheet,
-            ) {
-                Icon(
-                    imageVector = BuyOrNotIcons.Sort.asImageVector(),
-                    contentDescription = "투표 상태 필터",
-                    tint =
-                        if (selectedFilter != FilterChip.ALL) {
-                            BuyOrNotTheme.colors.gray950
-                        } else {
-                            BuyOrNotTheme.colors.gray500
-                        },
+        BuyOrNotIconChip(
+            imageVector = BuyOrNotIcons.Sort.asImageVector(),
+            contentDescription = "투표 상태 필터",
+            onClick = onShowSortSheet,
+            modifier = Modifier.padding(start = 20.dp),
+        )
+
+        LazyRow(
+            state = listState,
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .graphicsLayer { alpha = 0.99f }
+                    .drawWithContent {
+                        drawContent()
+                        if (isChipOverlapping) {
+                            val fadeWidth = 32.dp.toPx()
+                            val fadeHeight = 38.dp.toPx()
+                            drawRect(
+                                brush =
+                                    Brush.horizontalGradient(
+                                        colorStops =
+                                            arrayOf(
+                                                0f to Color.Transparent,
+                                                0.5f to Color.Black.copy(alpha = 0.74f),
+                                                1f to Color.Black,
+                                            ),
+                                        endX = fadeWidth,
+                                    ),
+                                topLeft =
+                                    Offset(
+                                        x = 0f,
+                                        y = (size.height - fadeHeight) / 2f,
+                                    ),
+                                size = Size(fadeWidth, fadeHeight),
+                                blendMode = BlendMode.DstIn,
+                            )
+                        }
+                    },
+            contentPadding = PaddingValues(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            item {
+                BuyOrNotChip(
+                    text = "전체",
+                    isSelected = selectedCategories.isEmpty(),
+                    onClick = {
+                        onAllCategorySelected()
+                        scrollToCenter(0)
+                    },
                 )
             }
-        }
 
-        item {
-            BuyOrNotChip(
-                text = "전체",
-                isSelected = selectedCategories.isEmpty(),
-                onClick = {
-                    onAllCategorySelected()
-                    scrollToCenter(1)
-                },
-            )
-        }
-
-        items(
-            count = FeedCategory.entries.size,
-            key = { index -> FeedCategory.entries[index].name },
-        ) { index ->
-            val category = FeedCategory.entries[index]
-            BuyOrNotChip(
-                text = category.displayName,
-                isSelected = category in selectedCategories,
-                onClick = {
-                    onCategoryToggled(category)
-                    scrollToCenter(2 + index)
-                },
-            )
+            items(
+                count = FeedCategory.entries.size,
+                key = { index -> FeedCategory.entries[index].name },
+            ) { index ->
+                val category = FeedCategory.entries[index]
+                BuyOrNotChip(
+                    text = category.displayName,
+                    isSelected = category in selectedCategories,
+                    onClick = {
+                        onCategoryToggled(category)
+                        scrollToCenter(1 + index)
+                    },
+                )
+            }
         }
     }
 }
@@ -624,6 +708,7 @@ private fun FeedItemCard(
     onReport: (String) -> Unit,
     onBlock: (String) -> Unit,
     onLinkClick: (url: String) -> Unit,
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
     Column {
         FeedCard(
@@ -654,6 +739,7 @@ private fun FeedItemCard(
             productLink = feed.productLink,
             onLinkClick = onLinkClick,
             showProductLinkTooltip = showProductLinkTooltip,
+            onImageClick = onImageClick,
         )
 
         BuyOrNotDivider(
@@ -665,8 +751,10 @@ private fun FeedItemCard(
 
 @Composable
 fun HomeFeedEmptyView(
+    title: String,
     onUploadClick: () -> Unit,
     modifier: Modifier = Modifier,
+    description: String? = null,
 ) {
     Column(
         modifier = modifier,
@@ -685,10 +773,19 @@ fun HomeFeedEmptyView(
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            text = "첫번째 투표를 올려보세요!",
+            text = title,
             style = BuyOrNotTheme.typography.titleT1Bold,
             color = BuyOrNotTheme.colors.gray800,
         )
+
+        if (description != null) {
+            Text(
+                modifier = Modifier.padding(top = 6.dp),
+                text = description,
+                style = BuyOrNotTheme.typography.bodyB5Medium,
+                color = BuyOrNotTheme.colors.gray600,
+            )
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -711,7 +808,7 @@ private fun HomeScreenPreview() {
     }
 }
 
-@Preview(name = "HomeScreen - Empty Feed", showBackground = true)
+@Preview(name = "HomeScreen - 투표 피드 빈 상태", showBackground = true)
 @Composable
 private fun HomeScreenEmptyFeedPreview() {
     BuyOrNotTheme {
@@ -721,6 +818,24 @@ private fun HomeScreenEmptyFeedPreview() {
                     isLoading = false,
                     userType = UserType.SOCIAL,
                     feeds = emptyList(),
+                    selectedTab = HomeTab.FEED,
+                ),
+            onIntent = {},
+        )
+    }
+}
+
+@Preview(name = "HomeScreen - 내 투표 빈 상태", showBackground = true)
+@Composable
+private fun HomeScreenEmptyMyFeedPreview() {
+    BuyOrNotTheme {
+        HomeScreen(
+            uiState =
+                HomeUiState(
+                    isLoading = false,
+                    userType = UserType.SOCIAL,
+                    feeds = emptyList(),
+                    selectedTab = HomeTab.MY_FEED,
                 ),
             onIntent = {},
         )

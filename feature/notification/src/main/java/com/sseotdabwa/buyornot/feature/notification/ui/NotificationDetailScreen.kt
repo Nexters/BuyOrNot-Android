@@ -51,6 +51,7 @@ import com.sseotdabwa.buyornot.domain.model.VoteChoice
 fun NotificationDetailRoute(
     onBackClick: () -> Unit,
     onLinkClick: (url: String) -> Unit = {},
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     viewModel: NotificationDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -77,6 +78,7 @@ fun NotificationDetailRoute(
         snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onLinkClick = onLinkClick,
+        onImageClick = onImageClick,
         onIntent = viewModel::handleIntent,
     )
 }
@@ -87,6 +89,7 @@ fun NotificationDetailScreen(
     onBackClick: () -> Unit,
     onIntent: (NotificationDetailIntent) -> Unit,
     onLinkClick: (url: String) -> Unit = {},
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     if (uiState.showBlockDialog) {
@@ -186,6 +189,7 @@ fun NotificationDetailScreen(
                             productLink = feed.productLink,
                             onLinkClick = onLinkClick,
                             showProductLinkTooltip = showLinkTooltip && feed.productLink != null,
+                            onImageClick = onImageClick,
                         )
                     }
                 }

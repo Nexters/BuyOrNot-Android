@@ -134,7 +134,7 @@ class NotificationViewModel @Inject constructor(
                             feedId = it.feedId,
                             imageUrl = it.viewUrl,
                             title = it.title,
-                            description = it.body,
+                            description = it.feedTitle,
                             time = TimeUtils.formatRelativeTime(it.voteClosedAt),
                             isRead = it.isRead,
                         )

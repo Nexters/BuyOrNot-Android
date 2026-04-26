@@ -11,6 +11,7 @@ data class Notification(
     val resultPercent: Int,
     val resultLabel: String,
     val viewUrl: String,
+    val feedTitle: String,
 )
 
 enum class NotificationType {

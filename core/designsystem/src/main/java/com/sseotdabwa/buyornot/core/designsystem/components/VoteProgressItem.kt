@@ -378,3 +378,55 @@ private fun VoteScreenPreview() {
         }
     }
 }
+
+@Preview(name = "VoteProgressItem - 동률 0% (투표 없음)", showBackground = true)
+@Composable
+private fun VoteProgressItemTieZeroPreview() {
+    BuyOrNotTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
+            VoteProgressItem(
+                text = "사! 가즈아!",
+                percentage = 0f,
+                percentageText = "0%",
+                progressBarColor = BuyOrNotTheme.colors.gray950,
+                shouldInvertTextColor = true,
+                textColor = BuyOrNotTheme.colors.gray700,
+                percentageTextColor = BuyOrNotTheme.colors.gray700,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            VoteProgressItem(
+                text = "애매하긴 해..",
+                percentage = 0f,
+                percentageText = "0%",
+                textColor = BuyOrNotTheme.colors.gray700,
+                percentageTextColor = BuyOrNotTheme.colors.gray700,
+            )
+        }
+    }
+}
+
+@Preview(name = "VoteProgressItem - 동률 50% (투표 있음)", showBackground = true)
+@Composable
+private fun VoteProgressItemTieFiftyPreview() {
+    BuyOrNotTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
+            VoteProgressItem(
+                text = "사! 가즈아!",
+                percentage = 0.5f,
+                percentageText = "50%",
+                progressBarColor = BuyOrNotTheme.colors.gray950,
+                shouldInvertTextColor = true,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            VoteProgressItem(
+                text = "애매하긴 해..",
+                percentage = 0.5f,
+                percentageText = "50%",
+                progressBarColor = BuyOrNotTheme.colors.gray950,
+                textColor = BuyOrNotTheme.colors.gray700,
+                percentageTextColor = BuyOrNotTheme.colors.gray950,
+                shouldInvertTextColor = true,
+            )
+        }
+    }
+}
