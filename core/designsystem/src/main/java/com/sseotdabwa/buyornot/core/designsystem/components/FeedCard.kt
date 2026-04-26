@@ -441,7 +441,7 @@ private fun FeedVoteSection(
                     percentageText = "$maybePercentage%",
                     progressBarColor = if (isTie && hasVotes) BuyOrNotTheme.colors.gray950 else BuyOrNotTheme.colors.gray400,
                     textColor = BuyOrNotTheme.colors.gray700,
-                    percentageTextColor = BuyOrNotTheme.colors.gray700,
+                    percentageTextColor = if (isTie && hasVotes) BuyOrNotTheme.colors.gray950 else BuyOrNotTheme.colors.gray700,
                     shouldInvertTextColor = isTie && hasVotes,
                     leadingContent =
                         if (userVotedOptionIndex == 1) {

@@ -424,7 +424,7 @@ private fun VoteProgressItemTieFiftyPreview() {
                 percentageText = "50%",
                 progressBarColor = BuyOrNotTheme.colors.gray950,
                 textColor = BuyOrNotTheme.colors.gray700,
-                percentageTextColor = BuyOrNotTheme.colors.gray700,
+                percentageTextColor = BuyOrNotTheme.colors.gray950,
                 shouldInvertTextColor = true,
             )
         }
