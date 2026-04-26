@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("buyornot.android.application")
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)

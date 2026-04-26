@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
@@ -40,7 +39,7 @@ fun BuyOrNotApp(
 
     val isFirstRun by viewModel.isFirstRun.collectAsStateWithLifecycle()
 
-    BackHandler(enabled = currentDestination?.hasRoute<HomeRoute>() == true) {
+    BackHandler(enabled = currentDestination?.route?.startsWith(HomeRoute::class.qualifiedName ?: "") == true) {
         onBackPressed()
     }
 
@@ -55,6 +54,11 @@ fun BuyOrNotApp(
         }
     }
 
+    val isFullscreen =
+        currentDestination?.route.let { route ->
+            route == SplashRoute::class.qualifiedName || route == AuthRoute::class.qualifiedName
+        }
+
     CompositionLocalProvider(LocalSnackbarState provides snackbarState) {
         Scaffold(
             containerColor = BuyOrNotTheme.colors.gray0,
@@ -67,17 +71,17 @@ fun BuyOrNotApp(
                 modifier =
                     Modifier
                         .consumeWindowInsets(innerPadding)
-                        .bottomBarPadding(currentDestination, innerPadding),
+                        .bottomBarPadding(isFullscreen, innerPadding),
             )
         }
     }
 }
 
 private fun Modifier.bottomBarPadding(
-    currentDestination: NavDestination?,
+    isFullscreen: Boolean,
     padding: PaddingValues,
 ): Modifier =
-    if (currentDestination?.hasRoute<SplashRoute>() == true || currentDestination?.hasRoute<AuthRoute>() == true) {
+    if (isFullscreen) {
         this
     } else {
         this.padding(padding)
