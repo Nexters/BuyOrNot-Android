@@ -149,6 +149,7 @@ fun FeedCard(
             FeedVoteSection(
                 hasVoted = hasVoted,
                 isVoteEnded = isVoteEnded,
+                isOwner = isOwner,
                 userVotedOptionIndex = userVotedOptionIndex,
                 buyPercentage = buyPercentage,
                 maybePercentage = maybePercentage,
@@ -393,6 +394,7 @@ private fun FeedImageCarousel(
 private fun FeedVoteSection(
     hasVoted: Boolean,
     isVoteEnded: Boolean,
+    isOwner: Boolean,
     userVotedOptionIndex: Int?,
     buyPercentage: Int,
     maybePercentage: Int,
@@ -403,7 +405,7 @@ private fun FeedVoteSection(
 ) {
     Column(modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (hasVoted || isVoteEnded) {
+            if (hasVoted || isVoteEnded || isOwner) {
                 VoteProgressItem(
                     text = stringResource(R.string.feed_card_vote_buy),
                     percentage = buyPercentage / 100f,
