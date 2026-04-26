@@ -23,40 +23,18 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
-/**
- * 알림 아이템의 상태를 정의 데이터 클래스
- *
- * @param id: 알림의 고유 식별자
- * @param imageUrl: 알림의 이미지 URL
- * @param label: 알림의 라벨 (예: "투표 종료")
- * @param message: 알림의 메시지 (예: "78% '애매하긴 해!'")
- * @param time: 알림이 생성된 시간 (예: "6시간 전")
- * @param isRead: 알림이 읽었는지 여부 (안 읽음: false, 읽음: true)
- */
-data class NotificationState(
-    val id: Long,
-    val imageUrl: String,
-    val label: String,
-    val message: String,
-    val time: String,
-    val isRead: Boolean,
-)
-
-/**
- * 알림 화면의 개별 아이템 컴포저블
- *
- * @param state: 알림 아이템의 상태를 나타내는 NotificationState 객체
- * @param onClick: 아이템을 클릭했을 때의 콜백 액션
- * @param modifier: 컴포저블에 적용할 Modifier
- */
 @Composable
 fun NotificationItem(
-    state: NotificationState,
+    id: Long,
+    imageUrl: String,
+    label: String,
+    message: String,
+    time: String,
+    isRead: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 읽음 상태에 따른 배경색 결정
-    val backgroundColor = if (state.isRead) BuyOrNotTheme.colors.gray50 else BuyOrNotTheme.colors.gray0
+    val backgroundColor = if (isRead) BuyOrNotTheme.colors.gray50 else BuyOrNotTheme.colors.gray0
 
     Row(
         modifier =
@@ -67,9 +45,8 @@ fun NotificationItem(
                 .padding(20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // 좌측 이미지
         AsyncImage(
-            model = state.imageUrl,
+            model = imageUrl,
             contentDescription = null,
             modifier =
                 Modifier
@@ -80,7 +57,6 @@ fun NotificationItem(
 
         Spacer(modifier = Modifier.width(14.dp))
 
-        // 우측 텍스트 영역
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.Center,
@@ -91,12 +67,12 @@ fun NotificationItem(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = state.label,
+                    text = label,
                     style = BuyOrNotTheme.typography.bodyB5Medium,
                     color = BuyOrNotTheme.colors.gray600,
                 )
                 Text(
-                    text = state.time,
+                    text = time,
                     style = BuyOrNotTheme.typography.bodyB6Medium,
                     color = BuyOrNotTheme.colors.gray600,
                 )
@@ -105,7 +81,7 @@ fun NotificationItem(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = state.message,
+                text = message,
                 style = BuyOrNotTheme.typography.subTitleS3SemiBold,
                 color = BuyOrNotTheme.colors.gray950,
             )
@@ -118,15 +94,12 @@ fun NotificationItem(
 private fun UnreadNotiPreview() {
     BuyOrNotTheme {
         NotificationItem(
-            state =
-                NotificationState(
-                    id = 1L,
-                    imageUrl = "https://picsum.photos/200",
-                    label = "투표 종료",
-                    message = "90% '애매하긴 해!'",
-                    time = "3일 전",
-                    isRead = false,
-                ),
+            id = 1L,
+            imageUrl = "https://picsum.photos/200",
+            label = "투표 종료",
+            message = "90% '애매하긴 해!'",
+            time = "3일 전",
+            isRead = false,
             onClick = {},
         )
     }
@@ -137,15 +110,12 @@ private fun UnreadNotiPreview() {
 private fun ReadNotiPreview() {
     BuyOrNotTheme {
         NotificationItem(
-            state =
-                NotificationState(
-                    id = 2L,
-                    imageUrl = "https://picsum.photos/200",
-                    label = "투표 종료",
-                    message = "56% '사! 가즈아!'",
-                    time = "3일 전",
-                    isRead = true,
-                ),
+            id = 2L,
+            imageUrl = "https://picsum.photos/200",
+            label = "투표 종료",
+            message = "56% '사! 가즈아!'",
+            time = "3일 전",
+            isRead = true,
             onClick = {},
         )
     }

@@ -47,18 +47,11 @@ class UploadViewModel @Inject constructor(
                 }
             }
             is UploadIntent.AddImages -> {
-                val existing = currentState.selectedImageUris.toSet()
                 val remaining = MAX_IMAGE_COUNT - currentState.selectedImageUris.size
-                val incoming = intent.uris.distinct()
-                val deduped = incoming.filter { it !in existing }
-                val toAdd = deduped.take(remaining)
-                val hasDuplicates = incoming.size < intent.uris.size || deduped.size < incoming.size
-                val hasOverflow = toAdd.size < deduped.size
+                val toAdd = intent.uris.take(remaining)
+                val hasOverflow = toAdd.size < intent.uris.size
                 updateState { it.copy(selectedImageUris = it.selectedImageUris + toAdd) }
-                when {
-                    hasOverflow -> sendSideEffect(UploadSideEffect.ShowSnackbar("최대 ${MAX_IMAGE_COUNT}장까지 추가할 수 있어요"))
-                    hasDuplicates -> sendSideEffect(UploadSideEffect.ShowSnackbar("이미 추가된 사진은 제외됐어요"))
-                }
+                if (hasOverflow) sendSideEffect(UploadSideEffect.ShowSnackbar("최대 ${MAX_IMAGE_COUNT}장까지 추가할 수 있어요"))
             }
             is UploadIntent.RemoveImage ->
                 updateState {

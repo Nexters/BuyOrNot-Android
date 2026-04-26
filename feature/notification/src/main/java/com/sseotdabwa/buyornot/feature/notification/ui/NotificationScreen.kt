@@ -234,25 +234,20 @@ fun NotificationScreen(
                     key = { it.id },
                 ) { notification ->
                     NotificationItem(
-                        state =
-                            NotificationState(
-                                id = notification.id,
-                                imageUrl = notification.imageUrl,
-                                label = notification.title,
-                                message = notification.description,
-                                time = notification.time,
-                                isRead = notification.isRead,
-                            ),
+                        id = notification.id,
+                        imageUrl = notification.imageUrl,
+                        label = notification.title,
+                        message = notification.description,
+                        time = notification.time,
+                        isRead = notification.isRead,
                         onClick = {
                             onIntent(NotificationIntent.OnNotificationClick(notification.id, notification.feedId))
                         },
                     )
 
-                    if (notification != uiState.notifications.last()) {
-                        BuyOrNotDivider(
-                            size = BuyOrNotDividerSize.Small,
-                        )
-                    }
+                    BuyOrNotDivider(
+                        size = BuyOrNotDividerSize.Small,
+                    )
                 }
             }
 
@@ -263,12 +258,12 @@ fun NotificationScreen(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 20.dp),
+                                .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = "30일 전 알림까지 보여줘요",
-                            style = BuyOrNotTheme.typography.bodyB6Medium,
+                            style = BuyOrNotTheme.typography.bodyB4Medium,
                             color = BuyOrNotTheme.colors.gray400,
                         )
                     }

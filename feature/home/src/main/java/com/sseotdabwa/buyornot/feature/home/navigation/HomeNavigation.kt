@@ -24,6 +24,7 @@ fun NavGraphBuilder.homeScreen(
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
     composable(
         route = HOME_ROUTE_WITH_TAB,
@@ -66,6 +67,7 @@ fun NavGraphBuilder.homeScreen(
             onProfileClick = onProfileClick,
             onUploadClick = onUploadClick,
             onLinkClick = onLinkClick,
+            onImageClick = onImageClick,
             initialTab = initialTab,
         )
     }

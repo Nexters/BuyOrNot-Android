@@ -104,6 +104,7 @@ fun UploadRoute(
             contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3),
         ) { uris: List<Uri> ->
             if (uris.isNotEmpty()) viewModel.handleIntent(UploadIntent.AddImages(uris))
+            keyboardController?.hide()
         }
 
     UploadScreen(
@@ -245,7 +246,10 @@ fun UploadScreen(
                     Icon(
                         imageVector = BuyOrNotIcons.Camera.asImageVector(),
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp),
+                        modifier =
+                            Modifier
+                                .size(18.dp)
+                                .clickable(onClick = onPickImage),
                         tint = BuyOrNotTheme.colors.gray800,
                     )
                     Text(
@@ -364,14 +368,25 @@ private fun LinkInputField(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
             singleLine = true,
             decorationBox = { innerTextField ->
-                if (link.isEmpty()) {
-                    Text(
-                        text = "상품 링크 (선택)",
-                        style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-                        color = BuyOrNotTheme.colors.gray600,
-                    )
+                Box(
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    if (link.isEmpty()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "상품 링크 ",
+                                style = BuyOrNotTheme.typography.subTitleS3SemiBold,
+                                color = BuyOrNotTheme.colors.gray600,
+                            )
+                            Text(
+                                text = "(선택)",
+                                style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+                                color = BuyOrNotTheme.colors.gray600,
+                            )
+                        }
+                    }
+                    innerTextField()
                 }
-                innerTextField()
             },
         )
     }
