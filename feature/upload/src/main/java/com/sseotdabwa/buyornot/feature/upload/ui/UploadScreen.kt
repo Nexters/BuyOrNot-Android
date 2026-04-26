@@ -1,9 +1,11 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Environment
+import android.os.Build
+import android.provider.MediaStore
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -67,7 +69,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -83,7 +84,6 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.shape.BubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
-import java.io.File
 import java.text.DecimalFormat
 
 @Composable
@@ -111,13 +111,34 @@ fun UploadRoute(
 
     var photoUri by remember { mutableStateOf<Uri?>(null) }
 
+    val insertPhotoUri: () -> Uri? = {
+        val contentValues =
+            ContentValues().apply {
+                put(
+                    MediaStore.Images.Media.DISPLAY_NAME,
+                    "buyornot_${System.currentTimeMillis()}.jpg",
+                )
+                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BuyOrNot")
+                }
+            }
+        context.contentResolver.insert(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            contentValues,
+        )
+    }
+
     val cameraLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.TakePicture(),
         ) { success ->
             if (success) {
                 photoUri?.let { viewModel.handleIntent(UploadIntent.AddImages(listOf(it))) }
+            } else {
+                photoUri?.let { context.contentResolver.delete(it, null, null) }
             }
+            photoUri = null
             keyboardController?.hide()
         }
 
@@ -126,23 +147,13 @@ fun UploadRoute(
             contract = ActivityResultContracts.RequestPermission(),
         ) { granted ->
             if (granted) {
-                photoUri?.let { cameraLauncher.launch(it) }
+                val uri = insertPhotoUri()
+                if (uri != null) {
+                    photoUri = uri
+                    cameraLauncher.launch(uri)
+                }
             }
         }
-
-    val createPhotoUri: () -> Uri = {
-        val dir =
-            File(
-                context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
-                "BuyOrNot",
-            ).also { it.mkdirs() }
-        val file = File(dir, "photo_${System.currentTimeMillis()}.jpg")
-        FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file,
-        )
-    }
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
@@ -175,15 +186,17 @@ fun UploadRoute(
                         icon = BuyOrNotIcons.Camera,
                         text = "카메라로 직접 찍기",
                         onClick = {
-                            val uri = createPhotoUri()
-                            photoUri = uri
                             val hasCameraPermission =
                                 ContextCompat.checkSelfPermission(
                                     context,
                                     Manifest.permission.CAMERA,
                                 ) == PackageManager.PERMISSION_GRANTED
                             if (hasCameraPermission) {
-                                cameraLauncher.launch(uri)
+                                val uri = insertPhotoUri()
+                                if (uri != null) {
+                                    photoUri = uri
+                                    cameraLauncher.launch(uri)
+                                }
                             } else {
                                 cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                             }
