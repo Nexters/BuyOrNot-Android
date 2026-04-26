@@ -9,14 +9,16 @@ import androidx.compose.animation.slideOutVertically
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
-import androidx.navigation.NavType
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import com.sseotdabwa.buyornot.feature.home.ui.HomeRoute
+import androidx.navigation.toRoute
 import com.sseotdabwa.buyornot.feature.home.ui.HomeTab
+import kotlinx.serialization.Serializable
+import com.sseotdabwa.buyornot.feature.home.ui.HomeRoute as HomeScreen
 
-const val HOME_ROUTE = "home"
-const val HOME_ROUTE_WITH_TAB = "home?tab={tab}"
+@Serializable
+data class HomeRoute(
+    val tab: String? = null,
+)
 
 fun NavGraphBuilder.homeScreen(
     onLoginClick: () -> Unit = {},
@@ -26,15 +28,7 @@ fun NavGraphBuilder.homeScreen(
     onLinkClick: (url: String) -> Unit = {},
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
-    composable(
-        route = HOME_ROUTE_WITH_TAB,
-        arguments =
-            listOf(
-                navArgument("tab") {
-                    type = NavType.StringType
-                    nullable = true
-                },
-            ),
+    composable<HomeRoute>(
         enterTransition = {
             slideInVertically(
                 initialOffsetY = { (it * 0.15f).toInt() },
@@ -54,14 +48,14 @@ fun NavGraphBuilder.homeScreen(
             ) + fadeOut(animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing))
         },
     ) { backStackEntry ->
-        val tabName = backStackEntry.arguments?.getString("tab")
+        val route = backStackEntry.toRoute<HomeRoute>()
         val initialTab =
-            when (tabName) {
+            when (route.tab) {
                 HomeTab.MY_FEED.name -> HomeTab.MY_FEED
                 else -> HomeTab.FEED
             }
 
-        HomeRoute(
+        HomeScreen(
             onLoginClick = onLoginClick,
             onNotificationClick = onNotificationClick,
             onProfileClick = onProfileClick,
@@ -74,12 +68,12 @@ fun NavGraphBuilder.homeScreen(
 }
 
 fun NavHostController.navigateToHome(navOptions: NavOptions? = null) {
-    this.navigate(HOME_ROUTE, navOptions)
+    navigate(HomeRoute(), navOptions)
 }
 
 fun NavHostController.navigateToHomeWithTab(
     tab: HomeTab,
     navOptions: NavOptions? = null,
 ) {
-    this.navigate("home?tab=${tab.name}", navOptions)
+    navigate(HomeRoute(tab = tab.name), navOptions)
 }
