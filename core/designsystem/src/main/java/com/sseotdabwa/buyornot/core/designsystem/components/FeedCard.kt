@@ -403,6 +403,9 @@ private fun FeedVoteSection(
     onVote: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val isTie = buyPercentage == maybePercentage
+    val hasVotes = totalVoteCount > 0
+
     Column(modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (hasVoted || isVoteEnded || isOwner) {
@@ -412,6 +415,8 @@ private fun FeedVoteSection(
                     percentageText = "$buyPercentage%",
                     progressBarColor = BuyOrNotTheme.colors.gray950,
                     shouldInvertTextColor = true,
+                    textColor = if (isTie && !hasVotes) BuyOrNotTheme.colors.gray700 else BuyOrNotTheme.colors.gray800,
+                    percentageTextColor = if (isTie && !hasVotes) BuyOrNotTheme.colors.gray700 else BuyOrNotTheme.colors.gray950,
                     leadingContent =
                         if (userVotedOptionIndex == 0) {
                             {
@@ -436,6 +441,7 @@ private fun FeedVoteSection(
                     percentageText = "$maybePercentage%",
                     textColor = BuyOrNotTheme.colors.gray700,
                     percentageTextColor = BuyOrNotTheme.colors.gray700,
+                    shouldInvertTextColor = isTie && hasVotes,
                     leadingContent =
                         if (userVotedOptionIndex == 1) {
                             {
