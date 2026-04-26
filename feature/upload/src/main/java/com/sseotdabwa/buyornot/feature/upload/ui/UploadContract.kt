@@ -16,6 +16,7 @@ data class UploadUiState(
     val content: String = "",
     val showCategorySheet: Boolean = false,
     val showExitDialog: Boolean = false,
+    val showPhotoPickerSheet: Boolean = false,
     val categories: List<FeedCategory> = FeedCategory.entries,
 ) {
     val hasInput: Boolean
@@ -67,6 +68,10 @@ sealed interface UploadIntent {
     ) : UploadIntent
 
     data class UpdateExitDialogVisibility(
+        val isVisible: Boolean,
+    ) : UploadIntent
+
+    data class UpdatePhotoPickerSheetVisibility(
         val isVisible: Boolean,
     ) : UploadIntent
 

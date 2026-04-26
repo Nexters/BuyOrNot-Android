@@ -1,6 +1,11 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
+import android.Manifest
+import android.content.ContentValues
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -37,7 +42,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,9 +68,12 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.sseotdabwa.buyornot.core.designsystem.components.ActionItem
+import com.sseotdabwa.buyornot.core.designsystem.components.ActionSheet
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotAlertDialog
@@ -99,6 +109,54 @@ fun UploadRoute(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
+
+    val insertPhotoUri: () -> Uri? = {
+        val contentValues =
+            ContentValues().apply {
+                put(
+                    MediaStore.Images.Media.DISPLAY_NAME,
+                    "buyornot_${System.currentTimeMillis()}.jpg",
+                )
+                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BuyOrNot")
+                }
+            }
+        context.contentResolver.insert(
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            contentValues,
+        )
+    }
+
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture(),
+        ) { success ->
+            if (success) {
+                photoUri?.let { viewModel.handleIntent(UploadIntent.AddImages(listOf(it))) }
+            } else {
+                photoUri?.let { context.contentResolver.delete(it, null, null) }
+            }
+            photoUri = null
+            keyboardController?.hide()
+        }
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            if (granted) {
+                val uri = insertPhotoUri()
+                if (uri != null) {
+                    photoUri = uri
+                    cameraLauncher.launch(uri)
+                }
+            } else {
+                snackbarState.show("카메라 권한을 허용해 주세요.")
+            }
+        }
+
     val galleryLauncher =
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3),
@@ -113,7 +171,7 @@ fun UploadRoute(
         onIntent = viewModel::handleIntent,
         onPickImage = {
             if (uiState.selectedImageUris.size < 3) {
-                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                viewModel.handleIntent(UploadIntent.UpdatePhotoPickerSheetVisibility(true))
             }
         },
         onSubmit = {
@@ -121,6 +179,46 @@ fun UploadRoute(
             viewModel.handleIntent(UploadIntent.Submit(context))
         },
     )
+
+    if (uiState.showPhotoPickerSheet) {
+        ActionSheet(
+            actions =
+                listOf(
+                    ActionItem(
+                        icon = BuyOrNotIcons.Camera,
+                        text = "카메라로 직접 찍기",
+                        onClick = {
+                            val hasCameraPermission =
+                                ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.CAMERA,
+                                ) == PackageManager.PERMISSION_GRANTED
+                            if (hasCameraPermission) {
+                                val uri = insertPhotoUri()
+                                if (uri != null) {
+                                    photoUri = uri
+                                    cameraLauncher.launch(uri)
+                                }
+                            } else {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
+                        },
+                    ),
+                    ActionItem(
+                        icon = BuyOrNotIcons.Gallery,
+                        text = "앨범에서 사진 선택",
+                        onClick = {
+                            galleryLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                            )
+                        },
+                    ),
+                ),
+            onDismissRequest = {
+                viewModel.handleIntent(UploadIntent.UpdatePhotoPickerSheetVisibility(false))
+            },
+        )
+    }
 }
 
 @Composable
