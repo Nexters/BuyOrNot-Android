@@ -17,10 +17,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -103,7 +106,7 @@ fun ImageViewerScreen(
             initialPage = initialPage,
             pageCount = { imageUrls.size },
         )
-    var isZoomed by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier =
@@ -115,6 +118,7 @@ fun ImageViewerScreen(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .height(60.dp),
             contentAlignment = Alignment.CenterStart,
         ) {
@@ -136,31 +140,68 @@ fun ImageViewerScreen(
             }
         }
 
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxSize().weight(1f),
-            userScrollEnabled = !isZoomed,
-        ) { page ->
-            ZoomableImage(
-                imageUrl = imageUrls[page],
-                onZoomChanged = { zoomed -> isZoomed = zoomed },
-            )
+        Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = false,
+            ) { page ->
+                ZoomableImage(imageUrl = imageUrls[page])
+            }
+
+            if (pagerState.currentPage > 0) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(start = 10.dp)
+                            .size(30.dp)
+                            .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                            .clickable { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) } },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = BuyOrNotIcons.ArrowLeft.asImageVector(),
+                        contentDescription = "이전 사진",
+                        tint = BuyOrNotTheme.colors.gray0,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+
+            if (pagerState.currentPage < imageUrls.size - 1) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = 10.dp)
+                            .size(30.dp)
+                            .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                            .clickable { scope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) } },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = BuyOrNotIcons.ArrowRight.asImageVector(),
+                        contentDescription = "다음 사진",
+                        tint = BuyOrNotTheme.colors.gray0,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
         }
 
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .navigationBarsPadding()
                     .height(60.dp),
         )
     }
 }
 
 @Composable
-private fun ZoomableImage(
-    imageUrl: String,
-    onZoomChanged: (Boolean) -> Unit,
-) {
+private fun ZoomableImage(imageUrl: String) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
@@ -176,7 +217,6 @@ private fun ZoomableImage(
                 onScaleChange = { scale = it },
                 onOffsetChange = { offset = it },
             )
-            onZoomChanged(false)
         }
     }
 
@@ -220,7 +260,6 @@ private fun ZoomableImage(
                                 )?.let { (maxX, maxY) ->
                                     Offset(rawOffset.x.coerceIn(-maxX, maxX), rawOffset.y.coerceIn(-maxY, maxY))
                                 } ?: rawOffset
-                                onZoomChanged(newScale > 1f)
                                 event.changes.forEach { if (it.positionChanged()) it.consume() }
                             }
                         } while (event.changes.any { it.pressed })
@@ -238,11 +277,9 @@ private fun ZoomableImage(
                                         onScaleChange = { scale = it },
                                         onOffsetChange = { offset = it },
                                     )
-                                    onZoomChanged(false)
                                 } else {
                                     scale = 2f
                                     offset = Offset.Zero
-                                    onZoomChanged(true)
                                 }
                             }
                         },

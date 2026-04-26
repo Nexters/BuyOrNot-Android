@@ -1,8 +1,9 @@
 package com.sseotdabwa.buyornot.core.ui.imageviewer
 
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.composable
+import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 
@@ -20,7 +21,14 @@ fun NavController.navigateToImageViewer(
 }
 
 fun NavGraphBuilder.imageViewerScreen(onBackClick: () -> Unit) {
-    composable<ImageViewerRoute> { backStackEntry ->
+    dialog<ImageViewerRoute>(
+        dialogProperties =
+            DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+                dismissOnClickOutside = false,
+            ),
+    ) { backStackEntry ->
         val route = backStackEntry.toRoute<ImageViewerRoute>()
         ImageViewerScreen(
             imageUrls = route.imageUrls,
