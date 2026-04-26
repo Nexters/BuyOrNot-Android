@@ -422,6 +422,7 @@ private fun VoteProgressItemTieFiftyPreview() {
                 text = "애매하긴 해..",
                 percentage = 0.5f,
                 percentageText = "50%",
+                progressBarColor = BuyOrNotTheme.colors.gray950,
                 textColor = BuyOrNotTheme.colors.gray700,
                 percentageTextColor = BuyOrNotTheme.colors.gray700,
                 shouldInvertTextColor = true,

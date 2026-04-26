@@ -439,6 +439,7 @@ private fun FeedVoteSection(
                     text = stringResource(R.string.feed_card_vote_maybe),
                     percentage = maybePercentage / 100f,
                     percentageText = "$maybePercentage%",
+                    progressBarColor = if (isTie && hasVotes) BuyOrNotTheme.colors.gray950 else BuyOrNotTheme.colors.gray400,
                     textColor = BuyOrNotTheme.colors.gray700,
                     percentageTextColor = BuyOrNotTheme.colors.gray700,
                     shouldInvertTextColor = isTie && hasVotes,
