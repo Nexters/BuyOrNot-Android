@@ -4,20 +4,22 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
-import com.sseotdabwa.buyornot.feature.upload.ui.UploadRoute
+import kotlinx.serialization.Serializable
+import com.sseotdabwa.buyornot.feature.upload.ui.UploadRoute as UploadScreen
 
-const val UPLOAD_ROUTE = "upload"
+@Serializable
+data object UploadRoute
 
 fun NavController.navigateToUpload(navOptions: NavOptions? = null) {
-    navigate(UPLOAD_ROUTE, navOptions)
+    navigate(UploadRoute, navOptions)
 }
 
 fun NavGraphBuilder.uploadScreen(
     onNavigateBack: () -> Unit = {},
     onNavigateToHomeReview: () -> Unit = {},
 ) {
-    composable(route = UPLOAD_ROUTE) {
-        UploadRoute(
+    composable<UploadRoute> {
+        UploadScreen(
             onNavigateBack = onNavigateBack,
             onNavigateToHomeReview = onNavigateToHomeReview,
         )

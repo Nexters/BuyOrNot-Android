@@ -2,24 +2,25 @@ package com.sseotdabwa.buyornot.core.ui.webview
 
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavType
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import java.net.URLDecoder
-import java.net.URLEncoder
-
-private const val WEBVIEW_ROUTE = "webview"
+import androidx.navigation.toRoute
+import kotlinx.serialization.Serializable
 
 internal const val TERMS_URL = "https://littlemoom.notion.site/buy-or-not-service-term?pvs=143"
 internal const val PRIVACY_URL = "https://littlemoom.notion.site/buy-or-not-privacy-term?pvs=143"
 internal const val FEEDBACK_URL = "https://docs.google.com/forms/d/e/1FAIpQLScG0GStvzog1HVZjAP9OpHl85azcez2OdAr7YwrI7rvCqInsg/viewform"
 
+@Serializable
+data class WebViewRoute(
+    val title: String,
+    val url: String,
+)
+
 fun NavController.navigateToWebView(
     title: String,
     url: String,
 ) {
-    val encodedUrl = URLEncoder.encode(url, "UTF-8")
-    this.navigate("$WEBVIEW_ROUTE?title=$title&url=$encodedUrl")
+    navigate(WebViewRoute(title = title, url = url))
 }
 
 fun NavController.navigateToTerms() {
@@ -35,19 +36,11 @@ fun NavController.navigateToFeedBack() {
 }
 
 fun NavGraphBuilder.webViewScreen(onBackClick: () -> Unit) {
-    composable(
-        route = "$WEBVIEW_ROUTE?title={title}&url={url}",
-        arguments =
-            listOf(
-                navArgument("title") { type = NavType.StringType },
-                navArgument("url") { type = NavType.StringType },
-            ),
-    ) { backStackEntry ->
-        val title = backStackEntry.arguments?.getString("title") ?: ""
-        val url = backStackEntry.arguments?.getString("url") ?: ""
-        WebViewRoute(
-            title = title,
-            url = URLDecoder.decode(url, "UTF-8"),
+    composable<WebViewRoute> { backStackEntry ->
+        val route = backStackEntry.toRoute<WebViewRoute>()
+        WebViewScreen(
+            title = route.title,
+            url = route.url,
             onBackClick = onBackClick,
         )
     }
