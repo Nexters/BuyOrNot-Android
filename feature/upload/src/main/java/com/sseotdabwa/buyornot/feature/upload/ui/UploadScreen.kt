@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.BackHandler
@@ -67,7 +68,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.core.content.PermissionChecker
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -136,7 +136,7 @@ fun UploadRoute(
                 context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
                 "BuyOrNot",
             ).also { it.mkdirs() }
-        val file = File(dir, "temp_photo.jpg")
+        val file = File(dir, "photo_${System.currentTimeMillis()}.jpg")
         FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
@@ -181,7 +181,7 @@ fun UploadRoute(
                                 ContextCompat.checkSelfPermission(
                                     context,
                                     Manifest.permission.CAMERA,
-                                ) == PermissionChecker.PERMISSION_GRANTED
+                                ) == PackageManager.PERMISSION_GRANTED
                             if (hasCameraPermission) {
                                 cameraLauncher.launch(uri)
                             } else {
