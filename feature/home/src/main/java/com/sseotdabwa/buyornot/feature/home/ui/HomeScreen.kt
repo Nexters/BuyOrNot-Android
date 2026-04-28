@@ -360,6 +360,9 @@ private fun HomeFeedList(
     val listState = rememberLazyListState()
     val isEmptyViewVisible = filteredFeeds.isEmpty() && !uiState.isLoading && !uiState.hasError
     val isMyFeedEmpty = uiState.selectedTab == HomeTab.MY_FEED && isEmptyViewVisible
+    val isAtTop by remember {
+        derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+    }
 
     var showLinkTooltip by remember { mutableStateOf(true) }
     val tooltipTargetIndex =
@@ -415,34 +418,40 @@ private fun HomeFeedList(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = contentPadding.calculateTopPadding())
-                        .background(BuyOrNotTheme.colors.gray0),
+                        .padding(top = contentPadding.calculateTopPadding()),
             ) {
-                AnimatedVisibility(
-                    visible = isHeaderVisible,
-                    enter = expandVertically(tween(300, easing = EaseOutCubic), expandFrom = Alignment.Top) + fadeIn(tween(300)),
-                    exit = shrinkVertically(tween(200, easing = EaseInCubic), shrinkTowards = Alignment.Top) + fadeOut(tween(200)),
-                ) {
-                    HomeTopBarSection(
+                Column(modifier = Modifier.background(BuyOrNotTheme.colors.gray0)) {
+                    AnimatedVisibility(
+                        visible = isHeaderVisible,
+                        enter = expandVertically(tween(300, easing = EaseOutCubic), expandFrom = Alignment.Top) + fadeIn(tween(300)),
+                        exit = shrinkVertically(tween(200, easing = EaseInCubic), shrinkTowards = Alignment.Top) + fadeOut(tween(200)),
+                    ) {
+                        HomeTopBarSection(
+                            userType = uiState.userType,
+                            onLoginClick = onLoginClick,
+                            onNotificationClick = onNotificationClick,
+                            onProfileClick = onProfileClick,
+                        )
+                    }
+
+                    HomeTabSection(
                         userType = uiState.userType,
-                        onLoginClick = onLoginClick,
-                        onNotificationClick = onNotificationClick,
-                        onProfileClick = onProfileClick,
+                        selectedTab = uiState.selectedTab,
+                        onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
                     )
                 }
-
-                HomeTabSection(
-                    userType = uiState.userType,
-                    selectedTab = uiState.selectedTab,
-                    onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
-                )
 
                 AnimatedVisibility(
                     visible = isHeaderVisible && !isMyFeedEmpty,
                     enter = expandVertically(tween(300, easing = EaseOutCubic), expandFrom = Alignment.Top) + fadeIn(tween(300)),
                     exit = shrinkVertically(tween(200, easing = EaseInCubic), shrinkTowards = Alignment.Top) + fadeOut(tween(200)),
                 ) {
-                    Column {
+                    Column(
+                        modifier =
+                            Modifier.background(
+                                if (isAtTop) Color.Transparent else BuyOrNotTheme.colors.gray0,
+                            ),
+                    ) {
                         Spacer(modifier = Modifier.height(10.dp))
                         FilterChipRow(
                             selectedCategories = uiState.selectedCategories,
