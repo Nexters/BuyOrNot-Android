@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,6 +53,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -360,6 +363,11 @@ private fun HomeFeedList(
     val listState = rememberLazyListState()
     val isEmptyViewVisible = filteredFeeds.isEmpty() && !uiState.isLoading && !uiState.hasError
     val isMyFeedEmpty = uiState.selectedTab == HomeTab.MY_FEED && isEmptyViewVisible
+    var headerHeightPx by remember { mutableIntStateOf(0) }
+    val density = LocalDensity.current
+    val isAtTop by remember {
+        derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+    }
 
     var showLinkTooltip by remember { mutableStateOf(true) }
     val tooltipTargetIndex =
@@ -409,61 +417,16 @@ private fun HomeFeedList(
         onRefresh = { onIntent(HomeIntent.Refresh) },
         modifier = modifier.fillMaxSize(),
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            // 고정 헤더 영역 (TopBar + FilterChipRow는 스크롤 방향에 따라 표시/숨김, Tab은 항상 고정)
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = contentPadding.calculateTopPadding())
-                        .background(BuyOrNotTheme.colors.gray0),
-            ) {
-                AnimatedVisibility(
-                    visible = isHeaderVisible,
-                    enter = expandVertically(tween(300, easing = EaseOutCubic), expandFrom = Alignment.Top) + fadeIn(tween(300)),
-                    exit = shrinkVertically(tween(200, easing = EaseInCubic), shrinkTowards = Alignment.Top) + fadeOut(tween(200)),
-                ) {
-                    HomeTopBarSection(
-                        userType = uiState.userType,
-                        onLoginClick = onLoginClick,
-                        onNotificationClick = onNotificationClick,
-                        onProfileClick = onProfileClick,
-                    )
-                }
-
-                HomeTabSection(
-                    userType = uiState.userType,
-                    selectedTab = uiState.selectedTab,
-                    onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
-                )
-
-                AnimatedVisibility(
-                    visible = isHeaderVisible && !isMyFeedEmpty,
-                    enter = expandVertically(tween(300, easing = EaseOutCubic), expandFrom = Alignment.Top) + fadeIn(tween(300)),
-                    exit = shrinkVertically(tween(200, easing = EaseInCubic), shrinkTowards = Alignment.Top) + fadeOut(tween(200)),
-                ) {
-                    Column {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        FilterChipRow(
-                            selectedCategories = uiState.selectedCategories,
-                            onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
-                            onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
-                            selectedFilter = uiState.selectedFilter,
-                            onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
-                }
-            }
-
-            // 스크롤 가능한 피드 목록
+        Box(modifier = Modifier.fillMaxSize()) {
+            // 스크롤 가능한 피드 목록 (헤더 오버레이 아래에 렌더링)
             LazyColumn(
                 state = listState,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                contentPadding = PaddingValues(bottom = contentPadding.calculateBottomPadding()),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding =
+                    PaddingValues(
+                        top = with(density) { headerHeightPx.toDp() },
+                        bottom = contentPadding.calculateBottomPadding(),
+                    ),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
@@ -557,6 +520,59 @@ private fun HomeFeedList(
                                 )
                             }
                         }
+                    }
+                }
+            }
+
+            // 고정 헤더 영역 (오버레이: LazyColumn 위에 렌더링)
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = contentPadding.calculateTopPadding())
+                        .onGloballyPositioned { headerHeightPx = it.size.height },
+            ) {
+                Column(modifier = Modifier.background(BuyOrNotTheme.colors.gray0)) {
+                    AnimatedVisibility(
+                        visible = isHeaderVisible,
+                        enter = expandVertically(tween(300, easing = EaseOutCubic), expandFrom = Alignment.Top) + fadeIn(tween(300)),
+                        exit = shrinkVertically(tween(200, easing = EaseInCubic), shrinkTowards = Alignment.Top) + fadeOut(tween(200)),
+                    ) {
+                        HomeTopBarSection(
+                            userType = uiState.userType,
+                            onLoginClick = onLoginClick,
+                            onNotificationClick = onNotificationClick,
+                            onProfileClick = onProfileClick,
+                        )
+                    }
+
+                    HomeTabSection(
+                        userType = uiState.userType,
+                        selectedTab = uiState.selectedTab,
+                        onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = isHeaderVisible && !isMyFeedEmpty,
+                    enter = expandVertically(tween(300, easing = EaseOutCubic), expandFrom = Alignment.Top) + fadeIn(tween(300)),
+                    exit = shrinkVertically(tween(200, easing = EaseInCubic), shrinkTowards = Alignment.Top) + fadeOut(tween(200)),
+                ) {
+                    Column(
+                        modifier =
+                            Modifier.background(
+                                if (isAtTop) Color.Transparent else BuyOrNotTheme.colors.gray0,
+                            ),
+                    ) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        FilterChipRow(
+                            selectedCategories = uiState.selectedCategories,
+                            onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
+                            onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
+                            selectedFilter = uiState.selectedFilter,
+                            onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
                 }
             }
