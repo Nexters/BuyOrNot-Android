@@ -3,48 +3,49 @@ package com.sseotdabwa.buyornot.feature.notification.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
-import androidx.navigation.NavType
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import com.sseotdabwa.buyornot.feature.notification.ui.NotificationDetailRoute
-import com.sseotdabwa.buyornot.feature.notification.ui.NotificationRoute
+import kotlinx.serialization.Serializable
+import com.sseotdabwa.buyornot.feature.notification.ui.NotificationDetailRoute as NotificationDetailScreen
+import com.sseotdabwa.buyornot.feature.notification.ui.NotificationRoute as NotificationScreen
 
-const val NOTIFICATION_ROUTE = "notification"
-const val NOTIFICATION_DETAIL_ROUTE = "notification_detail"
+@Serializable
+data object NotificationRoute
+
+@Serializable
+data class NotificationDetailRoute(
+    val notificationId: Long,
+    val feedId: Long,
+)
 
 fun NavGraphBuilder.notificationGraph(
     onBackClick: () -> Unit,
     onNotificationClick: (Long, Long) -> Unit,
+    onLinkClick: (url: String) -> Unit = {},
+    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
-    composable(route = NOTIFICATION_ROUTE) {
-        NotificationRoute(
+    composable<NotificationRoute> {
+        NotificationScreen(
             onBackClick = onBackClick,
             onNotificationClick = onNotificationClick,
         )
     }
 
-    composable(
-        route = "$NOTIFICATION_DETAIL_ROUTE/{notificationId}/{feedId}",
-        arguments =
-            listOf(
-                navArgument("notificationId") { type = NavType.LongType },
-                navArgument("feedId") { type = NavType.LongType },
-            ),
-    ) {
-        NotificationDetailRoute(
+    composable<NotificationDetailRoute> {
+        NotificationDetailScreen(
             onBackClick = onBackClick,
+            onLinkClick = onLinkClick,
+            onImageClick = onImageClick,
         )
     }
 }
 
 fun NavHostController.navigateToNotification(navOptions: NavOptions? = null) {
-    this.navigate(NOTIFICATION_ROUTE, navOptions)
+    navigate(NotificationRoute, navOptions)
 }
 
-// 상세 화면으로 이동하는 함수
 fun NavHostController.navigateToNotificationDetail(
     notificationId: Long,
     feedId: Long,
 ) {
-    this.navigate("$NOTIFICATION_DETAIL_ROUTE/$notificationId/$feedId")
+    navigate(NotificationDetailRoute(notificationId = notificationId, feedId = feedId))
 }

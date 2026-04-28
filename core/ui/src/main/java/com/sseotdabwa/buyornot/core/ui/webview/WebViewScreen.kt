@@ -11,15 +11,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 
 @Composable
-fun WebViewRoute(
-    title: String,
-    url: String,
-    onBackClick: () -> Unit,
-) {
-    WebViewScreen(title = title, url = url, onBackClick = onBackClick)
-}
-
-@Composable
 fun WebViewScreen(
     title: String,
     url: String,

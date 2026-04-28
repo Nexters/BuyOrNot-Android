@@ -202,7 +202,7 @@ private fun InteractiveBuyOrNotSheetPreview() {
                         Text(
                             text = "제목",
                             style = BuyOrNotTheme.typography.subTitleS1SemiBold,
-                            color = BuyOrNotTheme.colors.gray900,
+                            color = BuyOrNotTheme.colors.gray950,
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))

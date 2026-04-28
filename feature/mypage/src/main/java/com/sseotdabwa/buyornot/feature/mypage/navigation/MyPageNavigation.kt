@@ -8,46 +8,49 @@ import androidx.navigation.navigation
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToFeedBack
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToTerms
-import com.sseotdabwa.buyornot.feature.mypage.ui.AccountSettingRoute
-import com.sseotdabwa.buyornot.feature.mypage.ui.BlockedAccountsRoute
-import com.sseotdabwa.buyornot.feature.mypage.ui.MyPageRoute
-import com.sseotdabwa.buyornot.feature.mypage.ui.PolicyRoute
-import com.sseotdabwa.buyornot.feature.mypage.ui.WithdrawalRoute
+import kotlinx.serialization.Serializable
+import com.sseotdabwa.buyornot.feature.mypage.ui.AccountSettingRoute as AccountSettingScreen
+import com.sseotdabwa.buyornot.feature.mypage.ui.BlockedAccountsRoute as BlockedAccountsScreen
+import com.sseotdabwa.buyornot.feature.mypage.ui.MyPageRoute as MyPageScreen
+import com.sseotdabwa.buyornot.feature.mypage.ui.PolicyRoute as PolicyScreen
+import com.sseotdabwa.buyornot.feature.mypage.ui.WithdrawalRoute as WithdrawalScreen
 
-sealed class MyPageScreens(
-    val route: String,
-) {
-    object Graph : MyPageScreens("mypage_graph")
+@Serializable
+data object MyPageGraph
 
-    object Main : MyPageScreens("mypage_main")
+@Serializable
+data object MyPageMainRoute
 
-    object AccountSetting : MyPageScreens("account_setting")
+@Serializable
+data object AccountSettingRoute
 
-    object Policy : MyPageScreens("policy")
+@Serializable
+data object PolicyRoute
 
-    object Withdrawal : MyPageScreens("withdrawal")
+@Serializable
+data object WithdrawalRoute
 
-    object BlockedAccounts : MyPageScreens("blocked_accounts")
-}
+@Serializable
+data object BlockedAccountsRoute
 
 fun NavController.navigateToMyPage() {
-    this.navigate(MyPageScreens.Graph.route)
+    navigate(MyPageGraph)
 }
 
 fun NavController.navigateToAccountSetting() {
-    this.navigate(MyPageScreens.AccountSetting.route)
+    navigate(AccountSettingRoute)
 }
 
 fun NavController.navigateToPolicy() {
-    this.navigate(MyPageScreens.Policy.route)
+    navigate(PolicyRoute)
 }
 
 fun NavController.navigateToWithdrawal() {
-    this.navigate(MyPageScreens.Withdrawal.route)
+    navigate(WithdrawalRoute)
 }
 
 fun NavController.navigateToBlockedAccounts() {
-    this.navigate(MyPageScreens.BlockedAccounts.route)
+    navigate(BlockedAccountsRoute)
 }
 
 fun NavGraphBuilder.myPageGraph(
@@ -55,12 +58,9 @@ fun NavGraphBuilder.myPageGraph(
     versionName: String,
     onNavigateToLogin: () -> Unit,
 ) {
-    navigation(
-        startDestination = MyPageScreens.Main.route,
-        route = MyPageScreens.Graph.route,
-    ) {
-        composable(MyPageScreens.Main.route) {
-            MyPageRoute(
+    navigation<MyPageGraph>(startDestination = MyPageMainRoute) {
+        composable<MyPageMainRoute> {
+            MyPageScreen(
                 versionName = versionName,
                 onBackClick = navController::popBackStack,
                 onAccountSettingClick = navController::navigateToAccountSetting,
@@ -70,31 +70,31 @@ fun NavGraphBuilder.myPageGraph(
             )
         }
 
-        composable(MyPageScreens.AccountSetting.route) {
-            AccountSettingRoute(
+        composable<AccountSettingRoute> {
+            AccountSettingScreen(
                 onBackClick = navController::popBackStack,
                 onNavigateToLogin = onNavigateToLogin,
                 onNavigateToWithdrawal = navController::navigateToWithdrawal,
             )
         }
 
-        composable(MyPageScreens.Policy.route) {
-            PolicyRoute(
+        composable<PolicyRoute> {
+            PolicyScreen(
                 onBackClick = navController::popBackStack,
                 onNavigateToTerms = navController::navigateToTerms,
                 onNavigateToPrivacyPolicy = navController::navigateToPrivacyPolicy,
             )
         }
 
-        composable(MyPageScreens.Withdrawal.route) {
-            WithdrawalRoute(
+        composable<WithdrawalRoute> {
+            WithdrawalScreen(
                 onBackClick = navController::popBackStack,
                 onNavigateToLogin = onNavigateToLogin,
             )
         }
 
-        composable(MyPageScreens.BlockedAccounts.route) {
-            BlockedAccountsRoute(
+        composable<BlockedAccountsRoute> {
+            BlockedAccountsScreen(
                 onBackClick = navController::popBackStack,
             )
         }

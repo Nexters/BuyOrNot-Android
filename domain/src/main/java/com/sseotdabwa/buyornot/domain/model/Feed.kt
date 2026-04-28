@@ -1,10 +1,21 @@
 package com.sseotdabwa.buyornot.domain.model
 
 /**
+ * 피드 이미지 도메인 모델
+ */
+data class FeedImage(
+    val s3ObjectKey: String,
+    val imageUrl: String,
+    val imageWidth: Int,
+    val imageHeight: Int,
+)
+
+/**
  * 피드 도메인 모델
  */
 data class Feed(
     val feedId: Long,
+    val title: String,
     val content: String,
     val price: String,
     val category: FeedCategory,
@@ -12,15 +23,15 @@ data class Feed(
     val noCount: Int,
     val totalCount: Int,
     val feedStatus: FeedStatus,
-    val s3ObjectKey: String,
-    val viewUrl: String,
-    val imageWidth: Int,
-    val imageHeight: Int,
+    val images: List<FeedImage>,
     val author: Author,
     val createdAt: String,
     val hasVoted: Boolean,
     val myVoteChoice: VoteChoice?,
-)
+    val productLink: String? = null,
+) {
+    val viewUrls: List<String> get() = images.map { it.imageUrl }
+}
 
 /**
  * 작성자 정보 도메인 모델

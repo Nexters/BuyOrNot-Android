@@ -172,7 +172,7 @@ private fun BlockedUser(
             Text(
                 text = nickname,
                 style = BuyOrNotTheme.typography.paragraphP2Medium,
-                color = BuyOrNotTheme.colors.gray900,
+                color = BuyOrNotTheme.colors.gray950,
             )
         }
 

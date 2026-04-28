@@ -30,5 +30,6 @@ class NotificationRepositoryImpl @Inject constructor(
             resultPercent = resultPercent,
             resultLabel = resultLabel,
             viewUrl = viewUrl,
+            feedTitle = feedTitle.orEmpty(),
         )
 }

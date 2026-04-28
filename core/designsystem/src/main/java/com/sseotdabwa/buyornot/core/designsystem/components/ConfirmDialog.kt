@@ -47,7 +47,7 @@ fun BuyOrNotConfirmDialog(
                     text = title,
                     modifier = Modifier.padding(horizontal = 6.dp),
                     style = BuyOrNotTheme.typography.titleT2Bold,
-                    color = BuyOrNotTheme.colors.gray900,
+                    color = BuyOrNotTheme.colors.gray950,
                 )
 
                 Spacer(modifier = Modifier.height(26.dp))

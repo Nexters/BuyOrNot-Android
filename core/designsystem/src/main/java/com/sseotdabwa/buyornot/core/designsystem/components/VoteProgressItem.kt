@@ -51,7 +51,7 @@ fun VoteProgressItem(
     modifier: Modifier = Modifier,
     progressBarColor: Color = BuyOrNotTheme.colors.gray400,
     textColor: Color = BuyOrNotTheme.colors.gray800,
-    percentageTextColor: Color = BuyOrNotTheme.colors.gray900,
+    percentageTextColor: Color = BuyOrNotTheme.colors.gray950,
     invertedTextColor: Color = BuyOrNotTheme.colors.gray0,
     shouldInvertTextColor: Boolean = false,
     leadingContent: @Composable (() -> Unit)? = null,
@@ -247,7 +247,7 @@ private fun VoteProgressItemSelectedPreview() {
             percentage = 0.9f,
             percentageText = "90%",
             modifier = Modifier.padding(16.dp),
-            progressBarColor = BuyOrNotTheme.colors.gray900,
+            progressBarColor = BuyOrNotTheme.colors.gray950,
             shouldInvertTextColor = true,
         )
     }
@@ -277,7 +277,7 @@ private fun VoteProgressItemLowPercentagePreview() {
             percentage = 0.1f,
             percentageText = "10%",
             modifier = Modifier.padding(16.dp),
-            progressBarColor = BuyOrNotTheme.colors.gray900,
+            progressBarColor = BuyOrNotTheme.colors.gray950,
             shouldInvertTextColor = true,
         )
     }
@@ -292,7 +292,7 @@ private fun VoteProgressItemNoInvertPreview() {
             percentage = 1f,
             percentageText = "100%",
             modifier = Modifier.padding(16.dp),
-            progressBarColor = BuyOrNotTheme.colors.gray900,
+            progressBarColor = BuyOrNotTheme.colors.gray950,
             // ProfileImage 예시 (실제로는 ProfileImage Composable 사용)
             leadingContent = {
                 Box(
@@ -323,7 +323,7 @@ private fun VoteScreenPreview() {
                 text = "사! 가즈아!",
                 percentage = 0.9f,
                 percentageText = "90%",
-                progressBarColor = BuyOrNotTheme.colors.gray900,
+                progressBarColor = BuyOrNotTheme.colors.gray950,
                 shouldInvertTextColor = true,
                 leadingContent = {
                     // ProfileImage 예시 (실제로는 ProfileImage Composable 사용)
@@ -375,6 +375,58 @@ private fun VoteScreenPreview() {
                     color = BuyOrNotTheme.colors.gray600,
                 )
             }
+        }
+    }
+}
+
+@Preview(name = "VoteProgressItem - 동률 0% (투표 없음)", showBackground = true)
+@Composable
+private fun VoteProgressItemTieZeroPreview() {
+    BuyOrNotTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
+            VoteProgressItem(
+                text = "사! 가즈아!",
+                percentage = 0f,
+                percentageText = "0%",
+                progressBarColor = BuyOrNotTheme.colors.gray950,
+                shouldInvertTextColor = true,
+                textColor = BuyOrNotTheme.colors.gray700,
+                percentageTextColor = BuyOrNotTheme.colors.gray700,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            VoteProgressItem(
+                text = "애매하긴 해..",
+                percentage = 0f,
+                percentageText = "0%",
+                textColor = BuyOrNotTheme.colors.gray700,
+                percentageTextColor = BuyOrNotTheme.colors.gray700,
+            )
+        }
+    }
+}
+
+@Preview(name = "VoteProgressItem - 동률 50% (투표 있음)", showBackground = true)
+@Composable
+private fun VoteProgressItemTieFiftyPreview() {
+    BuyOrNotTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
+            VoteProgressItem(
+                text = "사! 가즈아!",
+                percentage = 0.5f,
+                percentageText = "50%",
+                progressBarColor = BuyOrNotTheme.colors.gray950,
+                shouldInvertTextColor = true,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            VoteProgressItem(
+                text = "애매하긴 해..",
+                percentage = 0.5f,
+                percentageText = "50%",
+                progressBarColor = BuyOrNotTheme.colors.gray950,
+                textColor = BuyOrNotTheme.colors.gray700,
+                percentageTextColor = BuyOrNotTheme.colors.gray950,
+                shouldInvertTextColor = true,
+            )
         }
     }
 }
