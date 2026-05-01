@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -77,26 +78,32 @@ internal fun CropOverlay(
     onCropRectChange: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val cropRectState = rememberUpdatedState(cropRect)
+    val imageBoundsState = rememberUpdatedState(imageBounds)
+    val onCropRectChangeState = rememberUpdatedState(onCropRectChange)
+
     Canvas(
         modifier =
             modifier
                 .fillMaxSize()
-                .pointerInput(cropRect, imageBounds) {
+                .pointerInput(Unit) {
                     val touchRadiusPx = 48.dp.toPx()
                     val minSizePx = 96.dp.toPx()
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
-                        val handle = detectHandle(down.position, cropRect, touchRadiusPx)
+                        val handle = detectHandle(down.position, cropRectState.value, touchRadiusPx)
                         if (handle == HandleZone.NONE) return@awaitEachGesture
                         do {
                             val event = awaitPointerEvent()
                             val delta = event.changes.first().positionChange()
+                            val currentRect = cropRectState.value
+                            val currentBounds = imageBoundsState.value
                             val newRect =
                                 when (handle) {
-                                    HandleZone.BODY -> cropRect.translate(delta).clampTo(imageBounds)
-                                    else -> cropRect.resizeFrom(handle, delta, minSizePx).clampTo(imageBounds)
+                                    HandleZone.BODY -> currentRect.translate(delta).clampTo(currentBounds)
+                                    else -> currentRect.resizeFrom(handle, delta, minSizePx).clampTo(currentBounds)
                                 }
-                            onCropRectChange(newRect)
+                            onCropRectChangeState.value(newRect)
                             event.changes.forEach { if (it.positionChanged()) it.consume() }
                         } while (event.changes.any { it.pressed })
                     }

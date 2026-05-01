@@ -101,8 +101,8 @@ fun CropScreen(
                                     val scaleY = bitmap.height / bounds.height
                                     val srcX = ((cropRect.left - bounds.left) * scaleX).toInt().coerceAtLeast(0)
                                     val srcY = ((cropRect.top - bounds.top) * scaleY).toInt().coerceAtLeast(0)
-                                    val srcW = (cropRect.width * scaleX).toInt().coerceAtMost(bitmap.width - srcX)
-                                    val srcH = (cropRect.height * scaleY).toInt().coerceAtMost(bitmap.height - srcY)
+                                    val srcW = (cropRect.width * scaleX).toInt().coerceIn(1, bitmap.width - srcX)
+                                    val srcH = (cropRect.height * scaleY).toInt().coerceIn(1, bitmap.height - srcY)
                                     val cropped = Bitmap.createBitmap(bitmap, srcX, srcY, srcW, srcH)
                                     bitmap.recycle()
                                     val file = File(context.cacheDir, "crop_${System.currentTimeMillis()}.jpg")
