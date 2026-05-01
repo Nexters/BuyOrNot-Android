@@ -73,6 +73,9 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
 import com.sseotdabwa.buyornot.core.designsystem.components.ActionItem
 import com.sseotdabwa.buyornot.core.designsystem.components.ActionSheet
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
@@ -98,12 +101,38 @@ fun UploadRoute(
     val snackbarState = LocalSnackbarState.current
     val context = LocalContext.current
 
+    val cropLauncher =
+        rememberLauncherForActivityResult(
+            contract = CropImageContract(),
+        ) { result ->
+            if (result.isSuccessful) {
+                result.uriContent?.let { uri ->
+                    viewModel.handleIntent(UploadIntent.CropConfirmed(uri))
+                } ?: viewModel.handleIntent(UploadIntent.CropSkipped)
+            } else {
+                viewModel.handleIntent(UploadIntent.CropSkipped)
+            }
+        }
+
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { sideEffect ->
             when (sideEffect) {
                 is UploadSideEffect.ShowSnackbar -> snackbarState.show(sideEffect.message)
                 is UploadSideEffect.NavigateBack -> onNavigateBack()
                 is UploadSideEffect.NavigateToHomeReview -> onNavigateToHomeReview()
+                is UploadSideEffect.LaunchCrop -> {
+                    cropLauncher.launch(
+                        CropImageContractOptions(
+                            uri = sideEffect.uri,
+                            cropImageOptions =
+                                CropImageOptions(
+                                    aspectRatioX = 1,
+                                    aspectRatioY = 1,
+                                    fixAspectRatio = true,
+                                ),
+                        ),
+                    )
+                }
             }
         }
     }
@@ -135,7 +164,7 @@ fun UploadRoute(
             contract = ActivityResultContracts.TakePicture(),
         ) { success ->
             if (success) {
-                photoUri?.let { viewModel.handleIntent(UploadIntent.AddImages(listOf(it))) }
+                photoUri?.let { viewModel.handleIntent(UploadIntent.StartCropQueue(listOf(it))) }
             } else {
                 photoUri?.let { context.contentResolver.delete(it, null, null) }
             }
@@ -162,7 +191,7 @@ fun UploadRoute(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3),
         ) { uris: List<Uri> ->
-            if (uris.isNotEmpty()) viewModel.handleIntent(UploadIntent.AddImages(uris))
+            if (uris.isNotEmpty()) viewModel.handleIntent(UploadIntent.StartCropQueue(uris))
             keyboardController?.hide()
         }
 
@@ -171,9 +200,12 @@ fun UploadRoute(
         uiState = uiState,
         onIntent = viewModel::handleIntent,
         onPickImage = {
-            if (uiState.selectedImageUris.size < 3) {
+            if (uiState.selectedImages.size < 3) {
                 viewModel.handleIntent(UploadIntent.UpdatePhotoPickerSheetVisibility(true))
             }
+        },
+        onReCropImage = { index ->
+            viewModel.handleIntent(UploadIntent.StartReCrop(index))
         },
         onSubmit = {
             keyboardController?.hide()
@@ -227,6 +259,7 @@ fun UploadScreen(
     uiState: UploadUiState,
     onIntent: (UploadIntent) -> Unit,
     onPickImage: () -> Unit,
+    onReCropImage: (Int) -> Unit,
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -240,7 +273,7 @@ fun UploadScreen(
             uiState.category != null &&
                 uiState.price.isNotEmpty() &&
                 uiState.title.isNotEmpty() &&
-                uiState.selectedImageUris.isNotEmpty() &&
+                uiState.selectedImages.isNotEmpty() &&
                 !uiState.isLoading
         }
 
@@ -323,9 +356,10 @@ fun UploadScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             ImagePickerRow(
-                selectedImageUris = uiState.selectedImageUris,
+                selectedImages = uiState.selectedImages,
                 onPickImage = onPickImage,
-                onRemoveImage = { uri -> onIntent(UploadIntent.RemoveImage(uri)) },
+                onReCropImage = onReCropImage,
+                onRemoveImage = { index -> onIntent(UploadIntent.RemoveImage(index)) },
             )
         }
 
@@ -352,7 +386,7 @@ fun UploadScreen(
                         tint = BuyOrNotTheme.colors.gray800,
                     )
                     Text(
-                        text = "${uiState.selectedImageUris.size}/3",
+                        text = "${uiState.selectedImages.size}/3",
                         style = BuyOrNotTheme.typography.subTitleS5SemiBold,
                         color = BuyOrNotTheme.colors.gray800,
                     )
@@ -640,23 +674,25 @@ private fun ContentInputField(
 
 @Composable
 private fun ImagePickerRow(
-    selectedImageUris: List<Uri>,
+    selectedImages: List<ImageEntry>,
     onPickImage: () -> Unit,
-    onRemoveImage: (Uri) -> Unit,
+    onReCropImage: (Int) -> Unit,
+    onRemoveImage: (Int) -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CameraButton(
-            selectedCount = selectedImageUris.size,
-            enabled = selectedImageUris.size < 3,
+            selectedCount = selectedImages.size,
+            enabled = selectedImages.size < 3,
             onClick = onPickImage,
         )
 
-        selectedImageUris.forEach { uri ->
+        selectedImages.forEachIndexed { index, entry ->
             SelectedImagePreview(
-                imageUri = uri,
-                onRemove = { onRemoveImage(uri) },
+                imageUri = entry.displayUri,
+                onReCrop = { onReCropImage(index) },
+                onRemove = { onRemoveImage(index) },
             )
         }
     }
@@ -701,6 +737,7 @@ private fun CameraButton(
 @Composable
 private fun SelectedImagePreview(
     imageUri: Uri,
+    onReCrop: () -> Unit,
     onRemove: () -> Unit,
 ) {
     Box(
@@ -712,7 +749,7 @@ private fun SelectedImagePreview(
                     width = 1.dp,
                     color = BuyOrNotTheme.colors.gray300,
                     shape = RoundedCornerShape(12.dp),
-                ),
+                ).clickable(onClick = onReCrop),
         contentAlignment = Alignment.TopEnd,
     ) {
         AsyncImage(
@@ -823,6 +860,7 @@ private fun UploadScreenPreview() {
             uiState = UploadUiState(),
             onIntent = {},
             onPickImage = {},
+            onReCropImage = {},
             onSubmit = {},
         )
     }
