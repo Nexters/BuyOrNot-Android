@@ -85,6 +85,7 @@ fun CropScreen(
             CropTopBar(
                 onCancel = onCancel,
                 onConfirm = {
+                    val capturedBounds = imageBounds ?: return@CropTopBar
                     isExtracting = true
                     scope.launch {
                         val result =
@@ -95,7 +96,7 @@ fun CropScreen(
                                             .openInputStream(imageUri)
                                             ?.use { BitmapFactory.decodeStream(it) }
                                             ?: error("Cannot open image")
-                                    val bounds = imageBounds ?: error("Image not ready")
+                                    val bounds = capturedBounds
                                     val scaleX = bitmap.width / bounds.width
                                     val scaleY = bitmap.height / bounds.height
                                     val srcX = ((cropRect.left - bounds.left) * scaleX).toInt().coerceAtLeast(0)
@@ -103,10 +104,12 @@ fun CropScreen(
                                     val srcW = (cropRect.width * scaleX).toInt().coerceAtMost(bitmap.width - srcX)
                                     val srcH = (cropRect.height * scaleY).toInt().coerceAtMost(bitmap.height - srcY)
                                     val cropped = Bitmap.createBitmap(bitmap, srcX, srcY, srcW, srcH)
+                                    bitmap.recycle()
                                     val file = File(context.cacheDir, "crop_${System.currentTimeMillis()}.jpg")
                                     FileOutputStream(file).use {
                                         cropped.compress(Bitmap.CompressFormat.JPEG, 90, it)
                                     }
+                                    cropped.recycle()
                                     FileProvider.getUriForFile(
                                         context,
                                         "${context.packageName}.fileprovider",
