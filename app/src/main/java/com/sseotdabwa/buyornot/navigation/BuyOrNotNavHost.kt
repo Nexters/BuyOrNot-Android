@@ -103,6 +103,7 @@ fun BuyOrNotNavHost(
             onImageClick = { urls, page -> navController.navigateToImageViewer(urls, page) },
         )
         uploadScreen(
+            navController = navController,
             onNavigateBack = navController::popBackStack,
             onNavigateToHomeReview = {
                 navController.navigateToHomeWithTab(

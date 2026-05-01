@@ -73,9 +73,6 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import com.canhub.cropper.CropImageContract
-import com.canhub.cropper.CropImageContractOptions
-import com.canhub.cropper.CropImageOptions
 import com.sseotdabwa.buyornot.core.designsystem.components.ActionItem
 import com.sseotdabwa.buyornot.core.designsystem.components.ActionSheet
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
@@ -95,24 +92,12 @@ fun UploadRoute(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
     onNavigateToHomeReview: () -> Unit = {},
+    onNavigateToCrop: (Uri) -> Unit = {},
     viewModel: UploadViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarState = LocalSnackbarState.current
     val context = LocalContext.current
-
-    val cropLauncher =
-        rememberLauncherForActivityResult(
-            contract = CropImageContract(),
-        ) { result ->
-            if (result.isSuccessful) {
-                result.uriContent?.let { uri ->
-                    viewModel.handleIntent(UploadIntent.CropConfirmed(uri))
-                } ?: viewModel.handleIntent(UploadIntent.CropSkipped)
-            } else {
-                viewModel.handleIntent(UploadIntent.CropSkipped)
-            }
-        }
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { sideEffect ->
@@ -120,19 +105,7 @@ fun UploadRoute(
                 is UploadSideEffect.ShowSnackbar -> snackbarState.show(sideEffect.message)
                 is UploadSideEffect.NavigateBack -> onNavigateBack()
                 is UploadSideEffect.NavigateToHomeReview -> onNavigateToHomeReview()
-                is UploadSideEffect.LaunchCrop -> {
-                    cropLauncher.launch(
-                        CropImageContractOptions(
-                            uri = sideEffect.uri,
-                            cropImageOptions =
-                                CropImageOptions(
-                                    aspectRatioX = 1,
-                                    aspectRatioY = 1,
-                                    fixAspectRatio = true,
-                                ),
-                        ),
-                    )
-                }
+                is UploadSideEffect.LaunchCrop -> onNavigateToCrop(sideEffect.uri)
             }
         }
     }
