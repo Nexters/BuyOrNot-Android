@@ -160,6 +160,15 @@ class CropGeometryTest {
     }
 
     @Test
+    fun `clampTo clamps bottom overflow`() {
+        val bounds = Rect(0f, 0f, 400f, 400f)
+        val rect = Rect(50f, 250f, 250f, 450f) // bottom overflows by 50
+        val result = rect.clampTo(bounds)
+        assertEquals(400f, result.bottom, 0.01f)
+        assertEquals(200f, result.height, 0.01f)
+    }
+
+    @Test
     fun `clampTo result is always 1to1 aspect ratio`() {
         val bounds = Rect(0f, 0f, 400f, 400f)
         val rect = Rect(-10f, -10f, 190f, 190f)
