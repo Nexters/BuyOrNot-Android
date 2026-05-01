@@ -15,6 +15,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +55,7 @@ fun CropScreen(
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
     var intrinsicSize by remember { mutableStateOf(Size.Unspecified) }
     var isExtracting by remember { mutableStateOf(false) }
+    var previewUri by remember { mutableStateOf<Uri?>(null) }
 
     val imageBounds: Rect? =
         remember(containerSize, intrinsicSize) {
@@ -78,6 +81,16 @@ fun CropScreen(
                 Rect(left, top, left + size, top + size)
             } ?: Rect.Zero,
         )
+    }
+
+    val currentPreviewUri = previewUri
+    if (currentPreviewUri != null) {
+        CropPreviewScreen(
+            croppedUri = currentPreviewUri,
+            onConfirm = { onConfirm(currentPreviewUri) },
+            onBack = { previewUri = null },
+        )
+        return
     }
 
     Scaffold(
@@ -118,7 +131,7 @@ fun CropScreen(
                                 }
                             }
                         isExtracting = false
-                        result.onSuccess { onConfirm(it) }
+                        result.onSuccess { previewUri = it }
                         result.onFailure { onCancel() }
                     }
                 },
@@ -164,6 +177,56 @@ fun CropScreen(
                     color = Color.White,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun CropPreviewScreen(
+    croppedUri: Uri,
+    onConfirm: () -> Unit,
+    onBack: () -> Unit,
+) {
+    Scaffold(
+        topBar = { CropPreviewTopBar(onBack = onBack, onConfirm = onConfirm) },
+        containerColor = Color.Black,
+    ) { paddingValues ->
+        AsyncImage(
+            model = croppedUri,
+            contentDescription = null,
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+            contentScale = ContentScale.Fit,
+        )
+    }
+}
+
+@Composable
+private fun CropPreviewTopBar(
+    onBack: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(Color.Black)
+                .height(60.dp)
+                .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = BuyOrNotIcons.Close.asImageVector(),
+                contentDescription = "다시 자르기",
+                tint = Color.White,
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        TextButton(onClick = onConfirm) {
+            Text(text = "완료", color = Color.White)
         }
     }
 }
