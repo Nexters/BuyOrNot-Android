@@ -2,6 +2,8 @@ package com.sseotdabwa.buyornot.core.ui.crop
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -104,11 +106,19 @@ fun CropScreen(
                         val result =
                             withContext(Dispatchers.IO) {
                                 runCatching {
-                                    val bitmap =
+                                    val rawBitmap =
                                         context.contentResolver
                                             .openInputStream(imageUri)
                                             ?.use { BitmapFactory.decodeStream(it) }
                                             ?: error("Cannot open image")
+                                    val exifOrientation =
+                                        context.contentResolver.openInputStream(imageUri)?.use {
+                                            ExifInterface(it).getAttributeInt(
+                                                ExifInterface.TAG_ORIENTATION,
+                                                ExifInterface.ORIENTATION_NORMAL,
+                                            )
+                                        } ?: ExifInterface.ORIENTATION_NORMAL
+                                    val bitmap = applyExifRotation(rawBitmap, exifOrientation)
                                     val bounds = capturedBounds
                                     val scaleX = bitmap.width / bounds.width
                                     val scaleY = bitmap.height / bounds.height
@@ -265,4 +275,30 @@ private fun CropTopBar(
             )
         }
     }
+}
+
+private fun applyExifRotation(
+    bitmap: Bitmap,
+    orientation: Int,
+): Bitmap {
+    val matrix = Matrix()
+    when (orientation) {
+        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+        ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+        ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+        ExifInterface.ORIENTATION_TRANSPOSE -> {
+            matrix.postRotate(90f)
+            matrix.postScale(-1f, 1f)
+        }
+        ExifInterface.ORIENTATION_TRANSVERSE -> {
+            matrix.postRotate(-90f)
+            matrix.postScale(-1f, 1f)
+        }
+        else -> return bitmap
+    }
+    val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    bitmap.recycle()
+    return rotated
 }
