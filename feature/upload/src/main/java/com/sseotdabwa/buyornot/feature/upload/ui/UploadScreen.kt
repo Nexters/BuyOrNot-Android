@@ -759,29 +759,25 @@ private fun SelectedImagePreview(
             contentScale = ContentScale.Crop,
         )
 
-        Box(
+        Surface(
             modifier =
                 Modifier
                     .padding(
                         top = 4.dp,
                         end = 4.dp,
-                    ).size(20.dp)
-                    .background(
-                        color =
-                            BuyOrNotTheme.colors.black.copy(
-                                alpha = 0.4f,
-                            ),
-                        shape = CircleShape,
-                    ).clip(CircleShape)
-                    .clickable { onRemove() },
-            contentAlignment = Alignment.Center,
+                    ).size(20.dp),
+            shape = CircleShape,
+            color = BuyOrNotTheme.colors.black.copy(alpha = 0.4f),
+            onClick = onRemove,
         ) {
-            Icon(
-                imageVector = BuyOrNotIcons.Close.asImageVector(),
-                contentDescription = "Close",
-                modifier = Modifier.size(10.dp),
-                tint = BuyOrNotTheme.colors.gray0,
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = BuyOrNotIcons.Close.asImageVector(),
+                    contentDescription = "Close",
+                    modifier = Modifier.size(10.dp),
+                    tint = BuyOrNotTheme.colors.gray0,
+                )
+            }
         }
     }
 }
