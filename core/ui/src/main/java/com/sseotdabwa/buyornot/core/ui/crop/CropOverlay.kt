@@ -1,7 +1,22 @@
 package com.sseotdabwa.buyornot.core.ui.crop
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 
 internal enum class HandleZone { TL, TR, BL, BR, BODY, NONE }
@@ -53,4 +68,72 @@ internal fun Rect.clampTo(bounds: Rect): Rect {
     val clampedLeft = left.coerceIn(bounds.left, bounds.right - clampedSize)
     val clampedTop = top.coerceIn(bounds.top, bounds.bottom - clampedSize)
     return Rect(clampedLeft, clampedTop, clampedLeft + clampedSize, clampedTop + clampedSize)
+}
+
+@Composable
+internal fun CropOverlay(
+    cropRect: Rect,
+    imageBounds: Rect,
+    onCropRectChange: (Rect) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .pointerInput(cropRect, imageBounds) {
+                    val touchRadiusPx = 48.dp.toPx()
+                    val minSizePx = 96.dp.toPx()
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        val handle = detectHandle(down.position, cropRect, touchRadiusPx)
+                        if (handle == HandleZone.NONE) return@awaitEachGesture
+                        do {
+                            val event = awaitPointerEvent()
+                            val delta = event.changes.first().positionChange()
+                            val newRect =
+                                when (handle) {
+                                    HandleZone.BODY -> cropRect.translate(delta).clampTo(imageBounds)
+                                    else -> cropRect.resizeFrom(handle, delta, minSizePx).clampTo(imageBounds)
+                                }
+                            onCropRectChange(newRect)
+                            event.changes.forEach { if (it.positionChanged()) it.consume() }
+                        } while (event.changes.any { it.pressed })
+                    }
+                },
+    ) {
+        drawDarkMask(cropRect)
+        drawHandles(cropRect, handleLength = 20.dp, strokeWidth = 3.dp)
+    }
+}
+
+private fun DrawScope.drawDarkMask(cropRect: Rect) {
+    val maskColor = Color.Black.copy(alpha = 0.5f)
+    drawRect(maskColor, topLeft = Offset.Zero, size = Size(size.width, cropRect.top))
+    drawRect(maskColor, topLeft = Offset(0f, cropRect.bottom), size = Size(size.width, size.height - cropRect.bottom))
+    drawRect(maskColor, topLeft = Offset(0f, cropRect.top), size = Size(cropRect.left, cropRect.height))
+    drawRect(maskColor, topLeft = Offset(cropRect.right, cropRect.top), size = Size(size.width - cropRect.right, cropRect.height))
+}
+
+private fun DrawScope.drawHandles(
+    cropRect: Rect,
+    handleLength: Dp,
+    strokeWidth: Dp,
+) {
+    val len = handleLength.toPx()
+    val sw = strokeWidth.toPx()
+    val color = Color.White
+
+    // TL
+    drawLine(color, cropRect.topLeft, cropRect.topLeft + Offset(len, 0f), sw, StrokeCap.Square)
+    drawLine(color, cropRect.topLeft, cropRect.topLeft + Offset(0f, len), sw, StrokeCap.Square)
+    // TR
+    drawLine(color, cropRect.topRight, cropRect.topRight + Offset(-len, 0f), sw, StrokeCap.Square)
+    drawLine(color, cropRect.topRight, cropRect.topRight + Offset(0f, len), sw, StrokeCap.Square)
+    // BL
+    drawLine(color, cropRect.bottomLeft, cropRect.bottomLeft + Offset(len, 0f), sw, StrokeCap.Square)
+    drawLine(color, cropRect.bottomLeft, cropRect.bottomLeft + Offset(0f, -len), sw, StrokeCap.Square)
+    // BR
+    drawLine(color, cropRect.bottomRight, cropRect.bottomRight + Offset(-len, 0f), sw, StrokeCap.Square)
+    drawLine(color, cropRect.bottomRight, cropRect.bottomRight + Offset(0f, -len), sw, StrokeCap.Square)
 }
