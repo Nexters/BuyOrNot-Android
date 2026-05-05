@@ -569,7 +569,6 @@ private fun HomeFeedList(
                             selectedCategories = uiState.selectedCategories,
                             onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
                             onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
-                            selectedFilter = uiState.selectedFilter,
                             onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -604,7 +603,6 @@ private fun FilterChipRow(
     selectedCategories: Set<FeedCategory>,
     onAllCategorySelected: () -> Unit,
     onCategoryToggled: (FeedCategory) -> Unit,
-    selectedFilter: FilterChip,
     onShowSortSheet: () -> Unit,
 ) {
     val listState = rememberLazyListState()
