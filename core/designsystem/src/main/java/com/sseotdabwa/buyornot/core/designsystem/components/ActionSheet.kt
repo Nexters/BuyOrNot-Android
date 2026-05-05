@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -64,7 +63,11 @@ fun ActionSheet(
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(18.dp),
-            contentPadding = PaddingValues(vertical = 16.dp),
+            contentPadding =
+                PaddingValues(
+                    top = 26.dp,
+                    bottom = 30.dp,
+                ),
         ) {
             items(
                 count = actions.size,
@@ -92,9 +95,11 @@ private fun ActionItemRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(30.dp)
                 .clickable(onClick = onClick)
-                .padding(horizontal = 24.dp),
+                .padding(
+                    horizontal = 24.dp,
+                    vertical = 6.dp,
+                ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start,
     ) {
