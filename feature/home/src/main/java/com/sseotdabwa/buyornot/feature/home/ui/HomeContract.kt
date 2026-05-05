@@ -83,6 +83,7 @@ data class HomeUiState(
     val blockingNickname: String? = null,
     val blockingUserId: Long? = null,
     val showSortSheet: Boolean = false,
+    val isTooltipDismissed: Boolean = false,
 )
 
 /**
@@ -141,6 +142,8 @@ sealed interface HomeIntent {
     data object ShowSortSheet : HomeIntent
 
     data object DismissSortSheet : HomeIntent
+
+    data object DismissTooltip : HomeIntent
 }
 
 /**
