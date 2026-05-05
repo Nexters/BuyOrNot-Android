@@ -3,7 +3,7 @@ package com.sseotdabwa.buyornot.core.data.di
 import com.sseotdabwa.buyornot.core.data.repository.AppPreferencesRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.AppUpdateRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.AuthRepositoryImpl
-import com.sseotdabwa.buyornot.core.data.repository.FeedRepositoryImpl
+import com.sseotdabwa.buyornot.core.data.repository.FakeFeedRepository
 import com.sseotdabwa.buyornot.core.data.repository.NotificationRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.UserPreferencesRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.UserRepositoryImpl
@@ -29,7 +29,7 @@ internal abstract class DataModule {
     abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
 
     @Binds
-    abstract fun bindFeedRepository(impl: FeedRepositoryImpl): FeedRepository
+    abstract fun bindFeedRepository(impl: FakeFeedRepository): FeedRepository
 
     @Binds
     abstract fun bindNotificationRepository(impl: NotificationRepositoryImpl): NotificationRepository

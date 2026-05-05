@@ -507,14 +507,14 @@ private fun HomeFeedList(
                         item {
                             if (uiState.selectedTab == HomeTab.MY_FEED) {
                                 HomeFeedEmptyView(
-                                    modifier = Modifier.padding(top = 140.dp),
+                                    modifier = Modifier.padding(top = 120.dp),
                                     title = "아직 올린 투표가 없어요",
                                     description = "고민되는 상품의 투표를 올려보세요!",
                                     onUploadClick = onUploadClick,
                                 )
                             } else {
                                 HomeFeedEmptyView(
-                                    modifier = Modifier.padding(top = 120.dp),
+                                    modifier = Modifier.padding(top = 100.dp),
                                     title = "첫번째 투표를 올려보세요!",
                                     onUploadClick = onUploadClick,
                                 )
