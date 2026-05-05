@@ -369,7 +369,6 @@ private fun HomeFeedList(
         derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
     }
 
-    var showLinkTooltip by remember { mutableStateOf(true) }
     val tooltipTargetIndex =
         remember(filteredFeeds) {
             filteredFeeds.indexOfFirst { it.productLink != null }
@@ -454,12 +453,13 @@ private fun HomeFeedList(
                                 voterProfileImageUrl = uiState.voterProfileImageUrl,
                                 isGuest = uiState.userType == UserType.GUEST,
                                 modifier = Modifier.animateItem(),
-                                showProductLinkTooltip = showLinkTooltip && index == tooltipTargetIndex,
+                                showProductLinkTooltip = !uiState.isTooltipDismissed && index == tooltipTargetIndex,
                                 onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
                                 onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
                                 onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
                                 onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
                                 onLinkClick = onLinkClick,
+                                onTooltipDismissed = { onIntent(HomeIntent.DismissTooltip) },
                                 onImageClick = onImageClick,
                             )
                         }
@@ -507,14 +507,14 @@ private fun HomeFeedList(
                         item {
                             if (uiState.selectedTab == HomeTab.MY_FEED) {
                                 HomeFeedEmptyView(
-                                    modifier = Modifier.padding(top = 140.dp),
+                                    modifier = Modifier.padding(top = 120.dp),
                                     title = "아직 올린 투표가 없어요",
                                     description = "고민되는 상품의 투표를 올려보세요!",
                                     onUploadClick = onUploadClick,
                                 )
                             } else {
                                 HomeFeedEmptyView(
-                                    modifier = Modifier.padding(top = 120.dp),
+                                    modifier = Modifier.padding(top = 100.dp),
                                     title = "첫번째 투표를 올려보세요!",
                                     onUploadClick = onUploadClick,
                                 )
@@ -569,7 +569,6 @@ private fun HomeFeedList(
                             selectedCategories = uiState.selectedCategories,
                             onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
                             onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
-                            selectedFilter = uiState.selectedFilter,
                             onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -604,7 +603,6 @@ private fun FilterChipRow(
     selectedCategories: Set<FeedCategory>,
     onAllCategorySelected: () -> Unit,
     onCategoryToggled: (FeedCategory) -> Unit,
-    selectedFilter: FilterChip,
     onShowSortSheet: () -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -676,8 +674,12 @@ private fun FilterChipRow(
                             )
                         }
                     },
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding =
+                PaddingValues(
+                    start = 6.dp,
+                    end = 20.dp,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             item {
@@ -724,6 +726,7 @@ private fun FeedItemCard(
     onReport: (String) -> Unit,
     onBlock: (String) -> Unit,
     onLinkClick: (url: String) -> Unit,
+    onTooltipDismissed: () -> Unit = {},
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
     Column {
@@ -755,6 +758,7 @@ private fun FeedItemCard(
             productLink = feed.productLink,
             onLinkClick = onLinkClick,
             showProductLinkTooltip = showProductLinkTooltip,
+            onTooltipDismiss = onTooltipDismissed,
             onImageClick = onImageClick,
         )
 

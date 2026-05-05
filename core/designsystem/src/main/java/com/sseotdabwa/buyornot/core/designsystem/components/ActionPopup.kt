@@ -132,7 +132,11 @@ fun ActionPopupContent(
     ) {
         val pressedColor = BuyOrNotTheme.colors.gray200
         Column(
-            modifier = Modifier.padding(6.dp),
+            modifier =
+                Modifier.padding(
+                    horizontal = 6.dp,
+                    vertical = 10.dp,
+                ),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             items.forEach { (label, onClick) ->

@@ -86,6 +86,7 @@ fun FeedCard(
     productLink: String? = null,
     onLinkClick: (url: String) -> Unit = {},
     showProductLinkTooltip: Boolean = false,
+    onTooltipDismiss: () -> Unit = {},
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
     val hasVoted = userVotedOptionIndex != null
@@ -140,7 +141,10 @@ fun FeedCard(
                 price = price,
                 productLink = productLink,
                 showTooltip = tooltipVisible,
-                onTooltipDismiss = { tooltipVisible = false },
+                onTooltipDismiss = {
+                    tooltipVisible = false
+                    onTooltipDismiss()
+                },
                 onFullscreenClick = { page -> onImageClick(productImageUrls, page) },
                 onLinkClick = onLinkClick,
             )

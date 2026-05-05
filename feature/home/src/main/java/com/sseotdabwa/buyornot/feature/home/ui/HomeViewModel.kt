@@ -132,6 +132,7 @@ class HomeViewModel @Inject constructor(
             }
             is HomeIntent.ShowSortSheet -> updateState { it.copy(showSortSheet = true) }
             is HomeIntent.DismissSortSheet -> updateState { it.copy(showSortSheet = false) }
+            is HomeIntent.DismissTooltip -> updateState { it.copy(isTooltipDismissed = true) }
         }
     }
 
