@@ -674,8 +674,12 @@ private fun FilterChipRow(
                             )
                         }
                     },
-            contentPadding = PaddingValues(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding =
+                PaddingValues(
+                    start = 6.dp,
+                    end = 20.dp,
+                ),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             item {
