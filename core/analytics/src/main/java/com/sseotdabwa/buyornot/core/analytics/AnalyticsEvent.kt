@@ -17,6 +17,7 @@ sealed class AnalyticsEvent {
     ) : AnalyticsEvent()
 
     data class VoteCreateStarted(
+        val entrySource: String,
         val isLoggedIn: Boolean,
     ) : AnalyticsEvent()
 

@@ -32,6 +32,7 @@ class MixpanelAnalytics(
                     "vote_submitted"
                 }
                 is AnalyticsEvent.VoteCreateStarted -> {
+                    props.put("entry_source", entrySource)
                     props.put("is_logged_in", isLoggedIn)
                     "vote_create_started"
                 }
