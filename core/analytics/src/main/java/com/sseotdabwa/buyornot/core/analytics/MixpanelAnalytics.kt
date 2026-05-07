@@ -17,7 +17,6 @@ class MixpanelAnalytics(
         val name =
             when (this) {
                 is AnalyticsEvent.FeedViewed -> {
-                    props.put("entry_source", entrySource)
                     props.put("first_visible_item_index", firstVisibleItemIndex)
                     "feed_viewed"
                 }
@@ -33,7 +32,6 @@ class MixpanelAnalytics(
                     "vote_submitted"
                 }
                 is AnalyticsEvent.VoteCreateStarted -> {
-                    props.put("entry_source", entrySource)
                     props.put("is_logged_in", isLoggedIn)
                     "vote_create_started"
                 }

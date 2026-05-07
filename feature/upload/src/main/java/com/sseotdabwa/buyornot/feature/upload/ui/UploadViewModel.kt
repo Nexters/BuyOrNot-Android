@@ -30,7 +30,6 @@ class UploadViewModel @Inject constructor(
             val userType = userPreferencesRepository.userType.first()
             analytics.track(
                 AnalyticsEvent.VoteCreateStarted(
-                    entrySource = "home",
                     isLoggedIn = userType == UserType.SOCIAL,
                 ),
             )

@@ -2,7 +2,6 @@ package com.sseotdabwa.buyornot.core.analytics
 
 sealed class AnalyticsEvent {
     data class FeedViewed(
-        val entrySource: String,
         val firstVisibleItemIndex: Int,
     ) : AnalyticsEvent()
 
@@ -18,7 +17,6 @@ sealed class AnalyticsEvent {
     ) : AnalyticsEvent()
 
     data class VoteCreateStarted(
-        val entrySource: String,
         val isLoggedIn: Boolean,
     ) : AnalyticsEvent()
 

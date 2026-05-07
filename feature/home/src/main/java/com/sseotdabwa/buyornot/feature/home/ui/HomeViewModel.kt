@@ -139,7 +139,6 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.OnFeedScreenEntered ->
                 analytics.track(
                     AnalyticsEvent.FeedViewed(
-                        entrySource = "home",
                         firstVisibleItemIndex = intent.firstVisibleItemIndex,
                     ),
                 )
