@@ -26,6 +26,7 @@ dependencyResolutionManagement {
 rootProject.name = "BuyOrNot"
 include(":app")
 include(":domain")
+include(":core:analytics")
 include(":core:data")
 include(":core:network")
 include(":core:datastore")
