@@ -144,6 +144,15 @@ sealed interface HomeIntent {
     data object DismissSortSheet : HomeIntent
 
     data object DismissTooltip : HomeIntent
+
+    data class OnFeedScreenEntered(
+        val firstVisibleItemIndex: Int,
+    ) : HomeIntent
+
+    data class OnFeedScreenExited(
+        val lastVisibleItemIndex: Int,
+        val timeSpentSeconds: Float,
+    ) : HomeIntent
 }
 
 /**
