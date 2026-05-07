@@ -101,6 +101,7 @@ android {
 
 dependencies {
     implementation(projects.domain)
+    implementation(projects.core.analytics)
     implementation(projects.core.data)
     implementation(projects.core.network)
     implementation(projects.core.datastore)
