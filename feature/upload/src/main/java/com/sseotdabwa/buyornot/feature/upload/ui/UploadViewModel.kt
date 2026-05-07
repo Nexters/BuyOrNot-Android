@@ -5,19 +5,38 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.viewModelScope
+import com.sseotdabwa.buyornot.core.analytics.Analytics
+import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.FeedImage
+import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
+import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.feature.upload.util.LinkValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class UploadViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val analytics: Analytics,
 ) : BaseViewModel<UploadUiState, UploadIntent, UploadSideEffect>(UploadUiState()) {
+    init {
+        viewModelScope.launch {
+            val userType = userPreferencesRepository.userType.first()
+            analytics.track(
+                AnalyticsEvent.VoteCreateStarted(
+                    entrySource = "home",
+                    isLoggedIn = userType == UserType.SOCIAL,
+                ),
+            )
+        }
+    }
+
     companion object {
         private const val MAX_IMAGE_COUNT = 3
         private const val MAX_TITLE_LENGTH = 40
@@ -28,29 +47,29 @@ class UploadViewModel @Inject constructor(
         when (intent) {
             is UploadIntent.UpdateCategory ->
                 updateState {
-                    it.copy(category = intent.category, showCategorySheet = false)
+                    it.copy(category = intent.category, showCategorySheet = false, lastTouchedField = "category")
                 }
             is UploadIntent.UpdatePrice ->
                 updateState {
-                    it.copy(price = intent.digits, priceFieldValue = intent.textFieldValue)
+                    it.copy(price = intent.digits, priceFieldValue = intent.textFieldValue, lastTouchedField = "price")
                 }
             is UploadIntent.UpdateLink ->
-                updateState { it.copy(link = intent.link) }
+                updateState { it.copy(link = intent.link, lastTouchedField = "link") }
             is UploadIntent.UpdateTitle -> {
                 if (intent.title.length <= MAX_TITLE_LENGTH) {
-                    updateState { it.copy(title = intent.title) }
+                    updateState { it.copy(title = intent.title, lastTouchedField = "title") }
                 }
             }
             is UploadIntent.UpdateContent -> {
                 if (intent.content.length <= MAX_CONTENT_LENGTH) {
-                    updateState { it.copy(content = intent.content) }
+                    updateState { it.copy(content = intent.content, lastTouchedField = "content") }
                 }
             }
             is UploadIntent.AddImages -> {
                 val remaining = MAX_IMAGE_COUNT - currentState.selectedImageUris.size
                 val toAdd = intent.uris.take(remaining)
                 val hasOverflow = toAdd.size < intent.uris.size
-                updateState { it.copy(selectedImageUris = it.selectedImageUris + toAdd) }
+                updateState { it.copy(selectedImageUris = it.selectedImageUris + toAdd, lastTouchedField = "images") }
                 if (hasOverflow) sendSideEffect(UploadSideEffect.ShowSnackbar("최대 ${MAX_IMAGE_COUNT}장까지 추가할 수 있어요"))
             }
             is UploadIntent.RemoveImage ->
@@ -71,6 +90,14 @@ class UploadViewModel @Inject constructor(
                     it.copy(showPhotoPickerSheet = intent.isVisible)
                 }
             UploadIntent.NavigateBack -> {
+                if (currentState.hasInput) {
+                    analytics.track(
+                        AnalyticsEvent.VoteCreateAbandoned(
+                            filledFields = currentState.filledFields,
+                            lastStep = currentState.lastTouchedField,
+                        ),
+                    )
+                }
                 updateState {
                     it.copy(showExitDialog = false, showCategorySheet = false)
                 }
@@ -133,7 +160,14 @@ class UploadViewModel @Inject constructor(
                     title = title,
                     link = link,
                 )
-            }.onSuccess {
+            }.onSuccess { feedId ->
+                analytics.track(
+                    AnalyticsEvent.VoteCreateCompleted(
+                        itemId = feedId,
+                        voteTitle = currentState.title,
+                        optionCount = currentState.selectedImageUris.size,
+                    ),
+                )
                 updateState { it.copy(isLoading = false) }
                 sendSideEffect(UploadSideEffect.NavigateToHomeReview)
             }.onFailure { throwable ->

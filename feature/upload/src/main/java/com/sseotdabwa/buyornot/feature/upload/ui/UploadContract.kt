@@ -18,6 +18,7 @@ data class UploadUiState(
     val showExitDialog: Boolean = false,
     val showPhotoPickerSheet: Boolean = false,
     val categories: List<FeedCategory> = FeedCategory.entries,
+    val lastTouchedField: String? = null,
 ) {
     val hasInput: Boolean
         get() =
@@ -27,6 +28,17 @@ data class UploadUiState(
                 link.isNotEmpty() ||
                 title.isNotEmpty() ||
                 content.isNotEmpty()
+
+    val filledFields: List<String>
+        get() =
+            buildList {
+                if (selectedImageUris.isNotEmpty()) add("images")
+                if (category != null) add("category")
+                if (price.isNotEmpty()) add("price")
+                if (link.isNotEmpty()) add("link")
+                if (title.isNotEmpty()) add("title")
+                if (content.isNotEmpty()) add("content")
+            }
 }
 
 sealed interface UploadIntent {
