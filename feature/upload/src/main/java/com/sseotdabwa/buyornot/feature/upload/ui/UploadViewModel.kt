@@ -90,6 +90,10 @@ class UploadViewModel @Inject constructor(
                     it.copy(showPhotoPickerSheet = intent.isVisible)
                 }
             UploadIntent.NavigateBack -> {
+                updateState {
+                    it.copy(showExitDialog = false, showCategorySheet = false)
+                }
+                sendSideEffect(UploadSideEffect.NavigateBack)
                 if (currentState.hasInput) {
                     analytics.track(
                         AnalyticsEvent.VoteCreateAbandoned(
@@ -98,10 +102,6 @@ class UploadViewModel @Inject constructor(
                         ),
                     )
                 }
-                updateState {
-                    it.copy(showExitDialog = false, showCategorySheet = false)
-                }
-                sendSideEffect(UploadSideEffect.NavigateBack)
             }
         }
     }
@@ -161,6 +161,8 @@ class UploadViewModel @Inject constructor(
                     link = link,
                 )
             }.onSuccess { feedId ->
+                updateState { it.copy(isLoading = false) }
+                sendSideEffect(UploadSideEffect.NavigateToHomeReview)
                 analytics.track(
                     AnalyticsEvent.VoteCreateCompleted(
                         itemId = feedId,
@@ -168,8 +170,6 @@ class UploadViewModel @Inject constructor(
                         optionCount = currentState.selectedImageUris.size,
                     ),
                 )
-                updateState { it.copy(isLoading = false) }
-                sendSideEffect(UploadSideEffect.NavigateToHomeReview)
             }.onFailure { throwable ->
                 updateState { it.copy(isLoading = false) }
                 sendSideEffect(UploadSideEffect.ShowSnackbar("업로드에 실패했습니다."))

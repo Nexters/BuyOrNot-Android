@@ -284,17 +284,6 @@ class HomeViewModel @Inject constructor(
                     UserType.GUEST -> feedRepository.voteGuestFeed(feedId.toLong(), choice)
                 }
             }.onSuccess { voteResult ->
-                analytics.track(
-                    AnalyticsEvent.VoteSubmitted(
-                        feedId = targetFeed.id.toLong(),
-                        voteChoice = if (optionIndex == 0) "YES" else "NO",
-                        feedCategory =
-                            FeedCategory.entries
-                                .find { it.displayName == targetFeed.category }
-                                ?.name
-                                ?: targetFeed.category,
-                    ),
-                )
                 // 2. 최종 업데이트: 서버 응답으로 확정
                 updateState { state ->
                     val newAllFeeds =
@@ -315,6 +304,17 @@ class HomeViewModel @Inject constructor(
                         feeds = applyCategories(newAllFeeds, state.selectedCategories),
                     )
                 }
+                analytics.track(
+                    AnalyticsEvent.VoteSubmitted(
+                        feedId = targetFeed.id.toLong(),
+                        voteChoice = if (optionIndex == 0) "YES" else "NO",
+                        feedCategory =
+                            FeedCategory.entries
+                                .find { it.displayName == targetFeed.category }
+                                ?.name
+                                ?: targetFeed.category,
+                    ),
+                )
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
                 // 3. 롤백 (Rollback): 해당 피드만 원복, 나머지 동시 변경사항 보존
