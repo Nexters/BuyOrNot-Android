@@ -266,18 +266,6 @@ class HomeViewModel @Inject constructor(
             targetFeed.userVotedOptionIndex != null -> return
         }
 
-        analytics.track(
-            AnalyticsEvent.VoteSubmitted(
-                feedId = targetFeed.id.toLong(),
-                voteChoice = if (optionIndex == 0) "YES" else "NO",
-                feedCategory =
-                    FeedCategory.entries
-                        .find { it.displayName == targetFeed.category }
-                        ?.name
-                        ?: targetFeed.category,
-            ),
-        )
-
         // 1. 낙관적 업데이트 (Optimistic Update)
         updateState { state ->
             val newAllFeeds = optimisticVoteUpdate(state.allFeeds, feedId, optionIndex)
@@ -296,6 +284,17 @@ class HomeViewModel @Inject constructor(
                     UserType.GUEST -> feedRepository.voteGuestFeed(feedId.toLong(), choice)
                 }
             }.onSuccess { voteResult ->
+                analytics.track(
+                    AnalyticsEvent.VoteSubmitted(
+                        feedId = targetFeed.id.toLong(),
+                        voteChoice = if (optionIndex == 0) "YES" else "NO",
+                        feedCategory =
+                            FeedCategory.entries
+                                .find { it.displayName == targetFeed.category }
+                                ?.name
+                                ?: targetFeed.category,
+                    ),
+                )
                 // 2. 최종 업데이트: 서버 응답으로 확정
                 updateState { state ->
                     val newAllFeeds =
