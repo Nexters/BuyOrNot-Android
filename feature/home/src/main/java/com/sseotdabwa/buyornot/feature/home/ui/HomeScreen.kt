@@ -34,6 +34,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -363,6 +364,19 @@ private fun HomeFeedList(
     val listState = rememberLazyListState()
     val isEmptyViewVisible = filteredFeeds.isEmpty() && !uiState.isLoading && !uiState.hasError
     val isMyFeedEmpty = uiState.selectedTab == HomeTab.MY_FEED && isEmptyViewVisible
+
+    val enterTimeMs = remember { System.currentTimeMillis() }
+    DisposableEffect(Unit) {
+        onIntent(HomeIntent.OnFeedScreenEntered(firstVisibleItemIndex = listState.firstVisibleItemIndex))
+        onDispose {
+            onIntent(
+                HomeIntent.OnFeedScreenExited(
+                    lastVisibleItemIndex = listState.firstVisibleItemIndex,
+                    timeSpentSeconds = (System.currentTimeMillis() - enterTimeMs) / 1000f,
+                ),
+            )
+        }
+    }
     var headerHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
     val isAtTop by remember {

@@ -7,6 +7,7 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.analytics)
     implementation(projects.core.common)
     implementation(projects.domain)
     implementation(projects.core.designsystem)

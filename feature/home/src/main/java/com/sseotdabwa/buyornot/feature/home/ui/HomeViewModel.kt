@@ -2,6 +2,8 @@ package com.sseotdabwa.buyornot.feature.home.ui
 
 import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.sseotdabwa.buyornot.core.analytics.Analytics
+import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
@@ -28,6 +30,7 @@ class HomeViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val feedRepository: FeedRepository,
     private val userRepository: UserRepository,
+    private val analytics: Analytics,
 ) : BaseViewModel<HomeUiState, HomeIntent, HomeSideEffect>(HomeUiState()) {
     private var currentUserId: Long? = null
     private var isUserIdLoaded = false
@@ -133,6 +136,19 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.ShowSortSheet -> updateState { it.copy(showSortSheet = true) }
             is HomeIntent.DismissSortSheet -> updateState { it.copy(showSortSheet = false) }
             is HomeIntent.DismissTooltip -> updateState { it.copy(isTooltipDismissed = true) }
+            is HomeIntent.OnFeedScreenEntered ->
+                analytics.track(
+                    AnalyticsEvent.FeedViewed(
+                        firstVisibleItemIndex = intent.firstVisibleItemIndex,
+                    ),
+                )
+            is HomeIntent.OnFeedScreenExited ->
+                analytics.track(
+                    AnalyticsEvent.FeedExited(
+                        timeSpentSeconds = intent.timeSpentSeconds,
+                        lastVisibleItemIndex = intent.lastVisibleItemIndex,
+                    ),
+                )
         }
     }
 
@@ -288,6 +304,17 @@ class HomeViewModel @Inject constructor(
                         feeds = applyCategories(newAllFeeds, state.selectedCategories),
                     )
                 }
+                analytics.track(
+                    AnalyticsEvent.VoteSubmitted(
+                        feedId = targetFeed.id.toLong(),
+                        voteChoice = if (optionIndex == 0) "YES" else "NO",
+                        feedCategory =
+                            FeedCategory.entries
+                                .find { it.displayName == targetFeed.category }
+                                ?.name
+                                ?: targetFeed.category,
+                    ),
+                )
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
                 // 3. 롤백 (Rollback): 해당 피드만 원복, 나머지 동시 변경사항 보존
