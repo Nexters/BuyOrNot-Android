@@ -99,7 +99,8 @@ class SplashViewModel @Inject constructor(
 
         return when {
             currentVersion < updateInfo.minimumVersion -> UpdateDialogType.Force
-            updateInfo.updateStrategy == UpdateStrategy.FORCE -> UpdateDialogType.Force
+            updateInfo.updateStrategy == UpdateStrategy.FORCE &&
+                currentVersion < updateInfo.latestVersion -> UpdateDialogType.Force
             updateInfo.updateStrategy == UpdateStrategy.SOFT &&
                 currentVersion < updateInfo.latestVersion -> {
                 val lastShown = appPreferencesRepository.lastSoftUpdateShownTime.first()
