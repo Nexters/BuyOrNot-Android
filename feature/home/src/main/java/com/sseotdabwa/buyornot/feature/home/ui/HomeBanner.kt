@@ -86,7 +86,7 @@ fun HomeBanner(
                     shape = RoundedCornerShape(HomeBannerDefaults.BannerCornerRadius),
                     shadow =
                         Shadow(
-                            radius = 25.dp,
+                            radius = 40.dp,
                             color = Color(0xFFE0E3E5).copy(alpha = 0.6f),
                             offset = DpOffset(x = 0.dp, y = 4.dp),
                         ),

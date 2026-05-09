@@ -11,6 +11,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -706,7 +707,12 @@ private fun SelectedImagePreview(
         modifier =
             Modifier
                 .size(68.dp)
-                .clip(RoundedCornerShape(12.dp)),
+                .clip(RoundedCornerShape(12.dp))
+                .border(
+                    width = 1.dp,
+                    color = BuyOrNotTheme.colors.gray300,
+                    shape = RoundedCornerShape(12.dp),
+                ),
         contentAlignment = Alignment.TopEnd,
     ) {
         AsyncImage(

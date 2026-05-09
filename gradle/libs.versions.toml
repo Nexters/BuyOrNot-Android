@@ -40,6 +40,9 @@ googleid = "1.2.0"
 
 lottie = "6.7.1"
 
+# Analytics
+mixpanel = "7.5.3"
+
 # Firebase
 firebaseBom = "34.9.0"
 googleServices = "4.4.2"
@@ -127,6 +130,9 @@ firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashly
 firebase-config = { group = "com.google.firebase", name = "firebase-config" }
 
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
+
+# Analytics
+mixpanel-android = { group = "com.mixpanel.android", name = "mixpanel-android", version.ref = "mixpanel" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
