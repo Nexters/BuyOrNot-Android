@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.model.AppUpdateInfo
 import com.sseotdabwa.buyornot.domain.model.UpdateStrategy
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.AppPreferencesRepository
@@ -25,7 +26,7 @@ private const val TAG = "SplashUpdate"
 
 internal fun resolveUpdateDialogType(
     currentVersion: Int,
-    updateInfo: com.sseotdabwa.buyornot.domain.model.AppUpdateInfo?,
+    updateInfo: AppUpdateInfo?,
     lastSoftUpdateShownTime: Long,
     now: Long,
 ): UpdateDialogType {
@@ -33,10 +34,12 @@ internal fun resolveUpdateDialogType(
 
     return when {
         currentVersion < updateInfo.minimumVersion -> UpdateDialogType.Force
+        // currentVersion >= latestVersion이면 이미 최신 버전이므로 FORCE 팝업 표시 안 함
         updateInfo.updateStrategy == UpdateStrategy.FORCE &&
             currentVersion < updateInfo.latestVersion -> UpdateDialogType.Force
         updateInfo.updateStrategy == UpdateStrategy.SOFT &&
             currentVersion < updateInfo.latestVersion -> {
+            // lastSoftUpdateShownTime이 미래 값이면 시계 역행으로 판단, 표시된 적 없는 것으로 처리
             val effectiveLastShown = if (lastSoftUpdateShownTime > now) 0L else lastSoftUpdateShownTime
             if (now - effectiveLastShown >= SOFT_UPDATE_INTERVAL_MILLIS) {
                 UpdateDialogType.Soft
@@ -118,7 +121,7 @@ class SplashViewModel @Inject constructor(
 
     private suspend fun determineDialogType(
         currentVersion: Int,
-        updateInfo: com.sseotdabwa.buyornot.domain.model.AppUpdateInfo?,
+        updateInfo: AppUpdateInfo?,
     ): UpdateDialogType {
         val now = System.currentTimeMillis()
         val lastShown = appPreferencesRepository.lastSoftUpdateShownTime.first()
@@ -129,6 +132,8 @@ class SplashViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 appPreferencesRepository.updateLastSoftUpdateShownTime(System.currentTimeMillis())
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to save soft update shown time", e)
             } finally {

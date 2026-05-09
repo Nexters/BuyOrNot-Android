@@ -199,4 +199,22 @@ class SplashUpdateLogicTest {
             )
         }
     }
+
+    @Test
+    fun 최초_설치시_소프트_업데이트를_표시한다() {
+        // DataStore 기본값(0L)일 때 now - 0 >= SOFT_UPDATE_INTERVAL_MILLIS 이므로 Soft 반환
+        val result =
+            resolveUpdateDialogType(
+                currentVersion = 8,
+                updateInfo =
+                    AppUpdateInfo(
+                        latestVersion = 10,
+                        minimumVersion = 5,
+                        updateStrategy = UpdateStrategy.SOFT,
+                    ),
+                lastSoftUpdateShownTime = 0L,
+                now = SOFT_UPDATE_INTERVAL_MILLIS + 1L,
+            )
+        assertEquals(UpdateDialogType.Soft, result)
+    }
 }
