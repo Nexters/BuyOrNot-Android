@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.model.AppUpdateInfo
 import com.sseotdabwa.buyornot.domain.model.UpdateStrategy
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.AppPreferencesRepository
@@ -20,8 +21,35 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 private const val SPLASH_TIMEOUT_MILLIS = 2300L
-private const val SOFT_UPDATE_INTERVAL_MILLIS = 24 * 60 * 60 * 1000L
+internal const val SOFT_UPDATE_INTERVAL_MILLIS = 24 * 60 * 60 * 1000L
 private const val TAG = "SplashUpdate"
+
+internal fun resolveUpdateDialogType(
+    currentVersion: Int,
+    updateInfo: AppUpdateInfo?,
+    lastSoftUpdateShownTime: Long,
+    now: Long,
+): UpdateDialogType {
+    if (updateInfo == null) return UpdateDialogType.None
+
+    return when {
+        currentVersion < updateInfo.minimumVersion -> UpdateDialogType.Force
+        // currentVersion >= latestVersion이면 이미 최신 버전이므로 FORCE 팝업 표시 안 함
+        updateInfo.updateStrategy == UpdateStrategy.FORCE &&
+            currentVersion < updateInfo.latestVersion -> UpdateDialogType.Force
+        updateInfo.updateStrategy == UpdateStrategy.SOFT &&
+            currentVersion < updateInfo.latestVersion -> {
+            // lastSoftUpdateShownTime이 미래 값이면 시계 역행으로 판단, 표시된 적 없는 것으로 처리
+            val effectiveLastShown = if (lastSoftUpdateShownTime > now) 0L else lastSoftUpdateShownTime
+            if (now - effectiveLastShown >= SOFT_UPDATE_INTERVAL_MILLIS) {
+                UpdateDialogType.Soft
+            } else {
+                UpdateDialogType.None
+            }
+        }
+        else -> UpdateDialogType.None
+    }
+}
 
 /**
  * 스플래시 화면을 위한 ViewModel
@@ -93,30 +121,21 @@ class SplashViewModel @Inject constructor(
 
     private suspend fun determineDialogType(
         currentVersion: Int,
-        updateInfo: com.sseotdabwa.buyornot.domain.model.AppUpdateInfo?,
+        updateInfo: AppUpdateInfo?,
     ): UpdateDialogType {
-        if (updateInfo == null) return UpdateDialogType.None
-
-        return when {
-            currentVersion < updateInfo.minimumVersion -> UpdateDialogType.Force
-            updateInfo.updateStrategy == UpdateStrategy.FORCE -> UpdateDialogType.Force
-            updateInfo.updateStrategy == UpdateStrategy.SOFT &&
-                currentVersion < updateInfo.latestVersion -> {
-                val lastShown = appPreferencesRepository.lastSoftUpdateShownTime.first()
-                if (System.currentTimeMillis() - lastShown >= SOFT_UPDATE_INTERVAL_MILLIS) {
-                    UpdateDialogType.Soft
-                } else {
-                    UpdateDialogType.None
-                }
-            }
-            else -> UpdateDialogType.None
-        }
+        val now = System.currentTimeMillis()
+        val lastShown = appPreferencesRepository.lastSoftUpdateShownTime.first()
+        return resolveUpdateDialogType(currentVersion, updateInfo, lastShown, now)
     }
 
     private fun dismissSoftUpdate() {
         viewModelScope.launch {
             try {
                 appPreferencesRepository.updateLastSoftUpdateShownTime(System.currentTimeMillis())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save soft update shown time", e)
             } finally {
                 updateState { it.copy(updateDialogType = UpdateDialogType.None) }
             }
