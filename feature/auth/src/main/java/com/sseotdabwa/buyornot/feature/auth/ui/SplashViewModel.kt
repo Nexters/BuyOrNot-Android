@@ -20,8 +20,33 @@ import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
 private const val SPLASH_TIMEOUT_MILLIS = 2300L
-private const val SOFT_UPDATE_INTERVAL_MILLIS = 24 * 60 * 60 * 1000L
+internal const val SOFT_UPDATE_INTERVAL_MILLIS = 24 * 60 * 60 * 1000L
 private const val TAG = "SplashUpdate"
+
+internal fun resolveUpdateDialogType(
+    currentVersion: Int,
+    updateInfo: com.sseotdabwa.buyornot.domain.model.AppUpdateInfo?,
+    lastSoftUpdateShownTime: Long,
+    now: Long,
+): UpdateDialogType {
+    if (updateInfo == null) return UpdateDialogType.None
+
+    return when {
+        currentVersion < updateInfo.minimumVersion -> UpdateDialogType.Force
+        updateInfo.updateStrategy == UpdateStrategy.FORCE &&
+            currentVersion < updateInfo.latestVersion -> UpdateDialogType.Force
+        updateInfo.updateStrategy == UpdateStrategy.SOFT &&
+            currentVersion < updateInfo.latestVersion -> {
+            val effectiveLastShown = if (lastSoftUpdateShownTime > now) 0L else lastSoftUpdateShownTime
+            if (now - effectiveLastShown >= SOFT_UPDATE_INTERVAL_MILLIS) {
+                UpdateDialogType.Soft
+            } else {
+                UpdateDialogType.None
+            }
+        }
+        else -> UpdateDialogType.None
+    }
+}
 
 /**
  * 스플래시 화면을 위한 ViewModel
@@ -95,29 +120,17 @@ class SplashViewModel @Inject constructor(
         currentVersion: Int,
         updateInfo: com.sseotdabwa.buyornot.domain.model.AppUpdateInfo?,
     ): UpdateDialogType {
-        if (updateInfo == null) return UpdateDialogType.None
-
-        return when {
-            currentVersion < updateInfo.minimumVersion -> UpdateDialogType.Force
-            updateInfo.updateStrategy == UpdateStrategy.FORCE &&
-                currentVersion < updateInfo.latestVersion -> UpdateDialogType.Force
-            updateInfo.updateStrategy == UpdateStrategy.SOFT &&
-                currentVersion < updateInfo.latestVersion -> {
-                val lastShown = appPreferencesRepository.lastSoftUpdateShownTime.first()
-                if (System.currentTimeMillis() - lastShown >= SOFT_UPDATE_INTERVAL_MILLIS) {
-                    UpdateDialogType.Soft
-                } else {
-                    UpdateDialogType.None
-                }
-            }
-            else -> UpdateDialogType.None
-        }
+        val now = System.currentTimeMillis()
+        val lastShown = appPreferencesRepository.lastSoftUpdateShownTime.first()
+        return resolveUpdateDialogType(currentVersion, updateInfo, lastShown, now)
     }
 
     private fun dismissSoftUpdate() {
         viewModelScope.launch {
             try {
                 appPreferencesRepository.updateLastSoftUpdateShownTime(System.currentTimeMillis())
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save soft update shown time", e)
             } finally {
                 updateState { it.copy(updateDialogType = UpdateDialogType.None) }
             }
