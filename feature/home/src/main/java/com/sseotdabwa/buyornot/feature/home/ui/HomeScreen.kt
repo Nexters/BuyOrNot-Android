@@ -38,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -366,8 +367,9 @@ private fun HomeFeedList(
     val isEmptyViewVisible = filteredFeeds.isEmpty() && !uiState.isLoading && !uiState.hasError
     val isMyFeedEmpty = uiState.selectedTab == HomeTab.MY_FEED && isEmptyViewVisible
 
-    val enterTimeMs = remember { System.currentTimeMillis() }
+    var enterTimeMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LifecycleEventEffect(Lifecycle.Event.ON_START) {
+        enterTimeMs = System.currentTimeMillis()
         onIntent(HomeIntent.OnFeedScreenEntered(firstVisibleItemIndex = listState.firstVisibleItemIndex))
     }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
