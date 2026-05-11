@@ -27,8 +27,14 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     override val userType: Flow<UserType> =
         userPreferencesDataSource.userType.map { it.toDomain() }
 
+    override val userId: Flow<Long> = userPreferencesDataSource.userId
+
     override suspend fun updateUserType(userType: UserType) {
         userPreferencesDataSource.updateUserType(userType.toDatastore())
+    }
+
+    override suspend fun updateUserId(userId: Long) {
+        userPreferencesDataSource.updateUserId(userId)
     }
 
     override suspend fun updateDisplayName(newName: String) {

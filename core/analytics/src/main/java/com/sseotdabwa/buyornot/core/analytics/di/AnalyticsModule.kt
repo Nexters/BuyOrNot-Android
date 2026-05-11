@@ -30,6 +30,11 @@ object AnalyticsModule {
                     BuildConfig.MIXPANEL_TOKEN,
                     true,
                 )
-            MixpanelAnalytics(mixpanel)
+            val appVersion =
+                context.packageManager
+                    .getPackageInfo(context.packageName, 0)
+                    .versionName
+                    ?: "unknown"
+            MixpanelAnalytics(mixpanel, appVersion)
         }
 }

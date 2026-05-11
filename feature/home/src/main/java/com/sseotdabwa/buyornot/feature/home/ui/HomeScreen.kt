@@ -371,7 +371,11 @@ private fun HomeFeedList(
         onDispose {
             onIntent(
                 HomeIntent.OnFeedScreenExited(
-                    lastVisibleItemIndex = listState.firstVisibleItemIndex,
+                    lastVisibleItemIndex =
+                        listState.layoutInfo.visibleItemsInfo
+                            .lastOrNull()
+                            ?.index
+                            ?: listState.firstVisibleItemIndex,
                     timeSpentSeconds = (System.currentTimeMillis() - enterTimeMs) / 1000f,
                 ),
             )
