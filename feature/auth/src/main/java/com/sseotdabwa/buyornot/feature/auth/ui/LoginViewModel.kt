@@ -173,6 +173,7 @@ class LoginViewModel @Inject constructor(
         runCatchingCancellable {
             userRepository.getMyProfile()
         }.onSuccess { profile ->
+            userPreferencesRepository.updateUserId(profile.id)
             userPreferencesRepository.updateDisplayName(profile.nickname)
             userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
         }.onFailure { e ->

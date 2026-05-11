@@ -14,6 +14,7 @@ enum class UserType {
  * 사용자 프로필 및 인증 토큰을 관리합니다.
  */
 data class UserPreferences(
+    val userId: Long = 0L,
     val displayName: String = "손님",
     val profileImageUrl: String = "",
     val accessToken: String = "",

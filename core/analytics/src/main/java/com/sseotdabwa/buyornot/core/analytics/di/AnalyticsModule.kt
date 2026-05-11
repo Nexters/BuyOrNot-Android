@@ -20,9 +20,14 @@ object AnalyticsModule {
     @Singleton
     fun provideAnalytics(
         @ApplicationContext context: Context,
-    ): Analytics =
-        if (BuildConfig.DEBUG) {
-            DebugAnalytics()
+    ): Analytics {
+        val appVersion =
+            context.packageManager
+                .getPackageInfo(context.packageName, 0)
+                .versionName
+                ?: "unknown"
+        return if (BuildConfig.DEBUG) {
+            DebugAnalytics(appVersion)
         } else {
             val mixpanel =
                 MixpanelAPI.getInstance(
@@ -30,6 +35,12 @@ object AnalyticsModule {
                     BuildConfig.MIXPANEL_TOKEN,
                     true,
                 )
-            MixpanelAnalytics(mixpanel)
+            val appVersion =
+                context.packageManager
+                    .getPackageInfo(context.packageName, 0)
+                    .versionName
+                    ?: "unknown"
+            MixpanelAnalytics(mixpanel, appVersion)
         }
+    }
 }
