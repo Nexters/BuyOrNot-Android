@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.ui
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.analytics.Analytics
@@ -32,6 +33,7 @@ class BuyOrNotViewModel @Inject constructor(
         userPreferencesRepository.userId
             .distinctUntilChanged()
             .onEach { userId ->
+                Log.d("BuyOrNotViewModel", "userId: $userId")
                 analytics.identify(if (userId != 0L) userId.toString() else null)
             }.launchIn(viewModelScope)
     }
