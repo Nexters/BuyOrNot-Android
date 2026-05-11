@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.core.datastore
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -22,6 +23,7 @@ class UserPreferencesDataSourceImpl @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : UserPreferencesDataSource {
     private object Keys {
+        val USER_ID = longPreferencesKey("user_id")
         val DISPLAY_NAME = stringPreferencesKey("display_name")
         val PROFILE_IMAGE_URL = stringPreferencesKey("profile_image_url")
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
@@ -32,6 +34,7 @@ class UserPreferencesDataSourceImpl @Inject constructor(
     override val preferences: Flow<UserPreferences> =
         context.userPreferencesDataStore.data.map { prefs ->
             UserPreferences(
+                userId = prefs[Keys.USER_ID] ?: UserPreferences().userId,
                 displayName = prefs[Keys.DISPLAY_NAME] ?: UserPreferences().displayName,
                 profileImageUrl = prefs[Keys.PROFILE_IMAGE_URL] ?: UserPreferences().profileImageUrl,
                 accessToken = prefs[Keys.ACCESS_TOKEN] ?: UserPreferences().accessToken,
@@ -47,6 +50,9 @@ class UserPreferencesDataSourceImpl @Inject constructor(
             )
         }
 
+    override val userId: Flow<Long> =
+        context.userPreferencesDataStore.data.map { it[Keys.USER_ID] ?: 0L }
+
     override val accessToken: Flow<String> = context.userPreferencesDataStore.data.map { it[Keys.ACCESS_TOKEN] ?: "" }
 
     override val userType: Flow<UserType> =
@@ -59,6 +65,12 @@ class UserPreferencesDataSourceImpl @Inject constructor(
                 }
             } ?: UserType.GUEST
         }
+
+    override suspend fun updateUserId(userId: Long) {
+        context.userPreferencesDataStore.edit { prefs ->
+            prefs[Keys.USER_ID] = userId
+        }
+    }
 
     override suspend fun updateDisplayName(newName: String) {
         context.userPreferencesDataStore.edit { prefs ->
@@ -90,6 +102,7 @@ class UserPreferencesDataSourceImpl @Inject constructor(
 
     override suspend fun clearUserInfo() {
         context.userPreferencesDataStore.edit { prefs ->
+            prefs.remove(Keys.USER_ID)
             prefs.remove(Keys.ACCESS_TOKEN)
             prefs.remove(Keys.REFRESH_TOKEN)
             prefs.remove(Keys.PROFILE_IMAGE_URL)

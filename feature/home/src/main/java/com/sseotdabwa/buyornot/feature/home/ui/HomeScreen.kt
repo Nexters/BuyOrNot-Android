@@ -34,11 +34,11 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -60,6 +60,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotAlertDialog
@@ -365,17 +367,22 @@ private fun HomeFeedList(
     val isEmptyViewVisible = filteredFeeds.isEmpty() && !uiState.isLoading && !uiState.hasError
     val isMyFeedEmpty = uiState.selectedTab == HomeTab.MY_FEED && isEmptyViewVisible
 
-    val enterTimeMs = remember { System.currentTimeMillis() }
-    DisposableEffect(Unit) {
+    var enterTimeMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LifecycleEventEffect(Lifecycle.Event.ON_START) {
+        enterTimeMs = System.currentTimeMillis()
         onIntent(HomeIntent.OnFeedScreenEntered(firstVisibleItemIndex = listState.firstVisibleItemIndex))
-        onDispose {
-            onIntent(
-                HomeIntent.OnFeedScreenExited(
-                    lastVisibleItemIndex = listState.firstVisibleItemIndex,
-                    timeSpentSeconds = (System.currentTimeMillis() - enterTimeMs) / 1000f,
-                ),
-            )
-        }
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        onIntent(
+            HomeIntent.OnFeedScreenExited(
+                lastVisibleItemIndex =
+                    listState.layoutInfo.visibleItemsInfo
+                        .lastOrNull()
+                        ?.index
+                        ?: listState.firstVisibleItemIndex,
+                timeSpentSeconds = (System.currentTimeMillis() - enterTimeMs) / 1000f,
+            ),
+        )
     }
     var headerHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current

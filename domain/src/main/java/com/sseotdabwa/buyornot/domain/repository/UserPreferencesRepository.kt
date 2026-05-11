@@ -25,9 +25,19 @@ interface UserPreferencesRepository {
     val userType: Flow<UserType>
 
     /**
+     * 현재 로그인된 사용자 ID를 Flow로 제공 (비로그인 시 0L)
+     */
+    val userId: Flow<Long>
+
+    /**
      * 사용자 타입 업데이트
      */
     suspend fun updateUserType(userType: UserType)
+
+    /**
+     * 사용자 ID 업데이트
+     */
+    suspend fun updateUserId(userId: Long)
 
     /**
      * 표시 이름 업데이트

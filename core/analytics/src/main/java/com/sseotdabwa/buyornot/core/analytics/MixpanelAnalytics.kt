@@ -6,10 +6,30 @@ import org.json.JSONObject
 
 class MixpanelAnalytics(
     private val mixpanel: MixpanelAPI,
+    appVersion: String,
 ) : Analytics {
+    init {
+        mixpanel.registerSuperProperties(
+            JSONObject().apply {
+                put("platform", "android")
+                put("app_version", appVersion)
+                put("user_id", JSONObject.NULL)
+            },
+        )
+    }
+
     override fun track(event: AnalyticsEvent) {
         val (name, props) = event.toMixpanel()
         mixpanel.track(name, props)
+    }
+
+    override fun identify(userId: String?) {
+        if (userId != null) {
+            mixpanel.identify(userId)
+        }
+        mixpanel.registerSuperProperties(
+            JSONObject().apply { put("user_id", userId ?: JSONObject.NULL) },
+        )
     }
 
     private fun AnalyticsEvent.toMixpanel(): Pair<String, JSONObject> {

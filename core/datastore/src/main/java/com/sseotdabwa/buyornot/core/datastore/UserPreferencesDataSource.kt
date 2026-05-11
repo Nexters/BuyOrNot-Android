@@ -14,6 +14,10 @@ interface UserPreferencesDataSource {
 
     val userType: Flow<UserType>
 
+    val userId: Flow<Long>
+
+    suspend fun updateUserId(userId: Long)
+
     suspend fun updateDisplayName(newName: String)
 
     suspend fun updateProfileImageUrl(newUrl: String)

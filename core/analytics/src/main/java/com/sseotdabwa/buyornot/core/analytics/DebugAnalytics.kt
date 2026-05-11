@@ -6,4 +6,8 @@ class DebugAnalytics : Analytics {
     override fun track(event: AnalyticsEvent) {
         Log.d("Analytics", event.toString())
     }
+
+    override fun identify(userId: String?) {
+        Log.d("Analytics", "identify: userId=$userId")
+    }
 }
