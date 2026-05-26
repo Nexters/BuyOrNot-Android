@@ -11,5 +11,7 @@ enum class FeedCategory(
     TRAVEL("여행 쇼핑템"),
     HEALTH("헬스 ∙ 운동용품"),
     BOOK("도서"),
+    INTERIOR("인테리어"),
+    KITCHEN("주방 ∙ 식기"),
     ETC("기타"),
 }
