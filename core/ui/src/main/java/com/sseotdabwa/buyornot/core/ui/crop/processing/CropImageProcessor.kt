@@ -66,11 +66,14 @@ private fun downscaleToMaxDimension(
     return scaled
 }
 
+private const val CROPPED_IMAGES_DIR = "cropped_images"
+
 private fun saveJpeg(
     context: Context,
     bitmap: Bitmap,
 ): Uri {
-    val file = File(context.cacheDir, "edit_${System.currentTimeMillis()}.jpg")
+    val dir = File(context.cacheDir, CROPPED_IMAGES_DIR).apply { mkdirs() }
+    val file = File(dir, "edit_${System.currentTimeMillis()}.jpg")
     FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it) }
     bitmap.recycle()
     return FileProvider.getUriForFile(
