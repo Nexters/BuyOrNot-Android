@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
+import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 
 @Composable
@@ -34,16 +35,17 @@ internal fun IdleActionBar(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ActionButton(label = "자르기", onClick = onCropClick)
+        ActionButton(label = "자르기", icon = BuyOrNotIcons.Crop, onClick = onCropClick)
         androidx.compose.foundation.layout
             .Spacer(modifier = Modifier.width(90.dp))
-        ActionButton(label = "회전", onClick = onRotateClick)
+        ActionButton(label = "회전", icon = BuyOrNotIcons.Rotate, onClick = onRotateClick)
     }
 }
 
 @Composable
 private fun ActionButton(
     label: String,
+    icon: IconResource,
     onClick: () -> Unit,
 ) {
     Column(
@@ -54,7 +56,7 @@ private fun ActionButton(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
-            imageVector = BuyOrNotIcons.Close.asImageVector(),
+            imageVector = icon.asImageVector(),
             contentDescription = label,
             tint = Color.White,
             modifier = Modifier.size(20.dp),

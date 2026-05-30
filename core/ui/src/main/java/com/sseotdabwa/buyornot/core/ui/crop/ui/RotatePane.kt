@@ -76,7 +76,7 @@ internal fun RotatePane(
                 modifier = Modifier.size(48.dp),
             ) {
                 Icon(
-                    imageVector = BuyOrNotIcons.Close.asImageVector(),
+                    imageVector = BuyOrNotIcons.Rotate.asImageVector(),
                     contentDescription = "반시계 방향 90도 회전",
                     tint = Color.White,
                 )
