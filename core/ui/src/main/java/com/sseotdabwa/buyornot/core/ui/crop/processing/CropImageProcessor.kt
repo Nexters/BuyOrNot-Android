@@ -52,7 +52,7 @@ private fun readExifOrientation(
         )
     } ?: ExifInterface.ORIENTATION_NORMAL
 
-private fun applyQuarterRotation(
+internal fun applyQuarterRotation(
     bitmap: Bitmap,
     quarters: Int,
 ): Bitmap {
@@ -64,7 +64,7 @@ private fun applyQuarterRotation(
     return rotated
 }
 
-private fun cropFromNormalized(
+internal fun cropFromNormalized(
     bitmap: Bitmap,
     rect: com.sseotdabwa.buyornot.core.ui.crop.state.NormalizedRect,
 ): Bitmap {
