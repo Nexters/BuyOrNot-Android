@@ -27,7 +27,7 @@ internal fun IdlePreview(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var bitmap by remember(imageUri) { mutableStateOf<Bitmap?>(null) }
+    var bitmap by remember(imageUri, editSpec) { mutableStateOf<Bitmap?>(null) }
 
     LaunchedEffect(imageUri, editSpec) {
         produceEditedPreview(context, imageUri, editSpec).onSuccess { bitmap = it }

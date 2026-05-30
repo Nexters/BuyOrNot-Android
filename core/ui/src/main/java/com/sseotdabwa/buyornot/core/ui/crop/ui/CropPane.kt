@@ -51,7 +51,7 @@ internal fun CropPane(
         mutableStateOf(editSpec.crop?.rectNormalized ?: NormalizedRect.Full)
     }
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
-    var rotatedBitmap by remember(imageUri) { mutableStateOf<Bitmap?>(null) }
+    var rotatedBitmap by remember(imageUri, editSpec.rotationQuarters) { mutableStateOf<Bitmap?>(null) }
 
     LaunchedEffect(imageUri, editSpec.rotationQuarters) {
         produceEditedPreview(context, imageUri, editSpec.copy(crop = null))

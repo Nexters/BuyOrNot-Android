@@ -117,10 +117,15 @@ class UploadViewModel @Inject constructor(
     private fun onCropConfirmed(croppedUri: Uri) {
         val state = currentState
         if (state.recropIndex != null) {
-            val original = state.selectedImages[state.recropIndex].originalUri
+            val idx = state.recropIndex
+            if (idx !in state.selectedImages.indices) {
+                updateState { it.copy(recropIndex = null, currentCropOriginal = null) }
+                return
+            }
+            val original = state.selectedImages[idx].originalUri
             val updated =
                 state.selectedImages.toMutableList().apply {
-                    set(state.recropIndex, ImageEntry(originalUri = original, displayUri = croppedUri))
+                    set(idx, ImageEntry(originalUri = original, displayUri = croppedUri))
                 }
             updateState { it.copy(selectedImages = updated, recropIndex = null, currentCropOriginal = null) }
         } else {
