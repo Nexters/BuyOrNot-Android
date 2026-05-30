@@ -51,6 +51,7 @@ firebaseAppDistribution = "5.1.1"
 
 # Code Quality
 ktlint = "14.0.1"
+exifinterface = "1.3.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -133,6 +134,7 @@ lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", versio
 
 # Analytics
 mixpanel-android = { group = "com.mixpanel.android", name = "mixpanel-android", version.ref = "mixpanel" }
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

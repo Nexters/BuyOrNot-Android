@@ -3,8 +3,8 @@ package com.sseotdabwa.buyornot.core.ui.crop.processing
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.ExifInterface
 import android.net.Uri
+import androidx.exifinterface.media.ExifInterface
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

@@ -18,6 +18,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.ui.crop.CropOverlay
@@ -109,4 +110,24 @@ internal fun CropPane(
             },
         )
     }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 375, heightDp = 812)
+@Composable
+private fun CropPaneFreePreview() {
+    CropPane(
+        imageUri = Uri.EMPTY,
+        editSpec = EditSpec(crop = CropSpec(AspectRatio.Free, NormalizedRect.Full)),
+        onControllerReady = {},
+    )
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 375, heightDp = 812)
+@Composable
+private fun CropPane1x1Preview() {
+    CropPane(
+        imageUri = Uri.EMPTY,
+        editSpec = EditSpec(crop = CropSpec(AspectRatio.R1x1, NormalizedRect(0.1f, 0.1f, 0.7f, 0.7f))),
+        onControllerReady = {},
+    )
 }

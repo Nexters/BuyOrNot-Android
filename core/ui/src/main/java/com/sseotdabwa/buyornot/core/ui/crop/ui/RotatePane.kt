@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
@@ -83,4 +84,24 @@ internal fun RotatePane(
             }
         }
     }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 375, heightDp = 812)
+@Composable
+private fun RotatePane0Preview() {
+    RotatePane(
+        imageUri = Uri.EMPTY,
+        editSpec = EditSpec(rotationQuarters = 0),
+        onControllerReady = {},
+    )
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 375, heightDp = 812)
+@Composable
+private fun RotatePane1QuarterPreview() {
+    RotatePane(
+        imageUri = Uri.EMPTY,
+        editSpec = EditSpec(rotationQuarters = 1),
+        onControllerReady = {},
+    )
 }

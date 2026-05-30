@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
@@ -62,4 +63,37 @@ internal fun EditTopBar(
             )
         }
     }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+private fun EditTopBarIdlePreview() {
+    EditTopBar(
+        mode = EditMode.Idle,
+        isConfirmEnabled = true,
+        onLeftAction = {},
+        onConfirm = {},
+    )
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+private fun EditTopBarCropPreview() {
+    EditTopBar(
+        mode = EditMode.Crop,
+        isConfirmEnabled = true,
+        onLeftAction = {},
+        onConfirm = {},
+    )
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000)
+@Composable
+private fun EditTopBarRotatePreview() {
+    EditTopBar(
+        mode = EditMode.Rotate,
+        isConfirmEnabled = false,
+        onLeftAction = {},
+        onConfirm = {},
+    )
 }

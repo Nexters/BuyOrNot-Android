@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import com.sseotdabwa.buyornot.core.ui.crop.processing.produceEditedPreview
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 
@@ -45,4 +46,13 @@ internal fun IdlePreview(
             )
         }
     }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 375, heightDp = 812)
+@Composable
+private fun IdlePreviewPlaceholderPreview() {
+    IdlePreview(
+        imageUri = Uri.EMPTY,
+        editSpec = EditSpec(),
+    )
 }
