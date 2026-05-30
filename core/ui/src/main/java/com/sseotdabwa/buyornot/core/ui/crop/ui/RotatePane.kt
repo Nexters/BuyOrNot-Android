@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 
 internal data class RotatePaneController(
@@ -79,7 +80,7 @@ internal fun RotatePane(
                 Icon(
                     imageVector = BuyOrNotIcons.Rotate.asImageVector(),
                     contentDescription = "반시계 방향 90도 회전",
-                    tint = Color.White,
+                    tint = BuyOrNotTheme.colors.gray0,
                 )
             }
         }

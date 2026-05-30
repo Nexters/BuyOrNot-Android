@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditMode
 
 @Composable
@@ -52,14 +53,14 @@ internal fun EditTopBar(
             Icon(
                 imageVector = leftIcon.asImageVector(),
                 contentDescription = leftContentDescription,
-                tint = Color.White,
+                tint = BuyOrNotTheme.colors.gray0,
             )
         }
         Spacer(modifier = Modifier.weight(1f))
         TextButton(onClick = onConfirm, enabled = isConfirmEnabled) {
             Text(
                 text = "완료",
-                color = if (isConfirmEnabled) Color.White else Color.White.copy(alpha = 0.3f),
+                color = BuyOrNotTheme.colors.gray0,
             )
         }
     }
