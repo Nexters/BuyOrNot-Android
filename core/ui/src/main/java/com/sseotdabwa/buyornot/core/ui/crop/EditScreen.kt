@@ -30,8 +30,6 @@ import com.sseotdabwa.buyornot.core.ui.crop.ui.CropPaneController
 import com.sseotdabwa.buyornot.core.ui.crop.ui.EditTopBar
 import com.sseotdabwa.buyornot.core.ui.crop.ui.IdleActionBar
 import com.sseotdabwa.buyornot.core.ui.crop.ui.IdlePreview
-import com.sseotdabwa.buyornot.core.ui.crop.ui.RotatePane
-import com.sseotdabwa.buyornot.core.ui.crop.ui.RotatePaneController
 import kotlinx.coroutines.launch
 
 @Composable
@@ -50,7 +48,6 @@ fun EditScreen(
     var pendingError by remember { mutableStateOf<String?>(null) }
 
     var cropController by remember { mutableStateOf<CropPaneController?>(null) }
-    var rotateController by remember { mutableStateOf<RotatePaneController?>(null) }
 
     LaunchedEffect(pendingError) {
         pendingError?.let {
@@ -70,10 +67,6 @@ fun EditScreen(
                         EditMode.Idle -> onCancel()
                         EditMode.Crop -> {
                             cropController = null
-                            mode = EditMode.Idle
-                        }
-                        EditMode.Rotate -> {
-                            rotateController = null
                             mode = EditMode.Idle
                         }
                     }
@@ -99,13 +92,6 @@ fun EditScreen(
                             cropController = null
                             mode = EditMode.Idle
                         }
-                        EditMode.Rotate -> {
-                            rotateController?.let {
-                                editSpec = reduce(editSpec, EditEvent.CommitRotate(it.commit()))
-                            }
-                            rotateController = null
-                            mode = EditMode.Idle
-                        }
                     }
                 },
             )
@@ -115,9 +101,15 @@ fun EditScreen(
                 EditMode.Idle ->
                     IdleActionBar(
                         onCropClick = { mode = EditMode.Crop },
-                        onRotateClick = { mode = EditMode.Rotate },
+                        onRotateClick = {
+                            editSpec =
+                                reduce(
+                                    editSpec,
+                                    EditEvent.CommitRotate(editSpec.rotationQuarters + 1),
+                                )
+                        },
                     )
-                EditMode.Crop, EditMode.Rotate -> { /* mode-specific bottom is inside the Pane */ }
+                EditMode.Crop -> { /* mode-specific bottom is inside the Pane */ }
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -137,12 +129,6 @@ fun EditScreen(
                         imageUri = imageUri,
                         editSpec = editSpec,
                         onControllerReady = { cropController = it },
-                    )
-                EditMode.Rotate ->
-                    RotatePane(
-                        imageUri = imageUri,
-                        editSpec = editSpec,
-                        onControllerReady = { rotateController = it },
                     )
             }
             if (isProcessing) {

@@ -31,13 +31,12 @@ internal fun EditTopBar(
     val leftIcon =
         when (mode) {
             EditMode.Idle -> BuyOrNotIcons.ArrowLeft
-            EditMode.Crop, EditMode.Rotate -> BuyOrNotIcons.Close
+            EditMode.Crop -> BuyOrNotIcons.Close
         }
     val leftContentDescription =
         when (mode) {
             EditMode.Idle -> "취소"
             EditMode.Crop -> "자르기 취소"
-            EditMode.Rotate -> "회전 취소"
         }
 
     Row(
@@ -84,17 +83,6 @@ private fun EditTopBarCropPreview() {
     EditTopBar(
         mode = EditMode.Crop,
         isConfirmEnabled = true,
-        onLeftAction = {},
-        onConfirm = {},
-    )
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFF000000)
-@Composable
-private fun EditTopBarRotatePreview() {
-    EditTopBar(
-        mode = EditMode.Rotate,
-        isConfirmEnabled = false,
         onLeftAction = {},
         onConfirm = {},
     )
