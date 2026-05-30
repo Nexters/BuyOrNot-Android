@@ -1,6 +1,8 @@
 package com.sseotdabwa.buyornot.core.ui.crop.ui
 
+import android.graphics.Bitmap
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,15 +19,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.ui.crop.CropOverlay
 import com.sseotdabwa.buyornot.core.ui.crop.geometry.computeRectForRatio
+import com.sseotdabwa.buyornot.core.ui.crop.processing.produceEditedPreview
 import com.sseotdabwa.buyornot.core.ui.crop.state.AspectRatio
 import com.sseotdabwa.buyornot.core.ui.crop.state.CropSpec
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
@@ -41,22 +45,28 @@ internal fun CropPane(
     onControllerReady: (CropPaneController) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     var tempRatio by remember { mutableStateOf(editSpec.crop?.ratio ?: AspectRatio.Free) }
     var tempRect by remember {
         mutableStateOf(editSpec.crop?.rectNormalized ?: NormalizedRect.Full)
     }
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
-    var intrinsicSize by remember { mutableStateOf(Size.Unspecified) }
+    var rotatedBitmap by remember(imageUri) { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(imageUri, editSpec.rotationQuarters) {
+        produceEditedPreview(context, imageUri, editSpec.copy(crop = null))
+            .onSuccess { rotatedBitmap = it }
+    }
+
+    val intrinsicSize: Size =
+        rotatedBitmap?.let { Size(it.width.toFloat(), it.height.toFloat()) } ?: Size.Unspecified
 
     val imageBounds: Rect? =
-        remember(containerSize, intrinsicSize, editSpec.rotationQuarters) {
+        remember(containerSize, intrinsicSize) {
             if (containerSize == IntSize.Zero || intrinsicSize == Size.Unspecified) return@remember null
-            val q = editSpec.rotationQuarters
-            val effectiveWidth = if (q % 2 == 0) intrinsicSize.width else intrinsicSize.height
-            val effectiveHeight = if (q % 2 == 0) intrinsicSize.height else intrinsicSize.width
-            val scale = minOf(containerSize.width / effectiveWidth, containerSize.height / effectiveHeight)
-            val displayedWidth = effectiveWidth * scale
-            val displayedHeight = effectiveHeight * scale
+            val scale = minOf(containerSize.width / intrinsicSize.width, containerSize.height / intrinsicSize.height)
+            val displayedWidth = intrinsicSize.width * scale
+            val displayedHeight = intrinsicSize.height * scale
             val left = (containerSize.width - displayedWidth) / 2f
             val top = (containerSize.height - displayedHeight) / 2f
             Rect(left, top, left + displayedWidth, top + displayedHeight)
@@ -77,24 +87,14 @@ internal fun CropPane(
                     .onSizeChanged { containerSize = it },
             contentAlignment = Alignment.Center,
         ) {
-            AsyncImage(
-                model = imageUri,
-                contentDescription = null,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .graphicsLayer { rotationZ = -90f * editSpec.rotationQuarters },
-                contentScale = ContentScale.Fit,
-                onSuccess = { state ->
-                    intrinsicSize =
-                        Size(
-                            state.result.drawable.intrinsicWidth
-                                .toFloat(),
-                            state.result.drawable.intrinsicHeight
-                                .toFloat(),
-                        )
-                },
-            )
+            rotatedBitmap?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
+                )
+            }
             if (imageBounds != null) {
                 CropOverlay(
                     cropRect = tempRect,
