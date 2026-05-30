@@ -90,7 +90,8 @@ internal fun CropOverlay(
         if (bounds.width <= 0f || bounds.height <= 0f) return@Canvas
         val rectPx = cropRectState.value.toPixelRect(bounds)
         drawDarkMask(rectPx)
-        drawCornerCircles(rectPx, diameter = 22.dp, strokeWidth = 1.dp, color = handleColor)
+        drawCropBorder(rectPx, strokeWidth = 1.dp, color = handleColor)
+        drawCornerCircles(rectPx, diameter = 22.dp, color = handleColor)
     }
 }
 
@@ -103,25 +104,36 @@ private fun NormalizedRect.toPixelRect(bounds: Rect): Rect =
     )
 
 private fun DrawScope.drawDarkMask(cropRect: Rect) {
-    val maskColor = Color.Black.copy(alpha = 0.5f)
+    val maskColor = Color.Black.copy(alpha = 0.7f)
     drawRect(maskColor, topLeft = Offset.Zero, size = Size(size.width, cropRect.top))
     drawRect(maskColor, topLeft = Offset(0f, cropRect.bottom), size = Size(size.width, size.height - cropRect.bottom))
     drawRect(maskColor, topLeft = Offset(0f, cropRect.top), size = Size(cropRect.left, cropRect.height))
     drawRect(maskColor, topLeft = Offset(cropRect.right, cropRect.top), size = Size(size.width - cropRect.right, cropRect.height))
 }
 
-private fun DrawScope.drawCornerCircles(
+private fun DrawScope.drawCropBorder(
     cropRect: Rect,
-    diameter: Dp,
     strokeWidth: Dp,
     color: Color,
 ) {
+    drawRect(
+        color = color,
+        topLeft = cropRect.topLeft,
+        size = Size(cropRect.width, cropRect.height),
+        style = Stroke(width = strokeWidth.toPx()),
+    )
+}
+
+private fun DrawScope.drawCornerCircles(
+    cropRect: Rect,
+    diameter: Dp,
+    color: Color,
+) {
     val radius = diameter.toPx() / 2f
-    val stroke = Stroke(width = strokeWidth.toPx())
-    drawCircle(color = color, radius = radius, center = cropRect.topLeft, style = stroke)
-    drawCircle(color = color, radius = radius, center = cropRect.topRight, style = stroke)
-    drawCircle(color = color, radius = radius, center = cropRect.bottomLeft, style = stroke)
-    drawCircle(color = color, radius = radius, center = cropRect.bottomRight, style = stroke)
+    drawCircle(color = color, radius = radius, center = cropRect.topLeft)
+    drawCircle(color = color, radius = radius, center = cropRect.topRight)
+    drawCircle(color = color, radius = radius, center = cropRect.bottomLeft)
+    drawCircle(color = color, radius = radius, center = cropRect.bottomRight)
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 375, heightDp = 812)
