@@ -65,16 +65,13 @@ class UploadViewModel @Inject constructor(
                     updateState { it.copy(content = intent.content, lastTouchedField = "content") }
                 }
             }
-            is UploadIntent.AddImages -> {
-                val remaining = MAX_IMAGE_COUNT - currentState.selectedImageUris.size
-                val toAdd = intent.uris.take(remaining)
-                val hasOverflow = toAdd.size < intent.uris.size
-                updateState { it.copy(selectedImageUris = it.selectedImageUris + toAdd, lastTouchedField = "images") }
-                if (hasOverflow) sendSideEffect(UploadSideEffect.ShowSnackbar("최대 ${MAX_IMAGE_COUNT}장까지 추가할 수 있어요"))
-            }
+            is UploadIntent.StartCropQueue -> startCropQueue(intent.uris)
+            is UploadIntent.CropConfirmed -> onCropConfirmed(intent.croppedUri)
+            is UploadIntent.CropSkipped -> onCropSkipped()
+            is UploadIntent.StartReCrop -> startReCrop(intent.index)
             is UploadIntent.RemoveImage ->
                 updateState {
-                    it.copy(selectedImageUris = it.selectedImageUris.filter { uri -> uri != intent.uri })
+                    it.copy(selectedImages = it.selectedImages.filterIndexed { i, _ -> i != intent.index })
                 }
             is UploadIntent.Submit -> submitFeed(intent.context)
             is UploadIntent.UpdateCategorySheetVisibility ->
@@ -104,6 +101,70 @@ class UploadViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun startCropQueue(uris: List<Uri>) {
+        val remaining = MAX_IMAGE_COUNT - currentState.selectedImages.size
+        val queue = uris.take(remaining)
+        val hasOverflow = queue.size < uris.size
+        if (hasOverflow) sendSideEffect(UploadSideEffect.ShowSnackbar("최대 ${MAX_IMAGE_COUNT}장까지 추가할 수 있어요"))
+        if (queue.isEmpty()) return
+        val first = queue.first()
+        updateState { it.copy(cropQueue = queue.drop(1), currentCropOriginal = first, recropIndex = null) }
+        sendSideEffect(UploadSideEffect.LaunchCrop(first))
+    }
+
+    private fun onCropConfirmed(croppedUri: Uri) {
+        val state = currentState
+        if (state.recropIndex != null) {
+            val idx = state.recropIndex
+            if (idx !in state.selectedImages.indices) {
+                updateState { it.copy(recropIndex = null, currentCropOriginal = null) }
+                return
+            }
+            val original = state.selectedImages[idx].originalUri
+            val updated =
+                state.selectedImages.toMutableList().apply {
+                    set(idx, ImageEntry(originalUri = original, displayUri = croppedUri))
+                }
+            updateState { it.copy(selectedImages = updated, recropIndex = null, currentCropOriginal = null) }
+        } else {
+            val original = state.currentCropOriginal ?: return
+            val newEntry = ImageEntry(originalUri = original, displayUri = croppedUri)
+            updateState { it.copy(selectedImages = it.selectedImages + newEntry) }
+            advanceCropQueue()
+        }
+    }
+
+    private fun onCropSkipped() {
+        val state = currentState
+        if (state.recropIndex != null) {
+            updateState { it.copy(recropIndex = null, currentCropOriginal = null) }
+            return
+        }
+        val original = state.currentCropOriginal ?: return
+        val newEntry = ImageEntry(originalUri = original, displayUri = original)
+        updateState { it.copy(selectedImages = it.selectedImages + newEntry) }
+        advanceCropQueue()
+    }
+
+    private fun advanceCropQueue() {
+        val queue = currentState.cropQueue
+        if (queue.isEmpty()) {
+            updateState { it.copy(currentCropOriginal = null) }
+            return
+        }
+        val next = queue.first()
+        updateState { it.copy(cropQueue = queue.drop(1), currentCropOriginal = next) }
+        sendSideEffect(UploadSideEffect.LaunchCrop(next))
+    }
+
+    private fun startReCrop(index: Int) {
+        val images = currentState.selectedImages
+        if (index !in images.indices) return
+        val original = images[index].originalUri
+        updateState { it.copy(recropIndex = index, currentCropOriginal = original) }
+        sendSideEffect(UploadSideEffect.LaunchCrop(original))
     }
 
     private fun submitFeed(context: Context) {
@@ -170,7 +231,7 @@ class UploadViewModel @Inject constructor(
                         optionCount = currentState.selectedImageUris.size,
                     ),
                 )
-            }.onFailure { throwable ->
+            }.onFailure {
                 updateState { it.copy(isLoading = false) }
                 sendSideEffect(UploadSideEffect.ShowSnackbar("업로드에 실패했습니다."))
             }
@@ -186,9 +247,7 @@ class UploadViewModel @Inject constructor(
         cursor?.use {
             if (it.moveToFirst()) {
                 val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (nameIndex != -1) {
-                    name = it.getString(nameIndex)
-                }
+                if (nameIndex != -1) name = it.getString(nameIndex)
             }
         }
         return name
@@ -200,10 +259,7 @@ class UploadViewModel @Inject constructor(
     ): Pair<Int, Int> =
         try {
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                val options =
-                    BitmapFactory.Options().apply {
-                        inJustDecodeBounds = true
-                    }
+                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 BitmapFactory.decodeStream(inputStream, null, options)
                 options.outWidth to options.outHeight
             } ?: (0 to 0)

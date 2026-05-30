@@ -55,8 +55,9 @@ import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 enum class ImageAspectRatio(
     val ratio: Float,
 ) {
-    SQUARE(1f), // 1:1 비율
-    PORTRAIT(4f / 5f), // 4:5 비율
+    SQUARE(1f), // 1:1 비율 (가로 == 세로)
+    LANDSCAPE(5f / 4f), // 5:4 비율 (가로 > 세로)
+    PORTRAIT(4f / 5f), // 4:5 비율 (가로 < 세로)
 }
 
 @Composable
@@ -652,6 +653,43 @@ private fun FeedCardSquareInteractivePreview() {
             onReportClick = {},
             productLink = "link",
             showProductLinkTooltip = true,
+        )
+    }
+}
+
+@Preview(
+    name = "FeedCard - Landscape (5:4) Interactive",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+)
+@Composable
+private fun FeedCardLandscapeInteractivePreview() {
+    BuyOrNotTheme {
+        var userVotedOption by remember { mutableStateOf<Int?>(null) }
+
+        FeedCard(
+            profileImageUrl = "https://picsum.photos/seed/profile3/200/200",
+            nickname = "가로러버",
+            category = "가전",
+            createdAt = "1시간 전",
+            title = "이 모니터 살까요?",
+            content = "가로로 긴 제품은 5:4 비율로 보면 좋아요!",
+            productImageUrls =
+                listOf(
+                    "https://picsum.photos/seed/product3/1000/800",
+                ),
+            price = "299,000",
+            imageAspectRatios = listOf(ImageAspectRatio.LANDSCAPE),
+            isVoteEnded = false,
+            userVotedOptionIndex = userVotedOption,
+            buyVoteCount = 12,
+            maybeVoteCount = 8,
+            totalVoteCount = 20,
+            onVote = { optionIndex ->
+                userVotedOption = optionIndex
+            },
+            onDeleteClick = {},
+            onReportClick = {},
         )
     }
 }
