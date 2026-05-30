@@ -49,12 +49,13 @@ internal fun CropOverlay(
                         val down = awaitFirstDown(requireUnconsumed = false)
                         val bounds = boundsState.value
                         if (bounds.width <= 0f || bounds.height <= 0f) return@awaitEachGesture
-                        val rectPx = cropRectState.value.toPixelRect(bounds)
+                        val normPosX = (down.position.x - bounds.left) / bounds.width
+                        val normPosY = (down.position.y - bounds.top) / bounds.height
                         val handle =
                             detectHandle(
-                                posX = down.position.x,
-                                posY = down.position.y,
-                                cropRect = rectPx.toNormalizedRect(bounds),
+                                posX = normPosX,
+                                posY = normPosY,
+                                cropRect = cropRectState.value,
                                 touchRadius = touchRadiusPx / maxOf(bounds.width, bounds.height),
                             )
                         if (handle == HandleZone.NONE) return@awaitEachGesture
@@ -95,14 +96,6 @@ private fun NormalizedRect.toPixelRect(bounds: Rect): Rect =
         top = bounds.top + top * bounds.height,
         right = bounds.left + right * bounds.width,
         bottom = bounds.top + bottom * bounds.height,
-    )
-
-private fun Rect.toNormalizedRect(bounds: Rect): NormalizedRect =
-    NormalizedRect(
-        left = (left - bounds.left) / bounds.width,
-        top = (top - bounds.top) / bounds.height,
-        right = (right - bounds.left) / bounds.width,
-        bottom = (bottom - bounds.top) / bounds.height,
     )
 
 private fun DrawScope.drawDarkMask(cropRect: Rect) {
