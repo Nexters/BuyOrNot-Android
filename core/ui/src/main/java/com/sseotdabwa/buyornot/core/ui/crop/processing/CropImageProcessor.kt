@@ -13,6 +13,8 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 
+private const val MAX_OUTPUT_DIMENSION = 1024
+
 suspend fun processToFile(
     context: Context,
     sourceUri: Uri,
@@ -27,7 +29,8 @@ suspend fun processToFile(
                 spec.crop
                     ?.let { cropFromNormalized(rotated, it.rectNormalized) }
                     ?: rotated
-            saveJpeg(context, cropped)
+            val resized = downscaleToMaxDimension(cropped, MAX_OUTPUT_DIMENSION)
+            saveJpeg(context, resized)
         }
     }
 
@@ -69,6 +72,17 @@ private fun cropFromNormalized(
     val cropped = Bitmap.createBitmap(bitmap, pixel.srcX, pixel.srcY, pixel.srcW, pixel.srcH)
     bitmap.recycle()
     return cropped
+}
+
+private fun downscaleToMaxDimension(
+    bitmap: Bitmap,
+    maxDimension: Int,
+): Bitmap {
+    val target = computeScaledDimensions(bitmap.width, bitmap.height, maxDimension)
+    if (target.width == bitmap.width && target.height == bitmap.height) return bitmap
+    val scaled = Bitmap.createScaledBitmap(bitmap, target.width, target.height, true)
+    if (scaled !== bitmap) bitmap.recycle()
+    return scaled
 }
 
 private fun saveJpeg(
