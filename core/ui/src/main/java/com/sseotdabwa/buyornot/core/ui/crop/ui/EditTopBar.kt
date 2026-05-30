@@ -60,6 +60,7 @@ internal fun EditTopBar(
         TextButton(onClick = onConfirm, enabled = isConfirmEnabled) {
             Text(
                 text = "완료",
+                style = BuyOrNotTheme.typography.subTitleS2SemiBold,
                 color = BuyOrNotTheme.colors.gray0,
             )
         }
