@@ -2,7 +2,7 @@ package com.sseotdabwa.buyornot.core.ui.crop.processing
 
 import android.graphics.Bitmap
 import android.graphics.Matrix
-import android.media.ExifInterface
+import androidx.exifinterface.media.ExifInterface
 
 internal fun applyExifRotation(
     bitmap: Bitmap,
