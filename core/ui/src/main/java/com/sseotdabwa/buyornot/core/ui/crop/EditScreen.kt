@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import com.sseotdabwa.buyornot.core.ui.crop.processing.processToFile
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditEvent
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditMode
@@ -149,4 +150,14 @@ fun EditScreen(
             }
         }
     }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 375, heightDp = 812)
+@Composable
+private fun EditScreenIdlePreview() {
+    EditScreen(
+        imageUri = Uri.EMPTY,
+        onConfirm = {},
+        onCancel = {},
+    )
 }

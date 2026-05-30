@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.core.ui.crop
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
@@ -16,6 +17,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.ui.crop.geometry.HandleZone
@@ -122,4 +124,32 @@ private fun DrawScope.drawHandles(
     drawLine(color, cropRect.bottomLeft, cropRect.bottomLeft + Offset(0f, -len), sw, StrokeCap.Square)
     drawLine(color, cropRect.bottomRight, cropRect.bottomRight + Offset(-len, 0f), sw, StrokeCap.Square)
     drawLine(color, cropRect.bottomRight, cropRect.bottomRight + Offset(0f, -len), sw, StrokeCap.Square)
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 375, heightDp = 812)
+@Composable
+private fun CropOverlayFreeRatioPreview() {
+    Box(modifier = Modifier.fillMaxSize()) {
+        CropOverlay(
+            cropRect = NormalizedRect(0.1f, 0.2f, 0.9f, 0.8f),
+            imageBounds = Rect(0f, 100f, 375f, 700f),
+            targetRatio = null,
+            onCropRectChange = {},
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 375, heightDp = 812)
+@Composable
+private fun CropOverlaySquareRatioPreview() {
+    Box(modifier = Modifier.fillMaxSize()) {
+        CropOverlay(
+            cropRect = NormalizedRect(0.15f, 0.3f, 0.85f, 0.7f),
+            imageBounds = Rect(0f, 100f, 375f, 700f),
+            targetRatio = 1f,
+            onCropRectChange = {},
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
 }
