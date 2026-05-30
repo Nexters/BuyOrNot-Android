@@ -2,11 +2,9 @@ package com.sseotdabwa.buyornot.core.ui.crop.processing
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import androidx.core.content.FileProvider
-import androidx.exifinterface.media.ExifInterface
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -22,7 +20,8 @@ suspend fun processToFile(
 ): Result<Uri> =
     withContext(Dispatchers.IO) {
         runCatching {
-            val raw = decodeBitmap(context, sourceUri)
+            val sampleSize = computeSampleSize(context, sourceUri, MAX_OUTPUT_DIMENSION)
+            val raw = decodeBitmap(context, sourceUri, sampleSize)
             val exifOriented = applyExifRotation(raw, readExifOrientation(context, sourceUri))
             val rotated = applyQuarterRotation(exifOriented, spec.rotationQuarters)
             val cropped =
@@ -33,24 +32,6 @@ suspend fun processToFile(
             saveJpeg(context, resized)
         }
     }
-
-private fun decodeBitmap(
-    context: Context,
-    uri: Uri,
-): Bitmap =
-    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
-        ?: error("Cannot open image: $uri")
-
-private fun readExifOrientation(
-    context: Context,
-    uri: Uri,
-): Int =
-    context.contentResolver.openInputStream(uri)?.use {
-        ExifInterface(it).getAttributeInt(
-            ExifInterface.TAG_ORIENTATION,
-            ExifInterface.ORIENTATION_NORMAL,
-        )
-    } ?: ExifInterface.ORIENTATION_NORMAL
 
 internal fun applyQuarterRotation(
     bitmap: Bitmap,

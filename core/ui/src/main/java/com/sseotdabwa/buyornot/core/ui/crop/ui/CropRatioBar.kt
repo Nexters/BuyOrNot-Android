@@ -106,6 +106,7 @@ private fun RatioItem(
         Spacer(modifier = Modifier.height(iconToTextGap))
         Text(
             text = label,
+            style = BuyOrNotTheme.typography.bodyB5Medium,
             color = tint,
         )
     }

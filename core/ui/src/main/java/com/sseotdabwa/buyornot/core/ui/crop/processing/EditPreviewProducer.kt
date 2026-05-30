@@ -2,10 +2,8 @@ package com.sseotdabwa.buyornot.core.ui.crop.processing
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
-import androidx.exifinterface.media.ExifInterface
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -57,7 +55,7 @@ private fun getOrDecodeBase(
             return cached.bitmap
         }
     }
-    val sampleSize = computePreviewSampleSize(context, sourceUri)
+    val sampleSize = computeSampleSize(context, sourceUri, PREVIEW_MAX_DIMENSION)
     val raw = decodeBitmap(context, sourceUri, sampleSize)
     val oriented = applyExifRotation(raw, readExifOrientation(context, sourceUri))
     synchronized(baseBitmapLock) {
@@ -79,41 +77,3 @@ private fun rotateWithoutRecycle(
     val matrix = Matrix().apply { postRotate(-90f * normalized) }
     return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
 }
-
-private fun computePreviewSampleSize(
-    context: Context,
-    uri: Uri,
-): Int {
-    val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    context.contentResolver.openInputStream(uri)?.use {
-        BitmapFactory.decodeStream(it, null, options)
-    } ?: return 1
-    var sampleSize = 1
-    val longer = maxOf(options.outWidth, options.outHeight)
-    while (longer / sampleSize > PREVIEW_MAX_DIMENSION) {
-        sampleSize *= 2
-    }
-    return sampleSize
-}
-
-private fun decodeBitmap(
-    context: Context,
-    uri: Uri,
-    sampleSize: Int,
-): Bitmap {
-    val options = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-    return context.contentResolver.openInputStream(uri)?.use {
-        BitmapFactory.decodeStream(it, null, options)
-    } ?: error("Cannot open image: $uri")
-}
-
-private fun readExifOrientation(
-    context: Context,
-    uri: Uri,
-): Int =
-    context.contentResolver.openInputStream(uri)?.use {
-        ExifInterface(it).getAttributeInt(
-            ExifInterface.TAG_ORIENTATION,
-            ExifInterface.ORIENTATION_NORMAL,
-        )
-    } ?: ExifInterface.ORIENTATION_NORMAL
