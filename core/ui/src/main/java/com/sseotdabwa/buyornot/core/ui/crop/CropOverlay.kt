@@ -12,14 +12,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.crop.geometry.HandleZone
 import com.sseotdabwa.buyornot.core.ui.crop.geometry.clampTo
 import com.sseotdabwa.buyornot.core.ui.crop.geometry.detectHandle
@@ -35,6 +36,7 @@ internal fun CropOverlay(
     onCropRectChange: (NormalizedRect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val handleColor = BuyOrNotTheme.colors.gray0
     val cropRectState = rememberUpdatedState(cropRect)
     val onCropRectChangeState = rememberUpdatedState(onCropRectChange)
     val ratioState = rememberUpdatedState(targetRatio)
@@ -88,7 +90,7 @@ internal fun CropOverlay(
         if (bounds.width <= 0f || bounds.height <= 0f) return@Canvas
         val rectPx = cropRectState.value.toPixelRect(bounds)
         drawDarkMask(rectPx)
-        drawHandles(rectPx, handleLength = 20.dp, strokeWidth = 3.dp)
+        drawCornerCircles(rectPx, diameter = 22.dp, strokeWidth = 1.dp, color = handleColor)
     }
 }
 
@@ -108,22 +110,18 @@ private fun DrawScope.drawDarkMask(cropRect: Rect) {
     drawRect(maskColor, topLeft = Offset(cropRect.right, cropRect.top), size = Size(size.width - cropRect.right, cropRect.height))
 }
 
-private fun DrawScope.drawHandles(
+private fun DrawScope.drawCornerCircles(
     cropRect: Rect,
-    handleLength: Dp,
+    diameter: Dp,
     strokeWidth: Dp,
+    color: Color,
 ) {
-    val len = handleLength.toPx()
-    val sw = strokeWidth.toPx()
-    val color = Color.White
-    drawLine(color, cropRect.topLeft, cropRect.topLeft + Offset(len, 0f), sw, StrokeCap.Square)
-    drawLine(color, cropRect.topLeft, cropRect.topLeft + Offset(0f, len), sw, StrokeCap.Square)
-    drawLine(color, cropRect.topRight, cropRect.topRight + Offset(-len, 0f), sw, StrokeCap.Square)
-    drawLine(color, cropRect.topRight, cropRect.topRight + Offset(0f, len), sw, StrokeCap.Square)
-    drawLine(color, cropRect.bottomLeft, cropRect.bottomLeft + Offset(len, 0f), sw, StrokeCap.Square)
-    drawLine(color, cropRect.bottomLeft, cropRect.bottomLeft + Offset(0f, -len), sw, StrokeCap.Square)
-    drawLine(color, cropRect.bottomRight, cropRect.bottomRight + Offset(-len, 0f), sw, StrokeCap.Square)
-    drawLine(color, cropRect.bottomRight, cropRect.bottomRight + Offset(0f, -len), sw, StrokeCap.Square)
+    val radius = diameter.toPx() / 2f
+    val stroke = Stroke(width = strokeWidth.toPx())
+    drawCircle(color = color, radius = radius, center = cropRect.topLeft, style = stroke)
+    drawCircle(color = color, radius = radius, center = cropRect.topRight, style = stroke)
+    drawCircle(color = color, radius = radius, center = cropRect.bottomLeft, style = stroke)
+    drawCircle(color = color, radius = radius, center = cropRect.bottomRight, style = stroke)
 }
 
 @Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 375, heightDp = 812)
