@@ -9,6 +9,8 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import com.sseotdabwa.buyornot.core.ui.crop.EDIT_RESULT_KEY
+import com.sseotdabwa.buyornot.core.ui.crop.EDIT_RESULT_SKIPPED
 import com.sseotdabwa.buyornot.core.ui.crop.navigateToEdit
 import com.sseotdabwa.buyornot.feature.upload.ui.UploadIntent
 import com.sseotdabwa.buyornot.feature.upload.ui.UploadViewModel
@@ -30,14 +32,14 @@ fun NavGraphBuilder.uploadScreen(
     composable<UploadRoute> { backStackEntry ->
         val viewModel = hiltViewModel<UploadViewModel>()
 
-        val cropResult by backStackEntry.savedStateHandle
-            .getStateFlow<String?>("editResult", null)
+        val editResult by backStackEntry.savedStateHandle
+            .getStateFlow<String?>(EDIT_RESULT_KEY, null)
             .collectAsStateWithLifecycle()
 
-        LaunchedEffect(cropResult) {
-            val result = cropResult ?: return@LaunchedEffect
-            backStackEntry.savedStateHandle.remove<String>("editResult")
-            if (result == "SKIPPED") {
+        LaunchedEffect(editResult) {
+            val result = editResult ?: return@LaunchedEffect
+            backStackEntry.savedStateHandle.remove<String>(EDIT_RESULT_KEY)
+            if (result == EDIT_RESULT_SKIPPED) {
                 viewModel.handleIntent(UploadIntent.CropSkipped)
             } else {
                 viewModel.handleIntent(UploadIntent.CropConfirmed(Uri.parse(result)))
