@@ -173,14 +173,14 @@ fun CropScreen(
                         )
                 },
             )
-            if (imageBounds != null) {
-                CropOverlay(
-                    cropRect = cropRect,
-                    imageBounds = imageBounds,
-                    onCropRectChange = { cropRect = it },
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
+// if (imageBounds != null) {
+//     CropOverlay(
+//         cropRect = cropRect,
+//         imageBounds = imageBounds,
+//         onCropRectChange = { cropRect = it },
+//         modifier = Modifier.fillMaxSize(),
+//     )
+// }
             if (isExtracting) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
