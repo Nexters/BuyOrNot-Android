@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.core.ui.crop.processing
 
 import com.sseotdabwa.buyornot.core.ui.crop.state.NormalizedRect
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CropCoordinateMappingTest {
@@ -29,7 +30,7 @@ class CropCoordinateMappingTest {
     }
 
     @Test
-    fun `소수점_좌표는_정수로_반올림되며_비트맵_경계를_벗어나지_않는다`() {
+    fun `소수점_좌표는_정수로_버림되며_비트맵_경계를_벗어나지_않는다`() {
         val r =
             mapNormalizedToPixel(
                 NormalizedRect(0.999f, 0.999f, 1f, 1f),
@@ -37,10 +38,10 @@ class CropCoordinateMappingTest {
                 bitmapHeight = 100,
             )
         // srcX는 99 또는 100 근처. srcX + srcW <= 100 보장
-        assert(r.srcX + r.srcW <= 100)
-        assert(r.srcY + r.srcH <= 100)
-        assert(r.srcW >= 1)
-        assert(r.srcH >= 1)
+        assertTrue(r.srcX + r.srcW <= 100)
+        assertTrue(r.srcY + r.srcH <= 100)
+        assertTrue(r.srcW >= 1)
+        assertTrue(r.srcH >= 1)
     }
 
     @Test
