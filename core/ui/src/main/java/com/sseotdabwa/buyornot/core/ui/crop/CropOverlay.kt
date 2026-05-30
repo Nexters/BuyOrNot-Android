@@ -76,9 +76,14 @@ internal fun CropOverlay(
                                 when (handle) {
                                     HandleZone.BODY -> current.translate(normDx, normDy).clampTo(unitBounds)
                                     else ->
-                                        current
-                                            .resizeFrom(handle, normDx, normDy, minSize, ratioState.value)
-                                            .clampTo(unitBounds)
+                                        current.resizeFrom(
+                                            handle,
+                                            normDx,
+                                            normDy,
+                                            minSize,
+                                            ratioState.value,
+                                            unitBounds,
+                                        )
                                 }
                             onCropRectChangeState.value(newRect)
                             event.changes.forEach { if (it.positionChanged()) it.consume() }

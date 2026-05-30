@@ -174,6 +174,86 @@ class CropGeometryTest {
         assertEquals(0.05f, result.bottom - result.top, 0.0001f)
     }
 
+    @Test
+    fun `자유비율_resizeFrom_BR은_bounds_바깥으로_확장되지_않는다`() {
+        val rect = NormalizedRect(0.6f, 0.6f, 0.8f, 0.8f)
+        val result =
+            rect.resizeFrom(
+                corner = HandleZone.BR,
+                deltaX = 0.5f,
+                deltaY = 0.5f,
+                minSize = 0.05f,
+                targetRatio = null,
+            )
+        assertEquals(0.6f, result.left, 0.0001f)
+        assertEquals(0.6f, result.top, 0.0001f)
+        assertEquals(1f, result.right, 0.0001f)
+        assertEquals(1f, result.bottom, 0.0001f)
+    }
+
+    @Test
+    fun `1대1_resizeFrom_BR은_bounds_경계까지만_확장되고_비율을_유지한다`() {
+        val rect = NormalizedRect(0.5f, 0.5f, 0.7f, 0.7f)
+        val result =
+            rect.resizeFrom(
+                corner = HandleZone.BR,
+                deltaX = 1f,
+                deltaY = 0f,
+                minSize = 0.05f,
+                targetRatio = 1f,
+            )
+        // anchor TL=(0.5,0.5), maxFromCorner = min(1-0.5, (1-0.5)*1) = 0.5
+        val w = result.right - result.left
+        val h = result.bottom - result.top
+        assertEquals(0.5f, w, 0.0001f)
+        assertEquals(0.5f, h, 0.0001f)
+        assertEquals(0.5f, result.left, 0.0001f)
+        assertEquals(0.5f, result.top, 0.0001f)
+        assertEquals(1f, result.right, 0.0001f)
+        assertEquals(1f, result.bottom, 0.0001f)
+    }
+
+    @Test
+    fun `3대4_resizeFrom_BR은_bounds로_제한될_때_세로축이_먼저_도달하며_비율_유지`() {
+        val rect = NormalizedRect(0.1f, 0.6f, 0.3f, 0.8f) // w=0.2, h=0.2
+        val result =
+            rect.resizeFrom(
+                corner = HandleZone.BR,
+                deltaX = 1f,
+                deltaY = 1f,
+                minSize = 0.05f,
+                targetRatio = 0.75f,
+            )
+        // anchor TL=(0.1, 0.6). 남은 폭=0.9, 남은 높이=0.4.
+        // maxFromCorner = min(0.9, 0.4*0.75) = 0.3. newHeight = 0.3 / 0.75 = 0.4.
+        val w = result.right - result.left
+        val h = result.bottom - result.top
+        assertEquals(0.3f, w, 0.0001f)
+        assertEquals(0.4f, h, 0.0001f)
+        assertEquals(0.75f, w / h, 0.0001f)
+    }
+
+    @Test
+    fun `1대1_resizeFrom_TL은_bounds_왼쪽_경계로_제한될_때_비율_유지`() {
+        val rect = NormalizedRect(0.1f, 0.2f, 0.6f, 0.7f) // w=h=0.5
+        val result =
+            rect.resizeFrom(
+                corner = HandleZone.TL,
+                deltaX = -1f,
+                deltaY = 0f,
+                minSize = 0.05f,
+                targetRatio = 1f,
+            )
+        // anchor BR=(0.6, 0.7). 남은 폭=0.6, 남은 높이=0.7.
+        // maxFromCorner = min(0.6, 0.7*1) = 0.6.
+        val w = result.right - result.left
+        val h = result.bottom - result.top
+        assertEquals(0.6f, w, 0.0001f)
+        assertEquals(0.6f, h, 0.0001f)
+        assertEquals(0.6f, result.right, 0.0001f)
+        assertEquals(0.7f, result.bottom, 0.0001f)
+    }
+
     // detectHandle
     @Test
     fun `detectHandle은_터치_반경_안의_TL_코너를_반환한다`() {

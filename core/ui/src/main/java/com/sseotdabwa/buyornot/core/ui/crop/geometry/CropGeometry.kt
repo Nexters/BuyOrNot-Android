@@ -45,7 +45,9 @@ fun NormalizedRect.rotateCounterClockwise(quarters: Int): NormalizedRect {
 }
 
 /**
- * 핸들 드래그로 rect를 리사이즈한다.
+ * 핸들 드래그로 rect를 리사이즈한다. 결과는 항상 `bounds` 안에 들어가며,
+ * `targetRatio != null` 인 경우 비율이 절대로 깨지지 않도록 anchor 코너 기준 최대 폭을
+ * 사전에 산출해 적용한다.
  *
  * Precondition (targetRatio != null): `this` rect already satisfies `targetRatio`
  * (width / height ≈ targetRatio). 그렇지 않은 상태에서 호출하면 첫 제스처에서
@@ -58,6 +60,7 @@ fun NormalizedRect.resizeFrom(
     deltaY: Float,
     minSize: Float,
     targetRatio: Float?,
+    bounds: NormalizedRect = NormalizedRect.Full,
 ): NormalizedRect {
     when (corner) {
         HandleZone.TL, HandleZone.TR, HandleZone.BL, HandleZone.BR -> Unit
@@ -71,36 +74,22 @@ fun NormalizedRect.resizeFrom(
         var b = bottom
         when (corner) {
             HandleZone.TL -> {
-                l += deltaX
-                t += deltaY
+                l = (l + deltaX).coerceAtLeast(bounds.left).coerceAtMost(r - minSize)
+                t = (t + deltaY).coerceAtLeast(bounds.top).coerceAtMost(b - minSize)
             }
             HandleZone.TR -> {
-                r += deltaX
-                t += deltaY
+                r = (r + deltaX).coerceAtMost(bounds.right).coerceAtLeast(l + minSize)
+                t = (t + deltaY).coerceAtLeast(bounds.top).coerceAtMost(b - minSize)
             }
             HandleZone.BL -> {
-                l += deltaX
-                b += deltaY
+                l = (l + deltaX).coerceAtLeast(bounds.left).coerceAtMost(r - minSize)
+                b = (b + deltaY).coerceAtMost(bounds.bottom).coerceAtLeast(t + minSize)
             }
             HandleZone.BR -> {
-                r += deltaX
-                b += deltaY
+                r = (r + deltaX).coerceAtMost(bounds.right).coerceAtLeast(l + minSize)
+                b = (b + deltaY).coerceAtMost(bounds.bottom).coerceAtLeast(t + minSize)
             }
             else -> Unit
-        }
-        if (r - l < minSize) {
-            when (corner) {
-                HandleZone.TL, HandleZone.BL -> l = r - minSize
-                HandleZone.TR, HandleZone.BR -> r = l + minSize
-                else -> Unit
-            }
-        }
-        if (b - t < minSize) {
-            when (corner) {
-                HandleZone.TL, HandleZone.TR -> t = b - minSize
-                HandleZone.BL, HandleZone.BR -> b = t + minSize
-                else -> Unit
-            }
         }
         return NormalizedRect(l, t, r, b)
     }
@@ -113,7 +102,15 @@ fun NormalizedRect.resizeFrom(
             HandleZone.BR -> if (abs(deltaX) >= abs(deltaY)) deltaX else deltaY
             else -> 0f
         }
-    val newWidth = (width + signedDelta).coerceAtLeast(minSize)
+    val maxFromCorner =
+        when (corner) {
+            HandleZone.TL -> minOf(right - bounds.left, (bottom - bounds.top) * targetRatio)
+            HandleZone.TR -> minOf(bounds.right - left, (bottom - bounds.top) * targetRatio)
+            HandleZone.BL -> minOf(right - bounds.left, (bounds.bottom - top) * targetRatio)
+            HandleZone.BR -> minOf(bounds.right - left, (bounds.bottom - top) * targetRatio)
+            else -> width
+        }
+    val newWidth = (width + signedDelta).coerceAtLeast(minSize).coerceAtMost(maxFromCorner)
     val newHeight = newWidth / targetRatio
     return when (corner) {
         HandleZone.TL -> NormalizedRect(right - newWidth, bottom - newHeight, right, bottom)
