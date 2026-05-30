@@ -61,6 +61,22 @@ internal fun CropPane(
     val intrinsicSize: Size =
         rotatedBitmap?.let { Size(it.width.toFloat(), it.height.toFloat()) } ?: Size.Unspecified
 
+    // 화면(픽셀) 기준 비율을 normalized 좌표계로 환산.
+    // normalized 1 unit = X축 imageWidth px, Y축 imageHeight px 이므로,
+    // 픽셀 ratio (W/H)를 normalized ratio로 변환하려면 imageAspect(=W/H)로 나눠야 한다.
+    val normalizedTargetRatio: Float? =
+        run {
+            val pixelRatio = tempRatio.targetRatio()
+            val w = intrinsicSize.width
+            val h = intrinsicSize.height
+            if (pixelRatio == null || w <= 0f || h <= 0f) null else pixelRatio * h / w
+        }
+
+    LaunchedEffect(normalizedTargetRatio) {
+        val ratio = normalizedTargetRatio ?: return@LaunchedEffect
+        tempRect = computeRectForRatio(tempRect, NormalizedRect.Full, ratio)
+    }
+
     val imageBounds: Rect? =
         remember(containerSize, intrinsicSize) {
             if (containerSize == IntSize.Zero || intrinsicSize == Size.Unspecified) return@remember null
@@ -99,7 +115,7 @@ internal fun CropPane(
                 CropOverlay(
                     cropRect = tempRect,
                     imageBounds = imageBounds,
-                    targetRatio = tempRatio.targetRatio(),
+                    targetRatio = normalizedTargetRatio,
                     onCropRectChange = { tempRect = it },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -107,10 +123,7 @@ internal fun CropPane(
         }
         CropRatioBar(
             selected = tempRatio,
-            onSelect = { newRatio ->
-                tempRatio = newRatio
-                tempRect = computeRectForRatio(tempRect, NormalizedRect.Full, newRatio.targetRatio())
-            },
+            onSelect = { newRatio -> tempRatio = newRatio },
         )
     }
 }
