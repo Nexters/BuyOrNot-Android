@@ -9,7 +9,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
-import com.sseotdabwa.buyornot.core.ui.crop.navigateToCrop
+import com.sseotdabwa.buyornot.core.ui.crop.navigateToEdit
 import com.sseotdabwa.buyornot.feature.upload.ui.UploadIntent
 import com.sseotdabwa.buyornot.feature.upload.ui.UploadViewModel
 import kotlinx.serialization.Serializable
@@ -31,12 +31,12 @@ fun NavGraphBuilder.uploadScreen(
         val viewModel = hiltViewModel<UploadViewModel>()
 
         val cropResult by backStackEntry.savedStateHandle
-            .getStateFlow<String?>("cropResult", null)
+            .getStateFlow<String?>("editResult", null)
             .collectAsStateWithLifecycle()
 
         LaunchedEffect(cropResult) {
             val result = cropResult ?: return@LaunchedEffect
-            backStackEntry.savedStateHandle.remove<String>("cropResult")
+            backStackEntry.savedStateHandle.remove<String>("editResult")
             if (result == "SKIPPED") {
                 viewModel.handleIntent(UploadIntent.CropSkipped)
             } else {
@@ -47,7 +47,7 @@ fun NavGraphBuilder.uploadScreen(
         UploadRouteComposable(
             onNavigateBack = onNavigateBack,
             onNavigateToHomeReview = onNavigateToHomeReview,
-            onNavigateToCrop = { uri -> navController.navigateToCrop(uri) },
+            onNavigateToCrop = { uri -> navController.navigateToEdit(uri) },
             viewModel = viewModel,
         )
     }

@@ -7,31 +7,34 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import kotlinx.serialization.Serializable
 
+const val EDIT_RESULT_KEY = "editResult"
+const val EDIT_RESULT_SKIPPED = "SKIPPED"
+
 @Serializable
-data class CropRoute(
+data class EditRoute(
     val encodedUri: String,
 )
 
-fun NavController.navigateToCrop(uri: Uri) {
-    navigate(CropRoute(encodedUri = uri.toString()))
+fun NavController.navigateToEdit(uri: Uri) {
+    navigate(EditRoute(encodedUri = uri.toString()))
 }
 
-fun NavGraphBuilder.cropScreen(navController: NavController) {
-    composable<CropRoute> { backStackEntry ->
-        val route = backStackEntry.toRoute<CropRoute>()
+fun NavGraphBuilder.editScreen(navController: NavController) {
+    composable<EditRoute> { backStackEntry ->
+        val route = backStackEntry.toRoute<EditRoute>()
         val imageUri = Uri.parse(route.encodedUri)
-        CropScreen(
+        EditScreen(
             imageUri = imageUri,
-            onConfirm = { croppedUri ->
+            onConfirm = { editedUri ->
                 navController.previousBackStackEntry
                     ?.savedStateHandle
-                    ?.set("cropResult", croppedUri.toString())
+                    ?.set(EDIT_RESULT_KEY, editedUri.toString())
                 navController.popBackStack()
             },
             onCancel = {
                 navController.previousBackStackEntry
                     ?.savedStateHandle
-                    ?.set("cropResult", "SKIPPED")
+                    ?.set(EDIT_RESULT_KEY, EDIT_RESULT_SKIPPED)
                 navController.popBackStack()
             },
         )
