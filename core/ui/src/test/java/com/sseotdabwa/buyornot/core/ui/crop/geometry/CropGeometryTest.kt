@@ -213,4 +213,56 @@ class CropGeometryTest {
             )
         assertEquals(HandleZone.NONE, zone)
     }
+
+    // rotateCounterClockwise
+    @Test
+    fun `rotateCCW_0회는_변환하지_않는다`() {
+        val rect = NormalizedRect(0.1f, 0.2f, 0.6f, 0.8f)
+        val result = rect.rotateCounterClockwise(0)
+        assertEquals(rect, result)
+    }
+
+    @Test
+    fun `rotateCCW_1회는_좌표를_반시계_90도로_매핑한다`() {
+        val rect = NormalizedRect(0.1f, 0.2f, 0.6f, 0.8f)
+        val result = rect.rotateCounterClockwise(1)
+        // (l, t, r, b) -> (t, 1-r, b, 1-l) = (0.2, 0.4, 0.8, 0.9)
+        assertEquals(0.2f, result.left, 0.0001f)
+        assertEquals(0.4f, result.top, 0.0001f)
+        assertEquals(0.8f, result.right, 0.0001f)
+        assertEquals(0.9f, result.bottom, 0.0001f)
+    }
+
+    @Test
+    fun `rotateCCW_2회는_점대칭으로_변환한다`() {
+        val rect = NormalizedRect(0.1f, 0.2f, 0.6f, 0.8f)
+        val result = rect.rotateCounterClockwise(2)
+        // 2회 적용: (l, t, r, b) -> (1-r, 1-b, 1-l, 1-t) = (0.4, 0.2, 0.9, 0.8)
+        assertEquals(0.4f, result.left, 0.0001f)
+        assertEquals(0.2f, result.top, 0.0001f)
+        assertEquals(0.9f, result.right, 0.0001f)
+        assertEquals(0.8f, result.bottom, 0.0001f)
+    }
+
+    @Test
+    fun `rotateCCW_4회는_원래_좌표로_돌아온다`() {
+        val rect = NormalizedRect(0.1f, 0.2f, 0.6f, 0.8f)
+        val result = rect.rotateCounterClockwise(4)
+        assertEquals(rect.left, result.left, 0.0001f)
+        assertEquals(rect.top, result.top, 0.0001f)
+        assertEquals(rect.right, result.right, 0.0001f)
+        assertEquals(rect.bottom, result.bottom, 0.0001f)
+    }
+
+    @Test
+    fun `rotateCCW_음수_quarters는_mod_4로_정규화된다`() {
+        val rect = NormalizedRect(0.1f, 0.2f, 0.6f, 0.8f)
+        // -1 회 = +3 회와 동일
+        val resultNeg = rect.rotateCounterClockwise(-1)
+        val resultPos = rect.rotateCounterClockwise(3)
+        assertEquals(resultPos.left, resultNeg.left, 0.0001f)
+        assertEquals(resultPos.top, resultNeg.top, 0.0001f)
+        assertEquals(resultPos.right, resultNeg.right, 0.0001f)
+        assertEquals(resultPos.bottom, resultNeg.bottom, 0.0001f)
+    }
 }

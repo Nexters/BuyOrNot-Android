@@ -1,5 +1,7 @@
 package com.sseotdabwa.buyornot.core.ui.crop.state
 
+import com.sseotdabwa.buyornot.core.ui.crop.geometry.rotateCounterClockwise
+
 fun reduce(
     state: EditSpec,
     event: EditEvent,
@@ -11,7 +13,14 @@ fun reduce(
             if (normalized == state.rotationQuarters) {
                 state
             } else {
-                state.copy(rotationQuarters = normalized, crop = null)
+                val deltaQuarters = (normalized - state.rotationQuarters + 4) % 4
+                val newCrop =
+                    state.crop?.let { existing ->
+                        existing.copy(
+                            rectNormalized = existing.rectNormalized.rotateCounterClockwise(deltaQuarters),
+                        )
+                    }
+                state.copy(rotationQuarters = normalized, crop = newCrop)
             }
         }
     }

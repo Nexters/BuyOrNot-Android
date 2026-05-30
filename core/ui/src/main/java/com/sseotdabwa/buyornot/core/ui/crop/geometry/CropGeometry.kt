@@ -22,6 +22,29 @@ fun NormalizedRect.translate(
 ): NormalizedRect = NormalizedRect(left + dx, top + dy, right + dx, bottom + dy)
 
 /**
+ * `quarters` 회만큼 NormalizedRect를 반시계 90° 회전 좌표계로 매핑한다.
+ *
+ * 회전 단위: 한 번 = CCW 90°. `quarters`가 음수이거나 4 이상이면 mod 4로 정규화한다.
+ *
+ * 회전된 비트맵 좌표계 기준이므로, `EditSpec.rotationQuarters`가 변경될 때
+ * `EditSpec.crop.rectNormalized`를 새 좌표계로 옮기는 용도로 사용한다.
+ */
+fun NormalizedRect.rotateCounterClockwise(quarters: Int): NormalizedRect {
+    val n = ((quarters % 4) + 4) % 4
+    var r = this
+    repeat(n) {
+        r =
+            NormalizedRect(
+                left = r.top,
+                top = 1f - r.right,
+                right = r.bottom,
+                bottom = 1f - r.left,
+            )
+    }
+    return r
+}
+
+/**
  * 핸들 드래그로 rect를 리사이즈한다.
  *
  * Precondition (targetRatio != null): `this` rect already satisfies `targetRatio`
