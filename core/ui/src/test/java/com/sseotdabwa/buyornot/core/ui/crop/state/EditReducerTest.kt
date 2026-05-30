@@ -54,4 +54,19 @@ class EditReducerTest {
         val next = reduce(state, EditEvent.CommitRotate(5))
         assertEquals(1, next.rotationQuarters)
     }
+
+    @Test
+    fun `CommitRotate_quarters_4는_0으로_정규화되어_crop이_리셋된다`() {
+        val state = EditSpec(rotationQuarters = 1, crop = sampleCrop)
+        val next = reduce(state, EditEvent.CommitRotate(4))
+        assertEquals(0, next.rotationQuarters)
+        assertNull(next.crop)
+    }
+
+    @Test
+    fun `CommitRotate는_음수_quarters를_올바르게_정규화한다`() {
+        val state = EditSpec(rotationQuarters = 0, crop = null)
+        val next = reduce(state, EditEvent.CommitRotate(-1))
+        assertEquals(3, next.rotationQuarters)
+    }
 }
