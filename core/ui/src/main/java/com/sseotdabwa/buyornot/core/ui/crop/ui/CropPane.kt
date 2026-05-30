@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -20,6 +21,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.ui.crop.CropOverlay
 import com.sseotdabwa.buyornot.core.ui.crop.geometry.computeRectForRatio
@@ -71,6 +73,7 @@ internal fun CropPane(
                 Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .padding(horizontal = 20.dp)
                     .onSizeChanged { containerSize = it },
             contentAlignment = Alignment.Center,
         ) {
