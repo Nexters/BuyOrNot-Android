@@ -21,6 +21,14 @@ fun NormalizedRect.translate(
     dy: Float,
 ): NormalizedRect = NormalizedRect(left + dx, top + dy, right + dx, bottom + dy)
 
+/**
+ * 핸들 드래그로 rect를 리사이즈한다.
+ *
+ * Precondition (targetRatio != null): `this` rect already satisfies `targetRatio`
+ * (width / height ≈ targetRatio). 그렇지 않은 상태에서 호출하면 첫 제스처에서
+ * height가 width 기준으로 silently 재계산되어 의도치 않은 형태가 될 수 있다.
+ * 비율을 새로 적용한 직후라면 먼저 [computeRectForRatio]를 호출해 rect를 정규화하라.
+ */
 fun NormalizedRect.resizeFrom(
     corner: HandleZone,
     deltaX: Float,
@@ -28,7 +36,10 @@ fun NormalizedRect.resizeFrom(
     minSize: Float,
     targetRatio: Float?,
 ): NormalizedRect {
-    if (corner !in setOf(HandleZone.TL, HandleZone.TR, HandleZone.BL, HandleZone.BR)) return this
+    when (corner) {
+        HandleZone.TL, HandleZone.TR, HandleZone.BL, HandleZone.BR -> Unit
+        else -> return this
+    }
 
     if (targetRatio == null) {
         var l = left
@@ -102,31 +113,9 @@ fun computeRectForRatio(
     val boundsH = bounds.bottom - bounds.top
     val maxW = minOf(boundsW, boundsH * targetRatio)
     val maxH = maxW / targetRatio
-    var l = cx - maxW / 2f
-    var r = cx + maxW / 2f
-    var t = cy - maxH / 2f
-    var b = cy + maxH / 2f
-    if (l < bounds.left) {
-        val s = bounds.left - l
-        l += s
-        r += s
-    }
-    if (r > bounds.right) {
-        val s = r - bounds.right
-        l -= s
-        r -= s
-    }
-    if (t < bounds.top) {
-        val s = bounds.top - t
-        t += s
-        b += s
-    }
-    if (b > bounds.bottom) {
-        val s = b - bounds.bottom
-        t -= s
-        b -= s
-    }
-    return NormalizedRect(l, t, r, b)
+    val l = (cx - maxW / 2f).coerceIn(bounds.left, bounds.right - maxW)
+    val t = (cy - maxH / 2f).coerceIn(bounds.top, bounds.bottom - maxH)
+    return NormalizedRect(l, t, l + maxW, t + maxH)
 }
 
 fun detectHandle(

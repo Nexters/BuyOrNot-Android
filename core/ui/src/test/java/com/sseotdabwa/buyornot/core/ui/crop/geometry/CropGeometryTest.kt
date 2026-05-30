@@ -37,7 +37,7 @@ class CropGeometryTest {
     }
 
     @Test
-    fun `1대1로_변환하면_중심을_유지하며_정사각형으로_변환된다`() {
+    fun `1대1로_변환하면_정사각형이_되고_bounds에_꽉_찬다`() {
         val current = NormalizedRect(0.2f, 0.3f, 0.8f, 0.5f) // cx=0.5, cy=0.4
         val result = computeRectForRatio(current, bounds, targetRatio = 1f)
         val w = result.right - result.left
@@ -135,6 +135,40 @@ class CropGeometryTest {
                 deltaY = -0.5f,
                 minSize = 0.05f,
                 targetRatio = null,
+            )
+        assertEquals(0.05f, result.right - result.left, 0.0001f)
+        assertEquals(0.05f, result.bottom - result.top, 0.0001f)
+    }
+
+    @Test
+    fun `1대1_resizeFrom_TL은_정사각형_비율을_유지하며_BR을_고정한다`() {
+        val rect = NormalizedRect(0.3f, 0.3f, 0.5f, 0.5f) // 0.2 x 0.2
+        val result =
+            rect.resizeFrom(
+                corner = HandleZone.TL,
+                deltaX = -0.1f,
+                deltaY = 0.0f,
+                minSize = 0.05f,
+                targetRatio = 1f,
+            )
+        val w = result.right - result.left
+        val h = result.bottom - result.top
+        assertEquals(w, h, 0.0001f)
+        assertEquals(0.3f, w, 0.0001f) // signedDelta = -(-0.1) = 0.1, width 0.2 + 0.1 = 0.3
+        assertEquals(0.5f, result.right, 0.0001f) // BR x fixed
+        assertEquals(0.5f, result.bottom, 0.0001f) // BR y fixed
+    }
+
+    @Test
+    fun `1대1_resizeFrom은_fixed_ratio에서도_minSize_이하로는_줄어들지_않는다`() {
+        val rect = NormalizedRect(0.4f, 0.4f, 0.5f, 0.5f) // 0.1
+        val result =
+            rect.resizeFrom(
+                corner = HandleZone.BR,
+                deltaX = -0.5f,
+                deltaY = -0.5f,
+                minSize = 0.05f,
+                targetRatio = 1f,
             )
         assertEquals(0.05f, result.right - result.left, 0.0001f)
         assertEquals(0.05f, result.bottom - result.top, 0.0001f)
