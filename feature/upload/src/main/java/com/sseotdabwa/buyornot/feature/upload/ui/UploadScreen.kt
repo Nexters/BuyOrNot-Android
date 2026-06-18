@@ -45,6 +45,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -242,9 +243,15 @@ fun UploadScreen(
     val decimalFormat = remember { DecimalFormat("#,###") }
     val scrollState = rememberScrollState()
     val contentFocusRequester = remember { FocusRequester() }
+    // 최초 진입 시에만 키패드를 띄운다. 업로드 -> 편집 -> 업로드 복귀 흐름에서는
+    // 컴포지션이 재생성되더라도 rememberSaveable 플래그가 유지되어 다시 포커스하지 않는다.
+    var hasRequestedInitialFocus by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        contentFocusRequester.requestFocus()
+        if (!hasRequestedInitialFocus) {
+            contentFocusRequester.requestFocus()
+            hasRequestedInitialFocus = true
+        }
     }
 
     val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
