@@ -35,15 +35,16 @@ import kotlinx.coroutines.launch
 @Composable
 fun EditScreen(
     imageUri: Uri,
-    onConfirm: (Uri) -> Unit,
+    onConfirm: (Uri, EditSpec) -> Unit,
     onCancel: () -> Unit,
+    initialSpec: EditSpec = EditSpec(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
     var mode by remember { mutableStateOf(EditMode.Idle) }
-    var editSpec by remember { mutableStateOf(EditSpec()) }
+    var editSpec by remember { mutableStateOf(initialSpec) }
     var isProcessing by remember { mutableStateOf(false) }
     var pendingError by remember { mutableStateOf<String?>(null) }
 
@@ -80,7 +81,7 @@ fun EditScreen(
                                 val result = processToFile(context, imageUri, editSpec)
                                 isProcessing = false
                                 result.fold(
-                                    onSuccess = { onConfirm(it) },
+                                    onSuccess = { onConfirm(it, editSpec) },
                                     onFailure = { pendingError = it.message ?: "이미지 처리에 실패했습니다" },
                                 )
                             }
@@ -143,7 +144,7 @@ fun EditScreen(
 private fun EditScreenIdlePreview() {
     EditScreen(
         imageUri = Uri.EMPTY,
-        onConfirm = {},
+        onConfirm = { _, _ -> },
         onCancel = {},
     )
 }

@@ -86,6 +86,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.shape.BubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import java.text.DecimalFormat
 
@@ -94,7 +95,7 @@ fun UploadRoute(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
     onNavigateToHomeReview: () -> Unit = {},
-    onNavigateToCrop: (Uri) -> Unit = {},
+    onNavigateToCrop: (Uri, EditSpec) -> Unit = { _, _ -> },
     viewModel: UploadViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -107,7 +108,7 @@ fun UploadRoute(
                 is UploadSideEffect.ShowSnackbar -> snackbarState.show(sideEffect.message)
                 is UploadSideEffect.NavigateBack -> onNavigateBack()
                 is UploadSideEffect.NavigateToHomeReview -> onNavigateToHomeReview()
-                is UploadSideEffect.LaunchCrop -> onNavigateToCrop(sideEffect.uri)
+                is UploadSideEffect.LaunchCrop -> onNavigateToCrop(sideEffect.uri, sideEffect.editSpec)
             }
         }
     }

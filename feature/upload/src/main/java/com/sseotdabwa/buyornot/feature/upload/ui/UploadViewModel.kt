@@ -9,6 +9,7 @@ import com.sseotdabwa.buyornot.core.analytics.Analytics
 import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
@@ -66,7 +67,7 @@ class UploadViewModel @Inject constructor(
                 }
             }
             is UploadIntent.StartCropQueue -> startCropQueue(intent.uris)
-            is UploadIntent.CropConfirmed -> onCropConfirmed(intent.croppedUri)
+            is UploadIntent.CropConfirmed -> onCropConfirmed(intent.croppedUri, intent.editSpec)
             is UploadIntent.CropSkipped -> onCropSkipped()
             is UploadIntent.StartReCrop -> startReCrop(intent.index)
             is UploadIntent.RemoveImage ->
@@ -114,7 +115,10 @@ class UploadViewModel @Inject constructor(
         sendSideEffect(UploadSideEffect.LaunchCrop(first))
     }
 
-    private fun onCropConfirmed(croppedUri: Uri) {
+    private fun onCropConfirmed(
+        croppedUri: Uri,
+        editSpec: EditSpec,
+    ) {
         val state = currentState
         if (state.recropIndex != null) {
             val idx = state.recropIndex
@@ -125,12 +129,12 @@ class UploadViewModel @Inject constructor(
             val original = state.selectedImages[idx].originalUri
             val updated =
                 state.selectedImages.toMutableList().apply {
-                    set(idx, ImageEntry(originalUri = original, displayUri = croppedUri))
+                    set(idx, ImageEntry(originalUri = original, displayUri = croppedUri, editSpec = editSpec))
                 }
             updateState { it.copy(selectedImages = updated, recropIndex = null, currentCropOriginal = null) }
         } else {
             val original = state.currentCropOriginal ?: return
-            val newEntry = ImageEntry(originalUri = original, displayUri = croppedUri)
+            val newEntry = ImageEntry(originalUri = original, displayUri = croppedUri, editSpec = editSpec)
             updateState { it.copy(selectedImages = it.selectedImages + newEntry) }
             advanceCropQueue()
         }
@@ -143,7 +147,7 @@ class UploadViewModel @Inject constructor(
             return
         }
         val original = state.currentCropOriginal ?: return
-        val newEntry = ImageEntry(originalUri = original, displayUri = original)
+        val newEntry = ImageEntry(originalUri = original, displayUri = original, editSpec = EditSpec())
         updateState { it.copy(selectedImages = it.selectedImages + newEntry) }
         advanceCropQueue()
     }
@@ -162,9 +166,9 @@ class UploadViewModel @Inject constructor(
     private fun startReCrop(index: Int) {
         val images = currentState.selectedImages
         if (index !in images.indices) return
-        val source = images[index].displayUri
-        updateState { it.copy(recropIndex = index, currentCropOriginal = source) }
-        sendSideEffect(UploadSideEffect.LaunchCrop(source))
+        val entry = images[index]
+        updateState { it.copy(recropIndex = index, currentCropOriginal = entry.originalUri) }
+        sendSideEffect(UploadSideEffect.LaunchCrop(entry.originalUri, entry.editSpec))
     }
 
     private fun submitFeed(context: Context) {

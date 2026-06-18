@@ -11,6 +11,8 @@ import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.sseotdabwa.buyornot.core.ui.crop.EDIT_RESULT_KEY
 import com.sseotdabwa.buyornot.core.ui.crop.EDIT_RESULT_SKIPPED
+import com.sseotdabwa.buyornot.core.ui.crop.EDIT_RESULT_SPEC_KEY
+import com.sseotdabwa.buyornot.core.ui.crop.decodeEditSpecArg
 import com.sseotdabwa.buyornot.core.ui.crop.navigateToEdit
 import com.sseotdabwa.buyornot.feature.upload.ui.UploadIntent
 import com.sseotdabwa.buyornot.feature.upload.ui.UploadViewModel
@@ -38,18 +40,22 @@ fun NavGraphBuilder.uploadScreen(
 
         LaunchedEffect(editResult) {
             val result = editResult ?: return@LaunchedEffect
+            val specArg = backStackEntry.savedStateHandle.get<String>(EDIT_RESULT_SPEC_KEY)
             backStackEntry.savedStateHandle.remove<String>(EDIT_RESULT_KEY)
+            backStackEntry.savedStateHandle.remove<String>(EDIT_RESULT_SPEC_KEY)
             if (result == EDIT_RESULT_SKIPPED) {
                 viewModel.handleIntent(UploadIntent.CropSkipped)
             } else {
-                viewModel.handleIntent(UploadIntent.CropConfirmed(Uri.parse(result)))
+                viewModel.handleIntent(
+                    UploadIntent.CropConfirmed(Uri.parse(result), decodeEditSpecArg(specArg)),
+                )
             }
         }
 
         UploadRouteComposable(
             onNavigateBack = onNavigateBack,
             onNavigateToHomeReview = onNavigateToHomeReview,
-            onNavigateToCrop = { uri -> navController.navigateToEdit(uri) },
+            onNavigateToCrop = { uri, editSpec -> navController.navigateToEdit(uri, editSpec) },
             viewModel = viewModel,
         )
     }
