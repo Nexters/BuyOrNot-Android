@@ -162,9 +162,9 @@ class UploadViewModel @Inject constructor(
     private fun startReCrop(index: Int) {
         val images = currentState.selectedImages
         if (index !in images.indices) return
-        val original = images[index].originalUri
-        updateState { it.copy(recropIndex = index, currentCropOriginal = original) }
-        sendSideEffect(UploadSideEffect.LaunchCrop(original))
+        val source = images[index].displayUri
+        updateState { it.copy(recropIndex = index, currentCropOriginal = source) }
+        sendSideEffect(UploadSideEffect.LaunchCrop(source))
     }
 
     private fun submitFeed(context: Context) {
