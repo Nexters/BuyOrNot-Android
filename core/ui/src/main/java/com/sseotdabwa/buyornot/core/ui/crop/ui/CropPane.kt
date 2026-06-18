@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,10 @@ internal fun CropPane(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    // CropOverlay의 코너 dot indicator가 잘리지 않도록 이미지를 안쪽으로 들이는 여백.
+    // imageBounds 계산도 동일한 여백을 사용해 CropOverlay 최대 영역이 실제 이미지 영역과 일치하도록 한다.
+    val imageInset = 12.dp
+    val imageInsetPx = with(LocalDensity.current) { imageInset.toPx() }
     var tempRatio by remember { mutableStateOf(editSpec.crop?.ratio ?: AspectRatio.Free) }
     var tempRect by remember {
         mutableStateOf(editSpec.crop?.rectNormalized ?: NormalizedRect.Full)
@@ -78,9 +83,13 @@ internal fun CropPane(
     }
 
     val imageBounds: Rect? =
-        remember(containerSize, intrinsicSize) {
+        remember(containerSize, intrinsicSize, imageInsetPx) {
             if (containerSize == IntSize.Zero || intrinsicSize == Size.Unspecified) return@remember null
-            val scale = minOf(containerSize.width / intrinsicSize.width, containerSize.height / intrinsicSize.height)
+            // 이미지는 inset 여백을 제외한 영역에 Fit으로 그려지므로, 그 영역 기준으로 스케일을 계산한다.
+            val availableWidth = containerSize.width - 2 * imageInsetPx
+            val availableHeight = containerSize.height - 2 * imageInsetPx
+            if (availableWidth <= 0f || availableHeight <= 0f) return@remember null
+            val scale = minOf(availableWidth / intrinsicSize.width, availableHeight / intrinsicSize.height)
             val displayedWidth = intrinsicSize.width * scale
             val displayedHeight = intrinsicSize.height * scale
             val left = (containerSize.width - displayedWidth) / 2f
@@ -100,6 +109,7 @@ internal fun CropPane(
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(horizontal = 20.dp)
+                    .padding(top = 12.dp)
                     .onSizeChanged { containerSize = it },
             contentAlignment = Alignment.Center,
         ) {
@@ -107,7 +117,10 @@ internal fun CropPane(
                 Image(
                     bitmap = it.asImageBitmap(),
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(imageInset),
                     contentScale = ContentScale.Fit,
                 )
             }
