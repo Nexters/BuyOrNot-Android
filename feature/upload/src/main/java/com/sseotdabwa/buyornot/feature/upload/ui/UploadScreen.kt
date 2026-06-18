@@ -50,6 +50,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
@@ -238,6 +240,11 @@ fun UploadScreen(
 ) {
     val decimalFormat = remember { DecimalFormat("#,###") }
     val scrollState = rememberScrollState()
+    val contentFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        contentFocusRequester.requestFocus()
+    }
 
     val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
 
@@ -324,6 +331,7 @@ fun UploadScreen(
                 onTitleChange = { onIntent(UploadIntent.UpdateTitle(it)) },
                 content = uiState.content,
                 onContentChange = { onIntent(UploadIntent.UpdateContent(it)) },
+                contentFocusRequester = contentFocusRequester,
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -584,6 +592,7 @@ private fun ContentInputField(
     onTitleChange: (String) -> Unit,
     content: String,
     onContentChange: (String) -> Unit,
+    contentFocusRequester: FocusRequester,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -617,7 +626,8 @@ private fun ContentInputField(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 84.dp),
+                    .heightIn(min = 84.dp)
+                    .focusRequester(contentFocusRequester),
             textStyle =
                 BuyOrNotTheme.typography.paragraphP2Medium.copy(
                     color = BuyOrNotTheme.colors.gray950,
