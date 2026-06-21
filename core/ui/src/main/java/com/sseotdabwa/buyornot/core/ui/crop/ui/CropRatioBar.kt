@@ -36,7 +36,7 @@ internal fun CropRatioBar(
                 .fillMaxWidth()
                 .background(Color.Black)
                 .padding(
-                    top = 36.dp,
+                    top = 24.dp,
                     bottom = 56.dp,
                 ),
         horizontalArrangement =

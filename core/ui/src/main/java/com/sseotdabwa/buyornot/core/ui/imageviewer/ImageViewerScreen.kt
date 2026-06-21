@@ -13,11 +13,7 @@ import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -108,39 +104,13 @@ fun ImageViewerScreen(
         )
     val scope = rememberCoroutineScope()
 
-    Column(
+    Box(
         modifier =
             Modifier
                 .fillMaxSize()
                 .background(Color.Black),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .height(60.dp),
-            contentAlignment = Alignment.CenterStart,
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .align(Alignment.TopStart)
-                        .padding(start = 10.dp, top = 10.dp)
-                        .size(40.dp)
-                        .clickable(onClick = onBackClick),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = BuyOrNotIcons.Close.asImageVector(),
-                    contentDescription = "Close",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        }
-
-        Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+        Box(modifier = Modifier.fillMaxSize()) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
@@ -193,10 +163,20 @@ fun ImageViewerScreen(
         Box(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .height(60.dp),
-        )
+                    .align(Alignment.TopStart)
+                    .statusBarsPadding()
+                    .padding(start = 10.dp, top = 10.dp)
+                    .size(40.dp)
+                    .clickable(onClick = onBackClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = BuyOrNotIcons.Close.asImageVector(),
+                contentDescription = "Close",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp),
+            )
+        }
     }
 }
 

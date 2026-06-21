@@ -45,11 +45,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
@@ -84,6 +87,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.shape.BubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import java.text.DecimalFormat
 
@@ -92,7 +96,7 @@ fun UploadRoute(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
     onNavigateToHomeReview: () -> Unit = {},
-    onNavigateToCrop: (Uri) -> Unit = {},
+    onNavigateToCrop: (Uri, EditSpec) -> Unit = { _, _ -> },
     viewModel: UploadViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -105,7 +109,7 @@ fun UploadRoute(
                 is UploadSideEffect.ShowSnackbar -> snackbarState.show(sideEffect.message)
                 is UploadSideEffect.NavigateBack -> onNavigateBack()
                 is UploadSideEffect.NavigateToHomeReview -> onNavigateToHomeReview()
-                is UploadSideEffect.LaunchCrop -> onNavigateToCrop(sideEffect.uri)
+                is UploadSideEffect.LaunchCrop -> onNavigateToCrop(sideEffect.uri, sideEffect.editSpec)
             }
         }
     }
@@ -238,6 +242,17 @@ fun UploadScreen(
 ) {
     val decimalFormat = remember { DecimalFormat("#,###") }
     val scrollState = rememberScrollState()
+    val contentFocusRequester = remember { FocusRequester() }
+    // 최초 진입 시에만 키패드를 띄운다. 업로드 -> 편집 -> 업로드 복귀 흐름에서는
+    // 컴포지션이 재생성되더라도 rememberSaveable 플래그가 유지되어 다시 포커스하지 않는다.
+    var hasRequestedInitialFocus by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (!hasRequestedInitialFocus) {
+            contentFocusRequester.requestFocus()
+            hasRequestedInitialFocus = true
+        }
+    }
 
     val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
 
@@ -324,6 +339,7 @@ fun UploadScreen(
                 onTitleChange = { onIntent(UploadIntent.UpdateTitle(it)) },
                 content = uiState.content,
                 onContentChange = { onIntent(UploadIntent.UpdateContent(it)) },
+                contentFocusRequester = contentFocusRequester,
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -584,6 +600,7 @@ private fun ContentInputField(
     onTitleChange: (String) -> Unit,
     content: String,
     onContentChange: (String) -> Unit,
+    contentFocusRequester: FocusRequester,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -617,7 +634,8 @@ private fun ContentInputField(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 84.dp),
+                    .heightIn(min = 84.dp)
+                    .focusRequester(contentFocusRequester),
             textStyle =
                 BuyOrNotTheme.typography.paragraphP2Medium.copy(
                     color = BuyOrNotTheme.colors.gray950,

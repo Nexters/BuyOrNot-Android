@@ -3,11 +3,13 @@ package com.sseotdabwa.buyornot.feature.upload.ui
 import android.content.Context
 import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
+import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 
 data class ImageEntry(
     val originalUri: Uri,
     val displayUri: Uri,
+    val editSpec: EditSpec = EditSpec(),
 )
 
 data class UploadUiState(
@@ -80,6 +82,7 @@ sealed interface UploadIntent {
 
     data class CropConfirmed(
         val croppedUri: Uri,
+        val editSpec: EditSpec,
     ) : UploadIntent
 
     data object CropSkipped : UploadIntent
@@ -118,6 +121,7 @@ sealed interface UploadSideEffect {
 
     data class LaunchCrop(
         val uri: Uri,
+        val editSpec: EditSpec = EditSpec(),
     ) : UploadSideEffect
 
     data object NavigateBack : UploadSideEffect
