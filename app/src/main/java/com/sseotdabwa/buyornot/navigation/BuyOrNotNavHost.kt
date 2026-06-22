@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import com.sseotdabwa.buyornot.BuildConfig
 import com.sseotdabwa.buyornot.core.network.AuthEvent
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
+import com.sseotdabwa.buyornot.core.ui.crop.editScreen
 import com.sseotdabwa.buyornot.core.ui.imageviewer.imageViewerScreen
 import com.sseotdabwa.buyornot.core.ui.imageviewer.navigateToImageViewer
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
@@ -102,6 +103,7 @@ fun BuyOrNotNavHost(
             onImageClick = { urls, page -> navController.navigateToImageViewer(urls, page) },
         )
         uploadScreen(
+            navController = navController,
             onNavigateBack = navController::popBackStack,
             onNavigateToHomeReview = {
                 navController.navigateToHomeWithTab(
@@ -127,5 +129,6 @@ fun BuyOrNotNavHost(
         webViewScreen(
             onBackClick = navController::popBackStack,
         )
+        editScreen(navController = navController)
     }
 }

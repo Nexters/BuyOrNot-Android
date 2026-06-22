@@ -167,7 +167,11 @@ fun NotificationDetailScreen(
                             price = feed.price,
                             imageAspectRatios =
                                 feed.images.map { image ->
-                                    if (image.imageHeight > image.imageWidth) ImageAspectRatio.PORTRAIT else ImageAspectRatio.SQUARE
+                                    when {
+                                        image.imageWidth > image.imageHeight -> ImageAspectRatio.LANDSCAPE
+                                        image.imageWidth < image.imageHeight -> ImageAspectRatio.PORTRAIT
+                                        else -> ImageAspectRatio.SQUARE
+                                    }
                                 },
                             isVoteEnded = feed.feedStatus == FeedStatus.CLOSED,
                             userVotedOptionIndex =

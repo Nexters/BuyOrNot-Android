@@ -45,11 +45,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
@@ -84,6 +87,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.shape.BubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import java.text.DecimalFormat
 
@@ -92,6 +96,7 @@ fun UploadRoute(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit = {},
     onNavigateToHomeReview: () -> Unit = {},
+    onNavigateToCrop: (Uri, EditSpec) -> Unit = { _, _ -> },
     viewModel: UploadViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -104,6 +109,7 @@ fun UploadRoute(
                 is UploadSideEffect.ShowSnackbar -> snackbarState.show(sideEffect.message)
                 is UploadSideEffect.NavigateBack -> onNavigateBack()
                 is UploadSideEffect.NavigateToHomeReview -> onNavigateToHomeReview()
+                is UploadSideEffect.LaunchCrop -> onNavigateToCrop(sideEffect.uri, sideEffect.editSpec)
             }
         }
     }
@@ -135,7 +141,7 @@ fun UploadRoute(
             contract = ActivityResultContracts.TakePicture(),
         ) { success ->
             if (success) {
-                photoUri?.let { viewModel.handleIntent(UploadIntent.AddImages(listOf(it))) }
+                photoUri?.let { viewModel.handleIntent(UploadIntent.StartCropQueue(listOf(it))) }
             } else {
                 photoUri?.let { context.contentResolver.delete(it, null, null) }
             }
@@ -162,7 +168,7 @@ fun UploadRoute(
         rememberLauncherForActivityResult(
             contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3),
         ) { uris: List<Uri> ->
-            if (uris.isNotEmpty()) viewModel.handleIntent(UploadIntent.AddImages(uris))
+            if (uris.isNotEmpty()) viewModel.handleIntent(UploadIntent.StartCropQueue(uris))
             keyboardController?.hide()
         }
 
@@ -171,9 +177,12 @@ fun UploadRoute(
         uiState = uiState,
         onIntent = viewModel::handleIntent,
         onPickImage = {
-            if (uiState.selectedImageUris.size < 3) {
+            if (uiState.selectedImages.size < 3) {
                 viewModel.handleIntent(UploadIntent.UpdatePhotoPickerSheetVisibility(true))
             }
+        },
+        onReCropImage = { index ->
+            viewModel.handleIntent(UploadIntent.StartReCrop(index))
         },
         onSubmit = {
             keyboardController?.hide()
@@ -227,11 +236,23 @@ fun UploadScreen(
     uiState: UploadUiState,
     onIntent: (UploadIntent) -> Unit,
     onPickImage: () -> Unit,
+    onReCropImage: (Int) -> Unit,
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val decimalFormat = remember { DecimalFormat("#,###") }
     val scrollState = rememberScrollState()
+    val contentFocusRequester = remember { FocusRequester() }
+    // 최초 진입 시에만 키패드를 띄운다. 업로드 -> 편집 -> 업로드 복귀 흐름에서는
+    // 컴포지션이 재생성되더라도 rememberSaveable 플래그가 유지되어 다시 포커스하지 않는다.
+    var hasRequestedInitialFocus by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        if (!hasRequestedInitialFocus) {
+            contentFocusRequester.requestFocus()
+            hasRequestedInitialFocus = true
+        }
+    }
 
     val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
 
@@ -240,7 +261,7 @@ fun UploadScreen(
             uiState.category != null &&
                 uiState.price.isNotEmpty() &&
                 uiState.title.isNotEmpty() &&
-                uiState.selectedImageUris.isNotEmpty() &&
+                uiState.selectedImages.isNotEmpty() &&
                 !uiState.isLoading
         }
 
@@ -318,14 +339,16 @@ fun UploadScreen(
                 onTitleChange = { onIntent(UploadIntent.UpdateTitle(it)) },
                 content = uiState.content,
                 onContentChange = { onIntent(UploadIntent.UpdateContent(it)) },
+                contentFocusRequester = contentFocusRequester,
             )
 
             Spacer(modifier = Modifier.height(10.dp))
 
             ImagePickerRow(
-                selectedImageUris = uiState.selectedImageUris,
+                selectedImages = uiState.selectedImages,
                 onPickImage = onPickImage,
-                onRemoveImage = { uri -> onIntent(UploadIntent.RemoveImage(uri)) },
+                onReCropImage = onReCropImage,
+                onRemoveImage = { index -> onIntent(UploadIntent.RemoveImage(index)) },
             )
         }
 
@@ -352,7 +375,7 @@ fun UploadScreen(
                         tint = BuyOrNotTheme.colors.gray800,
                     )
                     Text(
-                        text = "${uiState.selectedImageUris.size}/3",
+                        text = "${uiState.selectedImages.size}/3",
                         style = BuyOrNotTheme.typography.subTitleS5SemiBold,
                         color = BuyOrNotTheme.colors.gray800,
                     )
@@ -577,6 +600,7 @@ private fun ContentInputField(
     onTitleChange: (String) -> Unit,
     content: String,
     onContentChange: (String) -> Unit,
+    contentFocusRequester: FocusRequester,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -610,7 +634,8 @@ private fun ContentInputField(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 84.dp),
+                    .heightIn(min = 84.dp)
+                    .focusRequester(contentFocusRequester),
             textStyle =
                 BuyOrNotTheme.typography.paragraphP2Medium.copy(
                     color = BuyOrNotTheme.colors.gray950,
@@ -640,23 +665,25 @@ private fun ContentInputField(
 
 @Composable
 private fun ImagePickerRow(
-    selectedImageUris: List<Uri>,
+    selectedImages: List<ImageEntry>,
     onPickImage: () -> Unit,
-    onRemoveImage: (Uri) -> Unit,
+    onReCropImage: (Int) -> Unit,
+    onRemoveImage: (Int) -> Unit,
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         CameraButton(
-            selectedCount = selectedImageUris.size,
-            enabled = selectedImageUris.size < 3,
+            selectedCount = selectedImages.size,
+            enabled = selectedImages.size < 3,
             onClick = onPickImage,
         )
 
-        selectedImageUris.forEach { uri ->
+        selectedImages.forEachIndexed { index, entry ->
             SelectedImagePreview(
-                imageUri = uri,
-                onRemove = { onRemoveImage(uri) },
+                imageUri = entry.displayUri,
+                onReCrop = { onReCropImage(index) },
+                onRemove = { onRemoveImage(index) },
             )
         }
     }
@@ -701,6 +728,7 @@ private fun CameraButton(
 @Composable
 private fun SelectedImagePreview(
     imageUri: Uri,
+    onReCrop: () -> Unit,
     onRemove: () -> Unit,
 ) {
     Box(
@@ -712,7 +740,7 @@ private fun SelectedImagePreview(
                     width = 1.dp,
                     color = BuyOrNotTheme.colors.gray300,
                     shape = RoundedCornerShape(12.dp),
-                ),
+                ).clickable(onClick = onReCrop),
         contentAlignment = Alignment.TopEnd,
     ) {
         AsyncImage(
@@ -722,29 +750,25 @@ private fun SelectedImagePreview(
             contentScale = ContentScale.Crop,
         )
 
-        Box(
+        Surface(
             modifier =
                 Modifier
                     .padding(
                         top = 4.dp,
                         end = 4.dp,
-                    ).size(20.dp)
-                    .background(
-                        color =
-                            BuyOrNotTheme.colors.black.copy(
-                                alpha = 0.4f,
-                            ),
-                        shape = CircleShape,
-                    ).clip(CircleShape)
-                    .clickable { onRemove() },
-            contentAlignment = Alignment.Center,
+                    ).size(20.dp),
+            shape = CircleShape,
+            color = BuyOrNotTheme.colors.black.copy(alpha = 0.4f),
+            onClick = onRemove,
         ) {
-            Icon(
-                imageVector = BuyOrNotIcons.Close.asImageVector(),
-                contentDescription = "Close",
-                modifier = Modifier.size(10.dp),
-                tint = BuyOrNotTheme.colors.gray0,
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = BuyOrNotIcons.Close.asImageVector(),
+                    contentDescription = "Close",
+                    modifier = Modifier.size(10.dp),
+                    tint = BuyOrNotTheme.colors.gray0,
+                )
+            }
         }
     }
 }
@@ -823,6 +847,7 @@ private fun UploadScreenPreview() {
             uiState = UploadUiState(),
             onIntent = {},
             onPickImage = {},
+            onReCropImage = {},
             onSubmit = {},
         )
     }

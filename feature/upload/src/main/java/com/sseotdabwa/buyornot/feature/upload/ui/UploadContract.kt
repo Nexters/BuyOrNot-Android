@@ -3,11 +3,21 @@ package com.sseotdabwa.buyornot.feature.upload.ui
 import android.content.Context
 import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
+import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
+
+data class ImageEntry(
+    val originalUri: Uri,
+    val displayUri: Uri,
+    val editSpec: EditSpec = EditSpec(),
+)
 
 data class UploadUiState(
     val isLoading: Boolean = false,
-    val selectedImageUris: List<Uri> = emptyList(),
+    val selectedImages: List<ImageEntry> = emptyList(),
+    val cropQueue: List<Uri> = emptyList(),
+    val currentCropOriginal: Uri? = null,
+    val recropIndex: Int? = null,
     val category: FeedCategory? = null,
     val price: String = "",
     val priceFieldValue: TextFieldValue = TextFieldValue(""),
@@ -20,9 +30,12 @@ data class UploadUiState(
     val categories: List<FeedCategory> = FeedCategory.entries,
     val lastTouchedField: String? = null,
 ) {
+    val selectedImageUris: List<Uri>
+        get() = selectedImages.map { it.displayUri }
+
     val hasInput: Boolean
         get() =
-            selectedImageUris.isNotEmpty() ||
+            selectedImages.isNotEmpty() ||
                 category != null ||
                 price.isNotEmpty() ||
                 link.isNotEmpty() ||
@@ -63,12 +76,23 @@ sealed interface UploadIntent {
         val content: String,
     ) : UploadIntent
 
-    data class AddImages(
+    data class StartCropQueue(
         val uris: List<Uri>,
     ) : UploadIntent
 
+    data class CropConfirmed(
+        val croppedUri: Uri,
+        val editSpec: EditSpec,
+    ) : UploadIntent
+
+    data object CropSkipped : UploadIntent
+
+    data class StartReCrop(
+        val index: Int,
+    ) : UploadIntent
+
     data class RemoveImage(
-        val uri: Uri,
+        val index: Int,
     ) : UploadIntent
 
     data class Submit(
@@ -93,6 +117,11 @@ sealed interface UploadIntent {
 sealed interface UploadSideEffect {
     data class ShowSnackbar(
         val message: String,
+    ) : UploadSideEffect
+
+    data class LaunchCrop(
+        val uri: Uri,
+        val editSpec: EditSpec = EditSpec(),
     ) : UploadSideEffect
 
     data object NavigateBack : UploadSideEffect

@@ -32,6 +32,7 @@ core = "1.17.0"
 
 # Image Loading
 coil = "2.7.0"
+exifinterface = "1.4.2"
 
 navigationCompose = "2.8.2"
 kakaoSdk = "2.23.2"
@@ -110,6 +111,7 @@ androidx-core = { group = "androidx.core", name = "core", version.ref = "core" }
 
 # Image Loading
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 
 # Build-logic dependencies (for convention plugins)
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
