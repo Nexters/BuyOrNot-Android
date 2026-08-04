@@ -10,15 +10,24 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.metrics.performance.JankStats
+import androidx.metrics.performance.PerformanceMetricsState
 import com.sseotdabwa.buyornot.core.analytics.Analytics
 import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
+import com.sseotdabwa.buyornot.core.analytics.performance.Performance
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
+import com.sseotdabwa.buyornot.feature.auth.navigation.SplashRoute
 import com.sseotdabwa.buyornot.notification.FcmKeys
+import com.sseotdabwa.buyornot.performance.ScreenPerformanceTracker
+import com.sseotdabwa.buyornot.performance.screenTraceNameOf
 import com.sseotdabwa.buyornot.ui.BuyOrNotApp
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
+
+/** JankStats 프레임에 붙이는 상태 키. 이 태그로 프레임을 화면별로 가른다. */
+private const val FRAME_STATE_SCREEN = "screen"
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -28,13 +37,27 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var analytics: Analytics
 
+    @Inject
+    lateinit var performance: Performance
+
     private val pendingFeedDeepLink = MutableStateFlow<PendingFeedDeepLink?>(null)
+
+    private var jankStats: JankStats? = null
+    private var metricsStateHolder: PerformanceMetricsState.Holder? = null
+    private lateinit var screenPerformanceTracker: ScreenPerformanceTracker
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // 딥링크 처리가 feedId extra를 소비하므로 로깅을 먼저 수행한다.
         handlePushOpened(intent)
         handleFeedDeepLink(intent)
+        screenPerformanceTracker =
+            ScreenPerformanceTracker(
+                performance = performance,
+                // 스플래시가 그려진 것은 "앱을 쓸 수 있는 상태"가 아니므로 TTFD 판정에서 제외한다.
+                nonMeaningfulScreens = setOfNotNull(screenTraceNameOf(SplashRoute::class.qualifiedName)),
+                onScreenChanged = { screen -> metricsStateHolder?.state?.putState(FRAME_STATE_SCREEN, screen) },
+            )
         enableEdgeToEdge(
             statusBarStyle =
                 SystemBarStyle.light(
@@ -52,6 +75,7 @@ class MainActivity : ComponentActivity() {
             BuyOrNotTheme {
                 BuyOrNotApp(
                     authEventBus = authEventBus,
+                    screenPerformanceTracker = screenPerformanceTracker,
                     pendingFeedDeepLink = pendingDeepLink,
                     onPendingFeedDeepLinkConsumed = { pendingFeedDeepLink.value = null },
                     onBackPressed = { finish() },
@@ -59,6 +83,37 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+        startTrackingFrames()
+    }
+
+    /**
+     * 프레임 품질 수집을 시작한다.
+     *
+     * 단일 Activity라 JankStats 인스턴스도 하나다. 화면 구분은 프레임에 붙는
+     * [FRAME_STATE_SCREEN] 태그로 하며, 태그는 네비게이션 변경 시 갱신된다.
+     *
+     * `setContent` 이후에 호출해야 [PerformanceMetricsState] 가 붙을 뷰 계층이 존재한다.
+     */
+    private fun startTrackingFrames() {
+        metricsStateHolder = PerformanceMetricsState.getHolderForHierarchy(window.decorView)
+        jankStats =
+            JankStats.createAndTrack(window) { frameData ->
+                // 매 프레임 실행된다. 카운터 증가만 하고 할당·I/O를 하지 않는다.
+                screenPerformanceTracker.onFrame(frameData.isJank, frameData.frameDurationUiNanos)
+            }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        jankStats?.isTrackingEnabled = true
+        screenPerformanceTracker.onResumed()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        jankStats?.isTrackingEnabled = false
+        // 백그라운드 시간이 화면 체류 시간으로 잡히지 않도록 구간을 끊는다.
+        screenPerformanceTracker.onPaused()
     }
 
     override fun onNewIntent(intent: Intent) {
