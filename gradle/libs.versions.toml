@@ -47,6 +47,11 @@ chucker = "4.3.1"
 # Analytics
 mixpanel = "7.5.3"
 
+# Performance
+# JankStats. 단일 Activity Compose 구조에서는 Firebase 자동 화면 Trace가 화면을 구분하지
+# 못하므로, 프레임에 route를 태깅해 화면별 jank를 직접 집계한다.
+metricsPerformance = "1.0.0"
+
 # org.json 실제 구현체. android.jar의 org.json은 유닛테스트에서 Stub!을 던지므로 테스트에서만 사용한다.
 json = "20250517"
 
@@ -144,6 +149,9 @@ lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", versio
 # Analytics
 mixpanel-android = { group = "com.mixpanel.android", name = "mixpanel-android", version.ref = "mixpanel" }
 json = { group = "org.json", name = "json", version.ref = "json" }
+
+# Performance
+androidx-metrics-performance = { group = "androidx.metrics", name = "metrics-performance", version.ref = "metricsPerformance" }
 
 # Chucker
 chucker = { group = "com.github.chuckerteam.chucker", name = "library", version.ref = "chucker" }

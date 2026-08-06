@@ -57,6 +57,16 @@ class HomeViewModel @Inject constructor(
         loadInitialData()
     }
 
+    /**
+     * 피드 목록의 첫 프레임이 나간 시점에 UI가 호출한다.
+     *
+     * 데이터가 상태에 반영된 시점에 끊으면 LazyColumn 컴포지션·레이아웃 비용이 지표에서 빠져
+     * 체감 시간보다 짧게 나온다. 실패 경로는 이미 종료된 상태이므로 이 호출이 무시된다.
+     */
+    fun onFeedFirstContentRendered() {
+        feedFirstLoadTrace.stop()
+    }
+
     private fun observeUserPreferences() {
         viewModelScope.launch {
             var lastUserType: UserType? = null
@@ -586,7 +596,7 @@ class HomeViewModel @Inject constructor(
                 }
                 feedFirstLoadTrace.putAttribute("result", "success")
                 feedFirstLoadTrace.putMetric("feed_count", newFeeds.size.toLong())
-                feedFirstLoadTrace.stop()
+                // stop()은 목록이 실제로 그려진 뒤 onFeedFirstContentRendered()에서 호출한다.
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to load feeds", e)
                 updateState { it.copy(isLoading = false, hasError = true) }

@@ -29,4 +29,20 @@ object TraceNames {
 
     /** 투표 요청 왕복. UI는 낙관적 업데이트라 체감 시간과 분리해 본다. */
     const val VOTE_REQUEST = "vote_request"
+
+    /**
+     * 화면 진입부터 콘텐츠 첫 프레임이 나가기까지 (화면별 TTID/TTFD).
+     *
+     * [screen] 은 route 문자열이 아니라 인자가 제거된 짧은 이름이어야 한다.
+     * Firebase는 고유 Trace 이름 수에 상한이 있어, 파라미터가 섞이면 이름이 무한히 늘어난다.
+     */
+    fun screenRender(screen: String): String = "screen_render_$screen"
+
+    /**
+     * 화면 체류 구간의 프레임 품질. 구간 길이는 체류 시간이고 프레임 수는 측정항목으로 실린다.
+     *
+     * 단일 Activity Compose 구조에서 Firebase 자동 화면 Trace(`_st_MainActivity`)가
+     * 모든 화면의 프레임을 하나로 뭉개는 것을 화면 단위로 분해한 대체 지표다.
+     */
+    fun screenFrames(screen: String): String = "screen_frames_$screen"
 }

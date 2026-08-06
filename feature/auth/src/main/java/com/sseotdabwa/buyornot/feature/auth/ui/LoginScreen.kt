@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.performance.ReportScreenRendered
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 
 @Composable
@@ -71,6 +72,12 @@ fun AuthRoute(
             }
         }
     }
+
+    // 로그인 화면은 원격 데이터를 기다리지 않고 바로 그려지므로 항상 준비 상태다.
+    // isLoading은 소셜 로그인 진행 중 버튼을 잠그는 오버레이일 뿐 콘텐츠 준비 여부가 아니다.
+    // 로그인 시작 경로에서는 이 화면이 첫 의미 있는 화면이라, 여기서 보고하지 않으면
+    // 앱 시작 TTFD와 screen_render_auth Trace가 영영 닫히지 않는다.
+    ReportScreenRendered(ready = true)
 
     Box(
         modifier = Modifier.fillMaxSize(),
