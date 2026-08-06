@@ -16,7 +16,9 @@ import com.sseotdabwa.buyornot.core.analytics.performance.TraceNames
  * - `screen_render_<화면>` — 화면 진입부터 콘텐츠 첫 프레임까지
  * - `screen_frames_<화면>` — 체류 구간 길이 + 프레임 품질(전체/jank/frozen)
  *
- * 메인 스레드에서만 접근한다. 프레임 콜백과 네비게이션 변경이 모두 메인 스레드다.
+ * [onFrame] 만 JankStats 의 프레임 메트릭스 스레드에서 호출되고(API 24+), 나머지는 모두
+ * 메인 스레드에서 호출된다. 두 스레드가 공유하는 상태는 [currentScreen] 과 [frameStats] 뿐이라
+ * 각각 `@Volatile` 과 내부 락으로 막는다. Trace 핸들은 메인 스레드에서만 만지므로 보호하지 않는다.
  *
  * @param nonMeaningfulScreens 앱 시작 TTFD 판정에서 제외할 화면. 스플래시가 그려진 것은
  *   "앱을 쓸 수 있는 상태"가 아니므로 제외한다.
@@ -30,6 +32,8 @@ class ScreenPerformanceTracker(
     var isFirstMeaningfulRenderDone: Boolean by mutableStateOf(false)
         private set
 
+    /** [onFrame] 이 프레임 메트릭스 스레드에서 읽으므로 쓰기가 곧바로 보이도록 한다. */
+    @Volatile
     private var currentScreen: String? = null
     private var renderTrace: PerfTrace? = null
     private var framesTrace: PerfTrace? = null
@@ -86,12 +90,13 @@ class ScreenPerformanceTracker(
     private fun stopFramesTrace() {
         val trace = framesTrace ?: return
         framesTrace = null
+        val stats = frameStats.snapshot()
         // 프레임이 한 장도 없으면(즉시 스쳐 지나간 화면) 0으로 평균을 흐리지 않도록 버린다.
-        if (frameStats.isEmpty) return
+        if (stats.isEmpty) return
 
-        trace.putMetric(METRIC_TOTAL_FRAMES, frameStats.totalFrames)
-        trace.putMetric(METRIC_JANK_FRAMES, frameStats.jankFrames)
-        trace.putMetric(METRIC_FROZEN_FRAMES, frameStats.frozenFrames)
+        trace.putMetric(METRIC_TOTAL_FRAMES, stats.totalFrames)
+        trace.putMetric(METRIC_JANK_FRAMES, stats.jankFrames)
+        trace.putMetric(METRIC_FROZEN_FRAMES, stats.frozenFrames)
         trace.stop()
     }
 

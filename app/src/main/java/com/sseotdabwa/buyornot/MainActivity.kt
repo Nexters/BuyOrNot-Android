@@ -98,7 +98,9 @@ class MainActivity : ComponentActivity() {
         metricsStateHolder = PerformanceMetricsState.getHolderForHierarchy(window.decorView)
         jankStats =
             JankStats.createAndTrack(window) { frameData ->
-                // 매 프레임 실행된다. 카운터 증가만 하고 할당·I/O를 하지 않는다.
+                // API 24+ 에서는 메인 스레드가 아닌 프레임 메트릭스 스레드에서 매 프레임 실행된다.
+                // frameData 는 다음 프레임에 재사용되므로 필요한 값만 즉시 읽고 넘긴다.
+                // 카운터 증가만 하고 할당·I/O를 하지 않는다.
                 screenPerformanceTracker.onFrame(frameData.isJank, frameData.frameDurationUiNanos)
             }
     }
