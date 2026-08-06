@@ -84,10 +84,17 @@ fun BuyOrNotApp(
             route == SplashRoute::class.qualifiedName || route == AuthRoute::class.qualifiedName
         }
 
-    // 화면별 렌더링 지표. route에는 패키지 경로와 인자가 섞여 있어 짧은 이름으로 접어서 쓴다.
+    // 화면별 렌더링 지표. route에는 패키지 경로와 인자 자리표시자가 섞여 있어 짧은 이름으로 접어서 쓴다.
+    //
+    // 체류 구간은 이름이 아니라 back stack entry로 가른다. route는 인자가 채워지지 않은 패턴
+    // (`...NotificationDetailRoute/{feedId}/{notificationId}`)이라 피드 A 상세와 B 상세가
+    // 완전히 같은 문자열이다. 이름을 기준으로 삼으면 A → B 진입에서 B의 Trace가 열리지 않는다.
     val screenName = remember(currentRoute) { screenTraceNameOf(currentRoute) }
-    LaunchedEffect(screenName) {
-        screenName?.let(screenPerformanceTracker::onScreenEntered)
+    val screenSessionId = navBackStackEntry?.id
+    LaunchedEffect(screenSessionId, screenName) {
+        val screen = screenName ?: return@LaunchedEffect
+        val sessionId = screenSessionId ?: return@LaunchedEffect
+        screenPerformanceTracker.onScreenEntered(screen = screen, sessionId = sessionId)
     }
 
     // 스플래시가 아닌 첫 화면의 콘텐츠가 그려진 시점을 앱 시작 TTFD로 보고한다.

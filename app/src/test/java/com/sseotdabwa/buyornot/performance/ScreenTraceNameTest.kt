@@ -9,7 +9,7 @@ import org.junit.Test
 
 class ScreenTraceNameTest {
     @Test
-    fun `패키지 경로를 벗기고 Route 접미사를 제거한다`() {
+    fun `패키지_경로를_벗기고_Route_접미사를_제거한다`() {
         assertEquals(
             "home",
             screenTraceNameOf("com.sseotdabwa.buyornot.feature.home.navigation.HomeRoute"),
@@ -17,7 +17,7 @@ class ScreenTraceNameTest {
     }
 
     @Test
-    fun `여러 단어는 snake_case로 바꾼다`() {
+    fun `여러_단어는_snake_case로_바꾼다`() {
         assertEquals(
             "my_page",
             screenTraceNameOf("com.sseotdabwa.buyornot.feature.mypage.navigation.MyPageRoute"),
@@ -25,14 +25,14 @@ class ScreenTraceNameTest {
     }
 
     @Test
-    fun `경로 인자를 제거해 이름이 인자값마다 갈라지지 않게 한다`() {
+    fun `경로_인자를_제거해_이름이_인자값마다_갈라지지_않게_한다`() {
         val name = "com.sseotdabwa.buyornot.feature.notification.navigation.FeedDetailRoute"
         assertEquals("feed_detail", screenTraceNameOf("$name/{feedId}"))
         assertEquals("feed_detail", screenTraceNameOf("$name/123"))
     }
 
     @Test
-    fun `쿼리 인자도 제거한다`() {
+    fun `쿼리_인자도_제거한다`() {
         assertEquals(
             "home",
             screenTraceNameOf("com.sseotdabwa.buyornot.feature.home.navigation.HomeRoute?initialTab={initialTab}"),
@@ -40,12 +40,12 @@ class ScreenTraceNameTest {
     }
 
     @Test
-    fun `Route 접미사가 없어도 처리한다`() {
+    fun `Route_접미사가_없어도_처리한다`() {
         assertEquals("image_viewer", screenTraceNameOf("com.sseotdabwa.buyornot.core.ui.imageviewer.ImageViewer"))
     }
 
     @Test
-    fun `이름을 만들 수 없으면 null을 반환한다`() {
+    fun `이름을_만들_수_없으면_null을_반환한다`() {
         assertNull(screenTraceNameOf(null))
         assertNull(screenTraceNameOf(""))
         assertNull(screenTraceNameOf("   "))
@@ -53,7 +53,7 @@ class ScreenTraceNameTest {
     }
 
     @Test
-    fun `Trace 이름 상한을 넘지 않도록 길이를 자른다`() {
+    fun `Trace_이름_상한을_넘지_않도록_길이를_자른다`() {
         val absurdlyLong = "com.example." + "A".repeat(300) + "Route"
         val name = requireNotNull(screenTraceNameOf(absurdlyLong))
 
@@ -63,7 +63,7 @@ class ScreenTraceNameTest {
     }
 
     @Test
-    fun `구분자로 시작하거나 끝나지 않는다`() {
+    fun `구분자로_시작하거나_끝나지_않는다`() {
         val name = requireNotNull(screenTraceNameOf("com.example.UploadRoute"))
 
         assertFalse(name.startsWith("_"))

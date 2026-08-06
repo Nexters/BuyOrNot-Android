@@ -35,17 +35,33 @@ class ScreenPerformanceTracker(
     /** [onFrame] 이 프레임 메트릭스 스레드에서 읽으므로 쓰기가 곧바로 보이도록 한다. */
     @Volatile
     private var currentScreen: String? = null
+
+    /** 지금 측정 중인 체류 구간의 식별자. 같은 화면 종류의 연속 진입을 가르는 기준이다. */
+    private var currentSessionId: String? = null
     private var renderTrace: PerfTrace? = null
     private var framesTrace: PerfTrace? = null
     private val frameStats = ScreenFrameStats()
 
-    fun onScreenEntered(screen: String) {
-        if (screen == currentScreen) return
+    /**
+     * 화면 진입. 이전 구간을 닫고 새 구간을 연다.
+     *
+     * @param screen Trace 이름에 실을 화면 이름. 고유 Trace 이름 수를 화면 종류만큼으로 묶기 위해
+     *   route 인자를 접은 값이라, 서로 다른 진입이 같은 이름을 가질 수 있다.
+     * @param sessionId 이 진입을 구분하는 식별자. `NavBackStackEntry.id` 를 넘긴다.
+     *   [screen] 으로 구분하면 피드 A 상세 → 피드 B 상세처럼 이름이 같은 연속 진입이
+     *   같은 구간으로 뭉개져, B의 렌더 Trace가 아예 열리지 않고 B의 프레임이 A의 집계로 들어간다.
+     */
+    fun onScreenEntered(
+        screen: String,
+        sessionId: String,
+    ) {
+        if (sessionId == currentSessionId) return
 
         stopFramesTrace()
         abandonRenderTrace()
 
         currentScreen = screen
+        currentSessionId = sessionId
         onScreenChanged(screen)
         renderTrace = performance.newTrace(TraceNames.screenRender(screen)).apply { start() }
         startFramesTrace(screen)
