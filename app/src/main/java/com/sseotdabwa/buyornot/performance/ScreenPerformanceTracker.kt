@@ -110,9 +110,18 @@ class ScreenPerformanceTracker(
         // 프레임이 한 장도 없으면(즉시 스쳐 지나간 화면) 0으로 평균을 흐리지 않도록 버린다.
         if (stats.isEmpty) return
 
+        // 개수는 프레임 가중 집계용이다. 콘솔에서 sum(jank)/sum(total) 로 진짜 비율을 뽑을 수 있다.
         trace.putMetric(METRIC_TOTAL_FRAMES, stats.totalFrames)
         trace.putMetric(METRIC_JANK_FRAMES, stats.jankFrames)
         trace.putMetric(METRIC_FROZEN_FRAMES, stats.frozenFrames)
+
+        // 비율은 세션별 분포와 회귀 알림용이다. 개수와 달리 체류 시간에 오염되지 않아
+        // 화면 간 비교가 된다. 분모가 작으면 값이 튀므로 그때는 개수만 남긴다.
+        if (stats.isRateReliable) {
+            trace.putMetric(METRIC_JANK_RATE, stats.jankRatePermille)
+            trace.putMetric(METRIC_FROZEN_RATE, stats.frozenRatePermille)
+        }
+
         trace.stop()
     }
 
@@ -128,5 +137,9 @@ class ScreenPerformanceTracker(
         const val METRIC_TOTAL_FRAMES = "total_frames"
         const val METRIC_JANK_FRAMES = "jank_frames"
         const val METRIC_FROZEN_FRAMES = "frozen_frames"
+
+        // 정수 측정항목이라 비율은 ‰ 로 싣는다. 이름에 단위를 박아 콘솔에서 오독하지 않게 한다.
+        const val METRIC_JANK_RATE = "jank_rate_permille"
+        const val METRIC_FROZEN_RATE = "frozen_rate_permille"
     }
 }

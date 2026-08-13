@@ -72,6 +72,34 @@ class ScreenPerformanceTrackerTest {
     }
 
     @Test
+    fun `프레임이_충분히_모이면_비율_측정항목도_함께_싣는다`() {
+        tracker.onScreenEntered(screen = HOME, sessionId = "entry-1")
+        repeat(90) { tracker.onFrame(isJank = false, frameDurationNanos = SMOOTH_FRAME) }
+        repeat(10) { tracker.onFrame(isJank = true, frameDurationNanos = JANK_FRAME) }
+        tracker.onPaused()
+
+        val metrics = framesTracesOf(HOME).single().metrics
+        assertEquals(100L, metrics["total_frames"])
+        assertEquals(10L, metrics["jank_frames"])
+        assertEquals(100L, metrics["jank_rate_permille"])
+    }
+
+    /** 2프레임 중 1 jank = 500‰ 같은 값이 trace 단위 비가중 평균을 지배하지 않도록 한다. */
+    @Test
+    fun `분모가_작은_구간은_개수만_싣고_비율은_생략한다`() {
+        tracker.onScreenEntered(screen = HOME, sessionId = "entry-1")
+        tracker.onFrame(isJank = false, frameDurationNanos = SMOOTH_FRAME)
+        tracker.onFrame(isJank = true, frameDurationNanos = JANK_FRAME)
+        tracker.onPaused()
+
+        val metrics = framesTracesOf(HOME).single().metrics
+        assertEquals(2L, metrics["total_frames"])
+        assertEquals(1L, metrics["jank_frames"])
+        assertFalse(metrics.containsKey("jank_rate_permille"))
+        assertFalse(metrics.containsKey("frozen_rate_permille"))
+    }
+
+    @Test
     fun `프레임이_한_장도_없는_구간은_보고하지_않는다`() {
         tracker.onScreenEntered(screen = HOME, sessionId = "entry-1")
         tracker.onScreenEntered(screen = DETAIL, sessionId = "entry-2")
