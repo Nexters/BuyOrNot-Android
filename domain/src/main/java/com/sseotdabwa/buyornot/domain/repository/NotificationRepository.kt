@@ -6,4 +6,6 @@ interface NotificationRepository {
     suspend fun getNotifications(type: String?): List<Notification>
 
     suspend fun markAsRead(notificationId: Long)
+
+    suspend fun getUnreadCount(): Int
 }

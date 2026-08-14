@@ -101,6 +101,30 @@ internal val Typography =
                 fontSize = 14.sp,
                 lineHeight = (14 * 1.25f).sp,
             ),
+        titleT5Bold =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                lineHeight = (13 * 1.25f).sp,
+            ),
+        titleT6Bold =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                lineHeight = (12 * 1.25f).sp,
+            ),
+        titleT7Bold =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp,
+                lineHeight = (11 * 1.25f).sp,
+            ),
+        titleT8Bold =
+            baseTextStyle.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 10.sp,
+                lineHeight = (10 * 1.25f).sp,
+            ),
         // Sub Title
         subTitleS1SemiBold =
             baseTextStyle.copy(
@@ -276,6 +300,10 @@ data class BuyOrNotTypography(
     val titleT2Bold: TextStyle,
     val titleT3Bold: TextStyle,
     val titleT4Bold: TextStyle,
+    val titleT5Bold: TextStyle,
+    val titleT6Bold: TextStyle,
+    val titleT7Bold: TextStyle,
+    val titleT8Bold: TextStyle,
     val subTitleS1SemiBold: TextStyle,
     val subTitleS2SemiBold: TextStyle,
     val subTitleS3SemiBold: TextStyle,

@@ -86,6 +86,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.performance.ReportScreenRendered
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.UserType
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -142,6 +143,13 @@ fun HomeRoute(
             }
         }
     }
+
+    // isLoading 동안에는 CircularProgressIndicator가 그려지므로, 스피너가 아닌 실제 목록이
+    // 처음 프레임에 나간 시점을 렌더 완료로 본다.
+    ReportScreenRendered(
+        ready = !uiState.isLoading,
+        onRendered = viewModel::onFeedFirstContentRendered,
+    )
 
     HomeScreen(
         uiState = uiState,
@@ -237,6 +245,7 @@ fun HomeScreen(
 @Composable
 private fun HomeTopBarSection(
     userType: UserType,
+    unreadNotificationCount: Int,
     onLoginClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
@@ -247,6 +256,7 @@ private fun HomeTopBarSection(
             HomeTopBar(
                 onNotificationClick = onNotificationClick,
                 onProfileClick = onProfileClick,
+                unreadCount = unreadNotificationCount,
             )
         }
     }
@@ -371,6 +381,7 @@ private fun HomeFeedList(
     LifecycleEventEffect(Lifecycle.Event.ON_START) {
         enterTimeMs = System.currentTimeMillis()
         onIntent(HomeIntent.OnFeedScreenEntered(firstVisibleItemIndex = listState.firstVisibleItemIndex))
+        onIntent(HomeIntent.RefreshUnreadCount)
     }
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
         onIntent(
@@ -561,6 +572,7 @@ private fun HomeFeedList(
                     ) {
                         HomeTopBarSection(
                             userType = uiState.userType,
+                            unreadNotificationCount = uiState.unreadNotificationCount,
                             onLoginClick = onLoginClick,
                             onNotificationClick = onNotificationClick,
                             onProfileClick = onProfileClick,

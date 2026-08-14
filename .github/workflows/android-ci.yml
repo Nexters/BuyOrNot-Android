@@ -8,6 +8,64 @@ on:
   pull_request:
 
 jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    # 이 잡은 git 쓰기가 필요 없으므로 토큰을 읽기 전용으로 축소한다.
+    permissions:
+      contents: read
+    if: github.actor != 'github-actions[bot]'
+    concurrency:
+      group: unit-test-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # ref를 지정하지 않아 PR에서는 base와 병합된 merge ref를 검증한다.
+        # (브랜치 이름으로 체크아웃하면 트리거 커밋이 아닌 최신 tip을 테스트할 수 있다)
+        with:
+          # Gradle 빌드 스크립트에 토큰이 노출되지 않도록 로컬 git 설정에 남기지 않는다.
+          persist-credentials: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Create local.properties
+        run: |
+          echo "signed.store.file=keystore.jks" >> local.properties
+          echo "signed.store.password=${{ secrets.SIGNED_STORE_PASSWORD }}" >> local.properties
+          echo "signed.key.alias=${{ secrets.SIGNED_KEY_ALIAS }}" >> local.properties
+          echo "signed.key.password=${{ secrets.SIGNED_KEY_PASSWORD }}" >> local.properties
+          echo "debug.base.url=${{ secrets.DEBUG_BASE_URL }}" >> local.properties
+          echo "release.base.url=${{ secrets.RELEASE_BASE_URL }}" >> local.properties
+          echo "google.webClientId=${{ secrets.GOOGLE_WEB_CLIENT_ID }}" >> local.properties
+          echo "kakao.nativeAppKey=${{ secrets.KAKAO_NATIVE_APP_KEY }}" >> local.properties
+          echo "kakao.nativeAppKeyDebug=${{ secrets.KAKAO_NATIVE_APP_KEY_DEBUG }}" >> local.properties
+          echo "mixpanel.token=${{ secrets.MIXPANEL_TOKEN }}" >> local.properties
+
+      - name: Decode Keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
+
+      - name: Decode google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > app/google-services.json
+
+      - name: Configure Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports
+          path: '**/build/reports/tests/testDebugUnitTest/'
+          retention-days: 7
+
   ktlint:
     runs-on: ubuntu-latest
     if: github.actor != 'github-actions[bot]'

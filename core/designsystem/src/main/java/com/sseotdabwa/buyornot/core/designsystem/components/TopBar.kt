@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -116,13 +117,48 @@ fun BackTopBarWithTitle(
 }
 
 /**
- * 3. 홈 화면용 TopBar (로고 + 알림 + 프로필)
+ * 3. 뒤로가기 + 완료 버튼 TopBar (back-done)
+ */
+@Composable
+fun BackTopBarWithDone(
+    onBackClick: () -> Unit,
+    onDoneClick: () -> Unit,
+) {
+    BaseTopBar(
+        navigationIcon = {
+            ClickableIcon(
+                imageVector = BuyOrNotIcons.ArrowLeft.asImageVector(),
+                contentDescription = "Back",
+                onClick = onBackClick,
+            )
+        },
+        actions = {
+            TextButton(
+                onClick = onDoneClick,
+                colors =
+                    ButtonDefaults.textButtonColors(
+                        contentColor = BuyOrNotTheme.colors.gray950,
+                    ),
+                contentPadding = PaddingValues(0.dp),
+            ) {
+                Text(
+                    text = "완료",
+                    style = BuyOrNotTheme.typography.subTitleS2SemiBold,
+                )
+            }
+        },
+    )
+}
+
+/**
+ * 4. 홈 화면용 TopBar (로고 + 알림 + 프로필)
  */
 @Composable
 fun HomeTopBar(
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
     modifier: Modifier = Modifier,
+    unreadCount: Int = 0,
 ) {
     BaseTopBar(
         modifier = modifier,
@@ -134,13 +170,29 @@ fun HomeTopBar(
             )
         },
         actions = {
-            ClickableIcon(
-                imageVector = BuyOrNotIcons.NotificationFilled.asImageVector(),
-                contentDescription = "Notification",
-                onClick = onNotificationClick,
-                tint = BuyOrNotTheme.colors.gray500,
-                alignment = Alignment.CenterEnd,
-            )
+            // ClickableIcon이 유일한 클릭 대상(40dp 터치 영역)이며, 배지는 그 위에 얹힌
+            // 비상호작용 시각 오버레이입니다. 배지에는 pointerInput/clickable이 없어 탭을 소비하지 않습니다.
+            Box {
+                ClickableIcon(
+                    imageVector = BuyOrNotIcons.NotificationFilled.asImageVector(),
+                    contentDescription = "Notification",
+                    onClick = onNotificationClick,
+                    tint = BuyOrNotTheme.colors.gray600,
+                    alignment = Alignment.CenterEnd,
+                )
+
+                if (unreadCount > 0) {
+                    // Figma: 40dp 터치 영역의 우상단 모서리 기준으로 오른쪽 위로 살짝 튀어나오게 배치.
+                    // (badge 우상단 = 터치영역 우상단 + (x +6, y +3))
+                    NotificationNumberBadge(
+                        count = unreadCount,
+                        modifier =
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = 6.dp, y = 3.dp),
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.width(TopBarDefaults.IconSpacing))
 
@@ -148,7 +200,7 @@ fun HomeTopBar(
                 imageVector = BuyOrNotIcons.Profile.asImageVector(),
                 contentDescription = "Profile",
                 onClick = onProfileClick,
-                tint = BuyOrNotTheme.colors.gray500,
+                tint = BuyOrNotTheme.colors.gray600,
                 alignment = Alignment.CenterEnd,
             )
         },
@@ -156,7 +208,7 @@ fun HomeTopBar(
 }
 
 /**
- * 4. 게스트/로그인 유도용 TopBar (로고 + 로그인 버튼)
+ * 5. 게스트/로그인 유도용 TopBar (로고 + 로그인 버튼)
  */
 @Composable
 fun GuestTopBar(onLoginClick: () -> Unit) {
@@ -175,7 +227,7 @@ fun GuestTopBar(onLoginClick: () -> Unit) {
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = BuyOrNotTheme.colors.gray0,
-                        contentColor = BuyOrNotTheme.colors.gray700,
+                        contentColor = BuyOrNotTheme.colors.gray800,
                     ),
                 border =
                     BorderStroke(
@@ -184,7 +236,7 @@ fun GuestTopBar(onLoginClick: () -> Unit) {
                     ),
                 contentPadding =
                     PaddingValues(
-                        horizontal = 10.dp,
+                        horizontal = 12.dp,
                         vertical = 12.dp,
                     ),
             ) {
@@ -218,6 +270,17 @@ private fun BackTopBarWithTitlePreview() {
     }
 }
 
+@Preview(name = "BackTopBarWithDone", showBackground = true)
+@Composable
+private fun BackTopBarWithDonePreview() {
+    BuyOrNotTheme {
+        BackTopBarWithDone(
+            onBackClick = {},
+            onDoneClick = {},
+        )
+    }
+}
+
 @Preview(name = "HomeTopBar", showBackground = true)
 @Composable
 private fun HomeTopBarPreview() {
@@ -225,6 +288,7 @@ private fun HomeTopBarPreview() {
         HomeTopBar(
             onNotificationClick = {},
             onProfileClick = {},
+            unreadCount = 3,
         )
     }
 }

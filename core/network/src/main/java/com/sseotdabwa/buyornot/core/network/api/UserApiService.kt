@@ -35,4 +35,7 @@ interface UserApiService {
     suspend fun unblockUser(
         @Path("userId") userId: Long,
     ): BaseResponse<Unit>
+
+    @POST("/api/v1/users/app-open")
+    suspend fun notifyAppOpened(): BaseResponse<Unit>
 }

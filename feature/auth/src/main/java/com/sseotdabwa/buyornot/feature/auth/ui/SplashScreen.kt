@@ -30,6 +30,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotLotties
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.performance.ReportScreenRendered
 
 /**
  * 스플래시 화면의 네비게이션 진입점
@@ -61,6 +62,10 @@ fun SplashRoute(
             }
         }
     }
+
+    // 스플래시는 데이터를 기다리지 않고 바로 그려지므로 항상 준비 상태다.
+    // 이 지표는 프로세스 시작부터 첫 화면이 실제로 나가기까지를 담는다.
+    ReportScreenRendered(ready = true)
 
     SplashScreen(
         updateDialogType = uiState.updateDialogType,

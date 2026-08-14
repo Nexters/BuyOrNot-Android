@@ -56,4 +56,7 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    debugImplementation(libs.chucker)
+    releaseImplementation(libs.chucker.no.op)
 }

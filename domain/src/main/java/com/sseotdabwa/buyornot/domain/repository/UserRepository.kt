@@ -15,4 +15,6 @@ interface UserRepository {
     suspend fun blockUser(userId: Long)
 
     suspend fun unblockUser(userId: Long)
+
+    suspend fun notifyAppOpened()
 }

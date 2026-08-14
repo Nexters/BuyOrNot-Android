@@ -33,6 +33,10 @@ class UserRepositoryImpl @Inject constructor(
         userApiService.unblockUser(userId).getOrThrow()
     }
 
+    override suspend fun notifyAppOpened() {
+        userApiService.notifyAppOpened().getOrThrow()
+    }
+
     private fun User.toDomain(): UserProfile =
         UserProfile(
             id = id,

@@ -15,12 +15,18 @@ val localProperties =
 android {
     namespace = "com.sseotdabwa.buyornot.feature.auth"
 
+    // AGP 9부터 resValues 기본값이 false다.
+    buildFeatures {
+        resValues = true
+    }
+
     defaultConfig {
         resValue("string", "web_client_id", localProperties.getProperty("google.webClientId", ""))
     }
 }
 
 dependencies {
+    implementation(projects.core.analytics)
     implementation(projects.core.common)
     implementation(projects.domain)
     implementation(projects.core.designsystem)

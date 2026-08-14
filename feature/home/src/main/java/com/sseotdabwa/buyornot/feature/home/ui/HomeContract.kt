@@ -84,6 +84,7 @@ data class HomeUiState(
     val blockingUserId: Long? = null,
     val showSortSheet: Boolean = false,
     val isTooltipDismissed: Boolean = false,
+    val unreadNotificationCount: Int = 0,
 )
 
 /**
@@ -120,6 +121,8 @@ sealed interface HomeIntent {
     ) : HomeIntent
 
     data object LoadFeeds : HomeIntent
+
+    data object RefreshUnreadCount : HomeIntent
 
     data object LoadNextPage : HomeIntent
 

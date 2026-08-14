@@ -86,7 +86,8 @@ class DependencyGraphBuilder {
 
                 config.dependencies
                         .withType(ProjectDependency)
-                        .collect { it.dependencyProject }
+                        // Gradle 9에서 ProjectDependency.dependencyProject가 제거돼 path로 조회한다.
+                        .collect { rootProject.project(it.path) }
                         .each { dependency ->
                             projects.add(current)
                             projects.add(dependency)

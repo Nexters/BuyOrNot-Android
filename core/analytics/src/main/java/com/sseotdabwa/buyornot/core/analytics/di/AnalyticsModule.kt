@@ -5,6 +5,7 @@ import com.mixpanel.android.mpmetrics.MixpanelAPI
 import com.sseotdabwa.buyornot.core.analytics.Analytics
 import com.sseotdabwa.buyornot.core.analytics.BuildConfig
 import com.sseotdabwa.buyornot.core.analytics.DebugAnalytics
+import com.sseotdabwa.buyornot.core.analytics.IdentityBufferingAnalytics
 import com.sseotdabwa.buyornot.core.analytics.MixpanelAnalytics
 import dagger.Module
 import dagger.Provides
@@ -26,21 +27,18 @@ object AnalyticsModule {
                 .getPackageInfo(context.packageName, 0)
                 .versionName
                 ?: "unknown"
-        return if (BuildConfig.DEBUG) {
-            DebugAnalytics(appVersion)
-        } else {
-            val mixpanel =
-                MixpanelAPI.getInstance(
-                    context,
-                    BuildConfig.MIXPANEL_TOKEN,
-                    true,
-                )
-            val appVersion =
-                context.packageManager
-                    .getPackageInfo(context.packageName, 0)
-                    .versionName
-                    ?: "unknown"
-            MixpanelAnalytics(mixpanel, appVersion)
-        }
+        val delegate =
+            if (BuildConfig.DEBUG) {
+                DebugAnalytics(appVersion)
+            } else {
+                val mixpanel =
+                    MixpanelAPI.getInstance(
+                        context,
+                        BuildConfig.MIXPANEL_TOKEN,
+                        true,
+                    )
+                MixpanelAnalytics(mixpanel, appVersion)
+            }
+        return IdentityBufferingAnalytics(delegate)
     }
 }

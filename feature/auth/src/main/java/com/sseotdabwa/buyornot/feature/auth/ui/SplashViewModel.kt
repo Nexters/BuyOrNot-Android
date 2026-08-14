@@ -4,6 +4,9 @@ import android.content.Context
 import android.util.Log
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.lifecycle.viewModelScope
+import com.sseotdabwa.buyornot.core.analytics.performance.Performance
+import com.sseotdabwa.buyornot.core.analytics.performance.TraceNames
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.AppUpdateInfo
 import com.sseotdabwa.buyornot.domain.model.UpdateStrategy
@@ -11,6 +14,7 @@ import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.AppPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.AppUpdateRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
+import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
@@ -63,7 +67,13 @@ class SplashViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val appUpdateRepository: AppUpdateRepository,
     private val appPreferencesRepository: AppPreferencesRepository,
+    private val userRepository: UserRepository,
+    private val performance: Performance,
 ) : BaseViewModel<SplashUiState, SplashIntent, SplashSideEffect>(SplashUiState()) {
+    // 스플래시 진입부터 홈/로그인 분기가 결정되기까지. SPLASH_TIMEOUT_MILLIS 고정 딜레이가
+    // 하한이므로, 이 값이 딜레이를 넘어서면 원격 설정 조회가 병목이라는 뜻이다.
+    private val splashTrace = performance.newTrace(TraceNames.SPLASH_TO_NAVIGATION)
+
     init {
         checkTokenAndNavigate()
     }
@@ -75,7 +85,11 @@ class SplashViewModel @Inject constructor(
     }
 
     private fun checkTokenAndNavigate() {
+        viewModelScope.launch { runCatchingCancellable { userRepository.notifyAppOpened() } }
+
         viewModelScope.launch {
+            splashTrace.start()
+
             // 토큰 체크 + 업데이트 체크 병렬 실행
             val updateInfoDeferred =
                 async {
@@ -102,6 +116,12 @@ class SplashViewModel @Inject constructor(
             val dialogType = determineDialogType(currentVersion, updateInfo)
 
             Log.d(TAG, "currentVersion=$currentVersion, dialogType=$dialogType, updateInfo=$updateInfo")
+
+            // 업데이트 팝업 대기는 사용자 반응 시간이라 지표에서 제외한다 — 여기서 끊어야
+            // splash_to_navigation이 순수하게 앱이 소비한 시간만 담는다.
+            splashTrace.putAttribute("update_dialog", dialogType.toString())
+            splashTrace.putAttribute("has_valid_token", hasValidToken.toString())
+            splashTrace.stop()
 
             if (dialogType != UpdateDialogType.None) {
                 updateState { it.copy(updateDialogType = dialogType) }

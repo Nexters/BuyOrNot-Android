@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.analytics.Analytics
 import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
+import com.sseotdabwa.buyornot.core.analytics.performance.Performance
+import com.sseotdabwa.buyornot.core.analytics.performance.TraceNames
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
@@ -15,9 +17,11 @@ import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
+import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -30,14 +34,37 @@ class HomeViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val feedRepository: FeedRepository,
     private val userRepository: UserRepository,
+    private val notificationRepository: NotificationRepository,
     private val analytics: Analytics,
+    private val performance: Performance,
 ) : BaseViewModel<HomeUiState, HomeIntent, HomeSideEffect>(HomeUiState()) {
+    // 최초 피드 로딩 구간만 계측한다. loadFeeds()는 로그인 상태에서 init과
+    // userPreferences collect 양쪽에서 겹쳐 호출되므로, 중복 start/stop을 흘려보내는
+    // SingleShotPerfTrace에 의존해 첫 구간만 남긴다.
+    private val feedFirstLoadTrace = performance.newTrace(TraceNames.FEED_FIRST_LOAD)
+
     private var currentUserId: Long? = null
     private var isUserIdLoaded = false
+    private var unreadCountJob: Job? = null
+
+    // 피드 로딩 요청 세대. 새 로드/새로고침(탭·필터·카테고리 변경 포함) 시 증가시키고,
+    // 페이지네이션은 요청 시작 시점의 세대와 일치할 때만 결과를 병합해
+    // 진행 중이던 이전 페이지 응답이 최신 목록/커서를 덮어쓰지 않도록 한다. (PR #129 리뷰)
+    private var feedGeneration = 0
 
     init {
         observeUserPreferences()
         loadInitialData()
+    }
+
+    /**
+     * 피드 목록의 첫 프레임이 나간 시점에 UI가 호출한다.
+     *
+     * 데이터가 상태에 반영된 시점에 끊으면 LazyColumn 컴포지션·레이아웃 비용이 지표에서 빠져
+     * 체감 시간보다 짧게 나온다. 실패 경로는 이미 종료된 상태이므로 이 호출이 무시된다.
+     */
+    fun onFeedFirstContentRendered() {
+        feedFirstLoadTrace.stop()
     }
 
     private fun observeUserPreferences() {
@@ -56,10 +83,12 @@ class HomeViewModel @Inject constructor(
                     if (lastUserType != userType) {
                         if (userType == UserType.SOCIAL) {
                             loadUserIdAndRefreshFeeds()
+                            loadUnreadCount()
                         } else {
+                            unreadCountJob?.cancel()
                             currentUserId = null
                             isUserIdLoaded = true
-                            updateState { it.copy(selectedTab = HomeTab.FEED) }
+                            updateState { it.copy(selectedTab = HomeTab.FEED, unreadNotificationCount = 0) }
                             loadFeeds(tab = HomeTab.FEED)
                         }
                         lastUserType = userType
@@ -102,6 +131,30 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /**
+     * 안 읽은 알림 수를 조회해 배지 상태에 반영한다.
+     * 로그인(SOCIAL) 상태에서만 호출하며, 실패 시 silent(이전 값 유지, UI 오류 없음).
+     */
+    private fun loadUnreadCount() {
+        if (uiState.value.userType != UserType.SOCIAL) return
+
+        // 겹치는 요청 시 이전 요청을 취소해 오래된 응답이 최신 값을 덮어쓰지 않도록 한다.
+        unreadCountJob?.cancel()
+        unreadCountJob =
+            viewModelScope.launch {
+                runCatchingCancellable {
+                    notificationRepository.getUnreadCount()
+                }.onSuccess { count ->
+                    // 로그아웃 등으로 세션이 바뀐 뒤 도착한 응답은 무시한다.
+                    if (uiState.value.userType == UserType.SOCIAL) {
+                        updateState { it.copy(unreadNotificationCount = count) }
+                    }
+                }.onFailure { e ->
+                    Log.e("HomeViewModel", "Failed to load unread notification count", e)
+                }
+            }
+    }
+
     override fun handleIntent(intent: HomeIntent) {
         when (intent) {
             is HomeIntent.OnTabSelected -> handleTabSelection(intent.tab)
@@ -126,6 +179,7 @@ class HomeViewModel @Inject constructor(
                 }
             is HomeIntent.OnBlockConfirmed -> handleBlockConfirmed()
             is HomeIntent.LoadFeeds -> loadFeeds()
+            is HomeIntent.RefreshUnreadCount -> loadUnreadCount()
             is HomeIntent.LoadNextPage -> handleNextPage()
             is HomeIntent.Refresh -> handleRefresh()
             is HomeIntent.OnCategoryToggled -> handleCategoryToggled(intent.category)
@@ -204,6 +258,7 @@ class HomeViewModel @Inject constructor(
     private fun handleNextPage() {
         if (currentState.isNextPageLoading || !currentState.hasNextPage) return
 
+        val requestGeneration = feedGeneration
         viewModelScope.launch {
             updateState { it.copy(isNextPageLoading = true) }
             val requestedTab = currentState.selectedTab
@@ -226,7 +281,9 @@ class HomeViewModel @Inject constructor(
                         )
                 }
             }.onSuccess { feedList ->
-                if (currentState.selectedTab != requestedTab) {
+                // 요청 중 새 로드/새로고침/필터·카테고리·탭 변경이 있었으면(세대 불일치)
+                // 오래된 페이지 병합과 hasNextPage/nextCursor 갱신을 건너뛴다. (PR #129 리뷰)
+                if (feedGeneration != requestGeneration) {
                     updateState { it.copy(isNextPageLoading = false) }
                     return@launch
                 }
@@ -237,7 +294,9 @@ class HomeViewModel @Inject constructor(
                         feed.toFeedItem(isOwner)
                     }
 
-                val newAllFeeds = currentState.allFeeds + newItems
+                // 커서 기반 페이지네이션에서 페이지 경계가 겹치면 동일 feedId가 중복될 수 있어
+                // LazyColumn 중복 key 크래시가 발생한다. id 기준으로 중복을 제거한다. (이슈 #128)
+                val newAllFeeds = (currentState.allFeeds + newItems).distinctBy { it.id }
 
                 updateState {
                     it.copy(
@@ -278,12 +337,23 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val choice = if (optionIndex == 0) VoteChoice.YES else VoteChoice.NO
 
+            // UI는 위에서 낙관적으로 이미 갱신됐으므로, 이 trace는 사용자 체감 시간이 아닌
+            // 서버 왕복 시간을 재고 롤백이 얼마나 늦게 발생하는지 보기 위한 것이다.
+            val voteTrace =
+                performance.newTrace(TraceNames.VOTE_REQUEST).apply {
+                    putAttribute("user_type", uiState.value.userType.name)
+                    putAttribute("choice", choice.name)
+                    start()
+                }
+
             runCatchingCancellable {
                 when (uiState.value.userType) {
                     UserType.SOCIAL -> feedRepository.voteFeed(feedId.toLong(), choice)
                     UserType.GUEST -> feedRepository.voteGuestFeed(feedId.toLong(), choice)
                 }
             }.onSuccess { voteResult ->
+                voteTrace.putAttribute("result", "success")
+                voteTrace.stop()
                 // 2. 최종 업데이트: 서버 응답으로 확정
                 updateState { state ->
                     val newAllFeeds =
@@ -316,6 +386,8 @@ class HomeViewModel @Inject constructor(
                     ),
                 )
             }.onFailure { e ->
+                voteTrace.putAttribute("result", "error")
+                voteTrace.stop()
                 Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
                 // 3. 롤백 (Rollback): 해당 피드만 원복, 나머지 동시 변경사항 보존
                 updateState { state ->
@@ -472,7 +544,10 @@ class HomeViewModel @Inject constructor(
         tab: HomeTab? = null,
         clearFeeds: Boolean = true,
     ) {
+        // 새 로드 컨텍스트 시작 → 진행 중이던 페이지네이션 응답 무효화
+        feedGeneration++
         viewModelScope.launch {
+            feedFirstLoadTrace.start()
             if (clearFeeds) {
                 updateState {
                     it.copy(
@@ -502,10 +577,13 @@ class HomeViewModel @Inject constructor(
                 }
             }.onSuccess { feedList ->
                 val newFeeds =
-                    feedList.feeds.map { feed ->
-                        val isOwner = currentUserId != null && feed.author.userId == currentUserId
-                        feed.toFeedItem(isOwner)
-                    }
+                    feedList.feeds
+                        .map { feed ->
+                            val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                            feed.toFeedItem(isOwner)
+                        }
+                        // LazyColumn key 유일성 보장: 동일 feedId 중복 방지 (이슈 #128)
+                        .distinctBy { it.id }
                 updateState {
                     it.copy(
                         allFeeds = newFeeds,
@@ -516,9 +594,14 @@ class HomeViewModel @Inject constructor(
                         nextCursor = feedList.nextCursor,
                     )
                 }
+                feedFirstLoadTrace.putAttribute("result", "success")
+                feedFirstLoadTrace.putMetric("feed_count", newFeeds.size.toLong())
+                // stop()은 목록이 실제로 그려진 뒤 onFeedFirstContentRendered()에서 호출한다.
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to load feeds", e)
                 updateState { it.copy(isLoading = false, hasError = true) }
+                feedFirstLoadTrace.putAttribute("result", "error")
+                feedFirstLoadTrace.stop()
             }
         }
     }
@@ -530,6 +613,8 @@ class HomeViewModel @Inject constructor(
     private fun handleRefresh() {
         if (currentState.isRefreshing) return
 
+        // 새로고침도 새 로드 컨텍스트 → 진행 중이던 페이지네이션 응답 무효화
+        feedGeneration++
         viewModelScope.launch {
             updateState { it.copy(isRefreshing = true, hasError = false) }
 
@@ -544,10 +629,13 @@ class HomeViewModel @Inject constructor(
                 }
             }.onSuccess { feedList ->
                 val refreshedFeeds =
-                    feedList.feeds.map { feed ->
-                        val isOwner = currentUserId != null && feed.author.userId == currentUserId
-                        feed.toFeedItem(isOwner)
-                    }
+                    feedList.feeds
+                        .map { feed ->
+                            val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                            feed.toFeedItem(isOwner)
+                        }
+                        // LazyColumn key 유일성 보장: 새로고침 응답의 중복 feedId 방지 (이슈 #128)
+                        .distinctBy { it.id }
                 updateState {
                     it.copy(
                         allFeeds = refreshedFeeds,

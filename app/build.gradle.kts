@@ -1,3 +1,4 @@
+import com.google.firebase.appdistribution.gradle.firebaseAppDistribution
 import java.util.Properties
 
 plugins {
@@ -9,6 +10,7 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.firebase.appdistribution)
+    alias(libs.plugins.firebase.perf)
 }
 
 val localProperties =
@@ -30,8 +32,8 @@ android {
 
     defaultConfig {
         applicationId = "com.sseotdabwa.buyornot"
-        versionCode = 10
-        versionName = "0.3.3"
+        versionCode = 11
+        versionName = "0.3.4"
 
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${localProperties.getProperty("kakao.nativeAppKey", "")}\"")
         manifestPlaceholders["NATIVE_APP_KEY"] = localProperties.getProperty("kakao.nativeAppKey", "")
@@ -118,6 +120,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.metrics.performance)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -131,6 +134,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.performance)
 
     ksp(libs.hilt.compiler)
 

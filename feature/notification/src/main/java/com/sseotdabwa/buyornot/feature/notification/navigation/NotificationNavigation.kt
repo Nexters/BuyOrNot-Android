@@ -13,8 +13,8 @@ data object NotificationRoute
 
 @Serializable
 data class NotificationDetailRoute(
-    val notificationId: Long,
     val feedId: Long,
+    val notificationId: Long = -1L,
 )
 
 fun NavGraphBuilder.notificationGraph(
@@ -44,8 +44,18 @@ fun NavHostController.navigateToNotification(navOptions: NavOptions? = null) {
 }
 
 fun NavHostController.navigateToNotificationDetail(
-    notificationId: Long,
+    notificationId: Long = -1L,
     feedId: Long,
 ) {
-    navigate(NotificationDetailRoute(notificationId = notificationId, feedId = feedId))
+    navigate(NotificationDetailRoute(feedId = feedId, notificationId = notificationId))
+}
+
+/**
+ * FCM 딥링크 진입점. notificationId가 있으면 함께 넘겨 markAsRead까지 수행한다.
+ */
+fun NavHostController.navigateToFeedDetail(
+    feedId: Long,
+    notificationId: Long? = null,
+) {
+    navigate(NotificationDetailRoute(feedId = feedId, notificationId = notificationId ?: -1L))
 }

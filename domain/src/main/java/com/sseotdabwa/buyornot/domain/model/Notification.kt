@@ -15,8 +15,11 @@ data class Notification(
 )
 
 enum class NotificationType {
+    MY_FEED_VOTED_1,
+    MY_FEED_VOTED_10,
     MY_FEED_CLOSED,
     PARTICIPATED_FEED_CLOSED,
+    MARKETING_NO_VOTE,
     UNKNOWN,
     ;
 

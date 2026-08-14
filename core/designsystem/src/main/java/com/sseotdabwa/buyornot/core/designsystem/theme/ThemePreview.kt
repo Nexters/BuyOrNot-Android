@@ -166,6 +166,10 @@ private fun TypographyCatalogPreview() {
                 TypographyItem("titleT2Bold", BuyOrNotTheme.typography.titleT2Bold)
                 TypographyItem("titleT3Bold", BuyOrNotTheme.typography.titleT3Bold)
                 TypographyItem("titleT4Bold", BuyOrNotTheme.typography.titleT4Bold)
+                TypographyItem("titleT5Bold", BuyOrNotTheme.typography.titleT5Bold)
+                TypographyItem("titleT6Bold", BuyOrNotTheme.typography.titleT6Bold)
+                TypographyItem("titleT7Bold", BuyOrNotTheme.typography.titleT7Bold)
+                TypographyItem("titleT8Bold", BuyOrNotTheme.typography.titleT8Bold)
             }
 
             // SubTitle

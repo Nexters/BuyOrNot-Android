@@ -49,10 +49,18 @@ class TimeUtilsTest {
     }
 
     @Test
-    fun `7일을 초과할 경우 절대 날짜로 표시된다`() {
+    fun `7일_초과_14일_미만일_경우에도_1주_전으로_표시된다`() {
         val past = now.minusDays(8)
         val isoString = past.format(DateTimeFormatter.ISO_DATE_TIME)
         val result = TimeUtils.formatRelativeTime(isoString, now)
-        assertEquals("2026.2.14", result)
+        assertEquals("1주 전", result)
+    }
+
+    @Test
+    fun `14일_이상일_경우_절대_날짜로_표시된다`() {
+        val past = now.minusDays(14)
+        val isoString = past.format(DateTimeFormatter.ISO_DATE_TIME)
+        val result = TimeUtils.formatRelativeTime(isoString, now)
+        assertEquals("2026.2.8", result)
     }
 }

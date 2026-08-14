@@ -18,6 +18,8 @@ class NotificationRepositoryImpl @Inject constructor(
         notificationApiService.markAsRead(notificationId).getOrThrow()
     }
 
+    override suspend fun getUnreadCount(): Int = notificationApiService.getUnreadCount().getOrThrow().unreadCount
+
     private fun NotificationResponse.toDomain(): Notification =
         Notification(
             notificationId = notificationId,

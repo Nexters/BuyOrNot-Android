@@ -1,4 +1,4 @@
-import com.android.build.gradle.LibraryExtension
+import com.android.build.api.dsl.LibraryExtension
 import com.sseotdabwa.convention.configureComposeAndroid
 import com.sseotdabwa.convention.configureHiltAndroid
 import com.sseotdabwa.convention.configureKotlinAndroid
@@ -13,7 +13,6 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
         with(target) {
             with(pluginManager) {
                 apply("com.android.library")
-                apply("org.jetbrains.kotlin.android")
                 apply("org.jetbrains.kotlin.plugin.compose")
                 apply("org.jetbrains.kotlin.plugin.serialization")
             }
@@ -21,7 +20,6 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             extensions.configure<LibraryExtension> {
                 configureKotlinAndroid(this)
                 configureComposeAndroid(this)
-                defaultConfig.targetSdk = 36
             }
 
             configureHiltAndroid()

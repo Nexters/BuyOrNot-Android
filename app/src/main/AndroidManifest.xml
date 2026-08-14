@@ -17,6 +17,26 @@
         android:supportsRtl="true"
         android:windowSoftInputMode="adjustResize"
         android:theme="@style/Theme.BuyOrNot">
+
+        <!--
+            targetSdk 36부터 Android는 sw600dp 이상 화면(태블릿·폴더블 내부 화면·데스크톱 창)에서
+            screenOrientation·resizeableActivity·aspect-ratio 제한을 무시한다. 이 속성이 그 무시를
+            거부해 아래 MainActivity의 세로 고정이 대화면에서도 유지되게 한다.
+
+            가로 레이아웃이 준비되지 않아 둔 임시 조치다(#145). 이 opt-out은 targetSdk 37부터
+            프레임워크에서 제거되므로, 37로 올리기 전에 #145가 끝나야 한다.
+            https://developer.android.com/about/versions/17/changes/ff-restrictions-ignored
+        -->
+        <property
+            android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+            android:value="true" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="buyornot_default_channel" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
         <service
             android:name=".notification.BuyOrNotMessagingService"
             android:exported="false">
@@ -28,6 +48,8 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.BuyOrNot">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

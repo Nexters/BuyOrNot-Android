@@ -27,7 +27,7 @@ class NotificationDetailViewModel @Inject constructor(
 ) : BaseViewModel<NotificationDetailUiState, NotificationDetailIntent, NotificationDetailSideEffect>(
         NotificationDetailUiState(),
     ) {
-    private val notificationId: Long = checkNotNull(savedStateHandle["notificationId"])
+    private val notificationId: Long = savedStateHandle["notificationId"] ?: -1L
     private val feedId: Long = checkNotNull(savedStateHandle["feedId"])
 
     private var currentUserId: Long? = null
@@ -183,6 +183,7 @@ class NotificationDetailViewModel @Inject constructor(
     }
 
     private fun markAsRead() {
+        if (notificationId <= 0L) return
         viewModelScope.launch {
             runCatchingCancellable {
                 notificationRepository.markAsRead(notificationId)

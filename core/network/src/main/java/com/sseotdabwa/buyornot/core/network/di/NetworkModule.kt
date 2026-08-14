@@ -1,5 +1,7 @@
 package com.sseotdabwa.buyornot.core.network.di
 
+import android.content.Context
+import com.chuckerteam.chucker.api.ChuckerInterceptor
 import com.sseotdabwa.buyornot.core.datastore.UserPreferencesDataSource
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.core.network.BuildConfig
@@ -12,6 +14,7 @@ import com.sseotdabwa.buyornot.core.network.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -41,11 +44,13 @@ object NetworkModule {
     @Singleton
     @Named("AuthClient")
     fun provideAuthOkHttpClient(
+        @ApplicationContext context: Context,
         authInterceptor: AuthInterceptor,
         tokenAuthenticator: TokenAuthenticator,
     ): OkHttpClient =
         OkHttpClient
             .Builder()
+            .addInterceptor(ChuckerInterceptor.Builder(context).build())
             .addInterceptor(authInterceptor)
             .addInterceptor(
                 HttpLoggingInterceptor().apply {
@@ -63,9 +68,12 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("ReissueClient")
-    fun provideReissueOkHttpClient(): OkHttpClient =
+    fun provideReissueOkHttpClient(
+        @ApplicationContext context: Context,
+    ): OkHttpClient =
         OkHttpClient
             .Builder()
+            .addInterceptor(ChuckerInterceptor.Builder(context).build())
             .addInterceptor(
                 HttpLoggingInterceptor().apply {
                     level =

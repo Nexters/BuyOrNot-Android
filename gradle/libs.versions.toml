@@ -1,8 +1,8 @@
 [versions]
-agp = "8.13.2"
+agp = "9.3.1"
 kotlin = "2.3.0"
-ksp = "2.3.4"
-androidTools = "32.0.0"
+ksp = "2.3.10"
+androidTools = "32.3.1"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
@@ -12,7 +12,7 @@ activityCompose = "1.12.2"
 composeBom = "2026.01.00"
 
 # Hilt
-hilt = "2.58"
+hilt = "2.59.2"
 hiltNavigationCompose = "1.3.0"
 
 # DB
@@ -41,17 +41,29 @@ googleid = "1.2.0"
 
 lottie = "6.7.1"
 
+# Chucker
+chucker = "4.3.1"
+
 # Analytics
 mixpanel = "7.5.3"
 
+# Performance
+# JankStats. 단일 Activity Compose 구조에서는 Firebase 자동 화면 Trace가 화면을 구분하지
+# 못하므로, 프레임에 route를 태깅해 화면별 jank를 직접 집계한다.
+metricsPerformance = "1.0.0"
+
+# org.json 실제 구현체. android.jar의 org.json은 유닛테스트에서 Stub!을 던지므로 테스트에서만 사용한다.
+json = "20250517"
+
 # Firebase
 firebaseBom = "34.9.0"
-googleServices = "4.4.2"
-firebaseCrashlytics = "3.0.3"
-firebaseAppDistribution = "5.1.1"
+googleServices = "4.5.0"
+firebaseCrashlytics = "3.0.7"
+firebaseAppDistribution = "5.3.0"
+firebasePerf = "2.0.2"
 
 # Code Quality
-ktlint = "14.0.1"
+ktlint = "14.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -130,16 +142,24 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 firebase-config = { group = "com.google.firebase", name = "firebase-config" }
+firebase-performance = { group = "com.google.firebase", name = "firebase-perf" }
 
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 
 # Analytics
 mixpanel-android = { group = "com.mixpanel.android", name = "mixpanel-android", version.ref = "mixpanel" }
+json = { group = "org.json", name = "json", version.ref = "json" }
+
+# Performance
+androidx-metrics-performance = { group = "androidx.metrics", name = "metrics-performance", version.ref = "metricsPerformance" }
+
+# Chucker
+chucker = { group = "com.github.chuckerteam.chucker", name = "library", version.ref = "chucker" }
+chucker-no-op = { group = "com.github.chuckerteam.chucker", name = "library-no-op", version.ref = "chucker" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -149,3 +169,4 @@ ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlytics" }
 firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppDistribution" }
+firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "firebasePerf" }
