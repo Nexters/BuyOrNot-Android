@@ -6,6 +6,7 @@ import androidx.core.content.pm.PackageInfoCompat
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.analytics.performance.Performance
 import com.sseotdabwa.buyornot.core.analytics.performance.TraceNames
+import com.sseotdabwa.buyornot.core.common.deeplink.PendingNavigationStore
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.AppUpdateInfo
@@ -69,6 +70,7 @@ class SplashViewModel @Inject constructor(
     private val appPreferencesRepository: AppPreferencesRepository,
     private val userRepository: UserRepository,
     private val performance: Performance,
+    private val pendingNavigationStore: PendingNavigationStore,
 ) : BaseViewModel<SplashUiState, SplashIntent, SplashSideEffect>(SplashUiState()) {
     // 스플래시 진입부터 홈/로그인 분기가 결정되기까지. SPLASH_TIMEOUT_MILLIS 고정 딜레이가
     // 하한이므로, 이 값이 딜레이를 넘어서면 원격 설정 조회가 병목이라는 뜻이다.
@@ -105,7 +107,12 @@ class SplashViewModel @Inject constructor(
                     false
                 }
 
-            delay(SPLASH_TIMEOUT_MILLIS)
+            // 딥링크로 들어왔으면 브랜딩용 고정 대기를 건너뛴다. 링크를 누른 사용자는 특정 콘텐츠를
+            // 보러 온 것이고, 웹은 같은 URL에서 즉시 보여주므로 2.3초를 세우면 앱만 불친절해진다.
+            // 업데이트 팝업 판단은 아래에서 그대로 수행하므로 강제 업데이트는 여전히 막힌다.
+            if (!pendingNavigationStore.hasPending) {
+                delay(SPLASH_TIMEOUT_MILLIS)
+            }
 
             // 업데이트 다이얼로그 타입 결정
             val updateInfo = updateInfoDeferred.await()

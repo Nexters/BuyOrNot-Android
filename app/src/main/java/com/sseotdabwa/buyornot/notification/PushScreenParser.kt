@@ -1,18 +1,9 @@
 package com.sseotdabwa.buyornot.notification
 
-/**
- * 푸시 알림 탭 시 이동할 화면.
- *
- * 서버가 FCM data의 [FcmKeys.SCREEN]으로 내려주는 값과 이름이 1:1 대응한다.
- */
-enum class PushDestination {
-    FEED_DETAIL,
-    HOME,
-    FEED_CREATE,
-}
+import com.sseotdabwa.buyornot.core.common.deeplink.NavigationDestination
 
 /**
- * `screen`과 `feedId` 조합에서 이동 대상을 정한다.
+ * FCM data의 `screen`과 `feedId` 조합에서 이동 대상을 정한다.
  *
  * 계측기 없이 단위 테스트로 규칙을 고정하기 위해 Intent가 아니라 이미 분해된 값을 받는다
  * (`feedIdFromAppLink`와 같은 이유).
@@ -30,10 +21,10 @@ enum class PushDestination {
 fun pushDestinationOf(
     screen: String?,
     feedId: Long?,
-): PushDestination? {
-    if (feedId != null) return PushDestination.FEED_DETAIL
+): NavigationDestination? {
+    if (feedId != null) return NavigationDestination.FEED_DETAIL
     if (screen == null) return null
-    return PushDestination.entries
+    return NavigationDestination.entries
         .find { it.name == screen }
-        ?.takeIf { it != PushDestination.FEED_DETAIL }
+        ?.takeIf { it != NavigationDestination.FEED_DETAIL }
 }

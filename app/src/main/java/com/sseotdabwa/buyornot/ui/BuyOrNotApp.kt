@@ -14,9 +14,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
+import com.sseotdabwa.buyornot.core.common.deeplink.NavigationDestination
+import com.sseotdabwa.buyornot.core.common.deeplink.PendingNavigation
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
@@ -32,8 +35,6 @@ import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToFeedDetail
 import com.sseotdabwa.buyornot.feature.upload.navigation.navigateToUpload
 import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
-import com.sseotdabwa.buyornot.notification.PendingPushNavigation
-import com.sseotdabwa.buyornot.notification.PushDestination
 import com.sseotdabwa.buyornot.performance.ScreenPerformanceTracker
 import com.sseotdabwa.buyornot.performance.screenTraceNameOf
 
@@ -41,8 +42,8 @@ import com.sseotdabwa.buyornot.performance.screenTraceNameOf
 fun BuyOrNotApp(
     authEventBus: AuthEventBus,
     screenPerformanceTracker: ScreenPerformanceTracker,
-    pendingPushNavigation: PendingPushNavigation? = null,
-    onPendingPushNavigationConsumed: () -> Unit = {},
+    pendingNavigation: PendingNavigation? = null,
+    onPendingNavigationConsumed: () -> Unit = {},
     onBackPressed: () -> Unit = {},
     onFinish: () -> Unit = {},
     viewModel: BuyOrNotViewModel = hiltViewModel(),
@@ -54,7 +55,7 @@ fun BuyOrNotApp(
 
     val isFirstRun by viewModel.isFirstRun.collectAsStateWithLifecycle()
 
-    BackHandler(enabled = currentDestination?.route?.startsWith(HomeRoute::class.qualifiedName ?: "") == true) {
+    BackHandler(enabled = currentDestination?.hasRoute<HomeRoute>() == true) {
         onBackPressed()
     }
 
@@ -71,24 +72,29 @@ fun BuyOrNotApp(
 
     // FCM 알림 탭으로 전달된 pending feedId를 인증 완료(Splash/Auth 통과) 후 한 번만 소비한다.
     // Splash/로그인 화면에서는 보류하고, 인증된 어떤 화면(Home·MyPage·Upload 등)에서든 즉시 이동한다.
+    //
+    // 화면 판정에 `::class.qualifiedName`을 쓰면 안 된다. route 문자열은 @Serializable이 컴파일
+    // 시점에 박아넣은 원본 FQN인데, R8은 클래스를 난독화하므로 release에서 qualifiedName이
+    // `xh3` 같은 이름을 돌려준다. 둘이 절대 같아지지 않아 게이트가 항상 열린 상태가 되고,
+    // 스플래시 위에서 상세로 이동한 뒤 스플래시의 홈 이동이 그것을 덮어써 딥링크가 유실된다.
     val currentRoute = currentDestination?.route
     val isPastAuthGate =
-        currentRoute != null &&
-            currentRoute != SplashRoute::class.qualifiedName &&
-            currentRoute != AuthRoute::class.qualifiedName
-    LaunchedEffect(pendingPushNavigation, isPastAuthGate) {
-        val navigation = pendingPushNavigation ?: return@LaunchedEffect
+        currentDestination != null &&
+            !currentDestination.hasRoute<SplashRoute>() &&
+            !currentDestination.hasRoute<AuthRoute>()
+    LaunchedEffect(pendingNavigation, isPastAuthGate) {
+        val navigation = pendingNavigation ?: return@LaunchedEffect
         if (!isPastAuthGate) return@LaunchedEffect
         when (navigation.destination) {
-            // feedId는 pushDestinationOf가 FEED_DETAIL일 때 존재를 보장한다.
-            PushDestination.FEED_DETAIL ->
+            // feedId는 앱 링크·FCM 양쪽 경로에서 FEED_DETAIL일 때 존재가 보장된다.
+            NavigationDestination.FEED_DETAIL ->
                 navigation.feedId?.let { navController.navigateToFeedDetail(it, navigation.notificationId) }
 
-            PushDestination.FEED_CREATE -> navController.navigateToUpload()
+            NavigationDestination.FEED_CREATE -> navController.navigateToUpload()
 
             // 인증 통과 직후엔 이미 홈이지만, 다른 화면에 있다가 탭한 경우엔 홈으로 되돌려야 한다.
             // 홈이 중복으로 쌓이지 않게 기존 홈을 걷어내고 하나만 남긴다.
-            PushDestination.HOME ->
+            NavigationDestination.HOME ->
                 navController.navigateToHome(
                     navOptions {
                         popUpTo<HomeRoute> { inclusive = true }
@@ -96,13 +102,13 @@ fun BuyOrNotApp(
                     },
                 )
         }
-        onPendingPushNavigationConsumed()
+        onPendingNavigationConsumed()
     }
 
     val isFullscreen =
-        currentDestination?.route.let { route ->
-            route == SplashRoute::class.qualifiedName || route == AuthRoute::class.qualifiedName
-        }
+        currentDestination?.let { destination ->
+            destination.hasRoute<SplashRoute>() || destination.hasRoute<AuthRoute>()
+        } == true
 
     // 화면별 렌더링 지표. route에는 패키지 경로와 인자 자리표시자가 섞여 있어 짧은 이름으로 접어서 쓴다.
     //

@@ -23,6 +23,18 @@ val localProperties =
 
 fun gradlePropertyOrNull(key: String): String? = providers.gradleProperty(key).orNull?.takeUnless { it.isBlank() }
 
+/**
+ * 앱 링크로 가로챌 host. 비밀값이 아니고, 누락되면 앱 링크가 «조용히» 안 되는 값이라
+ * local.properties가 아니라 빌드 스크립트에 상수로 둔다.
+ *
+ * 도메인은 하이픈이 있는 buy-or-not, 패키지는 buyornot으로 표기가 다르다.
+ * 오타를 내면 빌드는 성공하고 검증만 실패하므로 여기 한 곳에서만 정의한다.
+ *
+ * 이 값과 짝이 되는 assetlinks.json이 각 host에 호스팅돼 있어야 autoVerify가 통과한다.
+ */
+val appLinkHostProd = "buy-or-not.com"
+val appLinkHostDev = "dev.buy-or-not.com"
+
 val firebaseDistributionTesters = gradlePropertyOrNull("firebaseAppDistributionTesters")
 val firebaseDistributionGroups = gradlePropertyOrNull("firebaseAppDistributionGroups")
 val firebaseDistributionReleaseNotes = gradlePropertyOrNull("firebaseAppDistributionReleaseNotes")
@@ -71,6 +83,8 @@ android {
             signingConfig = signingConfigs.getByName("release")
             buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${localProperties.getProperty("kakao.nativeAppKeyDebug", "")}\"")
             manifestPlaceholders["NATIVE_APP_KEY"] = localProperties.getProperty("kakao.nativeAppKeyDebug", "")
+            manifestPlaceholders["appLinkHost"] = appLinkHostDev
+            buildConfigField("String", "APP_LINK_HOST", "\"$appLinkHostDev\"")
             firebaseAppDistribution {
                 artifactType = "APK"
                 firebaseDistributionReleaseNotes?.let { releaseNotes = it }
@@ -86,6 +100,8 @@ android {
                 "proguard-rules.pro",
             )
             signingConfig = signingConfigs.getByName("release")
+            manifestPlaceholders["appLinkHost"] = appLinkHostProd
+            buildConfigField("String", "APP_LINK_HOST", "\"$appLinkHostProd\"")
             firebaseAppDistribution {
                 artifactType = "APK"
                 firebaseDistributionReleaseNotes?.let { releaseNotes = it }
@@ -104,6 +120,7 @@ android {
 dependencies {
     implementation(projects.domain)
     implementation(projects.core.analytics)
+    implementation(projects.core.common)
     implementation(projects.core.data)
     implementation(projects.core.network)
     implementation(projects.core.datastore)

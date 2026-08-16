@@ -56,6 +56,28 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!--
+                앱 링크 수신. ${appLinkHost}는 buildType별로 주입된다
+                (release: buy-or-not.com / debug: dev.buy-or-not.com).
+
+                autoVerify는 필터 안의 모든 host를 한 묶음으로 검증하므로 dev·prod를
+                한 필터에 넣으면 안 된다 — 한쪽 assetlinks가 실패하면 둘 다 검증에 실패한다.
+
+                pathPrefix가 없으면 이 도메인의 모든 URL(약관·문의 페이지까지)을 앱이
+                가로챈다. 반드시 /feed/로 한정한다.
+            -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="${appLinkHost}"
+                    android:pathPrefix="/feed/"
+                    android:scheme="https" />
+            </intent-filter>
         </activity>
         <activity
             android:name="com.kakao.sdk.auth.AuthCodeHandlerActivity"

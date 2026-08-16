@@ -43,4 +43,27 @@ sealed class AnalyticsEvent {
         val feedId: Long?,
         val notificationId: Long?,
     ) : AnalyticsEvent()
+
+    /**
+     * 앱 링크(`https://{host}/feed/{feedId}`) 탭으로 앱이 열림.
+     *
+     * [PushOpened]와 절대 섞지 않는다 — 앱 링크 유입을 푸시 이벤트에 태우면
+     * 푸시 CTR과 퍼널 전환율이 통째로 오염된다.
+     *
+     * 파싱에 실패해도([linkStatus] = `invalid`) 이벤트는 발행한다.
+     * 발행을 건너뛰면 «링크가 안 온 것»과 «와서 깨진 것»을 구분할 수 없다.
+     */
+    data class AppLinkOpened(
+        val linkStatus: String,
+        val feedId: Long?,
+        val referrer: String?,
+        val utmSource: String?,
+        val utmMedium: String?,
+        val utmCampaign: String?,
+    ) : AnalyticsEvent() {
+        companion object {
+            const val STATUS_RESOLVED = "resolved"
+            const val STATUS_INVALID = "invalid"
+        }
+    }
 }
