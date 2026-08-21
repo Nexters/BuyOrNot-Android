@@ -6,6 +6,7 @@ import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
+import kotlinx.coroutines.flow.StateFlow
 
 /**
  * 페이지네이션이 적용된 피드 목록 도메인 모델
@@ -17,6 +18,14 @@ data class FeedList(
 )
 
 interface FeedRepository {
+    /**
+     * 피드 생성 횟수. [createFeed] 성공 시마다 증가한다.
+     *
+     * 삭제·수정은 포함하지 않는다. 구독자가 이 신호에 필터를 초기화하므로,
+     * 삭제까지 반영하면 피드를 지울 때 사용자가 선택한 칩이 풀리는 회귀가 생긴다.
+     */
+    val feedCreatedRevision: StateFlow<Long>
+
     /**
      * 전체 피드 목록 조회
      *

@@ -21,13 +21,22 @@ import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
 import com.sseotdabwa.buyornot.domain.repository.FeedList
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
+import javax.inject.Singleton
 
+// feedCreatedRevision을 구독자와 공유해야 하므로 단일 인스턴스여야 한다.
+@Singleton
 class FeedRepositoryImpl @Inject constructor(
     private val feedApiService: FeedApiService,
 ) : FeedRepository {
+    private val _feedCreatedRevision = MutableStateFlow(0L)
+    override val feedCreatedRevision = _feedCreatedRevision.asStateFlow()
+
     override suspend fun getFeedList(
         cursor: Long?,
         size: Int,
@@ -114,6 +123,7 @@ class FeedRepositoryImpl @Inject constructor(
                 ),
             ).getOrThrow()
             .feedId
+            .also { _feedCreatedRevision.update { revision -> revision + 1 } }
 
     override suspend fun deleteFeed(feedId: Long) {
         feedApiService.deleteFeed(feedId).getOrThrow()

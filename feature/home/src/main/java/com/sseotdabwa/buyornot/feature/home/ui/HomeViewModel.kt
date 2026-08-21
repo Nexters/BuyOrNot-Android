@@ -22,6 +22,7 @@ import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -54,7 +55,26 @@ class HomeViewModel @Inject constructor(
 
     init {
         observeUserPreferences()
+        observeFeedCreated()
         loadInitialData()
+    }
+
+    /**
+     * 업로드 완료 후 방금 올린 글이 필터에 가려지지 않도록 내 피드 · 전체로 되돌린다.
+     *
+     * 업로드는 Home이 살아있는 상태에서 일어나므로 화면 재진입 시점의 라우트 인자로는
+     * 감지할 수 없다(같은 탭에서 업로드하면 인자가 그대로여서 변화가 없다). 그래서
+     * 네비게이션이 아니라 저장소의 생성 신호를 구독한다.
+     *
+     * drop(1)은 구독 시작 시 전달되는 StateFlow의 현재 값을 건너뛴다. 이것이 없으면
+     * ViewModel이 새로 생성될 때마다 과거 업로드로 탭이 바뀐다.
+     */
+    private fun observeFeedCreated() {
+        viewModelScope.launch {
+            feedRepository.feedCreatedRevision
+                .drop(1)
+                .collect { handleTabSelection(HomeTab.MY_FEED) }
+        }
     }
 
     /**
