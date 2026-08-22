@@ -22,6 +22,7 @@ import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -54,7 +55,26 @@ class HomeViewModel @Inject constructor(
 
     init {
         observeUserPreferences()
+        observeFeedCreated()
         loadInitialData()
+    }
+
+    /**
+     * 업로드 완료 후 방금 올린 글이 필터에 가려지지 않도록 내 피드 · 전체로 되돌린다.
+     *
+     * 업로드는 Home이 살아있는 상태에서 일어나므로 화면 재진입 시점의 라우트 인자로는
+     * 감지할 수 없다(같은 탭에서 업로드하면 인자가 그대로여서 변화가 없다). 그래서
+     * 네비게이션이 아니라 저장소의 생성 신호를 구독한다.
+     *
+     * drop(1)은 구독 시작 시 전달되는 StateFlow의 현재 값을 건너뛴다. 이것이 없으면
+     * ViewModel이 새로 생성될 때마다 과거 업로드로 탭이 바뀐다.
+     */
+    private fun observeFeedCreated() {
+        viewModelScope.launch {
+            feedRepository.feedCreatedRevision
+                .drop(1)
+                .collect { handleTabSelection(HomeTab.MY_FEED) }
+        }
     }
 
     /**
@@ -544,8 +564,9 @@ class HomeViewModel @Inject constructor(
         tab: HomeTab? = null,
         clearFeeds: Boolean = true,
     ) {
-        // 새 로드 컨텍스트 시작 → 진행 중이던 페이지네이션 응답 무효화
+        // 새 로드 컨텍스트 시작 → 진행 중이던 이전 로드/페이지네이션 응답 무효화
         feedGeneration++
+        val requestGeneration = feedGeneration
         viewModelScope.launch {
             feedFirstLoadTrace.start()
             if (clearFeeds) {
@@ -576,6 +597,10 @@ class HomeViewModel @Inject constructor(
                     HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
                 }
             }.onSuccess { feedList ->
+                // 요청 중 새 로드/새로고침(탭·필터·카테고리 변경, 업로드 후 재로드 포함)이 있었으면
+                // 오래된 응답이 최신 목록/커서를 덮어쓰지 않도록 버린다. (PR #148 리뷰)
+                if (feedGeneration != requestGeneration) return@launch
+
                 val newFeeds =
                     feedList.feeds
                         .map { feed ->
@@ -599,6 +624,9 @@ class HomeViewModel @Inject constructor(
                 // stop()은 목록이 실제로 그려진 뒤 onFeedFirstContentRendered()에서 호출한다.
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to load feeds", e)
+                // 오래된 실패가 진행 중인 최신 로드를 에러 화면으로 덮지 않도록 한다.
+                if (feedGeneration != requestGeneration) return@launch
+
                 updateState { it.copy(isLoading = false, hasError = true) }
                 feedFirstLoadTrace.putAttribute("result", "error")
                 feedFirstLoadTrace.stop()
@@ -613,8 +641,9 @@ class HomeViewModel @Inject constructor(
     private fun handleRefresh() {
         if (currentState.isRefreshing) return
 
-        // 새로고침도 새 로드 컨텍스트 → 진행 중이던 페이지네이션 응답 무효화
+        // 새로고침도 새 로드 컨텍스트 → 진행 중이던 이전 로드/페이지네이션 응답 무효화
         feedGeneration++
+        val requestGeneration = feedGeneration
         viewModelScope.launch {
             updateState { it.copy(isRefreshing = true, hasError = false) }
 
@@ -628,6 +657,11 @@ class HomeViewModel @Inject constructor(
                     HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
                 }
             }.onSuccess { feedList ->
+                if (feedGeneration != requestGeneration) {
+                    updateState { it.copy(isRefreshing = false) }
+                    return@launch
+                }
+
                 val refreshedFeeds =
                     feedList.feeds
                         .map { feed ->
@@ -641,13 +675,21 @@ class HomeViewModel @Inject constructor(
                         allFeeds = refreshedFeeds,
                         feeds = applyCategories(refreshedFeeds, it.selectedCategories),
                         isRefreshing = false,
+                        // 전체 로딩 중 새로고침이 들어와 이전 로드가 폐기된 경우에도
+                        // isLoading이 남지 않도록 여기서 함께 내린다.
+                        isLoading = false,
                         hasNextPage = feedList.hasNext,
                         nextCursor = feedList.nextCursor,
                     )
                 }
             }.onFailure { e ->
                 Log.e("HomeViewModel", "Failed to refresh feeds", e)
-                updateState { it.copy(isRefreshing = false, hasError = true) }
+                if (feedGeneration != requestGeneration) {
+                    updateState { it.copy(isRefreshing = false) }
+                    return@launch
+                }
+
+                updateState { it.copy(isRefreshing = false, isLoading = false, hasError = true) }
             }
         }
     }
