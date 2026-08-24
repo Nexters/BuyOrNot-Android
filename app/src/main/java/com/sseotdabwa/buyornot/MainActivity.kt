@@ -19,13 +19,13 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.feature.auth.navigation.SplashRoute
 import com.sseotdabwa.buyornot.notification.FcmKeys
-import com.sseotdabwa.buyornot.notification.PushDestination
+import com.sseotdabwa.buyornot.notification.PendingPushNavigation
+import com.sseotdabwa.buyornot.notification.PendingPushNavigationStore
 import com.sseotdabwa.buyornot.notification.pushDestinationOf
 import com.sseotdabwa.buyornot.performance.ScreenPerformanceTracker
 import com.sseotdabwa.buyornot.performance.screenTraceNameOf
 import com.sseotdabwa.buyornot.ui.BuyOrNotApp
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 
 /** JankStats 프레임에 붙이는 상태 키. 이 태그로 프레임을 화면별로 가른다. */
@@ -42,10 +42,10 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var performance: Performance
 
-    private val pendingFeedDeepLink = MutableStateFlow<PendingFeedDeepLink?>(null)
-
-    // 피드 상세가 아닌 목적지(홈·투표 등록). feedId가 없어 [PendingFeedDeepLink]로 표현할 수 없다.
-    private val pendingPushDestination = MutableStateFlow<PushDestination?>(null)
+    // Activity 필드로 두면 인증 대기 중 재생성될 때 목적지가 사라진다 —
+    // Intent extras는 이미 소비된 상태다. 자세한 근거는 [PendingPushNavigationStore] 주석 참고.
+    @Inject
+    lateinit var pendingPushNavigationStore: PendingPushNavigationStore
 
     private var jankStats: JankStats? = null
     private var metricsStateHolder: PerformanceMetricsState.Holder? = null
@@ -76,16 +76,13 @@ class MainActivity : ComponentActivity() {
                 ),
         )
         setContent {
-            val pendingDeepLink by pendingFeedDeepLink.collectAsStateWithLifecycle()
-            val pendingDestination by pendingPushDestination.collectAsStateWithLifecycle()
+            val pendingNavigation by pendingPushNavigationStore.pending.collectAsStateWithLifecycle()
             BuyOrNotTheme {
                 BuyOrNotApp(
                     authEventBus = authEventBus,
                     screenPerformanceTracker = screenPerformanceTracker,
-                    pendingFeedDeepLink = pendingDeepLink,
-                    onPendingFeedDeepLinkConsumed = { pendingFeedDeepLink.value = null },
-                    pendingPushDestination = pendingDestination,
-                    onPendingPushDestinationConsumed = { pendingPushDestination.value = null },
+                    pendingPushNavigation = pendingNavigation,
+                    onPendingPushNavigationConsumed = { pendingPushNavigationStore.consume() },
                     onBackPressed = { finish() },
                     onFinish = { finishAffinity() },
                 )
@@ -183,18 +180,16 @@ class MainActivity : ComponentActivity() {
             Log.d("FCM", "handlePushNavigation - screen=$screen, feedId=$feedId, destination=$destination")
         }
 
-        when (destination) {
-            // 딥링크는 feedId가 있어야 성립한다. pushDestinationOf가 이를 보장한다.
-            PushDestination.FEED_DETAIL ->
-                feedId?.let {
-                    pendingFeedDeepLink.value = PendingFeedDeepLink(feedId = it, notificationId = notificationId)
-                }
+        // 알 수 없는 screen이거나 이동할 대상이 없으면 앱만 열린다 — 크래시 금지.
+        if (destination == null) return
 
-            PushDestination.HOME, PushDestination.FEED_CREATE -> pendingPushDestination.value = destination
-
-            // 알 수 없는 screen이거나 이동할 대상이 없다. 앱만 열린다 — 크래시 금지.
-            null -> Unit
-        }
+        pendingPushNavigationStore.set(
+            PendingPushNavigation(
+                destination = destination,
+                feedId = feedId,
+                notificationId = notificationId,
+            ),
+        )
     }
 }
 
@@ -202,8 +197,3 @@ class MainActivity : ComponentActivity() {
 private fun Intent.longExtraOrNull(key: String): Long? =
     getStringExtra(key)?.toLongOrNull()
         ?: getLongExtra(key, -1L).takeIf { it != -1L }
-
-data class PendingFeedDeepLink(
-    val feedId: Long,
-    val notificationId: Long?,
-)
