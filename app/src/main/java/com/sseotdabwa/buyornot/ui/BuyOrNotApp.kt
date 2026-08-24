@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navOptions
 import com.sseotdabwa.buyornot.PendingFeedDeepLink
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -28,8 +29,11 @@ import com.sseotdabwa.buyornot.core.ui.snackbar.rememberBuyOrNotSnackbarState
 import com.sseotdabwa.buyornot.feature.auth.navigation.AuthRoute
 import com.sseotdabwa.buyornot.feature.auth.navigation.SplashRoute
 import com.sseotdabwa.buyornot.feature.home.navigation.HomeRoute
+import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToFeedDetail
+import com.sseotdabwa.buyornot.feature.upload.navigation.navigateToUpload
 import com.sseotdabwa.buyornot.navigation.BuyOrNotNavHost
+import com.sseotdabwa.buyornot.notification.PushDestination
 import com.sseotdabwa.buyornot.performance.ScreenPerformanceTracker
 import com.sseotdabwa.buyornot.performance.screenTraceNameOf
 
@@ -39,6 +43,8 @@ fun BuyOrNotApp(
     screenPerformanceTracker: ScreenPerformanceTracker,
     pendingFeedDeepLink: PendingFeedDeepLink? = null,
     onPendingFeedDeepLinkConsumed: () -> Unit = {},
+    pendingPushDestination: PushDestination? = null,
+    onPendingPushDestinationConsumed: () -> Unit = {},
     onBackPressed: () -> Unit = {},
     onFinish: () -> Unit = {},
     viewModel: BuyOrNotViewModel = hiltViewModel(),
@@ -77,6 +83,30 @@ fun BuyOrNotApp(
         if (!isPastAuthGate) return@LaunchedEffect
         navController.navigateToFeedDetail(deepLink.feedId, deepLink.notificationId)
         onPendingFeedDeepLinkConsumed()
+    }
+
+    // 피드 상세가 아닌 목적지(마케팅 알림). feedId가 없어 위 경로로는 표현할 수 없다.
+    // 인증 게이트를 기다리는 조건은 위와 같다 — 스플래시/로그인 위에서 이동하면 이후 홈 이동이 덮어쓴다.
+    LaunchedEffect(pendingPushDestination, isPastAuthGate) {
+        val destination = pendingPushDestination ?: return@LaunchedEffect
+        if (!isPastAuthGate) return@LaunchedEffect
+        when (destination) {
+            PushDestination.FEED_CREATE -> navController.navigateToUpload()
+
+            // 인증 통과 직후엔 이미 홈이지만, 다른 화면에 있다가 탭한 경우엔 홈으로 되돌려야 한다.
+            // 홈이 중복으로 쌓이지 않게 기존 홈을 걷어내고 하나만 남긴다.
+            PushDestination.HOME ->
+                navController.navigateToHome(
+                    navOptions {
+                        popUpTo<HomeRoute> { inclusive = true }
+                        launchSingleTop = true
+                    },
+                )
+
+            // MainActivity가 pendingFeedDeepLink로 처리한다. 여기 오지 않는다.
+            PushDestination.FEED_DETAIL -> Unit
+        }
+        onPendingPushDestinationConsumed()
     }
 
     val isFullscreen =

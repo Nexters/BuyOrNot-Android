@@ -53,12 +53,14 @@ class BuyOrNotMessagingService : FirebaseMessagingService() {
         val feedId = message.data[FcmKeys.FEED_ID]?.toLongOrNull()
         val notificationId = message.data[FcmKeys.NOTIFICATION_ID]?.toLongOrNull()
         val type = message.data[FcmKeys.TYPE]
+        val screen = message.data[FcmKeys.SCREEN]
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "onMessageReceived - type=$type, feedId=$feedId, notificationId=$notificationId")
+            Log.d(TAG, "onMessageReceived - type=$type, screen=$screen, feedId=$feedId, notificationId=$notificationId")
         }
 
         showFeedNotification(
             type = type,
+            screen = screen,
             feedId = feedId,
             notificationId = notificationId,
             title = message.notification?.title ?: DEFAULT_TITLE,
@@ -68,6 +70,7 @@ class BuyOrNotMessagingService : FirebaseMessagingService() {
 
     private fun showFeedNotification(
         type: String?,
+        screen: String?,
         feedId: Long?,
         notificationId: Long?,
         title: String,
@@ -82,6 +85,9 @@ class BuyOrNotMessagingService : FirebaseMessagingService() {
             Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 putExtra(FcmKeys.TYPE, type ?: FcmKeys.UNKNOWN_TYPE)
+                // screen은 라우팅 힌트다. 포그라운드 경로가 FCM의 백그라운드 launch Intent와
+                // 같은 extra 구성을 갖도록 서버가 준 값을 그대로 흘려보낸다.
+                if (screen != null) putExtra(FcmKeys.SCREEN, screen)
                 if (feedId != null) putExtra(FcmKeys.FEED_ID, feedId.toString())
                 if (notificationId != null) putExtra(FcmKeys.NOTIFICATION_ID, notificationId.toString())
             }

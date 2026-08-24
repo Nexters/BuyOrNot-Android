@@ -19,6 +19,8 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.feature.auth.navigation.SplashRoute
 import com.sseotdabwa.buyornot.notification.FcmKeys
+import com.sseotdabwa.buyornot.notification.PushDestination
+import com.sseotdabwa.buyornot.notification.pushDestinationOf
 import com.sseotdabwa.buyornot.performance.ScreenPerformanceTracker
 import com.sseotdabwa.buyornot.performance.screenTraceNameOf
 import com.sseotdabwa.buyornot.ui.BuyOrNotApp
@@ -42,6 +44,9 @@ class MainActivity : ComponentActivity() {
 
     private val pendingFeedDeepLink = MutableStateFlow<PendingFeedDeepLink?>(null)
 
+    // 피드 상세가 아닌 목적지(홈·투표 등록). feedId가 없어 [PendingFeedDeepLink]로 표현할 수 없다.
+    private val pendingPushDestination = MutableStateFlow<PushDestination?>(null)
+
     private var jankStats: JankStats? = null
     private var metricsStateHolder: PerformanceMetricsState.Holder? = null
     private lateinit var screenPerformanceTracker: ScreenPerformanceTracker
@@ -50,7 +55,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // 딥링크 처리가 feedId extra를 소비하므로 로깅을 먼저 수행한다.
         handlePushOpened(intent)
-        handleFeedDeepLink(intent)
+        handlePushNavigation(intent)
         screenPerformanceTracker =
             ScreenPerformanceTracker(
                 performance = performance,
@@ -72,12 +77,15 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             val pendingDeepLink by pendingFeedDeepLink.collectAsStateWithLifecycle()
+            val pendingDestination by pendingPushDestination.collectAsStateWithLifecycle()
             BuyOrNotTheme {
                 BuyOrNotApp(
                     authEventBus = authEventBus,
                     screenPerformanceTracker = screenPerformanceTracker,
                     pendingFeedDeepLink = pendingDeepLink,
                     onPendingFeedDeepLinkConsumed = { pendingFeedDeepLink.value = null },
+                    pendingPushDestination = pendingDestination,
+                    onPendingPushDestinationConsumed = { pendingPushDestination.value = null },
                     onBackPressed = { finish() },
                     onFinish = { finishAffinity() },
                 )
@@ -122,7 +130,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handlePushOpened(intent)
-        handleFeedDeepLink(intent)
+        handlePushNavigation(intent)
     }
 
     /**
@@ -151,19 +159,41 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private fun handleFeedDeepLink(intent: Intent?) {
-        if (intent == null || !intent.hasExtra(FcmKeys.FEED_ID)) return
+    /**
+     * 알림 payload의 `screen`·`feedId`로 이동 대상을 정해 pending 상태에 넣는다.
+     *
+     * 목적지 판정 규칙은 [pushDestinationOf]에 있다 — 여기서는 Intent를 분해하고 소비하는 일만 한다.
+     */
+    private fun handlePushNavigation(intent: Intent?) {
+        if (intent == null) return
+        val screen = intent.getStringExtra(FcmKeys.SCREEN)
         val feedId = intent.longExtraOrNull(FcmKeys.FEED_ID)
         val notificationId = intent.longExtraOrNull(FcmKeys.NOTIFICATION_ID)
+        if (screen == null && feedId == null) return
+
+        // 소비 마커. 이게 없으면 회전·프로세스 재생성 때 onCreate가 같은 Intent를 다시 받아
+        // 같은 화면으로 재이동한다. handlePushOpened의 removeExtra(TYPE)와 같은 역할이다.
+        intent.removeExtra(FcmKeys.SCREEN)
         intent.removeExtra(FcmKeys.FEED_ID)
         intent.removeExtra(FcmKeys.NOTIFICATION_ID)
         setIntent(intent)
+
+        val destination = pushDestinationOf(screen, feedId)
         if (BuildConfig.DEBUG) {
-            Log.d("FCM", "handleFeedDeepLink - resolved feedId=$feedId, notificationId=$notificationId")
+            Log.d("FCM", "handlePushNavigation - screen=$screen, feedId=$feedId, destination=$destination")
         }
-        // 딥링크는 feedId가 있어야 성립한다. 마케팅(feedId 없음)은 여기 도달 시 pending 미설정.
-        if (feedId != null) {
-            pendingFeedDeepLink.value = PendingFeedDeepLink(feedId = feedId, notificationId = notificationId)
+
+        when (destination) {
+            // 딥링크는 feedId가 있어야 성립한다. pushDestinationOf가 이를 보장한다.
+            PushDestination.FEED_DETAIL ->
+                feedId?.let {
+                    pendingFeedDeepLink.value = PendingFeedDeepLink(feedId = it, notificationId = notificationId)
+                }
+
+            PushDestination.HOME, PushDestination.FEED_CREATE -> pendingPushDestination.value = destination
+
+            // 알 수 없는 screen이거나 이동할 대상이 없다. 앱만 열린다 — 크래시 금지.
+            null -> Unit
         }
     }
 }
