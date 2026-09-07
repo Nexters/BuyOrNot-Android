@@ -81,6 +81,20 @@ internal fun AnalyticsEvent.toMixpanelEvent(): Pair<String, JSONObject> {
                 if (notificationId != null) props.put("notification_id", notificationId)
                 "push_opened"
             }
+            is AnalyticsEvent.AppLinkOpened -> {
+                props.put("link_status", linkStatus)
+                if (feedId != null) props.put("feed_id", feedId)
+                if (referrer != null) props.put("referrer", referrer)
+                if (utmSource != null) props.put("utm_source", utmSource)
+                if (utmMedium != null) props.put("utm_medium", utmMedium)
+                if (utmCampaign != null) props.put("utm_campaign", utmCampaign)
+                "app_link_opened"
+            }
+            is AnalyticsEvent.ShareClicked -> {
+                props.put("feed_id", feedId)
+                props.put("is_owner", isOwner)
+                "share_clicked"
+            }
         }
     return name to props
 }

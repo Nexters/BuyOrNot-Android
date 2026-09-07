@@ -21,11 +21,11 @@ data class HomeRoute(
 )
 
 fun NavGraphBuilder.homeScreen(
-    onLoginClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
+    onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
     composable<HomeRoute>(
@@ -56,11 +56,11 @@ fun NavGraphBuilder.homeScreen(
             }
 
         HomeScreen(
-            onLoginClick = onLoginClick,
             onNotificationClick = onNotificationClick,
             onProfileClick = onProfileClick,
             onUploadClick = onUploadClick,
             onLinkClick = onLinkClick,
+            onShareClick = onShareClick,
             onImageClick = onImageClick,
             initialTab = initialTab,
         )

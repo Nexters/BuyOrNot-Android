@@ -3,7 +3,6 @@ package com.sseotdabwa.buyornot.feature.auth.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,7 +86,6 @@ fun AuthRoute(
             isLoading = uiState.isLoading,
             onGoogleLoginClick = { viewModel.handleIntent(LoginIntent.GoogleLogin(context)) },
             onKakaoLoginClick = { viewModel.handleIntent(LoginIntent.KakaoLogin(context)) },
-            onGuestStartClick = { viewModel.handleIntent(LoginIntent.SkipLogin) },
             onTermsClick = onTermsClick,
             onPrivacyClick = onPrivacyClick,
         )
@@ -105,7 +103,6 @@ private fun LoginScreen(
     isLoading: Boolean,
     onGoogleLoginClick: () -> Unit,
     onKakaoLoginClick: () -> Unit,
-    onGuestStartClick: () -> Unit,
     onTermsClick: () -> Unit,
     onPrivacyClick: () -> Unit,
 ) {
@@ -121,7 +118,6 @@ private fun LoginScreen(
             isLoading = isLoading,
             onGoogleLoginClick = onGoogleLoginClick,
             onKakaoLoginClick = onKakaoLoginClick,
-            onGuestStartClick = onGuestStartClick,
             onTermsClick = onTermsClick,
             onPrivacyClick = onPrivacyClick,
         )
@@ -145,7 +141,6 @@ private fun LoginInteractionSection(
     isLoading: Boolean,
     onGoogleLoginClick: () -> Unit,
     onKakaoLoginClick: () -> Unit,
-    onGuestStartClick: () -> Unit,
     onTermsClick: () -> Unit,
     onPrivacyClick: () -> Unit,
 ) {
@@ -187,19 +182,6 @@ private fun LoginInteractionSection(
             hasBorder = false,
             enabled = !isLoading,
             onClick = onKakaoLoginClick,
-        )
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        Text(
-            text = "비회원으로 시작하기",
-            modifier =
-                Modifier.clickable(enabled = !isLoading) {
-                    onGuestStartClick()
-                },
-            style = BuyOrNotTheme.typography.captionC2Medium,
-            color = BuyOrNotTheme.colors.gray700,
-            textDecoration = TextDecoration.Underline,
         )
 
         Spacer(modifier = Modifier.height(28.dp))
@@ -328,7 +310,6 @@ private fun LoginScreenPreview() {
             isLoading = false,
             onGoogleLoginClick = {},
             onKakaoLoginClick = {},
-            onGuestStartClick = {},
             onTermsClick = {},
             onPrivacyClick = {},
         )

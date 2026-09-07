@@ -21,6 +21,7 @@ fun NavGraphBuilder.notificationGraph(
     onBackClick: () -> Unit,
     onNotificationClick: (Long, Long) -> Unit,
     onLinkClick: (url: String) -> Unit = {},
+    onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
     composable<NotificationRoute> {
@@ -34,6 +35,7 @@ fun NavGraphBuilder.notificationGraph(
         NotificationDetailScreen(
             onBackClick = onBackClick,
             onLinkClick = onLinkClick,
+            onShareClick = onShareClick,
             onImageClick = onImageClick,
         )
     }

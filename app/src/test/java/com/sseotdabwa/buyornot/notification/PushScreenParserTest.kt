@@ -1,31 +1,32 @@
 package com.sseotdabwa.buyornot.notification
 
+import com.sseotdabwa.buyornot.core.common.deeplink.EntryDestination
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-class PushDestinationTest {
+class PushScreenParserTest {
     @Test
     fun `투표_알림은_피드_상세로_보낸다`() {
-        assertEquals(PushDestination.FEED_DETAIL, pushDestinationOf("FEED_DETAIL", 169L))
+        assertEquals(EntryDestination.FEED_DETAIL, pushDestinationOf("FEED_DETAIL", 169L))
     }
 
     @Test
     fun `마케팅_투표_미등록은_홈으로_보낸다`() {
-        assertEquals(PushDestination.HOME, pushDestinationOf("HOME", null))
+        assertEquals(EntryDestination.HOME, pushDestinationOf("HOME", null))
     }
 
     @Test
     fun `재참여_온보딩_마케팅은_투표_등록_화면으로_보낸다`() {
-        assertEquals(PushDestination.FEED_CREATE, pushDestinationOf("FEED_CREATE", null))
+        assertEquals(EntryDestination.FEED_CREATE, pushDestinationOf("FEED_CREATE", null))
     }
 
     @Test
     fun `feedId가_있으면_screen보다_피드_상세가_이긴다`() {
         // 서버가 모순된 payload를 보내도 가장 구체적인 목적지로 간다
-        assertEquals(PushDestination.FEED_DETAIL, pushDestinationOf("HOME", 169L))
-        assertEquals(PushDestination.FEED_DETAIL, pushDestinationOf("FEED_CREATE", 169L))
-        assertEquals(PushDestination.FEED_DETAIL, pushDestinationOf(null, 169L))
+        assertEquals(EntryDestination.FEED_DETAIL, pushDestinationOf("HOME", 169L))
+        assertEquals(EntryDestination.FEED_DETAIL, pushDestinationOf("FEED_CREATE", 169L))
+        assertEquals(EntryDestination.FEED_DETAIL, pushDestinationOf(null, 169L))
     }
 
     @Test

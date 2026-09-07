@@ -188,6 +188,7 @@ class HomeViewModel @Inject constructor(
                 handleDelete(intent.feedId)
             }
             is HomeIntent.OnReportClicked -> handleReport(intent.feedId)
+            is HomeIntent.OnShareClicked -> handleShareClicked(intent.feedId, intent.isOwner)
             is HomeIntent.ShowBlockDialog -> handleShowBlockDialog(intent.feedId)
             is HomeIntent.DismissBlockDialog ->
                 updateState {
@@ -523,6 +524,18 @@ class HomeViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * 공유 의도만 기록한다. 시스템 공유 시트에서 어떤 앱을 골랐는지·보내기를 완료했는지는
+     * 앱으로 돌아오지 않으므로 측정할 수 없다. 실제 도달은 반대편의 `app_link_opened`로 본다.
+     */
+    private fun handleShareClicked(
+        feedId: String,
+        isOwner: Boolean,
+    ) {
+        val id = feedId.toLongOrNull() ?: return
+        analytics.track(AnalyticsEvent.ShareClicked(feedId = id, isOwner = isOwner))
     }
 
     private fun handleReport(feedId: String) {

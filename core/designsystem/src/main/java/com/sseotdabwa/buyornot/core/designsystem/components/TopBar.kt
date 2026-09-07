@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -21,10 +19,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -207,48 +203,6 @@ fun HomeTopBar(
     )
 }
 
-/**
- * 5. 게스트/로그인 유도용 TopBar (로고 + 로그인 버튼)
- */
-@Composable
-fun GuestTopBar(onLoginClick: () -> Unit) {
-    BaseTopBar(
-        navigationIcon = {
-            Icon(
-                imageVector = BuyOrNotIcons.AppLogo.asImageVector(),
-                contentDescription = "App Logo",
-                modifier = Modifier.padding(start = 12.dp),
-            )
-        },
-        actions = {
-            TextButton(
-                onClick = onLoginClick,
-                shape = RoundedCornerShape(10.dp),
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = BuyOrNotTheme.colors.gray0,
-                        contentColor = BuyOrNotTheme.colors.gray800,
-                    ),
-                border =
-                    BorderStroke(
-                        width = 1.dp,
-                        color = BuyOrNotTheme.colors.gray300,
-                    ),
-                contentPadding =
-                    PaddingValues(
-                        horizontal = 12.dp,
-                        vertical = 12.dp,
-                    ),
-            ) {
-                Text(
-                    stringResource(R.string.login_signup),
-                    style = BuyOrNotTheme.typography.subTitleS5SemiBold,
-                )
-            }
-        },
-    )
-}
-
 @Preview(name = "BackTopBar", showBackground = true)
 @Composable
 private fun BackTopBarWithoutTitlePreview() {
@@ -290,19 +244,5 @@ private fun HomeTopBarPreview() {
             onProfileClick = {},
             unreadCount = 3,
         )
-    }
-}
-
-@Preview(name = "GuestTopBar", showBackground = true)
-@Composable
-private fun GuestTopBarPreview() {
-    BuyOrNotTheme {
-        Box(
-            modifier = Modifier.background(BuyOrNotTheme.colors.gray0),
-        ) {
-            GuestTopBar(
-                onLoginClick = {},
-            )
-        }
     }
 }

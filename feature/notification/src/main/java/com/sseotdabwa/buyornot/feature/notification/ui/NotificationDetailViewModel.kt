@@ -3,6 +3,8 @@ package com.sseotdabwa.buyornot.feature.notification.ui
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.sseotdabwa.buyornot.core.analytics.Analytics
+import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
@@ -20,6 +22,7 @@ private const val TAG = "NotificationDetailViewModel"
 @HiltViewModel
 class NotificationDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
+    private val analytics: Analytics,
     private val feedRepository: FeedRepository,
     private val notificationRepository: NotificationRepository,
     private val userRepository: UserRepository,
@@ -65,6 +68,7 @@ class NotificationDetailViewModel @Inject constructor(
             NotificationDetailIntent.ShowBlockDialog -> updateState { it.copy(showBlockDialog = true) }
             NotificationDetailIntent.DismissBlockDialog -> updateState { it.copy(showBlockDialog = false) }
             NotificationDetailIntent.OnBlockConfirmed -> handleBlockConfirmed()
+            NotificationDetailIntent.OnShareClicked -> handleShareClicked()
         }
     }
 
@@ -152,6 +156,14 @@ class NotificationDetailViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * 공유 의도만 기록한다. 시스템 공유 시트의 선택 결과는 앱으로 돌아오지 않아 측정할 수 없다 —
+     * 실제 도달은 반대편의 `app_link_opened`로 본다.
+     */
+    private fun handleShareClicked() {
+        analytics.track(AnalyticsEvent.ShareClicked(feedId = feedId, isOwner = uiState.value.isOwner))
     }
 
     private fun handleReport() {

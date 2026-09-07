@@ -77,7 +77,7 @@ private fun SubPageErrorPreview() {
 private fun GuestErrorPreview() {
     BuyOrNotTheme {
         Column(modifier = Modifier.fillMaxSize()) {
-            GuestTopBar(onLoginClick = {})
+            HomeTopBar(onNotificationClick = {}, onProfileClick = {}, unreadCount = 0)
             BuyOrNotDivider(size = BuyOrNotDividerSize.Small)
             BuyOrNotErrorView(
                 message = "로그인 후 이용할 수 있는 서비스입니다",
@@ -107,7 +107,7 @@ private fun BackOnlyErrorPreview() {
 private fun DoubleErrorPreview() {
     BuyOrNotTheme {
         Column(modifier = Modifier.fillMaxSize()) {
-            GuestTopBar(onLoginClick = {})
+            HomeTopBar(onNotificationClick = {}, onProfileClick = {}, unreadCount = 0)
             BuyOrNotDivider(size = BuyOrNotDividerSize.Small)
             BuyOrNotTabRow(
                 selectedTabIndex = 0,

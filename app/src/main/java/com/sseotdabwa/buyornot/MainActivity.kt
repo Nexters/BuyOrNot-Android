@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot
 
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -15,17 +16,20 @@ import androidx.metrics.performance.PerformanceMetricsState
 import com.sseotdabwa.buyornot.core.analytics.Analytics
 import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
 import com.sseotdabwa.buyornot.core.analytics.performance.Performance
+import com.sseotdabwa.buyornot.core.common.deeplink.EntryDestination
+import com.sseotdabwa.buyornot.core.common.deeplink.PendingNavigation
+import com.sseotdabwa.buyornot.core.common.deeplink.PendingNavigationStore
+import com.sseotdabwa.buyornot.core.common.deeplink.feedIdFromAppLink
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.feature.auth.navigation.SplashRoute
 import com.sseotdabwa.buyornot.notification.FcmKeys
-import com.sseotdabwa.buyornot.notification.PendingPushNavigation
-import com.sseotdabwa.buyornot.notification.PendingPushNavigationStore
 import com.sseotdabwa.buyornot.notification.pushDestinationOf
 import com.sseotdabwa.buyornot.performance.ScreenPerformanceTracker
 import com.sseotdabwa.buyornot.performance.screenTraceNameOf
 import com.sseotdabwa.buyornot.ui.BuyOrNotApp
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.serialization.serializer
 import javax.inject.Inject
 
 /** JankStats 프레임에 붙이는 상태 키. 이 태그로 프레임을 화면별로 가른다. */
@@ -43,9 +47,9 @@ class MainActivity : ComponentActivity() {
     lateinit var performance: Performance
 
     // Activity 필드로 두면 인증 대기 중 재생성될 때 목적지가 사라진다 —
-    // Intent extras는 이미 소비된 상태다. 자세한 근거는 [PendingPushNavigationStore] 주석 참고.
+    // 진입 Intent는 이미 소비된 상태다. 자세한 근거는 [PendingNavigationStore] 주석 참고.
     @Inject
-    lateinit var pendingPushNavigationStore: PendingPushNavigationStore
+    lateinit var pendingNavigationStore: PendingNavigationStore
 
     private var jankStats: JankStats? = null
     private var metricsStateHolder: PerformanceMetricsState.Holder? = null
@@ -55,12 +59,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // 딥링크 처리가 feedId extra를 소비하므로 로깅을 먼저 수행한다.
         handlePushOpened(intent)
-        handlePushNavigation(intent)
+        handleNavigationIntent(intent)
         screenPerformanceTracker =
             ScreenPerformanceTracker(
                 performance = performance,
                 // 스플래시가 그려진 것은 "앱을 쓸 수 있는 상태"가 아니므로 TTFD 판정에서 제외한다.
-                nonMeaningfulScreens = setOfNotNull(screenTraceNameOf(SplashRoute::class.qualifiedName)),
+                //
+                // 런타임 route와 맞추려면 serializer의 serialName을 써야 한다. `::class.qualifiedName`은
+                // R8이 난독화한 이름이라 release에서 매칭에 실패하고, 스플래시가 의미 있는 첫 화면으로 집계된다.
+                nonMeaningfulScreens = setOfNotNull(screenTraceNameOf(serializer<SplashRoute>().descriptor.serialName)),
                 onScreenChanged = { screen -> metricsStateHolder?.state?.putState(FRAME_STATE_SCREEN, screen) },
             )
         enableEdgeToEdge(
@@ -76,13 +83,13 @@ class MainActivity : ComponentActivity() {
                 ),
         )
         setContent {
-            val pendingNavigation by pendingPushNavigationStore.pending.collectAsStateWithLifecycle()
+            val pendingNavigation by pendingNavigationStore.pending.collectAsStateWithLifecycle()
             BuyOrNotTheme {
                 BuyOrNotApp(
                     authEventBus = authEventBus,
                     screenPerformanceTracker = screenPerformanceTracker,
-                    pendingPushNavigation = pendingNavigation,
-                    onPendingPushNavigationConsumed = { pendingPushNavigationStore.consume() },
+                    pendingNavigation = pendingNavigation,
+                    onPendingNavigationConsumed = { pendingNavigationStore.consume() },
                     onBackPressed = { finish() },
                     onFinish = { finishAffinity() },
                 )
@@ -127,7 +134,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handlePushOpened(intent)
-        handlePushNavigation(intent)
+        handleNavigationIntent(intent)
     }
 
     /**
@@ -157,12 +164,18 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * 알림 payload의 `screen`·`feedId`로 이동 대상을 정해 pending 상태에 넣는다.
+     * 외부 유입 Intent에서 이동 대상을 정해 pending 상태에 넣는다.
      *
-     * 목적지 판정 규칙은 [pushDestinationOf]에 있다 — 여기서는 Intent를 분해하고 소비하는 일만 한다.
+     * 앱 링크(Uri)를 FCM extras보다 먼저 본다. 한 Intent가 양쪽을 동시에 만족하는 일은 없어야 하고,
+     * Uri 경로에서는 PushOpened를 절대 발행하지 않는다 (푸시 지표 오염 방지).
+     *
+     * FCM 경로의 목적지 판정 규칙은 [pushDestinationOf]에 있다 — 여기서는 Intent를 분해하고
+     * 소비하는 일만 한다.
      */
-    private fun handlePushNavigation(intent: Intent?) {
+    private fun handleNavigationIntent(intent: Intent?) {
         if (intent == null) return
+        if (handleAppLink(intent)) return
+
         val screen = intent.getStringExtra(FcmKeys.SCREEN)
         val feedId = intent.longExtraOrNull(FcmKeys.FEED_ID)
         val notificationId = intent.longExtraOrNull(FcmKeys.NOTIFICATION_ID)
@@ -177,19 +190,66 @@ class MainActivity : ComponentActivity() {
 
         val destination = pushDestinationOf(screen, feedId)
         if (BuildConfig.DEBUG) {
-            Log.d("FCM", "handlePushNavigation - screen=$screen, feedId=$feedId, destination=$destination")
+            Log.d("FCM", "handleNavigationIntent - screen=$screen, feedId=$feedId, destination=$destination")
         }
 
         // 알 수 없는 screen이거나 이동할 대상이 없으면 앱만 열린다 — 크래시 금지.
         if (destination == null) return
 
-        pendingPushNavigationStore.set(
-            PendingPushNavigation(
+        pendingNavigationStore.set(
+            PendingNavigation(
                 destination = destination,
                 feedId = feedId,
                 notificationId = notificationId,
             ),
         )
+    }
+
+    /**
+     * `https://{host}/feed/{feedId}` 앱 링크를 처리한다.
+     *
+     * @return 앱 링크 Intent였으면 true (파싱 성공 여부와 무관). FCM extras 경로를 건너뛰는 신호다.
+     */
+    private fun handleAppLink(intent: Intent): Boolean {
+        val uri = intent.data ?: return false
+
+        // 소비 마커. 이게 없으면 회전·프로세스 재생성 때 onCreate가 같은 Intent를 다시 받아
+        // 이벤트가 재발행되고 피드 상세로도 재이동한다. extras 경로의 removeExtra와 같은 역할이다.
+        intent.data = null
+        setIntent(intent)
+
+        val feedId = feedIdFromAppLink(uri.host, uri.pathSegments, BuildConfig.APP_LINK_HOST)
+        if (BuildConfig.DEBUG) {
+            Log.d("AppLink", "handleAppLink - uri=$uri, resolved feedId=$feedId, referrer=$referrer")
+        }
+
+        // 파싱에 실패해도 이벤트는 반드시 발행한다.
+        // 건너뛰면 «링크가 안 온 것»과 «와서 깨진 것»을 구분할 수 없다.
+        analytics.track(
+            AnalyticsEvent.AppLinkOpened(
+                linkStatus =
+                    if (feedId != null) {
+                        AnalyticsEvent.AppLinkOpened.STATUS_RESOLVED
+                    } else {
+                        AnalyticsEvent.AppLinkOpened.STATUS_INVALID
+                    },
+                feedId = feedId,
+                // 발신 앱이 넣어줄 때만 존재한다. 없으면 «referrer 없음»이 하나의 유입 버킷이 된다.
+                referrer = referrer?.host,
+                utmSource = uri.queryParameterOrNull("utm_source"),
+                utmMedium = uri.queryParameterOrNull("utm_medium"),
+                utmCampaign = uri.queryParameterOrNull("utm_campaign"),
+            ),
+        )
+
+        // 파싱 실패 시 pending을 설정하지 않는다 → 앱만 열리고 홈으로. 크래시 금지.
+        // (NotificationDetailViewModel이 feedId를 checkNotNull 하므로 잘못된 값을 넘기면 죽는다.)
+        if (feedId != null) {
+            pendingNavigationStore.set(
+                PendingNavigation(destination = EntryDestination.FEED_DETAIL, feedId = feedId),
+            )
+        }
+        return true
     }
 }
 
@@ -197,3 +257,10 @@ class MainActivity : ComponentActivity() {
 private fun Intent.longExtraOrNull(key: String): Long? =
     getStringExtra(key)?.toLongOrNull()
         ?: getLongExtra(key, -1L).takeIf { it != -1L }
+
+/**
+ * 값이 없거나 비어 있으면 null. Mixpanel에서 «속성 자체를 생략»하기 위한 정규화다.
+ *
+ * opaque URI(`mailto:` 등)에 [Uri.getQueryParameter]를 호출하면 예외가 나므로 감싼다.
+ */
+private fun Uri.queryParameterOrNull(key: String): String? = runCatching { getQueryParameter(key) }.getOrNull()?.takeIf { it.isNotBlank() }
