@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
+import com.sseotdabwa.buyornot.domain.model.GUEST_AUTHOR_USER_ID
 import com.sseotdabwa.buyornot.domain.model.UserType
 
 /**
@@ -45,7 +46,10 @@ data class FeedItem(
     val isOwner: Boolean,
     val authorUserId: Long,
     val productLink: String? = null,
-)
+) {
+    /** 비회원 작성 글. 차단 대상 유저가 없다 — [GUEST_AUTHOR_USER_ID] 참고. */
+    val isGuestAuthor: Boolean get() = authorUserId == GUEST_AUTHOR_USER_ID
+}
 
 /**
  * 홈 화면의 UI 상태 (MVI State)

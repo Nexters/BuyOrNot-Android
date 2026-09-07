@@ -196,6 +196,7 @@ fun NotificationDetailScreen(
                                 onIntent(NotificationDetailIntent.OnShareClicked)
                                 onShareClick(feed.feedId, feed.title)
                             },
+                            canBlock = !feed.author.isGuest,
                             showMoreButton = !uiState.isGuest,
                             productLink = feed.productLink,
                             onLinkClick = onLinkClick,

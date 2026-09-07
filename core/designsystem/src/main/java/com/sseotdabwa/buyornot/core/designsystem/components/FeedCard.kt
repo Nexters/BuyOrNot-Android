@@ -84,6 +84,7 @@ fun FeedCard(
     onReportClick: () -> Unit = {},
     onBlockClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
+    canBlock: Boolean = true,
     showMoreButton: Boolean = true,
     productLink: String? = null,
     onLinkClick: (url: String) -> Unit = {},
@@ -110,6 +111,7 @@ fun FeedCard(
             onReportClick = onReportClick,
             onBlockClick = onBlockClick,
             onShareClick = onShareClick,
+            canBlock = canBlock,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -182,6 +184,7 @@ private fun FeedCardHeader(
     onReportClick: () -> Unit,
     onBlockClick: () -> Unit,
     onShareClick: () -> Unit,
+    canBlock: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val isInPreviewMode = LocalInspectionMode.current
@@ -268,16 +271,22 @@ private fun FeedCardHeader(
                             onDeleteClick()
                         },
                     )
+                // 비회원 글은 차단할 대상(유저)이 없어 항목을 아예 노출하지 않는다.
+                // 신고는 유저가 아니라 피드를 대상으로 하므로 그대로 남긴다.
                 val userMenuItems =
-                    listOf(
+                    listOfNotNull(
                         shareMenuItem,
                         "신고하기" to {
                             showMenu = false
                             onReportClick()
                         },
-                        "차단하기" to {
-                            showMenu = false
-                            onBlockClick()
+                        if (canBlock) {
+                            "차단하기" to {
+                                showMenu = false
+                                onBlockClick()
+                            }
+                        } else {
+                            null
                         },
                     )
                 if (showMenu) {

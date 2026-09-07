@@ -798,6 +798,7 @@ private fun FeedItemCard(
             onReportClick = { onReport(feed.id) },
             onBlockClick = { onBlock(feed.id) },
             onShareClick = { onShare(feed.id, feed.title, feed.isOwner) },
+            canBlock = !feed.isGuestAuthor,
             showMoreButton = !isGuest,
             productLink = feed.productLink,
             onLinkClick = onLinkClick,
