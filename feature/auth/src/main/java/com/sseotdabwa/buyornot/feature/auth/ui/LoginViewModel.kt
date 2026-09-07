@@ -16,7 +16,6 @@ import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
-import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
@@ -40,14 +39,6 @@ class LoginViewModel @Inject constructor(
         when (intent) {
             is LoginIntent.GoogleLogin -> googleLogin(intent.context)
             is LoginIntent.KakaoLogin -> kakaoLogin(intent.context)
-            LoginIntent.SkipLogin -> skipLogin()
-        }
-    }
-
-    private fun skipLogin() {
-        viewModelScope.launch {
-            userPreferencesRepository.updateUserType(UserType.GUEST)
-            sendSideEffect(LoginSideEffect.NavigateToHome)
         }
     }
 

@@ -77,7 +77,6 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTabRow
 import com.sseotdabwa.buyornot.core.designsystem.components.ExpandableFloatingActionButton
 import com.sseotdabwa.buyornot.core.designsystem.components.FabOption
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCard
-import com.sseotdabwa.buyornot.core.designsystem.components.GuestTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.HomeTopBar
 import com.sseotdabwa.buyornot.core.designsystem.components.NeutralButton
 import com.sseotdabwa.buyornot.core.designsystem.components.OptionSheet
@@ -98,7 +97,6 @@ import kotlinx.coroutines.launch
  * 홈 화면 루트 컴포저블
  * MVI 패턴을 적용하여 ViewModel을 통해 상태를 관리합니다.
  *
- * @param onLoginClick 비회원일 때 로그인 버튼 클릭 콜백
  * @param onNotificationClick 알림 아이콘 클릭 콜백
  * @param onProfileClick 프로필 아이콘 클릭 콜백
  * @param onUploadClick 업로드 화면으로 이동 콜백
@@ -107,7 +105,6 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun HomeRoute(
-    onLoginClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
@@ -155,7 +152,6 @@ fun HomeRoute(
     HomeScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
-        onLoginClick = onLoginClick,
         onNotificationClick = onNotificationClick,
         onProfileClick = onProfileClick,
         onUploadClick = onUploadClick,
@@ -173,7 +169,6 @@ fun HomeRoute(
 fun HomeScreen(
     uiState: HomeUiState,
     onIntent: (HomeIntent) -> Unit,
-    onLoginClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
@@ -229,7 +224,6 @@ fun HomeScreen(
                 uiState = uiState,
                 onIntent = onIntent,
                 contentPadding = innerPadding,
-                onLoginClick = onLoginClick,
                 onNotificationClick = onNotificationClick,
                 onProfileClick = onProfileClick,
                 onUploadClick = onUploadClick,
@@ -248,22 +242,17 @@ fun HomeScreen(
 
 @Composable
 private fun HomeTopBarSection(
-    userType: UserType,
     unreadNotificationCount: Int,
-    onLoginClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
 ) {
-    when (userType) {
-        UserType.GUEST -> GuestTopBar(onLoginClick = onLoginClick)
-        UserType.SOCIAL -> {
-            HomeTopBar(
-                onNotificationClick = onNotificationClick,
-                onProfileClick = onProfileClick,
-                unreadCount = unreadNotificationCount,
-            )
-        }
-    }
+    // 비회원 진입 경로를 없앤 뒤로는 홈에 도달한 사용자가 곧 로그인 사용자다.
+    // 스플래시가 UserType.GUEST를 로그인 화면으로 보내므로 게스트는 여기까지 오지 못한다.
+    HomeTopBar(
+        onNotificationClick = onNotificationClick,
+        onProfileClick = onProfileClick,
+        unreadCount = unreadNotificationCount,
+    )
 }
 
 /**
@@ -368,7 +357,6 @@ private fun HomeFeedList(
     uiState: HomeUiState,
     onIntent: (HomeIntent) -> Unit,
     contentPadding: PaddingValues,
-    onLoginClick: () -> Unit,
     onNotificationClick: () -> Unit,
     onProfileClick: () -> Unit,
     onUploadClick: () -> Unit,
@@ -580,9 +568,7 @@ private fun HomeFeedList(
                         exit = shrinkVertically(tween(200, easing = EaseInCubic), shrinkTowards = Alignment.Top) + fadeOut(tween(200)),
                     ) {
                         HomeTopBarSection(
-                            userType = uiState.userType,
                             unreadNotificationCount = uiState.unreadNotificationCount,
-                            onLoginClick = onLoginClick,
                             onNotificationClick = onNotificationClick,
                             onProfileClick = onProfileClick,
                         )
