@@ -112,6 +112,7 @@ fun HomeRoute(
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
+    onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     initialTab: HomeTab = HomeTab.FEED,
     viewModel: HomeViewModel = hiltViewModel(),
@@ -159,6 +160,7 @@ fun HomeRoute(
         onProfileClick = onProfileClick,
         onUploadClick = onUploadClick,
         onLinkClick = onLinkClick,
+        onShareClick = onShareClick,
         onImageClick = onImageClick,
         onIntent = viewModel::handleIntent,
     )
@@ -176,6 +178,7 @@ fun HomeScreen(
     onProfileClick: () -> Unit = {},
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
+    onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
@@ -231,6 +234,7 @@ fun HomeScreen(
                 onProfileClick = onProfileClick,
                 onUploadClick = onUploadClick,
                 onLinkClick = onLinkClick,
+                onShareClick = onShareClick,
                 onImageClick = onImageClick,
             )
 
@@ -369,6 +373,7 @@ private fun HomeFeedList(
     onProfileClick: () -> Unit,
     onUploadClick: () -> Unit,
     onLinkClick: (url: String) -> Unit,
+    onShareClick: (feedId: Long, title: String) -> Unit,
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -491,6 +496,10 @@ private fun HomeFeedList(
                                 onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
                                 onBlock = { id -> onIntent(HomeIntent.ShowBlockDialog(id)) },
                                 onLinkClick = onLinkClick,
+                                onShare = { id, title, isOwner ->
+                                    onIntent(HomeIntent.OnShareClicked(id, isOwner))
+                                    id.toLongOrNull()?.let { feedId -> onShareClick(feedId, title) }
+                                },
                                 onTooltipDismissed = { onIntent(HomeIntent.DismissTooltip) },
                                 onImageClick = onImageClick,
                             )
@@ -759,6 +768,7 @@ private fun FeedItemCard(
     onReport: (String) -> Unit,
     onBlock: (String) -> Unit,
     onLinkClick: (url: String) -> Unit,
+    onShare: (feedId: String, title: String, isOwner: Boolean) -> Unit,
     onTooltipDismissed: () -> Unit = {},
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
 ) {
@@ -787,6 +797,7 @@ private fun FeedItemCard(
             onDeleteClick = { onDelete(feed.id) },
             onReportClick = { onReport(feed.id) },
             onBlockClick = { onBlock(feed.id) },
+            onShareClick = { onShare(feed.id, feed.title, feed.isOwner) },
             showMoreButton = !isGuest,
             productLink = feed.productLink,
             onLinkClick = onLinkClick,

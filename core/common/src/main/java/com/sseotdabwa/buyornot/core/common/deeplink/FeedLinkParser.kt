@@ -24,4 +24,5 @@ fun feedIdFromAppLink(
     return pathSegments[1].toLongOrNull()?.takeIf { it > 0L }
 }
 
-private const val FEED_PATH_SEGMENT = "feed"
+/** 링크를 읽는 쪽([feedIdFromAppLink])과 만드는 쪽([feedShareUrlOf])이 함께 보는 경로 세그먼트. */
+internal const val FEED_PATH_SEGMENT = "feed"

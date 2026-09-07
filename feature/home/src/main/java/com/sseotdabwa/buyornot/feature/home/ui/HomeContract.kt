@@ -120,6 +120,11 @@ sealed interface HomeIntent {
         val feedId: String,
     ) : HomeIntent
 
+    data class OnShareClicked(
+        val feedId: String,
+        val isOwner: Boolean,
+    ) : HomeIntent
+
     data object LoadFeeds : HomeIntent
 
     data object RefreshUnreadCount : HomeIntent

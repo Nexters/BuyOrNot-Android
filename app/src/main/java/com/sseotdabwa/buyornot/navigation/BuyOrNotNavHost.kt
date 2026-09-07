@@ -1,11 +1,14 @@
 package com.sseotdabwa.buyornot.navigation
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.sseotdabwa.buyornot.BuildConfig
+import com.sseotdabwa.buyornot.core.common.deeplink.feedShareTextOf
 import com.sseotdabwa.buyornot.core.network.AuthEvent
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.core.ui.crop.editScreen
@@ -43,6 +46,21 @@ fun BuyOrNotNavHost(
     modifier: Modifier = Modifier,
 ) {
     val snackbarState = LocalSnackbarState.current
+    val context = LocalContext.current
+
+    // 공유 URL의 host는 buildType별로 주입되는 BuildConfig.APP_LINK_HOST를 쓴다.
+    // 이 값이 app 모듈에만 있어 실행을 여기서 한다 — onLinkClick·onImageClick과 같은 층이다.
+    val shareFeed: (Long, String) -> Unit = { feedId, title ->
+        val sendIntent =
+            Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(
+                    Intent.EXTRA_TEXT,
+                    feedShareTextOf(BuildConfig.APP_LINK_HOST, feedId, title),
+                )
+            }
+        context.startActivity(Intent.createChooser(sendIntent, null))
+    }
 
     LaunchedEffect(authEventBus) {
         authEventBus.events.collect { event ->
@@ -94,12 +112,14 @@ fun BuyOrNotNavHost(
             onProfileClick = navController::navigateToMyPage,
             onUploadClick = navController::navigateToUpload,
             onLinkClick = { url -> navController.navigateToWebView("", url) },
+            onShareClick = shareFeed,
             onImageClick = { urls, page -> navController.navigateToImageViewer(urls, page) },
         )
         notificationGraph(
             onBackClick = navController::popBackStack,
             onNotificationClick = navController::navigateToNotificationDetail,
             onLinkClick = { url -> navController.navigateToWebView("", url) },
+            onShareClick = shareFeed,
             onImageClick = { urls, page -> navController.navigateToImageViewer(urls, page) },
         )
         uploadScreen(

@@ -66,4 +66,20 @@ sealed class AnalyticsEvent {
             const val STATUS_INVALID = "invalid"
         }
     }
+
+    /**
+     * 더보기 메뉴에서 «공유하기»를 탭해 공유 시트를 띄움.
+     *
+     * 공유 시트에서 실제로 어떤 앱을 골랐는지, 보내기를 완료했는지는 **알 수 없다** —
+     * 시스템 시트의 선택 결과가 앱으로 돌아오지 않는다. 이 이벤트는 «공유 의도»까지만 센다.
+     * 실제 도달은 [AppLinkOpened]로 반대편에서 관측하고, 두 이벤트를 이어 붙여
+     * «공유 → 유입» 퍼널을 만든다.
+     *
+     * @param isOwner 내 피드를 공유했는가. 표를 모으려는 공유와 남의 피드를 퍼뜨리는 공유는
+     *   동기가 달라 분리해서 본다.
+     */
+    data class ShareClicked(
+        val feedId: Long,
+        val isOwner: Boolean,
+    ) : AnalyticsEvent()
 }

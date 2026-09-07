@@ -51,6 +51,7 @@ import com.sseotdabwa.buyornot.domain.model.VoteChoice
 fun NotificationDetailRoute(
     onBackClick: () -> Unit,
     onLinkClick: (url: String) -> Unit = {},
+    onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     viewModel: NotificationDetailViewModel = hiltViewModel(),
 ) {
@@ -78,6 +79,7 @@ fun NotificationDetailRoute(
         snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onLinkClick = onLinkClick,
+        onShareClick = onShareClick,
         onImageClick = onImageClick,
         onIntent = viewModel::handleIntent,
     )
@@ -89,6 +91,7 @@ fun NotificationDetailScreen(
     onBackClick: () -> Unit,
     onIntent: (NotificationDetailIntent) -> Unit,
     onLinkClick: (url: String) -> Unit = {},
+    onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
@@ -189,6 +192,10 @@ fun NotificationDetailScreen(
                             onDeleteClick = { onIntent(NotificationDetailIntent.ShowDeleteDialog) },
                             onReportClick = { onIntent(NotificationDetailIntent.OnReportClicked) },
                             onBlockClick = { onIntent(NotificationDetailIntent.ShowBlockDialog) },
+                            onShareClick = {
+                                onIntent(NotificationDetailIntent.OnShareClicked)
+                                onShareClick(feed.feedId, feed.title)
+                            },
                             showMoreButton = !uiState.isGuest,
                             productLink = feed.productLink,
                             onLinkClick = onLinkClick,

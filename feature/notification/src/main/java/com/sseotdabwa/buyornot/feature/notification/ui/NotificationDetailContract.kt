@@ -32,6 +32,8 @@ sealed interface NotificationDetailIntent {
     data object DismissBlockDialog : NotificationDetailIntent
 
     data object OnBlockConfirmed : NotificationDetailIntent
+
+    data object OnShareClicked : NotificationDetailIntent
 }
 
 sealed interface NotificationDetailSideEffect {

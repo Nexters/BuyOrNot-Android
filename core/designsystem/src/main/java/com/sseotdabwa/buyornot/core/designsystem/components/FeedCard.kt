@@ -83,6 +83,7 @@ fun FeedCard(
     onDeleteClick: () -> Unit = {},
     onReportClick: () -> Unit = {},
     onBlockClick: () -> Unit = {},
+    onShareClick: () -> Unit = {},
     showMoreButton: Boolean = true,
     productLink: String? = null,
     onLinkClick: (url: String) -> Unit = {},
@@ -108,6 +109,7 @@ fun FeedCard(
             onDeleteClick = onDeleteClick,
             onReportClick = onReportClick,
             onBlockClick = onBlockClick,
+            onShareClick = onShareClick,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -179,6 +181,7 @@ private fun FeedCardHeader(
     onDeleteClick: () -> Unit,
     onReportClick: () -> Unit,
     onBlockClick: () -> Unit,
+    onShareClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isInPreviewMode = LocalInspectionMode.current
@@ -252,8 +255,14 @@ private fun FeedCardHeader(
                             .clickable { showMenu = true },
                     tint = BuyOrNotTheme.colors.gray500,
                 )
+                val shareMenuItem =
+                    "공유하기" to {
+                        showMenu = false
+                        onShareClick()
+                    }
                 val ownerMenuItems =
                     listOf(
+                        shareMenuItem,
                         "삭제하기" to {
                             showMenu = false
                             onDeleteClick()
@@ -261,6 +270,7 @@ private fun FeedCardHeader(
                     )
                 val userMenuItems =
                     listOf(
+                        shareMenuItem,
                         "신고하기" to {
                             showMenu = false
                             onReportClick()
