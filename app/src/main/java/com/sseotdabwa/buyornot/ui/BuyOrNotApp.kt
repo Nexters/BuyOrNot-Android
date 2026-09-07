@@ -18,7 +18,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
-import com.sseotdabwa.buyornot.core.common.deeplink.NavigationDestination
+import com.sseotdabwa.buyornot.core.common.deeplink.EntryDestination
 import com.sseotdabwa.buyornot.core.common.deeplink.PendingNavigation
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -87,14 +87,14 @@ fun BuyOrNotApp(
         if (!isPastAuthGate) return@LaunchedEffect
         when (navigation.destination) {
             // feedId는 앱 링크·FCM 양쪽 경로에서 FEED_DETAIL일 때 존재가 보장된다.
-            NavigationDestination.FEED_DETAIL ->
+            EntryDestination.FEED_DETAIL ->
                 navigation.feedId?.let { navController.navigateToFeedDetail(it, navigation.notificationId) }
 
-            NavigationDestination.FEED_CREATE -> navController.navigateToUpload()
+            EntryDestination.FEED_CREATE -> navController.navigateToUpload()
 
             // 인증 통과 직후엔 이미 홈이지만, 다른 화면에 있다가 탭한 경우엔 홈으로 되돌려야 한다.
             // 홈이 중복으로 쌓이지 않게 기존 홈을 걷어내고 하나만 남긴다.
-            NavigationDestination.HOME ->
+            EntryDestination.HOME ->
                 navController.navigateToHome(
                     navOptions {
                         popUpTo<HomeRoute> { inclusive = true }

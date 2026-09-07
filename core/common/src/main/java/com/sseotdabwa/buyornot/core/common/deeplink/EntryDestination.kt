@@ -5,7 +5,7 @@ package com.sseotdabwa.buyornot.core.common.deeplink
  *
  * FCM data의 `screen` 값과 이름이 1:1 대응한다. 앱 링크는 항상 [FEED_DETAIL]이다.
  */
-enum class NavigationDestination {
+enum class EntryDestination {
     FEED_DETAIL,
     HOME,
     FEED_CREATE,

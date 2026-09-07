@@ -9,11 +9,11 @@ import javax.inject.Singleton
 /**
  * 외부 유입으로 정해진 이동 대상. 인증 게이트를 통과할 때까지 들고 있다가 한 번만 소비된다.
  *
- * @param feedId [NavigationDestination.FEED_DETAIL]일 때만 존재한다.
+ * @param feedId [EntryDestination.FEED_DETAIL]일 때만 존재한다.
  * @param notificationId 읽음 처리에 쓴다. 마케팅 알림과 앱 링크에는 없다.
  */
 data class PendingNavigation(
-    val destination: NavigationDestination,
+    val destination: EntryDestination,
     val feedId: Long? = null,
     val notificationId: Long? = null,
 )
@@ -40,9 +40,6 @@ data class PendingNavigation(
 class PendingNavigationStore @Inject constructor() {
     private val _pending = MutableStateFlow<PendingNavigation?>(null)
     val pending: StateFlow<PendingNavigation?> = _pending.asStateFlow()
-
-    /** 외부 유입으로 진입했는가. 스플래시가 고정 대기를 건너뛸지 판단할 때 쓴다. */
-    val hasPending: Boolean get() = _pending.value != null
 
     fun set(navigation: PendingNavigation) {
         _pending.value = navigation

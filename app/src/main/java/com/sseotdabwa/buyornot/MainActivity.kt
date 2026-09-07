@@ -16,7 +16,7 @@ import androidx.metrics.performance.PerformanceMetricsState
 import com.sseotdabwa.buyornot.core.analytics.Analytics
 import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
 import com.sseotdabwa.buyornot.core.analytics.performance.Performance
-import com.sseotdabwa.buyornot.core.common.deeplink.NavigationDestination
+import com.sseotdabwa.buyornot.core.common.deeplink.EntryDestination
 import com.sseotdabwa.buyornot.core.common.deeplink.PendingNavigation
 import com.sseotdabwa.buyornot.core.common.deeplink.PendingNavigationStore
 import com.sseotdabwa.buyornot.core.common.deeplink.feedIdFromAppLink
@@ -246,7 +246,7 @@ class MainActivity : ComponentActivity() {
         // (NotificationDetailViewModel이 feedId를 checkNotNull 하므로 잘못된 값을 넘기면 죽는다.)
         if (feedId != null) {
             pendingNavigationStore.set(
-                PendingNavigation(destination = NavigationDestination.FEED_DETAIL, feedId = feedId),
+                PendingNavigation(destination = EntryDestination.FEED_DETAIL, feedId = feedId),
             )
         }
         return true

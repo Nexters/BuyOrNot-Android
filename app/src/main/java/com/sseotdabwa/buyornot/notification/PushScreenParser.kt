@@ -1,6 +1,6 @@
 package com.sseotdabwa.buyornot.notification
 
-import com.sseotdabwa.buyornot.core.common.deeplink.NavigationDestination
+import com.sseotdabwa.buyornot.core.common.deeplink.EntryDestination
 
 /**
  * FCM data의 `screen`과 `feedId` 조합에서 이동 대상을 정한다.
@@ -21,10 +21,10 @@ import com.sseotdabwa.buyornot.core.common.deeplink.NavigationDestination
 fun pushDestinationOf(
     screen: String?,
     feedId: Long?,
-): NavigationDestination? {
-    if (feedId != null) return NavigationDestination.FEED_DETAIL
+): EntryDestination? {
+    if (feedId != null) return EntryDestination.FEED_DETAIL
     if (screen == null) return null
-    return NavigationDestination.entries
+    return EntryDestination.entries
         .find { it.name == screen }
-        ?.takeIf { it != NavigationDestination.FEED_DETAIL }
+        ?.takeIf { it != EntryDestination.FEED_DETAIL }
 }
