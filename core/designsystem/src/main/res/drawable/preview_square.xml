@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 스크린샷 테스트용 1:1 샘플 이미지 (#153). 네트워크 없이 결정적으로 렌더된다. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    <path
+        android:fillColor="#D8DCE3"
+        android:pathData="M0,0h200v200h-200z" />
+    <path
+        android:fillColor="#9AA3B0"
+        android:pathData="M40,140l40,-50l30,35l25,-28l25,43z" />
+    <path
+        android:fillColor="#9AA3B0"
+        android:pathData="M60,55m-18,0a18,18 0,1 1,36 0a18,18 0,1 1,-36 0" />
+</vector>
