@@ -85,3 +85,7 @@ lint/tmp/
 .gemini/logs/
 .gemini/cache/
 docs/superpowers/
+
+# Roborazzi 스크린샷 (#153)
+# 골든은 레포에 커밋하지 않고 GitHub Actions 아티팩트로만 보관한다.
+**/build/outputs/roborazzi/

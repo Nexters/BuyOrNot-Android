@@ -1,0 +1,102 @@
+name: Screenshot comparison comment
+
+# workflow_run 으로 도는 이유: 코멘트에는 pull-requests/contents 쓰기 권한이 필요한데,
+# PR이 올린 코드를 빌드하는 워크플로에 그 토큰을 주면 fork PR에서 탈취될 수 있다.
+# 여기서는 빌드하지 않고 산출물만 읽으므로 쓰기 권한과 PR 코드가 같은 잡에 놓이지 않는다.
+on:
+  workflow_run:
+    workflows:
+      - Screenshot comparison
+    types:
+      - completed
+
+concurrency:
+  group: screenshot-comparison-comment-${{ github.event.workflow_run.id }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  comment:
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      actions: read # for downloading the diff artifacts
+      contents: write # for pushing the diff images to the companion branch
+      pull-requests: write # for the comment itself
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dawidd6/action-download-artifact@v6
+        with:
+          name: pr
+          run_id: ${{ github.event.workflow_run.id }}
+      - id: pull-request
+        run: |
+          # 이 파일은 PR이 올린 코드가 돌린 잡이 만든 것이므로 신뢰할 수 없는 입력이다.
+          number=$(tr -dc '0-9' < NR | head -c 10)
+          [ -n "$number" ] || { echo "::error::아티팩트에 PR 번호가 없습니다"; exit 1; }
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          # head_branch 를 그대로 쓰지 않는다. 이 레포의 컨벤션이 feature/#153-slug 라
+          # '#' 와 '/' 가 섞여 blob/<ref>/<path> URL 에서 경계가 모호해진다.
+          echo "COMPANION_BRANCH=companion/pr-$number" >> "$GITHUB_ENV"
+
+      - uses: dawidd6/action-download-artifact@v6
+        with:
+          name: screenshot-diff-reports
+          run_id: ${{ github.event.workflow_run.id }}
+          path: screenshot-diff-reports
+
+      # 컴패니언 브랜치를 만들기 전에 돌린다. git rm -rf 로 스크립트가 사라지기 때문이다.
+      - id: report
+        name: Build the report
+        run: |
+          python3 .github/scripts/build-screenshot-comment.py \
+            screenshot-diff-reports \
+            "${{ github.repository }}" \
+            "$COMPANION_BRANCH" \
+            comment.md \
+            files.txt
+          echo "count=$(wc -l < files.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+
+      # 코멘트에 이미지를 임베드하려면 HTTP로 닿을 수 있어야 한다. orphan 브랜치라
+      # develop 히스토리에 이미지가 들어가지 않는다.
+      # git rm 은 tracked 파일만 지우므로 방금 만든 comment.md / files.txt /
+      # screenshot-diff-reports 는 남는다.
+      - name: Push the diff images
+        if: steps.report.outputs.count != '0'
+        run: |
+          git checkout --orphan "$COMPANION_BRANCH"
+          git rm -rf --quiet .
+          # files.txt 의 경로는 다운로드 디렉터리 기준이다. 코멘트가 가리키는 URL과 맞추려면
+          # 그 경로가 리포 루트에서 시작해야 한다.
+          mv screenshot-diff-reports/* .
+          rmdir screenshot-diff-reports
+          git add --pathspec-from-file=files.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit --quiet -m "Screenshot diff for PR #${{ steps.pull-request.outputs.number }}"
+          git push --force origin "HEAD:$COMPANION_BRANCH"
+
+      # diff가 사라진 PR에도 코멘트를 갱신해야 한다. 그러지 않으면 이미 고친 변경에 대한
+      # 오래된 리포트가 마지막 말로 남는다.
+      - uses: peter-evans/find-comment@v3
+        id: existing
+        with:
+          issue-number: ${{ steps.pull-request.outputs.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 스크린샷 비교 리포트
+
+      - uses: peter-evans/create-or-update-comment@v4
+        if: steps.report.outputs.count != '0' || steps.existing.outputs.comment-id != ''
+        with:
+          comment-id: ${{ steps.existing.outputs.comment-id }}
+          issue-number: ${{ steps.pull-request.outputs.number }}
+          # 긴 본문은 프로세스 인자 목록을 넘치므로 파일로 넘긴다.
+          body-path: comment.md
+          edit-mode: replace

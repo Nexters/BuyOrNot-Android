@@ -1,0 +1,95 @@
+name: Screenshot comparison
+
+on:
+  pull_request:
+    paths:
+      - '**/*.kt'
+      - '**/*.kts'
+      - '**/*.toml'
+      - '**/src/**/res/**'
+      - 'gradle/wrapper/**'
+      - '.github/actions/setup-android/**'
+      - '.github/workflows/screenshot-comparison.yml'
+
+concurrency:
+  group: screenshot-comparison-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read # for clone
+      actions: write # for upload-artifact, and for downloading the base branch artifact
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-android
+        with:
+          signed-store-password: ${{ secrets.SIGNED_STORE_PASSWORD }}
+          signed-key-alias: ${{ secrets.SIGNED_KEY_ALIAS }}
+          signed-key-password: ${{ secrets.SIGNED_KEY_PASSWORD }}
+          debug-base-url: ${{ secrets.DEBUG_BASE_URL }}
+          release-base-url: ${{ secrets.RELEASE_BASE_URL }}
+          google-web-client-id: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          kakao-native-app-key: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+          kakao-native-app-key-debug: ${{ secrets.KAKAO_NATIVE_APP_KEY_DEBUG }}
+          mixpanel-token: ${{ secrets.MIXPANEL_TOKEN }}
+          keystore-base64: ${{ secrets.KEYSTORE_BASE64 }}
+          google-services-json-base64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+
+      # 골든은 base 커밋 것을 쓴다. 그래야 리포트가 "이 PR이 무엇을 바꿨는지"를 보여주고,
+      # 그 사이 develop 이 움직인 내용까지 섞이지 않는다.
+      - name: Download the goldens recorded on the base commit
+        id: baseline
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: screenshot-goldens
+          workflow: android-ci.yml
+          commit: ${{ github.event.pull_request.base.sha }}
+          if_no_artifact_found: fail
+      # 골든 기록 잡은 develop push 에서만 돌므로, base 커밋이 develop 의 tip 이 아니면
+      # 그 커밋의 아티팩트가 없다. 리포트를 포기하는 것보다 base 브랜치의 최신 골든과
+      # 비교하는 편이 낫다.
+      - name: Fall back to the newest goldens on the base branch
+        if: steps.baseline.outcome == 'failure'
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: screenshot-goldens
+          workflow: android-ci.yml
+          branch: ${{ github.base_ref }}
+          workflow_conclusion: success
+          if_no_artifact_found: fail
+
+      # compare 는 검증이 아니라 리포트다. 스크린샷이 달라져도 이 잡은 성공으로 끝나고,
+      # 판단은 PR 코멘트를 보고 사람이 한다. (verify 는 골든을 레포에 커밋하는 방식과
+      # 짝을 이루는데, 여기서는 아티팩트로만 두므로 개발자가 빨간불을 풀 방법이 없다.)
+      - name: Render this pull request and compare
+        run: ./gradlew compareRoborazziDebug --continue
+
+      - name: Upload diff reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-diff-reports
+          path: '**/build/outputs/roborazzi'
+          retention-days: 30
+
+      # 코멘트 워크플로는 workflow_run 으로 도는데, 그 이벤트 페이로드에는 PR 번호가 없다.
+      - name: Save the pull request number for the commenting workflow
+        run: |
+          mkdir -p pr
+          echo "${{ github.event.number }}" > pr/NR
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr
+          path: pr/
+          retention-days: 1
