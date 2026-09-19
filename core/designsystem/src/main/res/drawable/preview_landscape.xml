@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 스크린샷 테스트용 5:4 샘플 이미지 (#153). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="200dp"
+    android:viewportWidth="250"
+    android:viewportHeight="200">
+    <path
+        android:fillColor="#E3DCD8"
+        android:pathData="M0,0h250v200h-250z" />
+    <path
+        android:fillColor="#B0A39A"
+        android:pathData="M50,150l50,-60l35,40l30,-33l35,53z" />
+    <path
+        android:fillColor="#B0A39A"
+        android:pathData="M70,55m-18,0a18,18 0,1 1,36 0a18,18 0,1 1,-36 0" />
+</vector>

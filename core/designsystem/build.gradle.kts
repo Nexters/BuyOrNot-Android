@@ -1,5 +1,6 @@
 plugins {
     id("buyornot.android.library")
+    id("buyornot.android.screenshot")
     alias(libs.plugins.kotlin.compose)
 }
 

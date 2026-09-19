@@ -48,6 +48,7 @@ import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.shape.TopArrowBubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
@@ -646,7 +647,7 @@ private fun FeedCardSquareInteractivePreview() {
         var userVotedOption by remember { mutableStateOf<Int?>(null) }
 
         FeedCard(
-            profileImageUrl = "https://picsum.photos/seed/profile1/200/200",
+            profileImageUrl = PreviewImages.avatar(),
             nickname = "결정장애",
             category = "뷰티",
             createdAt = "10분 전",
@@ -654,9 +655,9 @@ private fun FeedCardSquareInteractivePreview() {
             content = "이 립스틱 색상 어때요? 평소에 안 바르던 색인데 도전해볼까 고민중이에요!",
             productImageUrls =
                 listOf(
-                    "https://picsum.photos/seed/product1/800/800",
-                    "https://picsum.photos/seed/product2/800/800",
-                    "https://picsum.photos/seed/product3/800/800",
+                    PreviewImages.square(),
+                    PreviewImages.square(),
+                    PreviewImages.square(),
                 ),
             price = "35,000",
             imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
@@ -687,7 +688,7 @@ private fun FeedCardLandscapeInteractivePreview() {
         var userVotedOption by remember { mutableStateOf<Int?>(null) }
 
         FeedCard(
-            profileImageUrl = "https://picsum.photos/seed/profile3/200/200",
+            profileImageUrl = PreviewImages.avatar(),
             nickname = "가로러버",
             category = "가전",
             createdAt = "1시간 전",
@@ -695,7 +696,7 @@ private fun FeedCardLandscapeInteractivePreview() {
             content = "가로로 긴 제품은 5:4 비율로 보면 좋아요!",
             productImageUrls =
                 listOf(
-                    "https://picsum.photos/seed/product3/1000/800",
+                    PreviewImages.landscape(),
                 ),
             price = "299,000",
             imageAspectRatios = listOf(ImageAspectRatio.LANDSCAPE),
@@ -724,7 +725,7 @@ private fun FeedCardPortraitInteractivePreview() {
         var userVotedOption by remember { mutableStateOf<Int?>(null) }
 
         FeedCard(
-            profileImageUrl = "https://picsum.photos/seed/profile2/200/200",
+            profileImageUrl = PreviewImages.avatar(),
             nickname = "패션피플",
             category = "의류",
             createdAt = "2시간 전",
@@ -732,7 +733,7 @@ private fun FeedCardPortraitInteractivePreview() {
             content = "이 원피스 4:5 비율로 보면 더 예쁜 것 같아요! 세로로 긴 옷 사진은 이 비율이 딱이에요.",
             productImageUrls =
                 listOf(
-                    "https://picsum.photos/seed/product2/800/1000",
+                    PreviewImages.portrait(),
                 ),
             price = "89,000",
             imageAspectRatios = listOf(ImageAspectRatio.PORTRAIT),

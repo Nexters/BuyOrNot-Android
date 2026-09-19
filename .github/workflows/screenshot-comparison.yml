@@ -1,0 +1,143 @@
+name: Screenshot comparison
+
+on:
+  pull_request:
+    paths:
+      - '**/*.kt'
+      - '**/*.kts'
+      - '**/*.toml'
+      - '**/src/**/res/**'
+      - 'gradle/wrapper/**'
+      - '.github/workflows/screenshot-comparison.yml'
+
+concurrency:
+  group: screenshot-comparison-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read # for clone
+      actions: write # for upload-artifact, and for downloading the base branch artifact
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # 골든은 base 커밋 것을 쓴다. 그래야 리포트가 "이 PR이 무엇을 바꿨는지"를 보여주고,
+      # 그 사이 develop 이 움직인 내용까지 섞이지 않는다.
+      - name: Download the goldens recorded on the base commit
+        id: baseline
+        uses: dawidd6/action-download-artifact@v24
+        with:
+          name: screenshot-goldens
+          workflow: android-ci.yml
+          commit: ${{ github.event.pull_request.base.sha }}
+          if_no_artifact_found: warn
+
+      # 골든 기록 잡은 develop push 에서만 돌므로, base 커밋이 develop 의 tip 이 아니면
+      # 그 커밋의 아티팩트가 없다. 리포트를 포기하는 것보다 base 브랜치의 최신 골든과
+      # 비교하는 편이 낫다.
+      #
+      # search_artifacts 가 필요하다. 이게 없으면 "가장 최근 성공 런" 하나만 보고
+      # 거기에 아티팩트가 없으면 그대로 포기한다 — 골든 기록 잡은 develop push 에서만
+      # 도는데 android-ci.yml 자체는 PR 에서도 돌기 때문에 흔히 어긋난다.
+      - name: Fall back to the newest goldens on the base branch
+        id: fallback
+        if: steps.baseline.outputs.found_artifact != 'true'
+        uses: dawidd6/action-download-artifact@v24
+        with:
+          name: screenshot-goldens
+          workflow: android-ci.yml
+          branch: ${{ github.base_ref }}
+          workflow_conclusion: success
+          search_artifacts: true
+          if_no_artifact_found: warn
+
+      - name: Resolve baseline availability
+        id: goldens
+        run: |
+          if [ "${{ steps.baseline.outputs.found_artifact }}" = "true" ] \
+            || [ "${{ steps.fallback.outputs.found_artifact }}" = "true" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            # 도입 직후에는 base 브랜치 어디에도 골든이 없다. 이건 고장이 아니라 아직
+            # 기준선이 없는 상태이므로, 잡을 실패시키는 대신 코멘트로 알린다.
+            echo "::notice::base 브랜치에 골든이 없어 비교를 건너뜁니다. develop 에 머지되어 골든 기록 잡이 한 번 돌면 다음 PR부터 동작합니다."
+          fi
+
+      # 시크릿을 넘기지 않는다. pull_request 는 PR 이 올린 Gradle 코드를 그대로 돌리므로,
+      # 실제 서명 키와 서비스 설정을 넘기면 그 코드가 읽어 밖으로 보낼 수 있다.
+      #
+      # 스크린샷 비교는 라이브러리 모듈의 unit test 라 :app 의 서명/Firebase 경로를 타지 않는다.
+      # app/build.gradle.kts 의 signingConfigs 는 값이 없으면 경고만 내고 디버그 서명으로
+      # 넘어가므로, 더미 값으로 충분하다. (실측: 더미 local.properties + google-services.json
+      # 없음 상태로 :core:designsystem:recordRoborazziDebug 47장 정상 생성)
+      - name: Create a dummy local.properties
+        if: steps.goldens.outputs.available == 'true'
+        run: |
+          {
+            echo "signed.store.file=keystore.jks"
+            echo "signed.store.password=dummy"
+            echo "signed.key.alias=dummy"
+            echo "signed.key.password=dummy"
+            echo "debug.base.url=https://example.invalid/"
+            echo "release.base.url=https://example.invalid/"
+            echo "google.webClientId=dummy"
+            echo "kakao.nativeAppKey=dummy"
+            echo "kakao.nativeAppKeyDebug=dummy"
+            echo "mixpanel.token=dummy"
+          } >> local.properties
+
+      - name: Set up JDK 17
+        if: steps.goldens.outputs.available == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configure Gradle
+        if: steps.goldens.outputs.available == 'true'
+        uses: gradle/actions/setup-gradle@v3
+
+      # compare 는 검증이 아니라 리포트다. 스크린샷이 달라져도 이 잡은 성공으로 끝나고,
+      # 판단은 PR 코멘트를 보고 사람이 한다. (verify 는 골든을 레포에 커밋하는 방식과
+      # 짝을 이루는데, 여기서는 아티팩트로만 두므로 개발자가 빨간불을 풀 방법이 없다.)
+      - name: Render this pull request and compare
+        if: steps.goldens.outputs.available == 'true'
+        run: ./gradlew compareRoborazziDebug --continue
+
+      - name: Upload diff reports
+        if: always() && steps.goldens.outputs.available == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshot-diff-reports
+          path: '**/build/outputs/roborazzi'
+          retention-days: 30
+
+      # 코멘트 워크플로는 workflow_run 으로 도는데, 그 이벤트 페이로드에는 PR 번호가 없다.
+      # STATUS 는 "diff 가 없음" 과 "비교 자체를 못 함" 을 구분하기 위한 것이다. 둘을 같은
+      # 코멘트로 보고하면 기준선이 없는 동안 "변경 없음" 이라는 거짓말을 하게 된다.
+      - name: Save the pull request number for the commenting workflow
+        if: always()
+        run: |
+          mkdir -p pr
+          echo "${{ github.event.number }}" > pr/NR
+          if [ "${{ steps.goldens.outputs.available }}" = "true" ]; then
+            echo "ok" > pr/STATUS
+          else
+            echo "no-goldens" > pr/STATUS
+          fi
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: pr
+          path: pr/
+          retention-days: 1

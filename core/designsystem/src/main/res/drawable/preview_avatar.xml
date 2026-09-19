@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 스크린샷 테스트용 프로필 샘플 이미지 (#153). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    <path
+        android:fillColor="#C9D2E3"
+        android:pathData="M0,0h200v200h-200z" />
+    <path
+        android:fillColor="#7E8CA8"
+        android:pathData="M100,80m-32,0a32,32 0,1 1,64 0a32,32 0,1 1,-64 0" />
+    <path
+        android:fillColor="#7E8CA8"
+        android:pathData="M100,125c-34,0 -55,22 -55,50v25h110v-25c0,-28 -21,-50 -55,-50z" />
+</vector>

@@ -2,6 +2,7 @@ import java.util.Properties
 
 plugins {
     id("buyornot.android.feature")
+    id("buyornot.android.screenshot")
 }
 
 val localProperties =

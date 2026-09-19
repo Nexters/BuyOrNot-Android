@@ -65,6 +65,12 @@ firebasePerf = "2.0.2"
 # Code Quality
 ktlint = "14.2.0"
 
+# Screenshot Test
+# Roborazzi가 Robolectric 위에서 @Preview 컴포저블을 렌더링하고, ComposablePreviewScanner가 프리뷰를 찾아낸다.
+roborazzi = "1.74.0"
+robolectric = "4.17"
+composablePreviewScanner = "0.9.3"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -153,6 +159,12 @@ json = { group = "org.json", name = "json", version.ref = "json" }
 # Performance
 androidx-metrics-performance = { group = "androidx.metrics", name = "metrics-performance", version.ref = "metricsPerformance" }
 
+# Screenshot Test
+roborazzi-compose-preview-scanner-support = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose-preview-scanner-support", version.ref = "roborazzi" }
+composable-preview-scanner-android = { group = "io.github.sergio-sastre.ComposablePreviewScanner", name = "android", version.ref = "composablePreviewScanner" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+roborazzi-gradlePlugin = { group = "io.github.takahirom.roborazzi", name = "roborazzi-gradle-plugin", version.ref = "roborazzi" }
+
 # Chucker
 chucker = { group = "com.github.chuckerteam.chucker", name = "library", version.ref = "chucker" }
 chucker-no-op = { group = "com.github.chuckerteam.chucker", name = "library-no-op", version.ref = "chucker" }
@@ -170,3 +182,4 @@ google-services = { id = "com.google.gms.google-services", version.ref = "google
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlytics" }
 firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppDistribution" }
 firebase-perf = { id = "com.google.firebase.firebase-perf", version.ref = "firebasePerf" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }

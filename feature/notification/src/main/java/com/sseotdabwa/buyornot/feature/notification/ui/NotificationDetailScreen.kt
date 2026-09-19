@@ -30,6 +30,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotSnackBarHost
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCard
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.components.showBuyOrNotSnackBar
+import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.Feed
@@ -233,7 +234,7 @@ private fun NotificationDetailScreenPreview() {
                                 listOf(
                                     FeedImage(
                                         s3ObjectKey = "",
-                                        imageUrl = "https://picsum.photos/800/800",
+                                        imageUrl = PreviewImages.square(),
                                         imageWidth = 800,
                                         imageHeight = 800,
                                     ),
@@ -242,7 +243,7 @@ private fun NotificationDetailScreenPreview() {
                                 Author(
                                     userId = 1L,
                                     nickname = "결정장애",
-                                    profileImage = "https://picsum.photos/200",
+                                    profileImage = PreviewImages.avatar(),
                                 ),
                             createdAt = "2026-02-21T15:00:53.552Z",
                             hasVoted = true,

@@ -39,6 +39,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotErrorView
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
+import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.permission.hasNotificationPermission
 import com.sseotdabwa.buyornot.core.ui.permission.openAppSettings
@@ -326,7 +327,7 @@ private fun NotificationScreenPreview() {
                             NotificationItem(
                                 id = 1L,
                                 feedId = 101L,
-                                imageUrl = "https://picsum.photos/200",
+                                imageUrl = PreviewImages.square(),
                                 title = "투표 종료",
                                 description = "78% '애매하긴 해!'",
                                 time = "2시간 전",
@@ -335,7 +336,7 @@ private fun NotificationScreenPreview() {
                             NotificationItem(
                                 id = 2L,
                                 feedId = 102L,
-                                imageUrl = "https://picsum.photos/201",
+                                imageUrl = PreviewImages.square(),
                                 title = "투표 종료",
                                 description = "56% '사! 가즈아!'",
                                 time = "3시간 전",

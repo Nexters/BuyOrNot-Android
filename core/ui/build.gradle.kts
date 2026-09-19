@@ -2,6 +2,7 @@ plugins {
     id("buyornot.android.library")
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    id("buyornot.android.screenshot")
 }
 
 android {

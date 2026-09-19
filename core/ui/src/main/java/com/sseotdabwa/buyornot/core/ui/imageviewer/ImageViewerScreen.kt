@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -326,7 +327,12 @@ private suspend fun animateResetZoom(
 private fun ImageViewerScreenPreview() {
     BuyOrNotTheme {
         ImageViewerScreen(
-            imageUrls = listOf("url1", "url2", "url3"),
+            imageUrls =
+                listOf(
+                    PreviewImages.square(),
+                    PreviewImages.landscape(),
+                    PreviewImages.portrait(),
+                ),
             initialPage = 0,
             onBackClick = {},
         )
@@ -338,7 +344,12 @@ private fun ImageViewerScreenPreview() {
 private fun ImageViewerScreenSecondPagePreview() {
     BuyOrNotTheme {
         ImageViewerScreen(
-            imageUrls = listOf("url1", "url2", "url3"),
+            imageUrls =
+                listOf(
+                    PreviewImages.square(),
+                    PreviewImages.landscape(),
+                    PreviewImages.portrait(),
+                ),
             initialPage = 1,
             onBackClick = {},
         )
