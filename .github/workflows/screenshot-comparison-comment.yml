@@ -30,9 +30,9 @@ jobs:
       pull-requests: write # for the comment itself
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: dawidd6/action-download-artifact@v6
+      - uses: dawidd6/action-download-artifact@v24
         with:
           name: pr
           run_id: ${{ github.event.workflow_run.id }}
@@ -45,8 +45,12 @@ jobs:
           # head_branch 를 그대로 쓰지 않는다. 이 레포의 컨벤션이 feature/#153-slug 라
           # '#' 와 '/' 가 섞여 blob/<ref>/<path> URL 에서 경계가 모호해진다.
           echo "COMPANION_BRANCH=companion/pr-$number" >> "$GITHUB_ENV"
+          # STATUS 는 "diff 가 없음" 과 "기준선이 없어 비교 자체를 못 함" 을 가른다.
+          status=$(tr -dc 'a-z-' < STATUS | head -c 20)
+          echo "status=$status" >> "$GITHUB_OUTPUT"
 
-      - uses: dawidd6/action-download-artifact@v6
+      - uses: dawidd6/action-download-artifact@v24
+        if: steps.pull-request.outputs.status == 'ok'
         with:
           name: screenshot-diff-reports
           run_id: ${{ github.event.workflow_run.id }}
@@ -56,6 +60,19 @@ jobs:
       - id: report
         name: Build the report
         run: |
+          if [ "${{ steps.pull-request.outputs.status }}" != "ok" ]; then
+            # 기준선이 없는 상태를 "변경 없음" 으로 보고하면 거짓말이 된다.
+            {
+              echo "스크린샷 비교 리포트"
+              echo
+              echo "base 브랜치에 골든이 없어 이번에는 비교하지 못했습니다."
+              echo
+              echo "스크린샷 비교 CI를 막 도입해 아직 기준선이 없는 상태입니다."
+              echo "develop 에 머지되어 골든 기록 잡이 한 번 돌면 다음 PR부터 동작합니다."
+            } > comment.md
+            echo "count=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           python3 .github/scripts/build-screenshot-comment.py \
             screenshot-diff-reports \
             "${{ github.repository }}" \
@@ -85,15 +102,18 @@ jobs:
 
       # diff가 사라진 PR에도 코멘트를 갱신해야 한다. 그러지 않으면 이미 고친 변경에 대한
       # 오래된 리포트가 마지막 말로 남는다.
-      - uses: peter-evans/find-comment@v3
+      - uses: peter-evans/find-comment@v4
         id: existing
         with:
           issue-number: ${{ steps.pull-request.outputs.number }}
           comment-author: 'github-actions[bot]'
           body-includes: 스크린샷 비교 리포트
 
-      - uses: peter-evans/create-or-update-comment@v4
-        if: steps.report.outputs.count != '0' || steps.existing.outputs.comment-id != ''
+      - uses: peter-evans/create-or-update-comment@v5
+        if: >
+          steps.report.outputs.count != '0'
+          || steps.existing.outputs.comment-id != ''
+          || steps.pull-request.outputs.status != 'ok'
         with:
           comment-id: ${{ steps.existing.outputs.comment-id }}
           issue-number: ${{ steps.pull-request.outputs.number }}
