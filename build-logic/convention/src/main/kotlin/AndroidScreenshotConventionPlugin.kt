@@ -29,6 +29,12 @@ class AndroidScreenshotConventionPlugin : Plugin<Project> {
                     packages.set(listOf(screenshotPackage))
                     // 이 레포의 프리뷰는 전부 private fun 이다.
                     includePrivatePreviews.set(true)
+                    // 생성된 테스트에 우리 설정을 끼워 넣는 유일한 훅. Robolectric 이
+                    // Application 의 init/onCreate 를 호출하지 않아 거기서는 못 한다.
+                    testerQualifiedClassName.set(SCREENSHOT_PREVIEW_TESTER)
+                    // 커스텀 tester 를 쓰면 위 스캔 옵션(private 프리뷰 포함, 제외 어노테이션)이
+                    // 자동 적용되지 않는다. 이 스위치가 옵션을 tester 로 전달한다.
+                    useScanOptionParametersInTester.set(true)
                     @OptIn(ExperimentalRoborazziApi::class)
                     annotationFilter.set(
                         AnnotationFilter.Exclude(SCREENSHOT_TEST_EXCLUDE_ANNOTATION),
@@ -64,5 +70,7 @@ class AndroidScreenshotConventionPlugin : Plugin<Project> {
     private companion object {
         const val SCREENSHOT_TEST_EXCLUDE_ANNOTATION =
             "com.sseotdabwa.buyornot.core.designsystem.preview.ScreenshotTestExclude"
+        const val SCREENSHOT_PREVIEW_TESTER =
+            "com.sseotdabwa.buyornot.core.testing.ScreenshotPreviewTester"
     }
 }
