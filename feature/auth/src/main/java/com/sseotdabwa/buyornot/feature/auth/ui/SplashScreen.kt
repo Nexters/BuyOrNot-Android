@@ -29,6 +29,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotAlertDialog
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotLotties
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.preview.ScreenshotTestExclude
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.performance.ReportScreenRendered
 
@@ -157,6 +158,11 @@ private fun openPlayStore(context: Context) {
 }
 
 @Preview(name = "SplashScreen - Pixel 5", device = "id:pixel_5", showBackground = true)
+@ScreenshotTestExclude(
+    reason =
+        "화면 전체가 로티 composition 로딩 결과(if (composition != null))에 걸려 있어, " +
+            "Robolectric 렌더 시점에는 앱 로고까지 포함해 아무것도 그려지지 않는다. 빈 골든만 남는다.",
+)
 @Composable
 private fun SplashScreenPreview() {
     BuyOrNotTheme {

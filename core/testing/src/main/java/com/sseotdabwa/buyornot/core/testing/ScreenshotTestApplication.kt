@@ -1,4 +1,4 @@
-package com.sseotdabwa.buyornot.core.designsystem
+package com.sseotdabwa.buyornot.core.testing
 
 import android.app.Application
 import coil.ImageLoader
@@ -11,8 +11,8 @@ import kotlinx.coroutines.Dispatchers
 /**
  * 스크린샷 테스트용 Application (#153).
  *
- * 프리뷰는 [com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages]의 로컬 리소스 URI만
- * 쓰기로 했지만, 그건 사람이 지키는 규율이다. 새 프리뷰가 실수로 http URL을 들고 오면
+ * 프리뷰는 core:designsystem 의 PreviewImages 가 주는 로컬 리소스 URI만 쓰기로 했지만,
+ * 그건 사람이 지키는 규율이다. 새 프리뷰가 실수로 http URL을 들고 오면
  * 아무도 UI를 건드리지 않은 PR에서 diff가 뜨는데, 원인이 코드가 아니라 네트워크 상태라
  * 추적하기가 어렵다.
  *

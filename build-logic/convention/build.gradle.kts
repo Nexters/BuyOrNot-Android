@@ -23,6 +23,7 @@ dependencies {
     compileOnly(libs.kotlin.gradlePlugin)
     compileOnly(libs.ksp.gradlePlugin)
     compileOnly(libs.compose.gradlePlugin)
+    compileOnly(libs.roborazzi.gradlePlugin)
 }
 
 gradlePlugin {
@@ -38,6 +39,10 @@ gradlePlugin {
         register("androidFeature") {
             id = "buyornot.android.feature"
             implementationClass = "AndroidFeatureConventionPlugin"
+        }
+        register("androidScreenshot") {
+            id = "buyornot.android.screenshot"
+            implementationClass = "AndroidScreenshotConventionPlugin"
         }
         register("kotlinLibrary") {
             id = "buyornot.kotlin.library"
