@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"python3 - <<'PY'\\nimport os\\nd=\\\"/Users/donghyeon/StudioProjects/BuyOrNot-Android/.github/ISSUE_TEMPLATE\\\"\\nfor name in sorted(os.listdir(d)):\\n    p=os.path.join(d,name)\\n    print(\\\"=\\\"*...",
-  "error": "Exit code 1\n======== '--bugFix-----작업할-것.md'\n---\nname: \"🐞 BugFix - 작업할 것\"\nabout: \"Something isn't working Template \"\ntitle: \"🐞 BugFix - \"\nlabels: 🐞 BugFix\nassignees: ''\n\n---\n\n## 🛠️ Issue Description\n[//]: # (해당 이슈에 대한 설명을 작성해주세요.)\n\n## 💭 Bug Description\n[//]: # (버그가 끼치는 영향과 문제를 설명해주세요.)\n\n### 📝 check-lists\n[//]: # (업무 체크리스트를 작성해주세요.)\n- [ ] Task1\n\n======== '--docs-----작업할-것.md'\n---\nname: \"📃 Docs - 작업할 것\"\nabout: \"Documentation writing and editing (README.md, etc.) Template \"\ntitle: \"📃 Docs -...",
-  "timestamp": "2026-07-21T13:57:15.499Z",
-  "retry_count": 1
-}
