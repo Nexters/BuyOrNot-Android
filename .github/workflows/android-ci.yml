@@ -27,33 +27,19 @@ jobs:
           # Gradle 빌드 스크립트에 토큰이 노출되지 않도록 로컬 git 설정에 남기지 않는다.
           persist-credentials: false
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: ./.github/actions/setup-android
         with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Create local.properties
-        run: |
-          echo "signed.store.file=keystore.jks" >> local.properties
-          echo "signed.store.password=${{ secrets.SIGNED_STORE_PASSWORD }}" >> local.properties
-          echo "signed.key.alias=${{ secrets.SIGNED_KEY_ALIAS }}" >> local.properties
-          echo "signed.key.password=${{ secrets.SIGNED_KEY_PASSWORD }}" >> local.properties
-          echo "debug.base.url=${{ secrets.DEBUG_BASE_URL }}" >> local.properties
-          echo "release.base.url=${{ secrets.RELEASE_BASE_URL }}" >> local.properties
-          echo "google.webClientId=${{ secrets.GOOGLE_WEB_CLIENT_ID }}" >> local.properties
-          echo "kakao.nativeAppKey=${{ secrets.KAKAO_NATIVE_APP_KEY }}" >> local.properties
-          echo "kakao.nativeAppKeyDebug=${{ secrets.KAKAO_NATIVE_APP_KEY_DEBUG }}" >> local.properties
-          echo "mixpanel.token=${{ secrets.MIXPANEL_TOKEN }}" >> local.properties
-
-      - name: Decode Keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
-
-      - name: Decode google-services.json
-        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > app/google-services.json
-
-      - name: Configure Gradle
-        uses: gradle/actions/setup-gradle@v3
+          signed-store-password: ${{ secrets.SIGNED_STORE_PASSWORD }}
+          signed-key-alias: ${{ secrets.SIGNED_KEY_ALIAS }}
+          signed-key-password: ${{ secrets.SIGNED_KEY_PASSWORD }}
+          debug-base-url: ${{ secrets.DEBUG_BASE_URL }}
+          release-base-url: ${{ secrets.RELEASE_BASE_URL }}
+          google-web-client-id: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          kakao-native-app-key: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+          kakao-native-app-key-debug: ${{ secrets.KAKAO_NATIVE_APP_KEY_DEBUG }}
+          mixpanel-token: ${{ secrets.MIXPANEL_TOKEN }}
+          keystore-base64: ${{ secrets.KEYSTORE_BASE64 }}
+          google-services-json-base64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
 
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
@@ -65,6 +51,48 @@ jobs:
           name: unit-test-reports
           path: '**/build/reports/tests/testDebugUnitTest/'
           retention-days: 7
+
+  # PR이 비교 기준으로 삼을 골든을 기록한다 (#153). 아무것도 단정하지 않는다.
+  # PR은 screenshot-comparison 워크플로에서 자기 코드를 직접 렌더링하므로, 여기는
+  # develop 에 커밋이 쌓일 때만 돌면 된다.
+  screenshot-goldens:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read # for clone
+      actions: write # for upload-artifact
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-android
+        with:
+          signed-store-password: ${{ secrets.SIGNED_STORE_PASSWORD }}
+          signed-key-alias: ${{ secrets.SIGNED_KEY_ALIAS }}
+          signed-key-password: ${{ secrets.SIGNED_KEY_PASSWORD }}
+          debug-base-url: ${{ secrets.DEBUG_BASE_URL }}
+          release-base-url: ${{ secrets.RELEASE_BASE_URL }}
+          google-web-client-id: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          kakao-native-app-key: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+          kakao-native-app-key-debug: ${{ secrets.KAKAO_NATIVE_APP_KEY_DEBUG }}
+          mixpanel-token: ${{ secrets.MIXPANEL_TOKEN }}
+          keystore-base64: ${{ secrets.KEYSTORE_BASE64 }}
+          google-services-json-base64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+
+      # --continue 는 한 모듈이 실패해도 나머지 골든을 기록하게 한다.
+      - name: Record preview screenshots
+        run: ./gradlew recordRoborazziDebug --continue
+
+      - name: Upload goldens
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-goldens
+          path: '**/build/outputs/roborazzi'
+          retention-days: 30
 
   ktlint:
     runs-on: ubuntu-latest
@@ -79,33 +107,19 @@ jobs:
         with:
           ref: ${{ github.head_ref || github.ref }}
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: ./.github/actions/setup-android
         with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Create local.properties
-        run: |
-          echo "signed.store.file=keystore.jks" >> local.properties
-          echo "signed.store.password=${{ secrets.SIGNED_STORE_PASSWORD }}" >> local.properties
-          echo "signed.key.alias=${{ secrets.SIGNED_KEY_ALIAS }}" >> local.properties
-          echo "signed.key.password=${{ secrets.SIGNED_KEY_PASSWORD }}" >> local.properties
-          echo "debug.base.url=${{ secrets.DEBUG_BASE_URL }}" >> local.properties
-          echo "release.base.url=${{ secrets.RELEASE_BASE_URL }}" >> local.properties
-          echo "google.webClientId=${{ secrets.GOOGLE_WEB_CLIENT_ID }}" >> local.properties
-          echo "kakao.nativeAppKey=${{ secrets.KAKAO_NATIVE_APP_KEY }}" >> local.properties
-          echo "kakao.nativeAppKeyDebug=${{ secrets.KAKAO_NATIVE_APP_KEY_DEBUG }}" >> local.properties
-          echo "mixpanel.token=${{ secrets.MIXPANEL_TOKEN }}" >> local.properties
-
-      - name: Decode Keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
-
-      - name: Decode google-services.json
-        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > app/google-services.json
-
-      - name: Configure Gradle
-        uses: gradle/actions/setup-gradle@v3
+          signed-store-password: ${{ secrets.SIGNED_STORE_PASSWORD }}
+          signed-key-alias: ${{ secrets.SIGNED_KEY_ALIAS }}
+          signed-key-password: ${{ secrets.SIGNED_KEY_PASSWORD }}
+          debug-base-url: ${{ secrets.DEBUG_BASE_URL }}
+          release-base-url: ${{ secrets.RELEASE_BASE_URL }}
+          google-web-client-id: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+          kakao-native-app-key: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+          kakao-native-app-key-debug: ${{ secrets.KAKAO_NATIVE_APP_KEY_DEBUG }}
+          mixpanel-token: ${{ secrets.MIXPANEL_TOKEN }}
+          keystore-base64: ${{ secrets.KEYSTORE_BASE64 }}
+          google-services-json-base64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
 
       - name: Run ktlint check
         id: ktlint
@@ -140,6 +154,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fail if ktlint had errors (internal branch only)
-        if: steps.ktlint.outcome == 'failure' && github.event.pull_request.head.repo.full_name == github.repository
-        run: exit 1
+  # 프리뷰가 외부 URL을 때리면 렌더 결과가 네트워크 상태에 좌우되어, UI를 건드리지 않은
+  # PR에서도 스크린샷 diff가 뜬다 (#153). 시크릿도 Gradle도 필요 없어 별도 잡으로 둔다.
+  preview-network-urls:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    permissions:
+      contents: read
+    concurrency:
+      group: preview-network-urls-${{ github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: python3 .github/scripts/check-preview-network-urls.py
