@@ -1,5 +1,6 @@
 plugins {
     id("buyornot.android.feature")
+    id("buyornot.android.screenshot")
 }
 
 android {
