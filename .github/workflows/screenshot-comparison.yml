@@ -8,7 +8,6 @@ on:
       - '**/*.toml'
       - '**/src/**/res/**'
       - 'gradle/wrapper/**'
-      - '.github/actions/setup-android/**'
       - '.github/workflows/screenshot-comparison.yml'
 
 concurrency:
@@ -74,20 +73,39 @@ jobs:
             echo "::notice::base 브랜치에 골든이 없어 비교를 건너뜁니다. develop 에 머지되어 골든 기록 잡이 한 번 돌면 다음 PR부터 동작합니다."
           fi
 
-      - uses: ./.github/actions/setup-android
+      # 시크릿을 넘기지 않는다. pull_request 는 PR 이 올린 Gradle 코드를 그대로 돌리므로,
+      # 실제 서명 키와 서비스 설정을 넘기면 그 코드가 읽어 밖으로 보낼 수 있다.
+      #
+      # 스크린샷 비교는 라이브러리 모듈의 unit test 라 :app 의 서명/Firebase 경로를 타지 않는다.
+      # app/build.gradle.kts 의 signingConfigs 는 값이 없으면 경고만 내고 디버그 서명으로
+      # 넘어가므로, 더미 값으로 충분하다. (실측: 더미 local.properties + google-services.json
+      # 없음 상태로 :core:designsystem:recordRoborazziDebug 47장 정상 생성)
+      - name: Create a dummy local.properties
         if: steps.goldens.outputs.available == 'true'
+        run: |
+          {
+            echo "signed.store.file=keystore.jks"
+            echo "signed.store.password=dummy"
+            echo "signed.key.alias=dummy"
+            echo "signed.key.password=dummy"
+            echo "debug.base.url=https://example.invalid/"
+            echo "release.base.url=https://example.invalid/"
+            echo "google.webClientId=dummy"
+            echo "kakao.nativeAppKey=dummy"
+            echo "kakao.nativeAppKeyDebug=dummy"
+            echo "mixpanel.token=dummy"
+          } >> local.properties
+
+      - name: Set up JDK 17
+        if: steps.goldens.outputs.available == 'true'
+        uses: actions/setup-java@v4
         with:
-          signed-store-password: ${{ secrets.SIGNED_STORE_PASSWORD }}
-          signed-key-alias: ${{ secrets.SIGNED_KEY_ALIAS }}
-          signed-key-password: ${{ secrets.SIGNED_KEY_PASSWORD }}
-          debug-base-url: ${{ secrets.DEBUG_BASE_URL }}
-          release-base-url: ${{ secrets.RELEASE_BASE_URL }}
-          google-web-client-id: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
-          kakao-native-app-key: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
-          kakao-native-app-key-debug: ${{ secrets.KAKAO_NATIVE_APP_KEY_DEBUG }}
-          mixpanel-token: ${{ secrets.MIXPANEL_TOKEN }}
-          keystore-base64: ${{ secrets.KEYSTORE_BASE64 }}
-          google-services-json-base64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configure Gradle
+        if: steps.goldens.outputs.available == 'true'
+        uses: gradle/actions/setup-gradle@v3
 
       # compare 는 검증이 아니라 리포트다. 스크린샷이 달라져도 이 잡은 성공으로 끝나고,
       # 판단은 PR 코멘트를 보고 사람이 한다. (verify 는 골든을 레포에 커밋하는 방식과

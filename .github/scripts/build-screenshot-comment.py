@@ -36,6 +36,11 @@ def collect(diff_root: Path) -> list[PurePosixPath]:
         # 경로 이스케이프는 거부한다. 심볼릭 링크도 따라가지 않는다.
         if ".." in rel.parts or path.is_symlink():
             continue
+        # 개행이 든 경로는 로보라찌가 만들 수 없다. 프리뷰 이름(@Preview(name = ...))이
+        # 스크린샷 id 에 들어가므로 여기로 개행을 흘려보낼 수 있고, 그러면 git 이 한 경로를
+        # 여러 pathspec 으로 쪼개 뒤쪽 줄이 pathspec magic 으로 해석된다.
+        if "\n" in str(rel) or "\r" in str(rel) or "\0" in str(rel):
+            continue
         found.append(rel)
     # rglob 순서는 파일시스템에 따라 달라진다. 잘린 리포트가 실행마다 다른 행을 남기지
     # 않도록 정렬한다.
@@ -98,7 +103,8 @@ def main() -> int:
     )
 
     files = collect(diff_root) if diff_root.is_dir() else []
-    out_filelist.write_text("".join(f"{f}\n" for f in files), encoding="utf-8")
+    # git add --pathspec-file-nul 이 읽는 형식. 개행 구분이면 한 경로가 쪼개질 수 있다.
+    out_filelist.write_bytes(b"".join(f"{f}\0".encode() for f in files))
     out_comment.write_text(build_comment(files, repo, branch), encoding="utf-8")
 
     print(f"diff {len(files)}건")

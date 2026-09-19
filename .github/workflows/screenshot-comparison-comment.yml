@@ -10,8 +10,13 @@ on:
     types:
       - completed
 
+# workflow_run.id 는 실행마다 달라 같은 PR 의 코멘트 잡이 겹칠 수 있다. 앞선 실행이 늦게
+# 끝나면 오래된 diff 로 최신 코멘트와 컴패니언 브랜치를 덮어쓴다. PR 을 가리키는 고정 키를
+# 쓴다 (PR 번호는 잡 안에서 아티팩트를 읽어야 나오므로 여기서는 쓸 수 없다).
 concurrency:
-  group: screenshot-comparison-comment-${{ github.event.workflow_run.id }}
+  group: >-
+    screenshot-comparison-comment-${{ github.event.workflow_run.head_repository.full_name }}-${{
+    github.event.workflow_run.head_branch }}
   cancel-in-progress: true
 
 permissions: {}
@@ -79,7 +84,7 @@ jobs:
             "$COMPANION_BRANCH" \
             comment.md \
             files.txt
-          echo "count=$(wc -l < files.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+          echo "count=$(tr -cd '\0' < files.txt | wc -c | tr -d ' ')" >> "$GITHUB_OUTPUT"
 
       # 코멘트에 이미지를 임베드하려면 HTTP로 닿을 수 있어야 한다. orphan 브랜치라
       # develop 히스토리에 이미지가 들어가지 않는다.
@@ -94,7 +99,11 @@ jobs:
           # 그 경로가 리포 루트에서 시작해야 한다.
           mv screenshot-diff-reports/* .
           rmdir screenshot-diff-reports
-          git add --pathspec-from-file=files.txt
+          # --literal-pathspecs 로 파일명 속 ':(glob)' 같은 pathspec magic 해석을 막고,
+          # --pathspec-file-nul 로 개행이 든 경로가 쪼개지지 않게 한다.
+          git --literal-pathspecs add \
+            --pathspec-from-file=files.txt \
+            --pathspec-file-nul
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit --quiet -m "Screenshot diff for PR #${{ steps.pull-request.outputs.number }}"
