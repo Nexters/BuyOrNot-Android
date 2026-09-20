@@ -637,7 +637,7 @@ private fun FeedCardToolTipPreview() {
 }
 
 @Preview(
-    name = "FeedCard - Square (1:1) Interactive",
+    name = "FeedCard - Square (1x1) Interactive",
     showBackground = true,
     backgroundColor = 0xFFFFFFFF,
 )
@@ -678,7 +678,7 @@ private fun FeedCardSquareInteractivePreview() {
 }
 
 @Preview(
-    name = "FeedCard - Landscape (5:4) Interactive",
+    name = "FeedCard - Landscape (5x4) Interactive",
     showBackground = true,
     backgroundColor = 0xFFFFFFFF,
 )
@@ -715,7 +715,7 @@ private fun FeedCardLandscapeInteractivePreview() {
 }
 
 @Preview(
-    name = "FeedCard - Portrait (4:5) Interactive",
+    name = "FeedCard - Portrait (4x5) Interactive",
     showBackground = true,
     backgroundColor = 0xFFFFFFFF,
 )
