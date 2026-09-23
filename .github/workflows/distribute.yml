@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - debug
+          - qa
           - release
       release_notes:
         description: '릴리스 노트 (비워두면 최신 커밋 메시지 사용)'
@@ -69,8 +70,10 @@ jobs:
 
       - name: Resolve release notes
         id: notes
+        env:
+          INPUT_RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
         run: |
-          NOTE="${{ github.event.inputs.release_notes }}"
+          NOTE="$INPUT_RELEASE_NOTES"
           if [ -z "$NOTE" ]; then
             NOTE="$(git log -1 --format='%s (%h)')"
           fi
@@ -85,22 +88,39 @@ jobs:
         run: |
           ./gradlew assembleDebug appDistributionUploadDebug \
             "-PfirebaseAppDistributionReleaseNotes=$RELEASE_NOTES" \
-            "-PfirebaseAppDistributionTesters=${{ github.event.inputs.testers }}" \
-            "-PfirebaseAppDistributionGroups=${{ github.event.inputs.groups }}"
+            "-PfirebaseAppDistributionTesters=$DISTRIBUTION_TESTERS" \
+            "-PfirebaseAppDistributionGroups=$DISTRIBUTION_GROUPS"
         env:
           GOOGLE_APPLICATION_CREDENTIALS: app/firebase-service-account.json
           RELEASE_NOTES: ${{ steps.notes.outputs.value }}
+          DISTRIBUTION_TESTERS: ${{ github.event.inputs.testers }}
+          DISTRIBUTION_GROUPS: ${{ github.event.inputs.groups }}
+
+      - name: Build & Distribute (QA)
+        if: github.event.inputs.build_type == 'qa'
+        run: |
+          ./gradlew assembleQa appDistributionUploadQa \
+            "-PfirebaseAppDistributionReleaseNotes=$RELEASE_NOTES" \
+            "-PfirebaseAppDistributionTesters=$DISTRIBUTION_TESTERS" \
+            "-PfirebaseAppDistributionGroups=$DISTRIBUTION_GROUPS"
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: app/firebase-service-account.json
+          RELEASE_NOTES: ${{ steps.notes.outputs.value }}
+          DISTRIBUTION_TESTERS: ${{ github.event.inputs.testers }}
+          DISTRIBUTION_GROUPS: ${{ github.event.inputs.groups }}
 
       - name: Build & Distribute (Release)
         if: github.event.inputs.build_type == 'release'
         run: |
           ./gradlew assembleRelease appDistributionUploadRelease \
             "-PfirebaseAppDistributionReleaseNotes=$RELEASE_NOTES" \
-            "-PfirebaseAppDistributionTesters=${{ github.event.inputs.testers }}" \
-            "-PfirebaseAppDistributionGroups=${{ github.event.inputs.groups }}"
+            "-PfirebaseAppDistributionTesters=$DISTRIBUTION_TESTERS" \
+            "-PfirebaseAppDistributionGroups=$DISTRIBUTION_GROUPS"
         env:
           GOOGLE_APPLICATION_CREDENTIALS: app/firebase-service-account.json
           RELEASE_NOTES: ${{ steps.notes.outputs.value }}
+          DISTRIBUTION_TESTERS: ${{ github.event.inputs.testers }}
+          DISTRIBUTION_GROUPS: ${{ github.event.inputs.groups }}
 
       - name: Notify Discord
         if: always()

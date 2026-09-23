@@ -92,6 +92,18 @@ android {
                 firebaseDistributionGroups?.let { groups = it }
             }
         }
+        // DA 이벤트 QA용. debug와 같은 서버·Firebase 앱을 쓰되 Mixpanel로 실제 전송한다.
+        // google-services.json에 .dev 클라이언트만 등록돼 있어 applicationId는 debug와 공유한다.
+        create("qa") {
+            initWith(getByName("debug"))
+            matchingFallbacks += "debug"
+            firebaseAppDistribution {
+                artifactType = "APK"
+                firebaseDistributionReleaseNotes?.let { releaseNotes = it }
+                firebaseDistributionTesters?.let { testers = it }
+                firebaseDistributionGroups?.let { groups = it }
+            }
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

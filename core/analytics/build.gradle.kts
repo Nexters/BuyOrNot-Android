@@ -23,9 +23,21 @@ android {
 
     buildTypes {
         debug {
+            buildConfigField("boolean", "SEND_TO_MIXPANEL", "false")
             buildConfigField("String", "MIXPANEL_TOKEN", "\"\"")
         }
+        create("qa") {
+            initWith(getByName("debug"))
+            buildConfigField("boolean", "SEND_TO_MIXPANEL", "true")
+            // QA 전용 Mixpanel 프로젝트가 정해지기 전까지는 운영 토큰으로 보낸다.
+            buildConfigField(
+                "String",
+                "MIXPANEL_TOKEN",
+                "\"${localProperties.getProperty("mixpanel.qa.token") ?: localProperties.getProperty("mixpanel.token", "")}\"",
+            )
+        }
         release {
+            buildConfigField("boolean", "SEND_TO_MIXPANEL", "true")
             buildConfigField(
                 "String",
                 "MIXPANEL_TOKEN",

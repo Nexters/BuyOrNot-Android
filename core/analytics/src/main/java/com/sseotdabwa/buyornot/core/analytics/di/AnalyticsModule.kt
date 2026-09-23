@@ -28,7 +28,8 @@ object AnalyticsModule {
                 .versionName
                 ?: "unknown"
         val delegate =
-            if (BuildConfig.DEBUG) {
+            // qa 빌드도 debuggable이라 DEBUG로는 구분할 수 없다.
+            if (!BuildConfig.SEND_TO_MIXPANEL) {
                 DebugAnalytics(appVersion)
             } else {
                 val mixpanel =
