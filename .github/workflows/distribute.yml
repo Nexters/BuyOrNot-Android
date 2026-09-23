@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - debug
+          - qa
           - release
       release_notes:
         description: '릴리스 노트 (비워두면 최신 커밋 메시지 사용)'
@@ -84,6 +85,17 @@ jobs:
         if: github.event.inputs.build_type == 'debug'
         run: |
           ./gradlew assembleDebug appDistributionUploadDebug \
+            "-PfirebaseAppDistributionReleaseNotes=$RELEASE_NOTES" \
+            "-PfirebaseAppDistributionTesters=${{ github.event.inputs.testers }}" \
+            "-PfirebaseAppDistributionGroups=${{ github.event.inputs.groups }}"
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: app/firebase-service-account.json
+          RELEASE_NOTES: ${{ steps.notes.outputs.value }}
+
+      - name: Build & Distribute (QA)
+        if: github.event.inputs.build_type == 'qa'
+        run: |
+          ./gradlew assembleQa appDistributionUploadQa \
             "-PfirebaseAppDistributionReleaseNotes=$RELEASE_NOTES" \
             "-PfirebaseAppDistributionTesters=${{ github.event.inputs.testers }}" \
             "-PfirebaseAppDistributionGroups=${{ github.event.inputs.groups }}"

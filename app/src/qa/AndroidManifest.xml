@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- 기본 60초 배치 전송을 1초로 줄여 DA가 Live View에서 바로 확인할 수 있게 한다. -->
+        <meta-data
+            android:name="com.mixpanel.android.MPConfig.FlushInterval"
+            android:value="1000" />
+    </application>
+
+</manifest>
