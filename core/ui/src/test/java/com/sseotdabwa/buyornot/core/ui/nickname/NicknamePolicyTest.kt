@@ -23,6 +23,7 @@ class NicknamePolicyTest {
         assertEquals("한글, 영문, 숫자를 조합해 입력해주세요.", NicknamePolicy.errorMessageOf("USER_010"))
         assertEquals("이미 사용 중인 닉네임이에요.", NicknamePolicy.errorMessageOf("USER_011"))
         assertEquals("사용할 수 없는 닉네임이에요.", NicknamePolicy.errorMessageOf("USER_012"))
+        assertEquals("최대 10자까지 입력할 수 있어요.", NicknamePolicy.errorMessageOf("USER_014"))
     }
 
     @Test
