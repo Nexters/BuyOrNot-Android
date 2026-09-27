@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.feature.home.ui
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.analytics.Analytics
 import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
@@ -24,6 +23,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -138,7 +138,7 @@ class HomeViewModel @Inject constructor(
         }.onSuccess { id ->
             currentUserId = id
         }.onFailure { e ->
-            Log.e("HomeViewModel", "Failed to load current userId", e)
+            Timber.e(e, "Failed to load current userId")
             currentUserId = null
         }
     }
@@ -170,7 +170,7 @@ class HomeViewModel @Inject constructor(
                         updateState { it.copy(unreadNotificationCount = count) }
                     }
                 }.onFailure { e ->
-                    Log.e("HomeViewModel", "Failed to load unread notification count", e)
+                    Timber.e(e, "Failed to load unread notification count")
                 }
             }
     }
@@ -329,7 +329,7 @@ class HomeViewModel @Inject constructor(
                     )
                 }
             }.onFailure { e ->
-                Log.e("HomeViewModel", "Failed to load next page", e)
+                Timber.e(e, "Failed to load next page")
                 updateState { it.copy(isNextPageLoading = false) }
             }
         }
@@ -409,7 +409,7 @@ class HomeViewModel @Inject constructor(
             }.onFailure { e ->
                 voteTrace.putAttribute("result", "error")
                 voteTrace.stop()
-                Log.e("HomeViewModel", "Failed to vote feed: $feedId", e)
+                Timber.e(e, "Failed to vote feed: $feedId")
                 // 3. 롤백 (Rollback): 해당 피드만 원복, 나머지 동시 변경사항 보존
                 updateState { state ->
                     val newAllFeeds =
@@ -472,7 +472,7 @@ class HomeViewModel @Inject constructor(
                     ),
                 )
             }.onFailure { e ->
-                Log.e("HomeViewModel", "Failed to delete feed: $feedId", e)
+                Timber.e(e, "Failed to delete feed: $feedId")
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = "삭제에 실패했습니다.",
@@ -515,7 +515,7 @@ class HomeViewModel @Inject constructor(
                     )
                 }
             }.onFailure { e ->
-                Log.e("HomeViewModel", "Failed to block user: $userId", e)
+                Timber.e(e, "Failed to block user: $userId")
                 sendSideEffect(
                     HomeSideEffect.ShowSnackbar(
                         message = "차단에 실패했습니다.",
@@ -550,7 +550,7 @@ class HomeViewModel @Inject constructor(
                     ),
                 )
             }.onFailure { e ->
-                Log.e("HomeViewModel", "Failed to report feed: $feedId", e)
+                Timber.e(e, "Failed to report feed: $feedId")
                 val errorMessage =
                     when {
                         e.message?.contains("400") == true -> "이미 신고한 피드이거나 본인의 피드입니다."
@@ -636,7 +636,7 @@ class HomeViewModel @Inject constructor(
                 feedFirstLoadTrace.putMetric("feed_count", newFeeds.size.toLong())
                 // stop()은 목록이 실제로 그려진 뒤 onFeedFirstContentRendered()에서 호출한다.
             }.onFailure { e ->
-                Log.e("HomeViewModel", "Failed to load feeds", e)
+                Timber.e(e, "Failed to load feeds")
                 // 오래된 실패가 진행 중인 최신 로드를 에러 화면으로 덮지 않도록 한다.
                 if (feedGeneration != requestGeneration) return@launch
 
@@ -696,7 +696,7 @@ class HomeViewModel @Inject constructor(
                     )
                 }
             }.onFailure { e ->
-                Log.e("HomeViewModel", "Failed to refresh feeds", e)
+                Timber.e(e, "Failed to refresh feeds")
                 if (feedGeneration != requestGeneration) {
                     updateState { it.copy(isRefreshing = false) }
                     return@launch

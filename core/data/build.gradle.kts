@@ -9,6 +9,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.timber)
     implementation(projects.domain)
     implementation(projects.core.common)
     implementation(projects.core.network)

@@ -1,7 +1,6 @@
 package com.sseotdabwa.buyornot.feature.auth.ui
 
 import android.content.Context
-import android.util.Log
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.analytics.performance.Performance
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import timber.log.Timber
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -137,7 +137,7 @@ class SplashViewModel @Inject constructor(
                     .toInt()
             val dialogType = determineDialogType(currentVersion, updateInfo)
 
-            Log.d(TAG, "currentVersion=$currentVersion, dialogType=$dialogType, updateInfo=$updateInfo")
+            Timber.tag(TAG).d("currentVersion=$currentVersion, dialogType=$dialogType, updateInfo=$updateInfo")
 
             // 업데이트 팝업 대기는 사용자 반응 시간이라 지표에서 제외한다 — 여기서 끊어야
             // splash_to_navigation이 순수하게 앱이 소비한 시간만 담는다.
@@ -177,7 +177,7 @@ class SplashViewModel @Inject constructor(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to save soft update shown time", e)
+                Timber.tag(TAG).e(e, "Failed to save soft update shown time")
             } finally {
                 updateState { it.copy(updateDialogType = UpdateDialogType.None) }
             }

@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.analytics.Analytics
@@ -15,9 +14,8 @@ import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
-
-private const val TAG = "NotificationDetailViewModel"
 
 @HiltViewModel
 class NotificationDetailViewModel @Inject constructor(
@@ -82,7 +80,7 @@ class NotificationDetailViewModel @Inject constructor(
                     }.onSuccess { id ->
                         currentUserId = id
                     }.onFailure {
-                        Log.w(TAG, "Failed to get current user ID")
+                        Timber.w("Failed to get current user ID")
                     }
                 }
                 feedRepository.getFeed(feedId)
@@ -114,7 +112,7 @@ class NotificationDetailViewModel @Inject constructor(
                 )
                 sendSideEffect(NotificationDetailSideEffect.NavigateBack)
             }.onFailure { e ->
-                Log.e(TAG, "Failed to delete feed: $feedId", e)
+                Timber.e(e, "Failed to delete feed: $feedId")
                 sendSideEffect(
                     NotificationDetailSideEffect.ShowSnackbar(
                         message = "삭제에 실패했습니다.",
@@ -147,7 +145,7 @@ class NotificationDetailViewModel @Inject constructor(
                 )
                 sendSideEffect(NotificationDetailSideEffect.NavigateBack)
             }.onFailure { e ->
-                Log.e(TAG, "Failed to block user: $userId", e)
+                Timber.e(e, "Failed to block user: $userId")
                 sendSideEffect(
                     NotificationDetailSideEffect.ShowSnackbar(
                         message = "차단에 실패했습니다.",
@@ -178,7 +176,7 @@ class NotificationDetailViewModel @Inject constructor(
                     ),
                 )
             }.onFailure { e ->
-                Log.e("NotificationDetailViewModel", "Failed to report feed: $feedId", e)
+                Timber.e(e, "Failed to report feed: $feedId")
                 val errorMessage =
                     when {
                         e.message?.contains("400") == true -> "이미 신고한 피드이거나 본인의 피드입니다."
