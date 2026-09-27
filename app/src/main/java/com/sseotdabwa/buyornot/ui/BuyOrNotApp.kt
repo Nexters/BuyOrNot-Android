@@ -29,6 +29,7 @@ import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.core.ui.snackbar.rememberBuyOrNotSnackbarState
 import com.sseotdabwa.buyornot.feature.auth.navigation.AuthRoute
+import com.sseotdabwa.buyornot.feature.auth.navigation.NicknameSetupRoute
 import com.sseotdabwa.buyornot.feature.auth.navigation.SplashRoute
 import com.sseotdabwa.buyornot.feature.home.navigation.HomeRoute
 import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
@@ -70,7 +71,8 @@ fun BuyOrNotApp(
         }
     }
 
-    // FCM 알림 탭으로 전달된 pending feedId를 인증 완료(Splash/Auth 통과) 후 한 번만 소비한다.
+    // FCM 알림 탭으로 전달된 pending feedId를 인증 완료(Splash/Auth/닉네임 설정 통과) 후 한 번만 소비한다.
+    // 닉네임 설정 전에는 서버가 피드 API를 막으므로 그 화면에서도 보류한다.
     // Splash/로그인 화면에서는 보류하고, 인증된 어떤 화면(Home·MyPage·Upload 등)에서든 즉시 이동한다.
     //
     // 화면 판정에 `::class.qualifiedName`을 쓰면 안 된다. route 문자열은 @Serializable이 컴파일
@@ -81,7 +83,8 @@ fun BuyOrNotApp(
     val isPastAuthGate =
         currentDestination != null &&
             !currentDestination.hasRoute<SplashRoute>() &&
-            !currentDestination.hasRoute<AuthRoute>()
+            !currentDestination.hasRoute<AuthRoute>() &&
+            !currentDestination.hasRoute<NicknameSetupRoute>()
     LaunchedEffect(pendingNavigation, isPastAuthGate) {
         val navigation = pendingNavigation ?: return@LaunchedEffect
         if (!isPastAuthGate) return@LaunchedEffect

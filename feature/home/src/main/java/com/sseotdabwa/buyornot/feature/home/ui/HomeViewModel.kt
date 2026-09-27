@@ -129,7 +129,7 @@ class HomeViewModel @Inject constructor(
         runCatchingCancellable {
             if (uiState.value.userType == UserType.SOCIAL) {
                 val profile = userRepository.getMyProfile()
-                userPreferencesRepository.updateDisplayName(profile.nickname)
+                profile.nickname?.let { userPreferencesRepository.updateDisplayName(it) }
                 userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
                 profile.id
             } else {

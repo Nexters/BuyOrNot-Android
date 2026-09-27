@@ -36,4 +36,6 @@ sealed interface SplashSideEffect {
     data object NavigateToLogin : SplashSideEffect
 
     data object NavigateToHome : SplashSideEffect
+
+    data object NavigateToNicknameSetup : SplashSideEffect
 }

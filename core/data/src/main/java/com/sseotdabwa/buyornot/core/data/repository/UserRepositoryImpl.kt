@@ -2,11 +2,15 @@ package com.sseotdabwa.buyornot.core.data.repository
 
 import com.sseotdabwa.buyornot.core.network.api.UserApiService
 import com.sseotdabwa.buyornot.core.network.dto.request.FcmTokenRequest
+import com.sseotdabwa.buyornot.core.network.dto.request.UserProfileUpdateRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.User
+import com.sseotdabwa.buyornot.core.network.dto.response.errorCodeOrNull
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
+import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.BlockedUser
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
+import retrofit2.HttpException
 import javax.inject.Inject
 import com.sseotdabwa.buyornot.core.network.dto.response.BlockedUser as BlockedUserResponse
 
@@ -18,6 +22,19 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun deleteMyAccount() {
         userApiService.deleteMyAccount().getOrThrow()
     }
+
+    override suspend fun updateProfile(
+        nickname: String?,
+        profileImage: String?,
+    ): UserProfile =
+        try {
+            userApiService
+                .updateProfile(UserProfileUpdateRequest(nickname = nickname, profileImage = profileImage))
+                .getOrThrow()
+                .toDomain()
+        } catch (e: HttpException) {
+            throw ApiException(code = e.errorCodeOrNull(), message = e.message(), cause = e)
+        }
 
     override suspend fun updateFcmToken(fcmToken: String) {
         userApiService.updateFcmToken(FcmTokenRequest(fcmToken)).getOrThrow()

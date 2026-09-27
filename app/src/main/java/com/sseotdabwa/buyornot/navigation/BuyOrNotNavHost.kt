@@ -20,10 +20,13 @@ import com.sseotdabwa.buyornot.core.ui.webview.navigateToTerms
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToWebView
 import com.sseotdabwa.buyornot.core.ui.webview.webViewScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.AuthRoute
+import com.sseotdabwa.buyornot.feature.auth.navigation.NicknameSetupRoute
 import com.sseotdabwa.buyornot.feature.auth.navigation.SplashRoute
 import com.sseotdabwa.buyornot.feature.auth.navigation.authScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateForceToLogin
 import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToLogin
+import com.sseotdabwa.buyornot.feature.auth.navigation.navigateToNicknameSetup
+import com.sseotdabwa.buyornot.feature.auth.navigation.nicknameSetupScreen
 import com.sseotdabwa.buyornot.feature.auth.navigation.splashScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.homeScreen
 import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHome
@@ -89,6 +92,15 @@ fun BuyOrNotNavHost(
                         },
                 )
             },
+            onNavigateToNicknameSetup = {
+                navController.navigateToNicknameSetup(
+                    navOptions =
+                        androidx.navigation.navOptions {
+                            popUpTo<SplashRoute> { inclusive = true }
+                            launchSingleTop = true
+                        },
+                )
+            },
             onFinish = onFinish,
         )
 
@@ -102,8 +114,29 @@ fun BuyOrNotNavHost(
                         },
                 )
             },
+            onNicknameRequired = {
+                navController.navigateToNicknameSetup(
+                    navOptions =
+                        androidx.navigation.navOptions {
+                            popUpTo<AuthRoute> { inclusive = true }
+                            launchSingleTop = true
+                        },
+                )
+            },
             onTermsClick = navController::navigateToTerms,
             onPrivacyClick = navController::navigateToPrivacyPolicy,
+        )
+
+        nicknameSetupScreen(
+            onSetupComplete = {
+                navController.navigateToHome(
+                    navOptions =
+                        androidx.navigation.navOptions {
+                            popUpTo<NicknameSetupRoute> { inclusive = true }
+                            launchSingleTop = true
+                        },
+                )
+            },
         )
 
         homeScreen(

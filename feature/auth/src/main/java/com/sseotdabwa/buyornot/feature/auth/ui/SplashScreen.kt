@@ -41,6 +41,7 @@ import com.sseotdabwa.buyornot.core.ui.performance.ReportScreenRendered
  *
  * @param onNavigateToLogin 로그인 화면으로 이동하는 콜백
  * @param onNavigateToHome 홈 화면으로 이동하는 콜백
+ * @param onNavigateToNicknameSetup 닉네임을 아직 설정하지 않은 계정일 때 닉네임 설정 화면으로 이동하는 콜백
  * @param onFinish 앱 종료 콜백 (강제 업데이트 시 "종료" 버튼)
  * @param viewModel SplashViewModel (Hilt 주입)
  */
@@ -48,6 +49,7 @@ import com.sseotdabwa.buyornot.core.ui.performance.ReportScreenRendered
 fun SplashRoute(
     onNavigateToLogin: () -> Unit,
     onNavigateToHome: () -> Unit,
+    onNavigateToNicknameSetup: () -> Unit,
     onFinish: () -> Unit,
     viewModel: SplashViewModel = hiltViewModel(),
 ) {
@@ -59,6 +61,7 @@ fun SplashRoute(
             when (sideEffect) {
                 is SplashSideEffect.NavigateToHome -> onNavigateToHome()
                 is SplashSideEffect.NavigateToLogin -> onNavigateToLogin()
+                is SplashSideEffect.NavigateToNicknameSetup -> onNavigateToNicknameSetup()
             }
         }
     }

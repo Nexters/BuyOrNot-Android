@@ -48,6 +48,7 @@ import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 @Composable
 fun AuthRoute(
     onLoginSuccess: () -> Unit,
+    onNicknameRequired: () -> Unit,
     onTermsClick: () -> Unit,
     onPrivacyClick: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel(),
@@ -61,6 +62,7 @@ fun AuthRoute(
         viewModel.sideEffect.collect {
             when (it) {
                 is LoginSideEffect.NavigateToHome -> onLoginSuccess()
+                is LoginSideEffect.NavigateToNicknameSetup -> onNicknameRequired()
                 is LoginSideEffect.ShowSnackbar -> {
                     snackbarState.show(
                         message = it.message,
