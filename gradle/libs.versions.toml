@@ -44,6 +44,9 @@ lottie = "6.7.1"
 # Chucker
 chucker = "4.3.1"
 
+# Logging
+timber = "5.0.1"
+
 # Analytics
 mixpanel = "7.5.3"
 
@@ -168,6 +171,9 @@ roborazzi-gradlePlugin = { group = "io.github.takahirom.roborazzi", name = "robo
 # Chucker
 chucker = { group = "com.github.chuckerteam.chucker", name = "library", version.ref = "chucker" }
 chucker-no-op = { group = "com.github.chuckerteam.chucker", name = "library-no-op", version.ref = "chucker" }
+
+# Logging
+timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

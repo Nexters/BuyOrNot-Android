@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.ui
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.analytics.Analytics
@@ -13,6 +12,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,7 +33,7 @@ class BuyOrNotViewModel @Inject constructor(
         userPreferencesRepository.userId
             .distinctUntilChanged()
             .onEach { userId ->
-                Log.d("BuyOrNotViewModel", "userId: $userId")
+                Timber.d("userId: $userId")
                 analytics.identify(if (userId != 0L) userId.toString() else null)
             }.launchIn(viewModelScope)
     }

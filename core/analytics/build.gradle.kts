@@ -48,6 +48,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.timber)
     implementation(libs.mixpanel.android)
 
     implementation(platform(libs.firebase.bom))

@@ -7,16 +7,15 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.sseotdabwa.buyornot.BuildConfig
 import com.sseotdabwa.buyornot.MainActivity
 import com.sseotdabwa.buyornot.R
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 private const val TAG = "FCM"
 private const val CHANNEL_ID = "buyornot_default_channel"
@@ -32,31 +31,24 @@ private const val MARKETING_NOTIFICATION_ID = 0
 class BuyOrNotMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "onNewToken - FCM token: $token")
-        }
+        Timber.tag(TAG).d("onNewToken")
         // TODO: Send token to server
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "onMessageReceived - from: ${message.from}")
-            Log.d(TAG, "onMessageReceived - data payload: ${message.data}")
-            Log.d(
-                TAG,
-                "onMessageReceived - notification: title=${message.notification?.title}, " +
-                    "body=${message.notification?.body}",
-            )
-        }
+        Timber.tag(TAG).d("onMessageReceived - from: ${message.from}")
+        Timber.tag(TAG).d("onMessageReceived - data payload: ${message.data}")
+        Timber.tag(TAG).d(
+            "onMessageReceived - notification: title=${message.notification?.title}, " +
+                "body=${message.notification?.body}",
+        )
 
         val feedId = message.data[FcmKeys.FEED_ID]?.toLongOrNull()
         val notificationId = message.data[FcmKeys.NOTIFICATION_ID]?.toLongOrNull()
         val type = message.data[FcmKeys.TYPE]
         val screen = message.data[FcmKeys.SCREEN]
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "onMessageReceived - type=$type, screen=$screen, feedId=$feedId, notificationId=$notificationId")
-        }
+        Timber.tag(TAG).d("onMessageReceived - type=$type, screen=$screen, feedId=$feedId, notificationId=$notificationId")
 
         showFeedNotification(
             type = type,
@@ -116,7 +108,7 @@ class BuyOrNotMessagingService : FirebaseMessagingService() {
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         ) {
-            Log.d(TAG, "showFeedNotification - POST_NOTIFICATIONS not granted, skip posting")
+            Timber.tag(TAG).d("showFeedNotification - POST_NOTIFICATIONS not granted, skip posting")
             return
         }
 

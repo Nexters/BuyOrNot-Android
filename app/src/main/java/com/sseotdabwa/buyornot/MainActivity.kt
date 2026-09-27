@@ -4,7 +4,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -30,6 +29,7 @@ import com.sseotdabwa.buyornot.performance.screenTraceNameOf
 import com.sseotdabwa.buyornot.ui.BuyOrNotApp
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.serializer
+import timber.log.Timber
 import javax.inject.Inject
 
 /** JankStats 프레임에 붙이는 상태 키. 이 태그로 프레임을 화면별로 가른다. */
@@ -151,9 +151,7 @@ class MainActivity : ComponentActivity() {
         // 회전·프로세스 재생성으로 onCreate가 같은 Intent를 다시 받아도 중복 발행되지 않도록 마커를 소비한다.
         intent.removeExtra(FcmKeys.TYPE)
         setIntent(intent)
-        if (BuildConfig.DEBUG) {
-            Log.d("FCM", "handlePushOpened - pushType=$pushType, feedId=$feedId, notificationId=$notificationId")
-        }
+        Timber.tag("FCM").d("handlePushOpened - pushType=$pushType, feedId=$feedId, notificationId=$notificationId")
         analytics.track(
             AnalyticsEvent.PushOpened(
                 pushType = pushType,
@@ -189,9 +187,7 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
 
         val destination = pushDestinationOf(screen, feedId)
-        if (BuildConfig.DEBUG) {
-            Log.d("FCM", "handleNavigationIntent - screen=$screen, feedId=$feedId, destination=$destination")
-        }
+        Timber.tag("FCM").d("handleNavigationIntent - screen=$screen, feedId=$feedId, destination=$destination")
 
         // 알 수 없는 screen이거나 이동할 대상이 없으면 앱만 열린다 — 크래시 금지.
         if (destination == null) return
@@ -219,9 +215,7 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
 
         val feedId = feedIdFromAppLink(uri.host, uri.pathSegments, BuildConfig.APP_LINK_HOST)
-        if (BuildConfig.DEBUG) {
-            Log.d("AppLink", "handleAppLink - uri=$uri, resolved feedId=$feedId, referrer=$referrer")
-        }
+        Timber.tag("AppLink").d("handleAppLink - uri=$uri, resolved feedId=$feedId, referrer=$referrer")
 
         // 파싱에 실패해도 이벤트는 반드시 발행한다.
         // 건너뛰면 «링크가 안 온 것»과 «와서 깨진 것»을 구분할 수 없다.

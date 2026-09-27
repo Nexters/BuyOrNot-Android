@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.feature.auth.ui
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.messaging.FirebaseMessaging
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
@@ -13,9 +12,8 @@ import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import javax.inject.Inject
-
-private const val TAG = "NicknameSetupViewModel"
 
 /**
  * 회원가입 직후 닉네임을 최초 설정하는 화면의 ViewModel
@@ -58,7 +56,7 @@ class NicknameSetupViewModel @Inject constructor(
                 runCatchingCancellable {
                     profile.nickname?.let { userPreferencesRepository.updateDisplayName(it) }
                     userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
-                }.onFailure { Log.w(TAG, "Failed to update user preferences", it) }
+                }.onFailure { Timber.w(it, "Failed to update user preferences") }
                 // 로그인 시점에는 닉네임이 없어 403으로 막혔으므로 여기서 등록한다.
                 updateFcmToken()
                 sendSideEffect(
@@ -70,7 +68,7 @@ class NicknameSetupViewModel @Inject constructor(
                 // 화면을 떠날 때까지 isLoading을 유지해 CTA가 다시 눌리지 않게 한다.
                 sendSideEffect(NicknameSetupSideEffect.NavigateToHome)
             }.onFailure { throwable ->
-                Log.e(TAG, "Failed to set nickname", throwable)
+                Timber.e(throwable, "Failed to set nickname")
                 // 키패드가 떠 있어 스낵바는 가려지므로 모든 실패를 입력창 아래에 보여준다.
                 val message =
                     (throwable as? ApiException)?.code?.let(NicknamePolicy::errorMessageOf)
@@ -85,7 +83,7 @@ class NicknameSetupViewModel @Inject constructor(
             val token = FirebaseMessaging.getInstance().token.await()
             userRepository.updateFcmToken(token)
         }.onFailure {
-            Log.e(TAG, "Failed to update FCM token to server", it)
+            Timber.e(it, "Failed to update FCM token to server")
         }
     }
 }

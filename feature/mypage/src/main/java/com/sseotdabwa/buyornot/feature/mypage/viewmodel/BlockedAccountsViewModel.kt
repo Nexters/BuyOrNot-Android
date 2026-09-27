@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.feature.mypage.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
@@ -8,9 +7,8 @@ import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import com.sseotdabwa.buyornot.feature.mypage.ui.BlockedUserItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
-
-private const val TAG = "BlockedAccountsViewModel"
 
 @HiltViewModel
 class BlockedAccountsViewModel @Inject constructor(
@@ -46,7 +44,7 @@ class BlockedAccountsViewModel @Inject constructor(
                 }
                 sendSideEffect(BlockedAccountsSideEffect.ShowSnackbar("${nickname}의 차단이 해제되었어요."))
             }.onFailure { throwable ->
-                Log.w(TAG, throwable.toString())
+                Timber.w(throwable)
             }
         }
     }
@@ -69,7 +67,7 @@ class BlockedAccountsViewModel @Inject constructor(
                 }
                 sendSideEffect(BlockedAccountsSideEffect.ShowSnackbar("${nickname}이 차단되었어요."))
             }.onFailure { throwable ->
-                Log.w(TAG, throwable.toString())
+                Timber.w(throwable)
             }
         }
     }
@@ -95,7 +93,7 @@ class BlockedAccountsViewModel @Inject constructor(
                 }
             }.onFailure { throwable ->
                 updateState { it.copy(isLoading = false) }
-                Log.w(TAG, throwable.toString())
+                Timber.w(throwable)
             }
         }
     }

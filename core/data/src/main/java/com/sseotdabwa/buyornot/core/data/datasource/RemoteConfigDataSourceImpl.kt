@@ -1,11 +1,11 @@
 package com.sseotdabwa.buyornot.core.data.datasource
 
-import android.util.Log
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.sseotdabwa.buyornot.domain.model.AppUpdateInfo
 import com.sseotdabwa.buyornot.domain.model.UpdateStrategy
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,9 +32,9 @@ class RemoteConfigDataSourceImpl @Inject constructor() : RemoteConfigDataSource 
 
         val activated =
             runCatching { remoteConfig.fetchAndActivate().await() }
-                .onFailure { Log.w(TAG, "fetchAndActivate failed, using cached/default values", it) }
+                .onFailure { Timber.tag(TAG).w(it, "fetchAndActivate failed, using cached/default values") }
                 .getOrDefault(false)
-        Log.d(TAG, "fetchAndActivate: activated=$activated")
+        Timber.tag(TAG).d("fetchAndActivate: activated=$activated")
 
         val latestVersion = remoteConfig.getLong(KEY_LATEST_VERSION).toInt()
         val minimumVersion = remoteConfig.getLong(KEY_MINIMUM_VERSION).toInt()
@@ -42,8 +42,7 @@ class RemoteConfigDataSourceImpl @Inject constructor() : RemoteConfigDataSource 
         val updateStrategy =
             runCatching { UpdateStrategy.valueOf(strategyRaw) }.getOrDefault(UpdateStrategy.NONE)
 
-        Log.d(
-            TAG,
+        Timber.tag(TAG).d(
             "Remote Config values — " +
                 "latestVersion=$latestVersion, " +
                 "minimumVersion=$minimumVersion, " +
