@@ -35,7 +35,7 @@ class MyPageViewModel @Inject constructor(
             }.onSuccess { profile ->
                 updateState { it.copy(isLoading = false, userProfile = profile) }
                 runCatchingCancellable {
-                    userPreferencesRepository.updateDisplayName(profile.nickname)
+                    profile.nickname?.let { userPreferencesRepository.updateDisplayName(it) }
                     userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
                 }.onFailure {
                     Log.w(TAG, "Failed to update user preferences")

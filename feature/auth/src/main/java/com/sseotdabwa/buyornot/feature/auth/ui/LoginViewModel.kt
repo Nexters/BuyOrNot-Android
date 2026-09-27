@@ -16,6 +16,7 @@ import com.kakao.sdk.common.model.ClientErrorCause
 import com.kakao.sdk.user.UserApiClient
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
@@ -93,9 +94,11 @@ class LoginViewModel @Inject constructor(
             runCatchingCancellable {
                 authRepository.googleLogin(idToken)
             }.onSuccess {
-                fetchAndStoreUserProfile()
-                updateFcmToken()
-                sendSideEffect(LoginSideEffect.NavigateToHome)
+                val profile = fetchAndStoreUserProfile()
+                val sideEffect = navigationAfterLogin(profile)
+                // 닉네임이 없는 계정은 FCM 토큰 등록도 403으로 막히므로 닉네임 설정 후에 등록한다.
+                if (sideEffect != LoginSideEffect.NavigateToNicknameSetup) updateFcmToken()
+                sendSideEffect(sideEffect)
             }.onFailure {
                 sendSideEffect(LoginSideEffect.ShowSnackbar(it.message ?: "구글 로그인에 실패했습니다."))
             }
@@ -150,9 +153,11 @@ class LoginViewModel @Inject constructor(
             runCatchingCancellable {
                 authRepository.kakaoLogin(accessToken)
             }.onSuccess {
-                fetchAndStoreUserProfile()
-                updateFcmToken()
-                sendSideEffect(LoginSideEffect.NavigateToHome)
+                val profile = fetchAndStoreUserProfile()
+                val sideEffect = navigationAfterLogin(profile)
+                // 닉네임이 없는 계정은 FCM 토큰 등록도 403으로 막히므로 닉네임 설정 후에 등록한다.
+                if (sideEffect != LoginSideEffect.NavigateToNicknameSetup) updateFcmToken()
+                sendSideEffect(sideEffect)
             }.onFailure {
                 sendSideEffect(LoginSideEffect.ShowSnackbar(it.message ?: "카카오 로그인에 실패했습니다."))
             }
@@ -160,17 +165,27 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private suspend fun fetchAndStoreUserProfile() {
+    private suspend fun fetchAndStoreUserProfile(): UserProfile? =
         runCatchingCancellable {
             userRepository.getMyProfile()
         }.onSuccess { profile ->
             userPreferencesRepository.updateUserId(profile.id)
-            userPreferencesRepository.updateDisplayName(profile.nickname)
+            profile.nickname?.let { userPreferencesRepository.updateDisplayName(it) }
             userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
         }.onFailure { e ->
             Log.e(TAG, "Failed to fetch user profile after login", e)
+        }.getOrNull()
+
+    /**
+     * 신규 가입자는 닉네임이 null로 내려오고, 닉네임을 정하기 전까지 서버가 대부분의 API를 막는다.
+     * 프로필 조회 자체가 실패했다면 닉네임 여부를 알 수 없으므로 기존처럼 홈으로 보낸다.
+     */
+    private fun navigationAfterLogin(profile: UserProfile?): LoginSideEffect =
+        if (profile != null && profile.nickname == null) {
+            LoginSideEffect.NavigateToNicknameSetup
+        } else {
+            LoginSideEffect.NavigateToHome
         }
-    }
 
     /**
      * FCM 토큰을 가져와 서버에 업데이트합니다.

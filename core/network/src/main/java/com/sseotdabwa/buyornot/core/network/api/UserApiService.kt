@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.core.network.api
 
 import com.sseotdabwa.buyornot.core.network.dto.request.FcmTokenRequest
+import com.sseotdabwa.buyornot.core.network.dto.request.UserProfileUpdateRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.BlockedUser
 import com.sseotdabwa.buyornot.core.network.dto.response.User
@@ -17,6 +18,11 @@ interface UserApiService {
 
     @DELETE("/api/v1/users/me")
     suspend fun deleteMyAccount(): BaseResponse<Unit>
+
+    @PATCH("/api/v1/users/me/profile")
+    suspend fun updateProfile(
+        @Body request: UserProfileUpdateRequest,
+    ): BaseResponse<User>
 
     @PATCH("/api/v1/users/fcm")
     suspend fun updateFcmToken(

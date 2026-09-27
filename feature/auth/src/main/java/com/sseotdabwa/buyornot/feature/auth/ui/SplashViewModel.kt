@@ -108,6 +108,16 @@ class SplashViewModel @Inject constructor(
                     false
                 }
 
+            // 닉네임을 정하지 않고 앱을 떠난 신규 가입자는 서버가 대부분의 API를 막으므로 홈 대신
+            // 닉네임 설정으로 보내야 한다. 아래 고정 대기와 겹치도록 미리 조회를 시작해 둔다.
+            // 조회에 실패하면 닉네임 여부를 알 수 없으므로 기존처럼 홈으로 보낸다.
+            val needsNicknameDeferred =
+                async {
+                    hasValidToken &&
+                        runCatchingCancellable { userRepository.getMyProfile().nickname == null }
+                            .getOrDefault(false)
+                }
+
             // 딥링크로 들어왔으면 브랜딩용 고정 대기를 건너뛴다. 링크를 누른 사용자는 특정 콘텐츠를
             // 보러 온 것이고, 웹은 같은 URL에서 즉시 보여주므로 2.3초를 세우면 앱만 불친절해진다.
             // 업데이트 팝업 판단은 아래에서 그대로 수행하므로 강제 업데이트는 여전히 막힌다.
@@ -120,6 +130,7 @@ class SplashViewModel @Inject constructor(
 
             // 업데이트 다이얼로그 타입 결정
             val updateInfo = updateInfoDeferred.await()
+            val needsNickname = needsNicknameDeferred.await()
             val currentVersion =
                 PackageInfoCompat
                     .getLongVersionCode(context.packageManager.getPackageInfo(context.packageName, 0))
@@ -140,10 +151,10 @@ class SplashViewModel @Inject constructor(
                 uiState.first { it.updateDialogType == UpdateDialogType.None }
             }
 
-            if (hasValidToken) {
-                sendSideEffect(SplashSideEffect.NavigateToHome)
-            } else {
-                sendSideEffect(SplashSideEffect.NavigateToLogin)
+            when {
+                !hasValidToken -> sendSideEffect(SplashSideEffect.NavigateToLogin)
+                needsNickname -> sendSideEffect(SplashSideEffect.NavigateToNicknameSetup)
+                else -> sendSideEffect(SplashSideEffect.NavigateToHome)
             }
 
             updateState { it.copy(isLoading = false) }

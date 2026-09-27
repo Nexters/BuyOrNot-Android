@@ -21,6 +21,8 @@ sealed interface LoginIntent {
 sealed interface LoginSideEffect {
     data object NavigateToHome : LoginSideEffect
 
+    data object NavigateToNicknameSetup : LoginSideEffect
+
     data class ShowSnackbar(
         val message: String,
         val icon: IconResource? = null,
