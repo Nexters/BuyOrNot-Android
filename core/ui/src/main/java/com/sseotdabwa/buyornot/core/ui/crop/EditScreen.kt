@@ -144,6 +144,7 @@ fun EditScreen(
                         editSpec = editSpec,
                         onControllerReady = { cropController = it },
                         lockedRatio = lockedRatio,
+                        onPreviewError = { pendingError = "이미지를 불러오지 못했습니다" },
                     )
             }
             if (isProcessing) {

@@ -47,6 +47,7 @@ internal fun CropPane(
     onControllerReady: (CropPaneController) -> Unit,
     modifier: Modifier = Modifier,
     lockedRatio: AspectRatio? = null,
+    onPreviewError: (Throwable) -> Unit = {},
 ) {
     val context = LocalContext.current
     // CropOverlay의 코너 dot indicator가 잘리지 않도록 이미지를 안쪽으로 들이는 여백.
@@ -63,6 +64,8 @@ internal fun CropPane(
     LaunchedEffect(imageUri, editSpec.rotationQuarters) {
         produceEditedPreview(context, imageUri, editSpec.copy(crop = null))
             .onSuccess { rotatedBitmap = it }
+            // 실패하면 컨트롤러가 준비되지 않아 확정할 수 없으므로 원인을 화면에 알린다.
+            .onFailure(onPreviewError)
     }
 
     val intrinsicSize: Size =
