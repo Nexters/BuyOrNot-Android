@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.feature.mypage.viewmodel
 
-import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import kotlinx.coroutines.CompletableDeferred
@@ -187,7 +186,7 @@ class ProfileEditViewModelTest {
             val sideEffects = viewModel.sideEffect.take(2).toList()
             assertEquals(
                 listOf(
-                    ProfileEditSideEffect.ShowSnackbar(message = "프로필을 수정했어요.", icon = BuyOrNotIcons.CheckCircle),
+                    ProfileEditSideEffect.ShowSnackbar(message = "프로필을 수정했어요."),
                     ProfileEditSideEffect.NavigateBackWithUpdate,
                 ),
                 sideEffects,
