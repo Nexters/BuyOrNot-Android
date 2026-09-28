@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.sseotdabwa.buyornot.core.ui.crop.state.AspectRatio
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -26,7 +27,7 @@ suspend fun processToFile(
             val rotated = applyQuarterRotation(exifOriented, spec.rotationQuarters)
             val cropped =
                 spec.crop
-                    ?.let { cropFromNormalized(rotated, it.rectNormalized) }
+                    ?.let { cropFromNormalized(rotated, it.rectNormalized, forceSquare = it.ratio == AspectRatio.R1x1) }
                     ?: rotated
             val resized = downscaleToMaxDimension(cropped, MAX_OUTPUT_DIMENSION)
             saveJpeg(context, resized)
@@ -48,8 +49,10 @@ internal fun applyQuarterRotation(
 internal fun cropFromNormalized(
     bitmap: Bitmap,
     rect: com.sseotdabwa.buyornot.core.ui.crop.state.NormalizedRect,
+    forceSquare: Boolean = false,
 ): Bitmap {
-    val pixel = mapNormalizedToPixel(rect, bitmap.width, bitmap.height)
+    val mapped = mapNormalizedToPixel(rect, bitmap.width, bitmap.height)
+    val pixel = if (forceSquare) mapped.squared() else mapped
     val cropped = Bitmap.createBitmap(bitmap, pixel.srcX, pixel.srcY, pixel.srcW, pixel.srcH)
     bitmap.recycle()
     return cropped

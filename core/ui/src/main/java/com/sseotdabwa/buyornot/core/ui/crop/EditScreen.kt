@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.sseotdabwa.buyornot.core.ui.crop.processing.processToFile
+import com.sseotdabwa.buyornot.core.ui.crop.state.AspectRatio
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditEvent
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditMode
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
@@ -32,19 +33,25 @@ import com.sseotdabwa.buyornot.core.ui.crop.ui.IdleActionBar
 import com.sseotdabwa.buyornot.core.ui.crop.ui.IdlePreview
 import kotlinx.coroutines.launch
 
+/**
+ * @param lockedRatio 지정하면 해당 비율로만 자를 수 있다. 아직 자르지 않았다면 자르기 모드로 바로 시작한다.
+ */
 @Composable
 fun EditScreen(
     imageUri: Uri,
     onConfirm: (Uri, EditSpec) -> Unit,
     onCancel: () -> Unit,
     initialSpec: EditSpec = EditSpec(),
+    lockedRatio: AspectRatio? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var mode by remember { mutableStateOf(EditMode.Idle) }
     var editSpec by remember { mutableStateOf(initialSpec) }
+    // 비율이 고정됐는데 아직 그 비율로 자르지 않았는지 여부. 이 상태로는 편집을 끝낼 수 없다.
+    val needsLockedCrop = lockedRatio != null && editSpec.crop?.ratio != lockedRatio
+    var mode by remember { mutableStateOf(if (needsLockedCrop) EditMode.Crop else EditMode.Idle) }
     var isProcessing by remember { mutableStateOf(false) }
     var pendingError by remember { mutableStateOf<String?>(null) }
 
@@ -61,14 +68,16 @@ fun EditScreen(
         topBar = {
             EditTopBar(
                 mode = mode,
-                isConfirmEnabled = !isProcessing,
+                // 자르기 모드에서는 이미지가 로드되어 컨트롤러가 준비된 뒤에만 확정할 수 있다.
+                isConfirmEnabled = !isProcessing && (mode != EditMode.Crop || cropController != null),
                 onLeftAction = {
                     if (isProcessing) return@EditTopBar
                     when (mode) {
                         EditMode.Idle -> onCancel()
                         EditMode.Crop -> {
                             cropController = null
-                            mode = EditMode.Idle
+                            // 고정 비율로 자르기 전이면 돌아갈 편집 화면이 없으므로 편집 자체를 취소한다.
+                            if (needsLockedCrop) onCancel() else mode = EditMode.Idle
                         }
                     }
                 },
@@ -76,6 +85,10 @@ fun EditScreen(
                     if (isProcessing) return@EditTopBar
                     when (mode) {
                         EditMode.Idle -> {
+                            if (needsLockedCrop) {
+                                mode = EditMode.Crop
+                                return@EditTopBar
+                            }
                             isProcessing = true
                             scope.launch {
                                 val result = processToFile(context, imageUri, editSpec)
@@ -130,6 +143,7 @@ fun EditScreen(
                         imageUri = imageUri,
                         editSpec = editSpec,
                         onControllerReady = { cropController = it },
+                        lockedRatio = lockedRatio,
                     )
             }
             if (isProcessing) {

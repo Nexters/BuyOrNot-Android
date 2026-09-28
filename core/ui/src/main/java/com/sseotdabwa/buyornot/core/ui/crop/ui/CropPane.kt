@@ -5,11 +5,12 @@ import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,13 +46,14 @@ internal fun CropPane(
     editSpec: EditSpec,
     onControllerReady: (CropPaneController) -> Unit,
     modifier: Modifier = Modifier,
+    lockedRatio: AspectRatio? = null,
 ) {
     val context = LocalContext.current
     // CropOverlay의 코너 dot indicator가 잘리지 않도록 이미지를 안쪽으로 들이는 여백.
     // imageBounds 계산도 동일한 여백을 사용해 CropOverlay 최대 영역이 실제 이미지 영역과 일치하도록 한다.
     val imageInset = 12.dp
     val imageInsetPx = with(LocalDensity.current) { imageInset.toPx() }
-    var tempRatio by remember { mutableStateOf(editSpec.crop?.ratio ?: AspectRatio.Free) }
+    var tempRatio by remember { mutableStateOf(lockedRatio ?: editSpec.crop?.ratio ?: AspectRatio.Free) }
     var tempRect by remember {
         mutableStateOf(editSpec.crop?.rectNormalized ?: NormalizedRect.Full)
     }
@@ -74,7 +76,9 @@ internal fun CropPane(
             val pixelRatio = tempRatio.targetRatio()
             val w = intrinsicSize.width
             val h = intrinsicSize.height
-            if (pixelRatio == null || w <= 0f || h <= 0f) null else pixelRatio * h / w
+            // 이미지 로드 전 intrinsicSize는 Size.Unspecified(NaN)라 `<= 0f` 비교로는 걸러지지 않는다.
+            // NaN 비율이 tempRect에 한 번 들어가면 이후 계산이 모두 NaN이 되므로 양수일 때만 계산한다.
+            if (pixelRatio == null || !(w > 0f) || !(h > 0f)) null else pixelRatio * h / w
         }
 
     LaunchedEffect(normalizedTargetRatio) {
@@ -97,9 +101,11 @@ internal fun CropPane(
             Rect(left, top, left + displayedWidth, top + displayedHeight)
         }
 
-    DisposableEffect(Unit) {
-        onControllerReady(CropPaneController(commit = { CropSpec(tempRatio, tempRect) }))
-        onDispose { }
+    // 이미지가 로드되기 전의 tempRect는 비율이 적용되지 않은 Full이다. 위의 비율 보정이 끝난 뒤에
+    // 컨트롤러를 넘겨, 로드 전에 확정해 비율이 깨진 crop이 나가는 일을 막는다.
+    val isReady = imageBounds != null
+    LaunchedEffect(isReady) {
+        if (isReady) onControllerReady(CropPaneController(commit = { CropSpec(tempRatio, tempRect) }))
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -134,10 +140,15 @@ internal fun CropPane(
                 )
             }
         }
-        CropRatioBar(
-            selected = tempRatio,
-            onSelect = { newRatio -> tempRatio = newRatio },
-        )
+        // 비율이 고정되면 고를 것이 없으므로 선택 바 대신 여백만 둔다.
+        if (lockedRatio == null) {
+            CropRatioBar(
+                selected = tempRatio,
+                onSelect = { newRatio -> tempRatio = newRatio },
+            )
+        } else {
+            Spacer(modifier = Modifier.height(24.dp))
+        }
     }
 }
 

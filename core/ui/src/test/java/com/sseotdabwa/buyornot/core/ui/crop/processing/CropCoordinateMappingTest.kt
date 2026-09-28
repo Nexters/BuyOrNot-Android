@@ -55,4 +55,13 @@ class CropCoordinateMappingTest {
         assertEquals(1, r.srcW)
         assertEquals(1, r.srcH)
     }
+
+    @Test
+    fun `squared는_짧은_변에_맞춰_가운데를_남긴_정사각형을_만든다`() {
+        val r = PixelRect(srcX = 10, srcY = 20, srcW = 301, srcH = 300).squared()
+        assertEquals(PixelRect(srcX = 10, srcY = 20, srcW = 300, srcH = 300), r)
+
+        val tall = PixelRect(srcX = 0, srcY = 0, srcW = 100, srcH = 110).squared()
+        assertEquals(PixelRect(srcX = 0, srcY = 5, srcW = 100, srcH = 100), tall)
+    }
 }

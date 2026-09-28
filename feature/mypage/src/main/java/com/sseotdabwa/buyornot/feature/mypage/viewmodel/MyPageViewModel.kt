@@ -21,13 +21,17 @@ class MyPageViewModel @Inject constructor(
 
     override fun handleIntent(intent: MyPageIntent) {
         when (intent) {
-            is MyPageIntent.LoadProfile -> loadProfile()
+            is MyPageIntent.LoadProfile -> loadProfile(showLoading = true)
+            is MyPageIntent.RefreshProfile -> loadProfile(showLoading = false)
         }
     }
 
-    private fun loadProfile() {
+    /**
+     * @param showLoading false면 화면 전체 로딩으로 바꾸지 않아 기존 내용이 깜빡이지 않는다.
+     */
+    private fun loadProfile(showLoading: Boolean) {
         viewModelScope.launch {
-            updateState { it.copy(isLoading = true) }
+            if (showLoading) updateState { it.copy(isLoading = true) }
             runCatchingCancellable {
                 userRepository.getMyProfile()
             }.onSuccess { profile ->

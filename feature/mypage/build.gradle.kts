@@ -15,4 +15,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.kakao.user)
     implementation(libs.androidx.credentials)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
