@@ -19,13 +19,25 @@ const val EDIT_RESULT_SKIPPED = "SKIPPED"
 data class EditRoute(
     val encodedUri: String,
     val editSpecArg: String = "",
+    // 고정할 자르기 비율의 [AspectRatio.name]. null이면 비율을 자유롭게 고른다.
+    val lockedRatioName: String? = null,
 )
 
+/**
+ * @param lockedRatio 지정하면 해당 비율로만 자를 수 있다. 자르기 화면으로 바로 진입하고 비율 선택 바를 숨긴다.
+ */
 fun NavController.navigateToEdit(
     uri: Uri,
     editSpec: EditSpec = EditSpec(),
+    lockedRatio: AspectRatio? = null,
 ) {
-    navigate(EditRoute(encodedUri = uri.toString(), editSpecArg = editSpec.encodeToArg()))
+    navigate(
+        EditRoute(
+            encodedUri = uri.toString(),
+            editSpecArg = editSpec.encodeToArg(),
+            lockedRatioName = lockedRatio?.name,
+        ),
+    )
 }
 
 fun NavGraphBuilder.editScreen(navController: NavController) {
@@ -35,6 +47,7 @@ fun NavGraphBuilder.editScreen(navController: NavController) {
         EditScreen(
             imageUri = imageUri,
             initialSpec = decodeEditSpecArg(route.editSpecArg),
+            lockedRatio = route.lockedRatioName?.let { runCatching { AspectRatio.valueOf(it) }.getOrNull() },
             onConfirm = { editedUri, editSpec ->
                 navController.previousBackStackEntry?.savedStateHandle?.apply {
                     set(EDIT_RESULT_KEY, editedUri.toString())

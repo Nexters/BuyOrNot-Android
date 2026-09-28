@@ -11,6 +11,9 @@ data class MyPageUiState(
 
 sealed interface MyPageIntent {
     data object LoadProfile : MyPageIntent
+
+    /** 프로필 수정 후 돌아왔을 때 로딩 화면 없이 프로필만 다시 불러온다. */
+    data object RefreshProfile : MyPageIntent
 }
 
 sealed interface MyPageSideEffect {

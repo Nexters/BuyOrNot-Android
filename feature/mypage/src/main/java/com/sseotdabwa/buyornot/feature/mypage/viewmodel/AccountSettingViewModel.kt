@@ -30,16 +30,20 @@ class AccountSettingViewModel @Inject constructor(
 
     override fun handleIntent(intent: AccountSettingIntent) {
         when (intent) {
-            is AccountSettingIntent.FetchProfile -> fetchProfile()
+            is AccountSettingIntent.FetchProfile -> fetchProfile(showLoading = true)
+            is AccountSettingIntent.RefreshProfile -> fetchProfile(showLoading = false)
             is AccountSettingIntent.Logout -> logout(intent.context)
             is AccountSettingIntent.ShowLogoutDialog -> updateState { it.copy(isLogoutDialogVisible = true) }
             is AccountSettingIntent.DismissLogoutDialog -> updateState { it.copy(isLogoutDialogVisible = false) }
         }
     }
 
-    private fun fetchProfile() {
+    /**
+     * @param showLoading false면 화면 전체 로딩으로 바꾸지 않아 기존 내용이 깜빡이지 않는다.
+     */
+    private fun fetchProfile(showLoading: Boolean) {
         viewModelScope.launch {
-            updateState { it.copy(isLoading = true) }
+            if (showLoading) updateState { it.copy(isLoading = true) }
             runCatchingCancellable {
                 userRepository.getMyProfile()
             }.onSuccess { profile ->
