@@ -509,6 +509,7 @@ private fun HomeFeedList(
                                 },
                                 onTooltipDismissed = { onIntent(HomeIntent.DismissTooltip) },
                                 onImageClick = onImageClick,
+                                onCommentClick = { id -> onIntent(HomeIntent.OnCommentClicked(id)) },
                             )
                         }
 
@@ -776,6 +777,7 @@ private fun FeedItemCard(
     onShare: (feedId: String, title: String, isOwner: Boolean) -> Unit,
     onTooltipDismissed: () -> Unit = {},
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onCommentClick: (feedId: String) -> Unit = {},
 ) {
     Column {
         FeedCard(
@@ -810,6 +812,10 @@ private fun FeedItemCard(
             showProductLinkTooltip = showProductLinkTooltip,
             onTooltipDismiss = onTooltipDismissed,
             onImageClick = onImageClick,
+            useThreadLayout = true,
+            commentCount = feed.commentCount,
+            latestComment = feed.latestComment,
+            onCommentClick = { onCommentClick(feed.id) },
         )
 
         BuyOrNotDivider(
