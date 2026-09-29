@@ -10,15 +10,21 @@ private data class ErrorResponse(
     val errorCode: String? = null,
 )
 
+/** 에러 응답 본문에서 꺼낸 서버 에러 코드와 메시지. */
+data class ApiError(
+    val code: String?,
+    val message: String?,
+)
+
 private val errorJson = Json { ignoreUnknownKeys = true }
 
-/**
- * 2xx가 아닌 응답은 Retrofit이 [HttpException]으로 던져 `BaseResponse.getOrThrow()`까지 오지 않는다.
- * 에러 바디의 `errorCode`를 꺼내야 사용자에게 상황별 문구를 보여줄 수 있다.
- *
- * @return 에러 바디의 `errorCode`. 바디가 없거나 형식이 다르면 null
- */
-fun HttpException.errorCodeOrNull(): String? =
+/** 에러 본문은 한 번만 읽을 수 있으므로 코드와 메시지가 둘 다 필요하면 이 함수를 쓴다. */
+fun HttpException.apiErrorOrNull(): ApiError? =
     runCatching {
-        response()?.errorBody()?.string()?.let { errorJson.decodeFromString<ErrorResponse>(it).errorCode }
+        response()?.errorBody()?.string()?.let {
+            val body = errorJson.decodeFromString<ErrorResponse>(it)
+            ApiError(code = body.errorCode, message = body.message)
+        }
     }.getOrNull()
+
+fun HttpException.errorCodeOrNull(): String? = apiErrorOrNull()?.code

@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class BaseResponse<T>(
     val data: T? = null,
-    val message: String,
+    // 댓글 작성 응답처럼 message 없이 내려오는 경우가 있다.
+    val message: String = "",
     val status: String,
     val errorCode: String? = null,
 )

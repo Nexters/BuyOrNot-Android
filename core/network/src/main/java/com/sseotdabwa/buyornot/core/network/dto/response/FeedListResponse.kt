@@ -57,6 +57,10 @@ data class FeedItemDto(
     val hasVoted: Boolean?,
     @SerialName("myVoteChoice")
     val myVoteChoice: String?,
+    @SerialName("commentCount")
+    val commentCount: Int = 0,
+    @SerialName("latestComment")
+    val latestComment: LatestCommentDto? = null,
 )
 
 @Serializable
