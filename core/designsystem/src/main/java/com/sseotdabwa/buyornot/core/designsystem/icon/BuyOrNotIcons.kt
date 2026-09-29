@@ -41,6 +41,7 @@ object BuyOrNotIcons {
     val ArrowLeft = IconResource(R.drawable.ic_arrow_left)
     val ArrowRight = IconResource(R.drawable.ic_arrow_right)
     val ArrowDown = IconResource(R.drawable.ic_arrow_down)
+    val ArrowUp = IconResource(R.drawable.ic_arrow_up)
 
     // 기능 아이콘
     val CheckCircle = IconResource(R.drawable.ic_check_circle)
@@ -53,6 +54,7 @@ object BuyOrNotIcons {
     val Profile = IconResource(R.drawable.ic_profile)
     val Notification = IconResource(R.drawable.ic_notification)
     val NotificationFilled = IconResource(R.drawable.ic_notification_filled)
+    val Comment = IconResource(R.drawable.ic_comment)
 
     // 자르기 비율 아이콘
     val RatioFree = IconResource(R.drawable.ic_ratio_free)

@@ -26,6 +26,8 @@ internal val LightColorScheme =
         green100 = Color(0xFF42C694),
         red100 = Color(0xFFFF3830),
         blue100 = Color(0xFF217CF9),
+        orange100 = Color(0xFFFF5309),
+        orange50 = Color(0xFFFFDCD2),
     )
 
 @Immutable
@@ -50,6 +52,8 @@ data class BuyOrNotColorScheme(
     val green100: Color,
     val red100: Color,
     val blue100: Color,
+    val orange100: Color,
+    val orange50: Color,
 )
 
 val LocalColorScheme =
@@ -75,5 +79,7 @@ val LocalColorScheme =
             green100 = Color.Unspecified,
             red100 = Color.Unspecified,
             blue100 = Color.Unspecified,
+            orange100 = Color.Unspecified,
+            orange50 = Color.Unspecified,
         )
     }
