@@ -8,6 +8,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,10 +39,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -64,6 +71,8 @@ class BuyOrNotSnackBarVisuals(
     override val message: String,
     val iconResource: IconResource? = null,
     val iconTint: SnackBarIconTint = SnackBarIconTint.Success,
+    /** 메시지 왼쪽에 보여줄 썸네일 (투표 완료 스낵바의 피드 대표 이미지 등). */
+    val imageUrl: String? = null,
     override val actionLabel: String? = null,
     override val withDismissAction: Boolean = false,
     override val duration: SnackbarDuration = SnackbarDuration.Short,
@@ -98,8 +107,17 @@ fun BuyOrNotSnackBar(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            modifier =
+                if (visuals?.imageUrl != null) {
+                    Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+                } else {
+                    Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
+                },
         ) {
+            visuals?.imageUrl?.let { imageUrl ->
+                SnackBarThumbnail(imageUrl = imageUrl)
+                Spacer(modifier = Modifier.width(10.dp))
+            }
             icon?.let {
                 Icon(
                     imageVector = it,
@@ -113,8 +131,38 @@ fun BuyOrNotSnackBar(
             Text(
                 text = snackbarData.visuals.message,
                 style = BuyOrNotTheme.typography.bodyB5Medium,
+                modifier = Modifier.weight(1f, fill = false),
             )
+
+            snackbarData.visuals.actionLabel?.let { actionLabel ->
+                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = actionLabel,
+                    style = BuyOrNotTheme.typography.bodyB5Medium,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable { snackbarData.performAction() },
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun SnackBarThumbnail(imageUrl: String) {
+    val thumbnailModifier =
+        Modifier
+            .size(31.dp)
+            .clip(RoundedCornerShape(4.dp))
+    if (LocalInspectionMode.current) {
+        Box(modifier = thumbnailModifier.background(BuyOrNotTheme.colors.gray600))
+    } else {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = null,
+            modifier = thumbnailModifier,
+            contentScale = ContentScale.Crop,
+        )
     }
 }
 
@@ -151,6 +199,8 @@ fun BuyOrNotSnackBarHost(hostState: SnackbarHostState) {
  * @param iconResource 메시지 좌측에 표시할 아이콘 리소스 (null이면 아이콘 없음)
  * @param iconTint 아이콘의 색상 틴트 (기본값: [SnackBarIconTint.Success])
  * @param duration 스낵바 표시 시간 (기본값: [SnackbarDuration.Short] = 4초)
+ * @param imageUrl 메시지 왼쪽에 보여줄 썸네일 URL (null이면 표시하지 않음)
+ * @param actionLabel 오른쪽 액션 문구. 누르면 [SnackbarResult.ActionPerformed]가 반환된다.
  * @return 스낵바가 어떻게 닫혔는지를 나타내는 [SnackbarResult]
  *
  * @sample
@@ -173,6 +223,8 @@ suspend fun showBuyOrNotSnackBar(
     iconResource: IconResource? = null,
     iconTint: SnackBarIconTint = SnackBarIconTint.Success,
     duration: SnackbarDuration = SnackbarDuration.Short,
+    imageUrl: String? = null,
+    actionLabel: String? = null,
 ): SnackbarResult =
     snackbarMutex.withLock {
         try {
@@ -182,6 +234,8 @@ suspend fun showBuyOrNotSnackBar(
                         message = message,
                         iconResource = iconResource,
                         iconTint = iconTint,
+                        imageUrl = imageUrl,
+                        actionLabel = actionLabel,
                         duration = SnackbarDuration.Indefinite, // 직접 타이머 제어
                     ),
                 )
@@ -249,6 +303,22 @@ private fun BuyOrNotSnackBarPreview() {
                             BuyOrNotSnackBarVisuals(
                                 message = "아이콘이 있는 스낵바입니다.",
                                 iconResource = BuyOrNotIcons.CheckCircle,
+                            )
+
+                        override fun dismiss() {}
+
+                        override fun performAction() {}
+                    },
+            )
+
+            BuyOrNotSnackBar(
+                snackbarData =
+                    object : SnackbarData {
+                        override val visuals =
+                            BuyOrNotSnackBarVisuals(
+                                message = "투표를 완료했어요!",
+                                imageUrl = "preview",
+                                actionLabel = "의견 남기기",
                             )
 
                         override fun dismiss() {}
