@@ -53,6 +53,19 @@ import com.sseotdabwa.buyornot.core.designsystem.shape.TopArrowBubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 
+/** 피드 카드 하단에 보여줄 최신 댓글 미리보기. */
+data class FeedCommentPreview(
+    val nickname: String,
+    val content: String,
+)
+
+// thread 레이아웃에서 본문이 시작하는 x — 프로필 아바타(20 + 32) 오른쪽 여백 10을 더한 닉네임 시작점과 같다.
+private val ThreadContentStart = 62.dp
+private val CardHorizontalPadding = 20.dp
+
+// thread 라인은 프로필 아바타 중심(20 + 32 / 2)에서 내려온다.
+private val ThreadLineX = 36.dp
+
 enum class ImageAspectRatio(
     val ratio: Float,
 ) {
@@ -92,6 +105,10 @@ fun FeedCard(
     showProductLinkTooltip: Boolean = false,
     onTooltipDismiss: () -> Unit = {},
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    useThreadLayout: Boolean = false,
+    commentCount: Int? = null,
+    latestComment: FeedCommentPreview? = null,
+    onCommentClick: () -> Unit = {},
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
@@ -115,10 +132,26 @@ fun FeedCard(
             canBlock = canBlock,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        val contentStart = if (useThreadLayout) ThreadContentStart else CardHorizontalPadding
+        val showThreadLine = useThreadLayout && latestComment != null
+        val threadLineColor = BuyOrNotTheme.colors.gray300
 
-        Column {
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+        Column(
+            modifier =
+                Modifier.drawBehind {
+                    if (showThreadLine) {
+                        drawLine(
+                            color = threadLineColor,
+                            start = Offset(ThreadLineX.toPx(), 0f),
+                            end = Offset(ThreadLineX.toPx(), size.height),
+                            strokeWidth = 1.dp.toPx(),
+                        )
+                    }
+                },
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Column(modifier = Modifier.padding(start = contentStart, end = CardHorizontalPadding)) {
                 if (title.isNotEmpty()) {
                     Text(
                         text = title,
@@ -153,6 +186,7 @@ fun FeedCard(
                 },
                 onFullscreenClick = { page -> onImageClick(productImageUrls, page) },
                 onLinkClick = onLinkClick,
+                contentPadding = PaddingValues(start = contentStart, end = CardHorizontalPadding),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -167,7 +201,22 @@ fun FeedCard(
                 totalVoteCount = totalVoteCount,
                 voterProfileImageUrl = voterProfileImageUrl,
                 onVote = onVote,
-                modifier = Modifier.padding(horizontal = 20.dp),
+                commentCount = commentCount,
+                onCommentClick = onCommentClick,
+                modifier = Modifier.padding(start = contentStart, end = CardHorizontalPadding),
+            )
+        }
+
+        if (latestComment != null) {
+            Spacer(modifier = Modifier.height(14.dp))
+            CommentPreviewCard(
+                nickname = latestComment.nickname,
+                content = latestComment.content,
+                modifier =
+                    Modifier
+                        .padding(start = contentStart, end = CardHorizontalPadding)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(onClick = onCommentClick),
             )
         }
     }
@@ -313,6 +362,7 @@ private fun FeedImageCarousel(
     onFullscreenClick: (pageIndex: Int) -> Unit,
     onLinkClick: (url: String) -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp),
 ) {
     val isInPreviewMode = LocalInspectionMode.current
 
@@ -321,7 +371,7 @@ private fun FeedImageCarousel(
     Box(modifier = modifier) {
         HorizontalPager(
             state = pagerState,
-            contentPadding = PaddingValues(horizontal = 20.dp),
+            contentPadding = contentPadding,
             pageSpacing = 10.dp,
             modifier = Modifier.animateContentSize(),
         ) { page ->
@@ -432,6 +482,8 @@ private fun FeedVoteSection(
     voterProfileImageUrl: String,
     onVote: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    commentCount: Int? = null,
+    onCommentClick: () -> Unit = {},
 ) {
     val isTie = buyPercentage == maybePercentage
     val hasVotes = totalVoteCount > 0
@@ -505,7 +557,11 @@ private fun FeedVoteSection(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
             val statusText =
                 if (isVoteEnded) {
                     stringResource(R.string.feed_card_vote_status_ended)
@@ -518,9 +574,43 @@ private fun FeedVoteSection(
                 style = BuyOrNotTheme.typography.bodyB7Medium,
                 color = BuyOrNotTheme.colors.gray600,
             )
+            if (commentCount != null) {
+                CommentCount(
+                    count = commentCount,
+                    onClick = onCommentClick,
+                    modifier = Modifier.padding(end = 4.dp),
+                )
+            }
         }
     }
 }
+
+@Composable
+private fun CommentCount(
+    count: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.nonRippleClickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            imageVector = BuyOrNotIcons.Comment.asImageVector(),
+            contentDescription = "댓글",
+            modifier = Modifier.size(13.dp),
+            tint = BuyOrNotTheme.colors.gray600,
+        )
+        Text(
+            text = if (count > MAX_DISPLAY_COMMENT_COUNT) "$MAX_DISPLAY_COMMENT_COUNT+" else count.toString(),
+            style = BuyOrNotTheme.typography.bodyB5Medium,
+            color = BuyOrNotTheme.colors.gray600,
+        )
+    }
+}
+
+private const val MAX_DISPLAY_COMMENT_COUNT = 99
 
 @Composable
 private fun VoteOption(
@@ -747,6 +837,70 @@ private fun FeedCardPortraitInteractivePreview() {
             },
             onDeleteClick = {},
             onReportClick = {},
+        )
+    }
+}
+
+@Preview(
+    name = "FeedCard - Thread (댓글 있음)",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+)
+@Composable
+private fun FeedCardThreadWithCommentPreview() {
+    BuyOrNotTheme {
+        FeedCard(
+            profileImageUrl = PreviewImages.avatar(),
+            nickname = "참새방앗간12456",
+            category = "패션 ∙ 잡화",
+            createdAt = "6시간 전",
+            title = "장화 살지말지 고민됩니다",
+            content = "장마가 이미 끝나버리긴 했는데 지금 할인기간이라 매우 고민됩니다..",
+            productImageUrls = listOf(PreviewImages.square()),
+            price = "31,900",
+            imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
+            isVoteEnded = false,
+            buyVoteCount = 12,
+            maybeVoteCount = 4,
+            totalVoteCount = 16,
+            onVote = {},
+            useThreadLayout = true,
+            commentCount = 120,
+            latestComment =
+                FeedCommentPreview(
+                    nickname = "토봉이날다12456",
+                    content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
+                ),
+        )
+    }
+}
+
+@Preview(
+    name = "FeedCard - Thread (댓글 없음)",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+)
+@Composable
+private fun FeedCardThreadWithoutCommentPreview() {
+    BuyOrNotTheme {
+        FeedCard(
+            profileImageUrl = PreviewImages.avatar(),
+            nickname = "참새방앗간12456",
+            category = "패션 ∙ 잡화",
+            createdAt = "6시간 전",
+            title = "장화 살지말지 고민됩니다",
+            content = "장마가 이미 끝나버리긴 했는데 지금 할인기간이라 매우 고민됩니다..",
+            productImageUrls = listOf(PreviewImages.square()),
+            price = "31,900",
+            imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
+            isVoteEnded = false,
+            userVotedOptionIndex = 0,
+            buyVoteCount = 12,
+            maybeVoteCount = 4,
+            totalVoteCount = 16,
+            onVote = {},
+            useThreadLayout = true,
+            commentCount = 0,
         )
     }
 }
