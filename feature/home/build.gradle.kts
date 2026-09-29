@@ -17,4 +17,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.unit)
     implementation(libs.coil.compose)
     implementation(libs.androidx.ui)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

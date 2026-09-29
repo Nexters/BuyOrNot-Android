@@ -31,6 +31,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -111,11 +112,13 @@ fun HomeRoute(
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onFeedCommentsClick: (feedId: Long, focusCommentInput: Boolean) -> Unit = { _, _ -> },
     initialTab: HomeTab = HomeTab.FEED,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     // 초기 탭 설정
     LaunchedEffect(initialTab) {
@@ -138,6 +141,22 @@ fun HomeRoute(
                 is HomeSideEffect.NavigateToNotification -> onNotificationClick()
                 is HomeSideEffect.NavigateToProfile -> onProfileClick()
                 is HomeSideEffect.NavigateToUpload -> onUploadClick()
+                is HomeSideEffect.NavigateToFeedComments ->
+                    onFeedCommentsClick(sideEffect.feedId, sideEffect.focusCommentInput)
+                is HomeSideEffect.ShowVoteCompletedSnackbar ->
+                    // 스낵바가 떠 있는 동안에도 다른 이벤트(댓글 진입 등)가 막히지 않게 따로 띄운다.
+                    coroutineScope.launch {
+                        val result =
+                            showBuyOrNotSnackBar(
+                                snackbarHostState = snackbarHostState,
+                                message = "투표를 완료했어요!",
+                                imageUrl = sideEffect.imageUrl,
+                                actionLabel = "의견 남기기",
+                            )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            onFeedCommentsClick(sideEffect.feedId, true)
+                        }
+                    }
             }
         }
     }

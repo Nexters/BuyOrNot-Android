@@ -7,14 +7,17 @@ import com.sseotdabwa.buyornot.core.analytics.performance.Performance
 import com.sseotdabwa.buyornot.core.analytics.performance.TraceNames
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
+import com.sseotdabwa.buyornot.core.designsystem.components.FeedCommentPreview
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.domain.model.CommentPreview
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
+import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
@@ -34,6 +37,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val feedRepository: FeedRepository,
+    private val commentRepository: CommentRepository,
     private val userRepository: UserRepository,
     private val notificationRepository: NotificationRepository,
     private val analytics: Analytics,
@@ -56,7 +60,48 @@ class HomeViewModel @Inject constructor(
     init {
         observeUserPreferences()
         observeFeedCreated()
+        observeCommentChanges()
         loadInitialData()
+    }
+
+    /**
+     * 상세 화면에서 댓글을 쓰거나 지우면 목록에 돌아왔을 때 댓글 수·미리보기가 맞아야 한다.
+     * 목록 전체를 다시 불러오면 스크롤 위치와 페이지가 날아가므로 바뀐 피드 하나만 다시 받는다.
+     */
+    private fun observeCommentChanges() {
+        viewModelScope.launch {
+            commentRepository.commentChanges.collect { feedId -> refreshFeedComments(feedId) }
+        }
+    }
+
+    private fun refreshFeedComments(feedId: Long) {
+        val id = feedId.toString()
+        if (uiState.value.allFeeds.none { it.id == id }) return
+        viewModelScope.launch {
+            runCatchingCancellable {
+                feedRepository.getFeed(feedId)
+            }.onSuccess { feed ->
+                updateState { state ->
+                    val newAllFeeds =
+                        state.allFeeds.map { item ->
+                            if (item.id == id) {
+                                item.copy(
+                                    commentCount = feed.commentCount,
+                                    latestComment = feed.latestComment?.toFeedCommentPreview(),
+                                )
+                            } else {
+                                item
+                            }
+                        }
+                    state.copy(
+                        allFeeds = newAllFeeds,
+                        feeds = applyCategories(newAllFeeds, state.selectedCategories),
+                    )
+                }
+            }.onFailure { e ->
+                Timber.w(e, "Failed to refresh comments of feed: $feedId")
+            }
+        }
     }
 
     /**
@@ -181,6 +226,10 @@ class HomeViewModel @Inject constructor(
             is HomeIntent.OnFilterSelected -> handleFilterSelection(intent.filter)
             is HomeIntent.OnBannerDismissed -> handleBannerDismiss()
             is HomeIntent.OnVoteClicked -> handleVote(intent.feedId, intent.optionIndex)
+            is HomeIntent.OnCommentClicked ->
+                intent.feedId.toLongOrNull()?.let { feedId ->
+                    sendSideEffect(HomeSideEffect.NavigateToFeedComments(feedId = feedId, focusCommentInput = false))
+                }
             is HomeIntent.ShowDeleteDialog -> updateState { it.copy(showDeleteDialog = true, deletingFeedId = intent.feedId) }
             is HomeIntent.DismissDeleteDialog -> updateState { it.copy(showDeleteDialog = false, deletingFeedId = null) }
             is HomeIntent.OnDeleteConfirmed -> {
@@ -395,6 +444,12 @@ class HomeViewModel @Inject constructor(
                         feeds = applyCategories(newAllFeeds, state.selectedCategories),
                     )
                 }
+                sendSideEffect(
+                    HomeSideEffect.ShowVoteCompletedSnackbar(
+                        feedId = feedId.toLong(),
+                        imageUrl = voteResult.feedImageUrl ?: targetFeed.productImageUrls.firstOrNull(),
+                    ),
+                )
                 analytics.track(
                     AnalyticsEvent.VoteSubmitted(
                         feedId = targetFeed.id.toLong(),
@@ -770,6 +825,10 @@ class HomeViewModel @Inject constructor(
             isOwner = isOwner,
             authorUserId = author.userId,
             productLink = productLink,
+            commentCount = commentCount,
+            latestComment = latestComment?.toFeedCommentPreview(),
         )
     }
+
+    private fun CommentPreview.toFeedCommentPreview(): FeedCommentPreview = FeedCommentPreview(nickname = nickname, content = content)
 }

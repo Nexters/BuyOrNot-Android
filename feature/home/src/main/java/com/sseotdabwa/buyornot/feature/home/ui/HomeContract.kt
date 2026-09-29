@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.home.ui
 
 import androidx.compose.runtime.Immutable
+import com.sseotdabwa.buyornot.core.designsystem.components.FeedCommentPreview
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
@@ -46,6 +47,9 @@ data class FeedItem(
     val isOwner: Boolean,
     val authorUserId: Long,
     val productLink: String? = null,
+    val commentCount: Int = 0,
+    /** 댓글이 없으면 null — 카드의 thread 라인과 미리보기를 숨긴다. */
+    val latestComment: FeedCommentPreview? = null,
 ) {
     /** 비회원 작성 글. 차단 대상 유저가 없다 — [GUEST_AUTHOR_USER_ID] 참고. */
     val isGuestAuthor: Boolean get() = authorUserId == GUEST_AUTHOR_USER_ID
@@ -124,6 +128,11 @@ sealed interface HomeIntent {
         val feedId: String,
     ) : HomeIntent
 
+    /** 카드의 댓글 수·최신 댓글 미리보기 탭 */
+    data class OnCommentClicked(
+        val feedId: String,
+    ) : HomeIntent
+
     data class OnShareClicked(
         val feedId: String,
         val isOwner: Boolean,
@@ -181,4 +190,15 @@ sealed interface HomeSideEffect {
     data object NavigateToProfile : HomeSideEffect
 
     data object NavigateToUpload : HomeSideEffect
+
+    /** 투표 완료 스낵바 — [의견 남기기]를 누르면 댓글 입력창으로 이동한다. */
+    data class ShowVoteCompletedSnackbar(
+        val feedId: Long,
+        val imageUrl: String?,
+    ) : HomeSideEffect
+
+    data class NavigateToFeedComments(
+        val feedId: Long,
+        val focusCommentInput: Boolean,
+    ) : HomeSideEffect
 }
