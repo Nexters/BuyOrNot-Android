@@ -137,7 +137,7 @@ private fun CommentHeader(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(start = 20.dp, end = 20.dp, top = 16.dp),
+                        .padding(horizontal = 20.dp, vertical = 10.dp),
                 contentAlignment = Alignment.CenterEnd,
             ) {
                 Box {
@@ -147,10 +147,10 @@ private fun CommentHeader(
                     ) {
                         Text(
                             text = sort.label,
-                            style = BuyOrNotTheme.typography.bodyB5Medium,
+                            style = BuyOrNotTheme.typography.bodyB4Medium,
                             color = BuyOrNotTheme.colors.gray800,
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Icon(
                             imageVector = BuyOrNotIcons.ArrowDown.asImageVector(),
                             contentDescription = "정렬 변경",
@@ -160,6 +160,7 @@ private fun CommentHeader(
                     }
                     if (showMenu) {
                         ActionPopup(
+                            selectedIndex = CommentSort.entries.indexOf(sort),
                             items =
                                 CommentSort.entries.map { option ->
                                     option.label to {
@@ -172,6 +173,7 @@ private fun CommentHeader(
                     }
                 }
             }
+            HorizontalDivider(thickness = 1.dp, color = BuyOrNotTheme.colors.gray300)
         }
     }
 }

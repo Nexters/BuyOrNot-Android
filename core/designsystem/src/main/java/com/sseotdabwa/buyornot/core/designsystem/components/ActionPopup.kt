@@ -9,6 +9,7 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,6 +24,7 @@ import androidx.compose.ui.node.DelegatableNode
 import androidx.compose.ui.node.DrawModifierNode
 import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -31,6 +33,8 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import kotlinx.coroutines.launch
+
+private val SelectableItemWidth = 90.dp
 
 private class PressedColorIndicationNode(
     private val color: Color,
@@ -70,11 +74,13 @@ private data class PressedColorIndicationFactory(
  *
  * @param items 표시할 메뉴 항목 목록입니다. 각 항목은 레이블 문자열과 클릭 콜백의 쌍으로 구성됩니다.
  * @param onDismiss 팝업 외부 영역 클릭 시 호출되는 콜백입니다.
+ * @param selectedIndex 선택된 항목(정렬 등). null이면 선택 표시 없이 모든 항목을 같은 스타일로 그린다.
  */
 @Composable
 fun ActionPopup(
     items: List<Pair<String, () -> Unit>>,
     onDismiss: () -> Unit,
+    selectedIndex: Int? = null,
 ) {
     val density = LocalDensity.current
     val navHeight = 20.dp
@@ -97,6 +103,7 @@ fun ActionPopup(
     ) {
         ActionPopupContent(
             items = items,
+            selectedIndex = selectedIndex,
             tonalElevation = 8.dp,
             shadowElevation = 8.dp,
         )
@@ -110,11 +117,13 @@ fun ActionPopup(
  * @param modifier 컴포넌트에 적용할 Modifier입니다.
  * @param tonalElevation Surface의 tonal elevation입니다.
  * @param shadowElevation Surface의 shadow elevation입니다.
+ * @param selectedIndex 선택된 항목. 선택 메뉴는 항목 폭을 고정하고 선택 항목만 굵게 표시한다.
  */
 @Composable
 fun ActionPopupContent(
     items: List<Pair<String, () -> Unit>>,
     modifier: Modifier = Modifier,
+    selectedIndex: Int? = null,
     tonalElevation: Dp = 0.dp,
     shadowElevation: Dp = 0.dp,
 ) {
@@ -139,22 +148,26 @@ fun ActionPopupContent(
                 ),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            items.forEach { (label, onClick) ->
+            items.forEachIndexed { index, (label, onClick) ->
+                val isSelectable = selectedIndex != null
+                val isSelected = index == selectedIndex
                 Text(
                     text = label,
                     modifier =
                         Modifier
+                            .then(if (isSelectable) Modifier.width(SelectableItemWidth) else Modifier)
                             .clip(RoundedCornerShape(8.dp))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = remember(pressedColor) { PressedColorIndicationFactory(color = pressedColor) },
                                 onClick = onClick,
                             ).padding(
-                                horizontal = 20.dp,
+                                horizontal = if (isSelectable) 12.dp else 20.dp,
                                 vertical = 8.dp,
                             ),
-                    style = BuyOrNotTheme.typography.bodyB3Medium,
-                    color = BuyOrNotTheme.colors.gray800,
+                    style = if (isSelected) BuyOrNotTheme.typography.titleT3Bold else BuyOrNotTheme.typography.bodyB3Medium,
+                    color = if (isSelected) BuyOrNotTheme.colors.gray950 else BuyOrNotTheme.colors.gray800,
+                    textAlign = if (isSelectable) TextAlign.Center else TextAlign.Start,
                 )
             }
         }

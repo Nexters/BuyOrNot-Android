@@ -237,7 +237,7 @@ fun NotificationDetailScreen(
                     ) {
                         item(key = "feed") {
                             FeedCard(
-                                modifier = Modifier.padding(top = 26.dp, bottom = 20.dp),
+                                modifier = Modifier.padding(top = 26.dp, bottom = 16.dp),
                                 profileImageUrl = feed.author.profileImage ?: "",
                                 nickname = feed.author.nickname,
                                 category = feed.category.displayName,
