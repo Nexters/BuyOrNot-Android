@@ -121,7 +121,7 @@ fun CommentInput(
                         .focusRequester(focusRequester),
                 enabled = enabled,
                 maxLines = COMMENT_INPUT_MAX_LINES,
-                textStyle = BuyOrNotTheme.typography.bodyB4Medium.copy(color = BuyOrNotTheme.colors.gray900),
+                textStyle = BuyOrNotTheme.typography.bodyB4Medium.copy(color = BuyOrNotTheme.colors.gray950),
                 cursorBrush = SolidColor(BuyOrNotTheme.colors.gray950),
                 decorationBox = { innerTextField ->
                     Box(

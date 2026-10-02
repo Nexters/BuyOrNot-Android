@@ -3,7 +3,6 @@ package com.sseotdabwa.buyornot.core.designsystem.components
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,7 +48,9 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.R
@@ -80,6 +81,13 @@ private val ThreadCornerRadius = 10.dp
 
 // 라인이 꺾여 미리보기 카드 왼쪽 끝에 붙는 높이 (미리보기 카드 상단 기준).
 private val ThreadJoinOffsetY = 35.dp
+
+private val ProductImageCornerRadius = 14.dp
+private val ProductImageSpacing = 10.dp
+
+// thread 레이아웃은 들여쓴 만큼 이미지가 좁아져 다음 이미지가 보이도록 간격을 줄인다.
+private val ThreadProductImageSpacing = 8.dp
+private val PriceTextPadding = 16.dp
 
 enum class ImageAspectRatio(
     val ratio: Float,
@@ -190,18 +198,18 @@ fun FeedCard(
                         color = BuyOrNotTheme.colors.gray950,
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                 }
 
                 Text(
                     text = content,
                     modifier = Modifier.padding(horizontal = 4.dp),
-                    style = BuyOrNotTheme.typography.bodyB4Medium,
+                    style = BuyOrNotTheme.typography.paragraphP3Medium,
                     color = BuyOrNotTheme.colors.gray800,
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             FeedImageCarousel(
                 productImageUrls = productImageUrls,
@@ -217,6 +225,13 @@ fun FeedCard(
                 onFullscreenClick = { page -> onImageClick(productImageUrls, page) },
                 onLinkClick = onLinkClick,
                 contentPadding = PaddingValues(start = contentStart, end = CardHorizontalPadding),
+                pageSpacing = if (useThreadLayout) ThreadProductImageSpacing else ProductImageSpacing,
+                priceStyle =
+                    if (useThreadLayout) {
+                        BuyOrNotTheme.typography.headingH4Bold
+                    } else {
+                        BuyOrNotTheme.typography.titleT1Bold
+                    },
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -320,7 +335,7 @@ private fun FeedCardHeader(
                         color = BuyOrNotTheme.colors.gray800,
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = createdAt,
                     style = BuyOrNotTheme.typography.bodyB7Medium,
@@ -392,8 +407,10 @@ private fun FeedImageCarousel(
     onTooltipDismiss: () -> Unit,
     onFullscreenClick: (pageIndex: Int) -> Unit,
     onLinkClick: (url: String) -> Unit,
+    priceStyle: TextStyle,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp),
+    pageSpacing: Dp = ProductImageSpacing,
 ) {
     val isInPreviewMode = LocalInspectionMode.current
 
@@ -403,7 +420,7 @@ private fun FeedImageCarousel(
         HorizontalPager(
             state = pagerState,
             contentPadding = contentPadding,
-            pageSpacing = 10.dp,
+            pageSpacing = pageSpacing,
             modifier = Modifier.animateContentSize(),
         ) { page ->
             Box(
@@ -411,12 +428,8 @@ private fun FeedImageCarousel(
                     Modifier
                         .fillMaxWidth()
                         .aspectRatio(firstAspectRatio.ratio)
-                        .clip(RoundedCornerShape(16.dp))
-                        .border(
-                            width = 1.dp,
-                            color = BuyOrNotTheme.colors.gray300,
-                            shape = RoundedCornerShape(16.dp),
-                        ).clickable { onFullscreenClick(page) },
+                        .clip(RoundedCornerShape(ProductImageCornerRadius))
+                        .clickable { onFullscreenClick(page) },
             ) {
                 if (isInPreviewMode) {
                     Box(
@@ -483,10 +496,10 @@ private fun FeedImageCarousel(
                         modifier =
                             Modifier
                                 .align(Alignment.BottomStart)
-                                .padding(start = 14.dp, bottom = 16.dp),
+                                .padding(start = PriceTextPadding, bottom = PriceTextPadding),
                         color = BuyOrNotTheme.colors.gray0,
                         style =
-                            BuyOrNotTheme.typography.headingH4Bold.copy(
+                            priceStyle.copy(
                                 shadow =
                                     Shadow(
                                         color = Color.Black.copy(alpha = 0.3f),
@@ -599,12 +612,27 @@ private fun FeedVoteSection(
                 } else {
                     stringResource(R.string.feed_card_vote_status_ongoing)
                 }
-            Text(
-                text = stringResource(R.string.feed_card_vote_count_format, totalVoteCount, statusText),
-                modifier = Modifier.padding(start = 6.dp),
-                style = BuyOrNotTheme.typography.bodyB7Medium,
-                color = BuyOrNotTheme.colors.gray600,
-            )
+            Row(
+                modifier = Modifier.padding(start = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.feed_card_vote_count_format, totalVoteCount.toDisplayCount()),
+                    style = BuyOrNotTheme.typography.bodyB5Medium,
+                    color = BuyOrNotTheme.colors.gray600,
+                )
+                Text(
+                    text = "∙",
+                    style = BuyOrNotTheme.typography.bodyB7Medium,
+                    color = BuyOrNotTheme.colors.gray600,
+                )
+                Text(
+                    text = statusText,
+                    style = BuyOrNotTheme.typography.bodyB5Medium,
+                    color = BuyOrNotTheme.colors.gray600,
+                )
+            }
             if (commentCount != null) {
                 CommentCount(
                     count = commentCount,
@@ -634,14 +662,17 @@ private fun CommentCount(
             tint = BuyOrNotTheme.colors.gray600,
         )
         Text(
-            text = if (count > MAX_DISPLAY_COMMENT_COUNT) "$MAX_DISPLAY_COMMENT_COUNT+" else count.toString(),
+            text = count.toDisplayCount(),
             style = BuyOrNotTheme.typography.bodyB5Medium,
             color = BuyOrNotTheme.colors.gray600,
         )
     }
 }
 
-private const val MAX_DISPLAY_COMMENT_COUNT = 99
+private const val MAX_DISPLAY_COUNT = 99
+
+/** 투표 수·댓글 수는 상한을 넘으면 "99+"처럼 줄여 보여준다. */
+private fun Int.toDisplayCount(): String = if (this > MAX_DISPLAY_COUNT) "$MAX_DISPLAY_COUNT+" else toString()
 
 @Composable
 private fun VoteOption(
@@ -664,7 +695,7 @@ private fun VoteOption(
             text = text,
             modifier =
                 Modifier.padding(
-                    horizontal = 16.dp,
+                    horizontal = 15.dp,
                     vertical = 14.dp,
                 ),
             style = BuyOrNotTheme.typography.subTitleS4SemiBold,
