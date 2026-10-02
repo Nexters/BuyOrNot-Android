@@ -30,6 +30,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -129,6 +130,8 @@ fun CommentInput(
                                 text = if (enabled) placeholder else disabledPlaceholder,
                                 style = BuyOrNotTheme.typography.bodyB4Medium,
                                 color = if (enabled) BuyOrNotTheme.colors.gray600 else BuyOrNotTheme.colors.gray500,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                         innerTextField()
@@ -150,7 +153,12 @@ fun CommentInput(
                     imageVector = BuyOrNotIcons.ArrowUp.asImageVector(),
                     contentDescription = "댓글 등록",
                     modifier = Modifier.size(18.dp),
-                    tint = if (canSubmit) BuyOrNotTheme.colors.gray0 else BuyOrNotTheme.colors.gray600,
+                    tint =
+                        when {
+                            canSubmit -> BuyOrNotTheme.colors.gray0
+                            enabled -> BuyOrNotTheme.colors.gray600
+                            else -> BuyOrNotTheme.colors.gray400
+                        },
                 )
             }
         }
