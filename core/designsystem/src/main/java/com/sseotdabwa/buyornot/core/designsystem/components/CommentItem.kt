@@ -36,7 +36,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
@@ -219,24 +218,35 @@ fun CommentAvatar(
     }
 }
 
-/** 오른쪽 아래로 꼬리가 달린 흰 말풍선 (24×22, 꼬리 6). */
+// 투표 말풍선 시안 좌표. 모든 값은 말풍선 폭 기준이라 Shape가 실제 크기에 맞춰 비율로 그린다.
+private const val BUBBLE_WIDTH = 24f
+private const val BUBBLE_BODY_HEIGHT = 22f
+private const val BUBBLE_HEIGHT = 25.5f
+private const val BUBBLE_CORNER_RADIUS = 6.31f
+private const val BUBBLE_TAIL_START_X = 12.4f
+private const val BUBBLE_TAIL_END_X = 18.4f
+
+/** 몸통 아래에 꼬리가 달린 흰 말풍선. 꼬리는 왼쪽 변이 수직이고 끝이 왼쪽 아래에서 둥글게 맺힌다. */
 private val VoteBubbleShape =
     GenericShape { size, _ ->
-        val tail = 6.dp.value * (size.width / 24.dp.value)
-        val bodyHeight = size.height - tail
+        val unit = size.width / BUBBLE_WIDTH
+        val bodyBottom = BUBBLE_BODY_HEIGHT * unit
+        val bottom = BUBBLE_HEIGHT * unit
+        val tailStartX = BUBBLE_TAIL_START_X * unit
         addRoundRect(
             RoundRect(
                 left = 0f,
                 top = 0f,
                 right = size.width,
-                bottom = bodyHeight,
-                cornerRadius = CornerRadius(bodyHeight * 0.29f),
+                bottom = bodyBottom,
+                cornerRadius = CornerRadius(BUBBLE_CORNER_RADIUS * unit),
             ),
         )
-        // 꼬리: 몸통 오른쪽 아래 모서리 안쪽에서 아래로 뾰족하게
-        moveTo(size.width - tail * 2.2f, bodyHeight - 1f)
-        lineTo(size.width - tail * 0.8f, bodyHeight - 1f)
-        lineTo(size.width - tail * 0.9f, size.height)
+        // 몸통과 겹치게 조금 위에서 시작해 이음새가 보이지 않게 한다.
+        moveTo(tailStartX, bodyBottom - unit)
+        lineTo(BUBBLE_TAIL_END_X * unit, bodyBottom - unit)
+        lineTo(tailStartX + unit, bottom - unit * 0.4f)
+        quadraticTo(tailStartX, bottom + unit * 0.6f, tailStartX, bottom - unit * 0.9f)
         close()
     }
 
@@ -248,7 +258,7 @@ private fun VoteBubble(
     Box(
         modifier =
             modifier
-                .size(width = 24.dp, height = 26.dp)
+                .size(width = BUBBLE_WIDTH.dp, height = BUBBLE_HEIGHT.dp)
                 .shadow(
                     elevation = 4.dp,
                     shape = VoteBubbleShape,
@@ -259,7 +269,7 @@ private fun VoteBubble(
     ) {
         Text(
             text = bubble.emoji,
-            fontSize = 12.sp,
+            style = BuyOrNotTheme.typography.bodyB6Medium,
             modifier = Modifier.padding(top = 3.dp),
         )
     }

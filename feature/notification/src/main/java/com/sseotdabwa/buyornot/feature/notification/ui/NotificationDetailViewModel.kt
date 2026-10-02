@@ -84,7 +84,7 @@ class NotificationDetailViewModel @Inject constructor(
             NotificationDetailIntent.OnShareClicked -> handleShareClicked()
             is NotificationDetailIntent.OnVoteClicked -> handleVote(intent.optionIndex)
             is NotificationDetailIntent.OnCommentInputChanged ->
-                // 금칙어로 막힌 등록은 내용을 고치면 다시 열린다.
+                // 금칙어·작성 빈도 제한으로 막힌 등록은 내용을 고치면 다시 열린다.
                 updateState {
                     it.copy(
                         commentInput = intent.text,
@@ -366,7 +366,7 @@ class NotificationDetailViewModel @Inject constructor(
                 updateState {
                     it.copy(
                         isSubmittingComment = false,
-                        isCommentSubmitBlocked = apiError?.code == CommentErrorCode.PROFANITY,
+                        isCommentSubmitBlocked = apiError?.code in SUBMIT_BLOCKING_ERROR_CODES,
                     )
                 }
                 sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = apiError.createErrorMessage()))
@@ -404,12 +404,7 @@ class NotificationDetailViewModel @Inject constructor(
             }.onSuccess {
                 // 신고된 댓글은 서버 목록에서 빠지므로 화면에서도 바로 뺀다.
                 removeComment(commentId)
-                sendSideEffect(
-                    NotificationDetailSideEffect.ShowSnackbar(
-                        message = "댓글 신고가 접수되었어요.",
-                        icon = BuyOrNotIcons.CheckCircle,
-                    ),
-                )
+                sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = "댓글 신고가 접수되었어요."))
             }.onFailure { e ->
                 Timber.e(e, "Failed to report comment: $commentId")
                 if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeComment(commentId)
@@ -465,5 +460,13 @@ class NotificationDetailViewModel @Inject constructor(
         const val KEY_SCROLL_TO_COMMENTS = "scrollToComments"
         const val KEY_FOCUS_COMMENT_INPUT = "focusCommentInput"
         private const val DEFAULT_CREATE_ERROR_MESSAGE = "댓글 등록에 실패했어요."
+
+        // 같은 내용으로 다시 보내도 또 거절되는 에러라 내용을 고칠 때까지 등록 버튼을 막는다.
+        private val SUBMIT_BLOCKING_ERROR_CODES =
+            setOf(
+                CommentErrorCode.PROFANITY,
+                CommentErrorCode.RATE_LIMITED,
+                CommentErrorCode.PROFANITY_BLOCKED,
+            )
     }
 }

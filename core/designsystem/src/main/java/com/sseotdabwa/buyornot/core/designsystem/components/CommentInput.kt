@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -30,6 +31,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,6 +42,9 @@ import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 private const val COMMENT_INPUT_MAX_LINES = 5
+
+// 선택지 라벨이 길면 이 폭 안에서 가운데 정렬로 줄을 바꾼다.
+private val VotedLabelMaxWidth = 197.dp
 
 /**
  * 피드 상세 하단에 고정되는 댓글 입력창.
@@ -84,8 +89,10 @@ fun CommentInput(
                         withStyle(SpanStyle(color = BuyOrNotTheme.colors.orange100)) { append(votedOptionLabel) }
                         append("’에 투표했어요")
                     },
+                modifier = Modifier.widthIn(max = VotedLabelMaxWidth),
                 style = BuyOrNotTheme.typography.bodyB6Medium,
                 color = BuyOrNotTheme.colors.gray800,
+                textAlign = TextAlign.Center,
             )
         }
 
@@ -197,7 +204,6 @@ private fun CommentInputPreview() {
                 onSubmit = {},
                 profileImageUrl = PreviewImages.avatar(),
                 enabled = false,
-                disabledPlaceholder = "투표 후 의견을 작성할 수 있어요!",
             )
         }
     }

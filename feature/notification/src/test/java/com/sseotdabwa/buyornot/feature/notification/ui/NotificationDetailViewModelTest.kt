@@ -151,7 +151,7 @@ class NotificationDetailViewModelTest {
         }
 
     @Test
-    fun `댓글_작성_빈도_제한에_걸리면_서버_메시지를_보여주고_등록은_막지_않는다`() =
+    fun `댓글_작성_빈도_제한에_걸리면_서버_메시지를_보여주고_내용을_고칠_때까지_등록을_막는다`() =
         runTest {
             val viewModel = createViewModel(FakeFeedRepository(testFeed(hasVoted = true)))
             commentRepository.createError =
@@ -164,7 +164,41 @@ class NotificationDetailViewModelTest {
                 NotificationDetailSideEffect.ShowSnackbar(message = "잠시 후 다시 댓글을 남길 수 있어요."),
                 viewModel.sideEffect.first(),
             )
+            assertEquals("저도요", viewModel.uiState.value.commentInput)
+            assertFalse(viewModel.uiState.value.canSubmitComment)
+
+            viewModel.handleIntent(NotificationDetailIntent.OnCommentInputChanged("저도요!"))
+
             assertTrue(viewModel.uiState.value.canSubmitComment)
+        }
+
+    @Test
+    fun `금칙어_반복으로_작성이_제한되면_내용을_고칠_때까지_등록을_막는다`() =
+        runTest {
+            val viewModel = createViewModel(FakeFeedRepository(testFeed(hasVoted = true)))
+            commentRepository.createError =
+                ApiException(code = CommentErrorCode.PROFANITY_BLOCKED, message = "잠시 후 다시 댓글을 남길 수 있어요.")
+            viewModel.handleIntent(NotificationDetailIntent.OnCommentInputChanged("나쁜말"))
+
+            viewModel.handleIntent(NotificationDetailIntent.OnCommentSubmit)
+
+            assertFalse(viewModel.uiState.value.canSubmitComment)
+        }
+
+    @Test
+    fun `댓글을_신고하면_아이콘_없는_스낵바로_접수를_알린다`() =
+        runTest {
+            commentRepository.firstPages[CommentSort.REGISTERED] =
+                CommentPage(listOf(testComment(1)), nextCursor = null, hasNext = false)
+            val viewModel = createViewModel(FakeFeedRepository(testFeed(hasVoted = true, commentCount = 1)))
+
+            viewModel.handleIntent(NotificationDetailIntent.ShowReportCommentDialog(commentId = 1))
+            viewModel.handleIntent(NotificationDetailIntent.OnReportCommentConfirmed)
+
+            assertEquals(
+                NotificationDetailSideEffect.ShowSnackbar(message = "댓글 신고가 접수되었어요."),
+                viewModel.sideEffect.first(),
+            )
         }
 
     @Test

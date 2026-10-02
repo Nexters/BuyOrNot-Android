@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.designsystem.components.ActionPopup
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
+import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentItem
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentTag
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentTagStyle
@@ -35,6 +36,7 @@ import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentSort
+import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 
 private const val COMMENT_HEADER_KEY = "comment_header"
@@ -69,7 +71,17 @@ internal fun LazyListScope.commentSection(
     when {
         !uiState.canViewComments -> item(key = "comment_locked") { CommentMessage("투표 후 댓글을 볼 수 있어요!") }
         uiState.isCommentsLoading && uiState.comments.isEmpty() -> item(key = "comment_loading") { CommentLoading() }
-        uiState.comments.isEmpty() -> item(key = "comment_empty") { CommentMessage("투표에 대한 의견을 남겨볼까요?") }
+        uiState.comments.isEmpty() ->
+            item(key = "comment_empty") {
+                // 마감 피드는 입력창이 막혀 있어 의견을 권하지 않고 막힌 이유를 알린다.
+                CommentMessage(
+                    if (uiState.feed?.feedStatus == FeedStatus.CLOSED) {
+                        "마감된 투표에는 댓글을 남길 수 없어요."
+                    } else {
+                        "투표에 대한 의견을 남겨볼까요?"
+                    },
+                )
+            }
         else -> {
             itemsIndexed(items = uiState.comments, key = { _, comment -> comment.id }) { index, comment ->
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
@@ -85,7 +97,7 @@ internal fun LazyListScope.commentSection(
                     )
                     // 댓글과 댓글 사이에만 두고 마지막 댓글 아래에는 없다.
                     if (index < uiState.comments.lastIndex) {
-                        HorizontalDivider(thickness = 1.dp, color = BuyOrNotTheme.colors.gray300)
+                        BuyOrNotDivider(size = BuyOrNotDividerSize.Small)
                     }
                 }
             }
@@ -130,7 +142,7 @@ private fun CommentHeader(
     onSortSelected: (CommentSort) -> Unit,
 ) {
     Column {
-        HorizontalDivider(thickness = 1.dp, color = BuyOrNotTheme.colors.gray300)
+        BuyOrNotDivider(size = BuyOrNotDividerSize.Small)
         if (showSort) {
             var showMenu by remember { mutableStateOf(false) }
             Box(
@@ -173,7 +185,7 @@ private fun CommentHeader(
                     }
                 }
             }
-            HorizontalDivider(thickness = 1.dp, color = BuyOrNotTheme.colors.gray300)
+            BuyOrNotDivider(size = BuyOrNotDividerSize.Small)
         }
     }
 }

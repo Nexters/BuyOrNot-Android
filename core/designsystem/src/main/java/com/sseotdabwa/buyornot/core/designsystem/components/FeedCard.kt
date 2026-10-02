@@ -66,18 +66,20 @@ data class FeedCommentPreview(
     val content: String,
 )
 
-// thread 레이아웃에서 본문이 시작하는 x — 프로필 아바타(20 + 32) 오른쪽 여백 10을 더한 닉네임 시작점과 같다.
-private val ThreadContentStart = 62.dp
 private val CardHorizontalPadding = 20.dp
+private val ProfileAvatarSize = 32.dp
+private val ProfileNicknameSpacing = 10.dp
 
-// thread 라인은 프로필 아바타 중심(20 + 32 / 2)에서 내려온다.
-private val ThreadLineX = 36.dp
+// thread 레이아웃에서는 본문을 닉네임 시작점에 맞춰 들여쓴다.
+private val ThreadContentStart = CardHorizontalPadding + ProfileAvatarSize + ProfileNicknameSpacing
+
+// thread 라인은 프로필 아바타 중심에서 내려온다.
+private val ThreadLineX = CardHorizontalPadding + ProfileAvatarSize / 2
 private val ThreadLineWidth = 1.2.dp
 private val ThreadCornerRadius = 10.dp
-private val ProfileAvatarSize = 32.dp
 
-// 시안: 라인은 미리보기 카드 상단에서 35.6 아래 높이에서 꺾여 카드 왼쪽 끝에 붙는다.
-private val ThreadJoinOffsetY = 35.6.dp
+// 라인이 꺾여 미리보기 카드 왼쪽 끝에 붙는 높이 (미리보기 카드 상단 기준).
+private val ThreadJoinOffsetY = 35.dp
 
 enum class ImageAspectRatio(
     val ratio: Float,
@@ -281,7 +283,7 @@ private fun FeedCardHeader(
                 Box(
                     modifier =
                         Modifier
-                            .size(32.dp)
+                            .size(ProfileAvatarSize)
                             .clip(CircleShape)
                             .background(BuyOrNotTheme.colors.gray400),
                 )
@@ -291,12 +293,12 @@ private fun FeedCardHeader(
                     contentDescription = null,
                     modifier =
                         Modifier
-                            .size(32.dp)
+                            .size(ProfileAvatarSize)
                             .clip(CircleShape),
                     contentScale = ContentScale.Crop,
                 )
             }
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(ProfileNicknameSpacing))
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
