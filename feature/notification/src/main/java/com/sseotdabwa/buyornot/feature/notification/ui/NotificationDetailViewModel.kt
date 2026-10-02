@@ -310,7 +310,9 @@ class NotificationDetailViewModel @Inject constructor(
 
     private fun loadNextComments() {
         val state = currentState
-        if (!state.hasNextComments || state.isCommentsLoading || state.isNextCommentsLoading) return
+        if (!state.canViewComments || !state.hasNextComments || state.isCommentsLoading || state.isNextCommentsLoading) {
+            return
+        }
         val generation = commentGeneration
         viewModelScope.launch {
             updateState { it.copy(isNextCommentsLoading = true) }

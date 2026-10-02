@@ -205,6 +205,20 @@ class NotificationDetailViewModelTest {
         }
 
     @Test
+    fun `새로고침_후_댓글을_볼_수_없게_되면_다음_페이지를_부르지_않는다`() {
+        commentRepository.firstPages[CommentSort.REGISTERED] =
+            CommentPage(listOf(testComment(1)), nextCursor = 1, hasNext = true)
+        val feedRepository = FakeFeedRepository(testFeed(hasVoted = true))
+        val viewModel = createViewModel(feedRepository)
+        feedRepository.feed = testFeed(hasVoted = false)
+        viewModel.handleIntent(NotificationDetailIntent.OnRefresh)
+
+        viewModel.handleIntent(NotificationDetailIntent.LoadNextComments)
+
+        assertEquals(1, commentRepository.getCalls.size)
+    }
+
+    @Test
     fun `다음_페이지를_이어_붙이고_중복된_댓글은_한_번만_남긴다`() {
         commentRepository.firstPages[CommentSort.REGISTERED] =
             CommentPage(listOf(testComment(1), testComment(2)), nextCursor = 2, hasNext = true)
