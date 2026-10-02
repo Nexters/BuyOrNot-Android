@@ -12,7 +12,7 @@ internal fun String.toVoteChoice(): VoteChoice? =
         else -> null
     }
 
-// 알 수 없는 값은 회원으로 본다 — 비회원으로 잘못 보이면 "비회원" 태그가 붙는다.
+// 알 수 없는 값은 회원으로 본다.
 internal fun String.toCommentAuthorType(): CommentAuthorType = if (this == "GUEST") CommentAuthorType.GUEST else CommentAuthorType.MEMBER
 
 internal fun LatestCommentDto.toDomain(): CommentPreview =

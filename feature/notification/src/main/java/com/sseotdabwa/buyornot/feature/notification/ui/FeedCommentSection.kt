@@ -37,7 +37,7 @@ import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentSort
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 
-internal const val COMMENT_HEADER_KEY = "comment_header"
+private const val COMMENT_HEADER_KEY = "comment_header"
 
 /** 투표 선택지 문구. 태그와 입력창 안내에 쓴다. */
 internal fun VoteChoice.label(): String =
@@ -53,10 +53,7 @@ private val CommentSort.label: String
             CommentSort.LATEST -> "최신순"
         }
 
-/**
- * 피드 상세의 댓글 영역: 정렬 헤더 + 댓글 목록 + 다음 페이지 로딩.
- * 헤더의 key는 [COMMENT_HEADER_KEY]로, 댓글 진입점에서 이 위치로 스크롤한다.
- */
+/** 피드 상세의 댓글 영역: 정렬 헤더 + 댓글 목록 + 다음 페이지 로딩. */
 internal fun LazyListScope.commentSection(
     uiState: NotificationDetailUiState,
     onIntent: (NotificationDetailIntent) -> Unit,

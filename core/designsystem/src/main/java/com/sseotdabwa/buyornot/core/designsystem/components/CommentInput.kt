@@ -48,7 +48,7 @@ private const val COMMENT_INPUT_MAX_LINES = 5
  * @param votedOptionLabel 내가 투표한 선택지. null이 아니면 입력창 위에 "'…'에 투표했어요"를 보여준다.
  * @param enabled false면 입력 자체를 막고 [disabledPlaceholder]를 보여준다 (투표 전 등).
  * @param submitEnabled 등록 버튼 활성화 여부. 비어 있거나 금칙어로 거절된 뒤 수정 전이면 false.
- * @param maxLength 이 길이를 넘는 입력은 받지 않는다.
+ * @param maxLength 이 길이를 넘는 입력은 잘라낸다.
  */
 @Composable
 fun CommentInput(

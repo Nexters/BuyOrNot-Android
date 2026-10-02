@@ -55,7 +55,7 @@ enum class CommentVoteBubble(
 }
 
 enum class CommentTagStyle {
-    /** 작성자·투표 선택지 태그 */
+    /** 투표 선택지 태그 */
     DEFAULT,
 
     /** "작성자" 태그 */
