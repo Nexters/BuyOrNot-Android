@@ -106,7 +106,7 @@ fun CommentInput(
 
             BasicTextField(
                 value = value,
-                onValueChange = { if (it.length <= maxLength) onValueChange(it) },
+                onValueChange = { onValueChange(it.take(maxLength)) },
                 modifier =
                     Modifier
                         .weight(1f)
