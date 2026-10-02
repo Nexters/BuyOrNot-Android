@@ -106,7 +106,7 @@ fun CommentInput(
 
             BasicTextField(
                 value = value,
-                onValueChange = { onValueChange(it.take(maxLength)) },
+                onValueChange = { onValueChange(it.limitLength(maxLength)) },
                 modifier =
                     Modifier
                         .weight(1f)
@@ -155,6 +155,13 @@ fun CommentInput(
             }
         }
     }
+}
+
+// 이모지의 서로게이트 쌍을 반으로 자르면 깨진 문자가 서버로 가므로 경계에 걸린 쌍은 통째로 버린다.
+private fun String.limitLength(maxLength: Int): String {
+    if (length <= maxLength) return this
+    val end = if (Character.isHighSurrogate(this[maxLength - 1])) maxLength - 1 else maxLength
+    return substring(0, end)
 }
 
 @Preview(name = "CommentInput - 상태", showBackground = true, backgroundColor = 0xFFFFFFFF)

@@ -118,6 +118,17 @@ class NotificationDetailViewModelTest {
         }
 
     @Test
+    fun `300자를_넘는_댓글은_등록_요청을_보내지_않는다`() {
+        val viewModel = createViewModel(FakeFeedRepository(testFeed(hasVoted = true)))
+        viewModel.handleIntent(NotificationDetailIntent.OnCommentInputChanged("가".repeat(301)))
+
+        viewModel.handleIntent(NotificationDetailIntent.OnCommentSubmit)
+
+        assertFalse(viewModel.uiState.value.canSubmitComment)
+        assertTrue(commentRepository.createdContents.isEmpty())
+    }
+
+    @Test
     fun `금칙어로_거절되면_서버_메시지를_보여주고_내용을_고칠_때까지_등록을_막는다`() =
         runTest {
             val viewModel = createViewModel(FakeFeedRepository(testFeed(hasVoted = true)))

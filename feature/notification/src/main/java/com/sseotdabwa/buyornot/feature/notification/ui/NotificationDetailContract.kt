@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.feature.notification.ui
 
 import androidx.compose.runtime.Immutable
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+import com.sseotdabwa.buyornot.domain.model.COMMENT_MAX_LENGTH
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentSort
 import com.sseotdabwa.buyornot.domain.model.Feed
@@ -46,7 +47,12 @@ data class NotificationDetailUiState(
         get() = feed != null && !isGuest && hasJoinedVote && feed.feedStatus == FeedStatus.OPEN
 
     val canSubmitComment: Boolean
-        get() = canWriteComment && commentInput.isNotBlank() && !isSubmittingComment && !isCommentSubmitBlocked
+        get() =
+            canWriteComment &&
+                commentInput.isNotBlank() &&
+                commentInput.trim().length <= COMMENT_MAX_LENGTH &&
+                !isSubmittingComment &&
+                !isCommentSubmitBlocked
 }
 
 sealed interface NotificationDetailIntent {
