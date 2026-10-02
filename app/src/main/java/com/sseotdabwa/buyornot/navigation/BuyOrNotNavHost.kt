@@ -34,6 +34,7 @@ import com.sseotdabwa.buyornot.feature.home.navigation.navigateToHomeWithTab
 import com.sseotdabwa.buyornot.feature.home.ui.HomeTab
 import com.sseotdabwa.buyornot.feature.mypage.navigation.myPageGraph
 import com.sseotdabwa.buyornot.feature.mypage.navigation.navigateToMyPage
+import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToFeedComments
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotification
 import com.sseotdabwa.buyornot.feature.notification.navigation.navigateToNotificationDetail
 import com.sseotdabwa.buyornot.feature.notification.navigation.notificationGraph
@@ -146,6 +147,9 @@ fun BuyOrNotNavHost(
             onLinkClick = { url -> navController.navigateToWebView("", url) },
             onShareClick = shareFeed,
             onImageClick = { urls, page -> navController.navigateToImageViewer(urls, page) },
+            onFeedCommentsClick = { feedId, focusCommentInput ->
+                navController.navigateToFeedComments(feedId = feedId, focusCommentInput = focusCommentInput)
+            },
         )
         notificationGraph(
             onBackClick = navController::popBackStack,

@@ -15,4 +15,6 @@ data class VoteResponse(
     val noCount: Int,
     @SerialName("totalCount")
     val totalCount: Int,
+    @SerialName("feedImageUrl")
+    val feedImageUrl: String? = null,
 )

@@ -3,7 +3,6 @@ package com.sseotdabwa.buyornot.core.designsystem.components
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +27,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,11 +38,19 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.R
@@ -52,6 +60,34 @@ import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.shape.TopArrowBubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
+
+/** 피드 카드 하단에 보여줄 최신 댓글 미리보기. */
+data class FeedCommentPreview(
+    val nickname: String,
+    val content: String,
+)
+
+private val CardHorizontalPadding = 20.dp
+private val ProfileAvatarSize = 32.dp
+private val ProfileNicknameSpacing = 10.dp
+
+// thread 레이아웃에서는 본문을 닉네임 시작점에 맞춰 들여쓴다.
+private val ThreadContentStart = CardHorizontalPadding + ProfileAvatarSize + ProfileNicknameSpacing
+
+// thread 라인은 프로필 아바타 중심에서 내려온다.
+private val ThreadLineX = CardHorizontalPadding + ProfileAvatarSize / 2
+private val ThreadLineWidth = 1.2.dp
+private val ThreadCornerRadius = 10.dp
+
+// 라인이 꺾여 미리보기 카드 왼쪽 끝에 붙는 높이 (미리보기 카드 상단 기준).
+private val ThreadJoinOffsetY = 35.dp
+
+private val ProductImageCornerRadius = 14.dp
+private val ProductImageSpacing = 10.dp
+
+// thread 레이아웃은 들여쓴 만큼 이미지가 좁아져 다음 이미지가 보이도록 간격을 줄인다.
+private val ThreadProductImageSpacing = 8.dp
+private val PriceTextPadding = 16.dp
 
 enum class ImageAspectRatio(
     val ratio: Float,
@@ -92,6 +128,10 @@ fun FeedCard(
     showProductLinkTooltip: Boolean = false,
     onTooltipDismiss: () -> Unit = {},
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    useThreadLayout: Boolean = false,
+    commentCount: Int? = null,
+    latestComment: FeedCommentPreview? = null,
+    onCommentClick: () -> Unit = {},
 ) {
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
@@ -100,7 +140,37 @@ fun FeedCard(
     val pagerState = rememberPagerState(pageCount = { productImageUrls.size })
     var tooltipVisible by remember(showProductLinkTooltip) { mutableStateOf(showProductLinkTooltip) }
 
-    Column(modifier = modifier) {
+    val contentStart = if (useThreadLayout) ThreadContentStart else CardHorizontalPadding
+    val showThreadLine = useThreadLayout && latestComment != null
+    val threadLineColor = BuyOrNotTheme.colors.gray300
+    // 라인이 헤더 아바타와 미리보기 카드를 잇도록 두 위치를 측정해 카드 전체 위에 그린다.
+    var headerHeightPx by remember { mutableFloatStateOf(0f) }
+    var previewTopPx by remember { mutableFloatStateOf(0f) }
+
+    Column(
+        modifier =
+            modifier.drawBehind {
+                if (showThreadLine && previewTopPx > 0f) {
+                    val x = ThreadLineX.toPx()
+                    // 아바타는 헤더 행 안에서 세로 가운데 정렬된다.
+                    val startY = (headerHeightPx + ProfileAvatarSize.toPx()) / 2f
+                    val joinY = previewTopPx + ThreadJoinOffsetY.toPx()
+                    val radius = ThreadCornerRadius.toPx()
+                    val path =
+                        Path().apply {
+                            moveTo(x, startY)
+                            lineTo(x, joinY - radius)
+                            quadraticTo(x, joinY, x + radius, joinY)
+                            lineTo(contentStart.toPx(), joinY)
+                        }
+                    drawPath(
+                        path = path,
+                        color = threadLineColor,
+                        style = Stroke(width = ThreadLineWidth.toPx(), cap = StrokeCap.Round),
+                    )
+                }
+            },
+    ) {
         FeedCardHeader(
             profileImageUrl = profileImageUrl,
             nickname = nickname,
@@ -113,12 +183,13 @@ fun FeedCard(
             onBlockClick = onBlockClick,
             onShareClick = onShareClick,
             canBlock = canBlock,
+            modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
         Column {
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Column(modifier = Modifier.padding(start = contentStart, end = CardHorizontalPadding)) {
                 if (title.isNotEmpty()) {
                     Text(
                         text = title,
@@ -127,18 +198,18 @@ fun FeedCard(
                         color = BuyOrNotTheme.colors.gray950,
                     )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                 }
 
                 Text(
                     text = content,
                     modifier = Modifier.padding(horizontal = 4.dp),
-                    style = BuyOrNotTheme.typography.bodyB4Medium,
+                    style = BuyOrNotTheme.typography.paragraphP3Medium,
                     color = BuyOrNotTheme.colors.gray800,
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             FeedImageCarousel(
                 productImageUrls = productImageUrls,
@@ -153,6 +224,14 @@ fun FeedCard(
                 },
                 onFullscreenClick = { page -> onImageClick(productImageUrls, page) },
                 onLinkClick = onLinkClick,
+                contentPadding = PaddingValues(start = contentStart, end = CardHorizontalPadding),
+                pageSpacing = if (useThreadLayout) ThreadProductImageSpacing else ProductImageSpacing,
+                priceStyle =
+                    if (useThreadLayout) {
+                        BuyOrNotTheme.typography.headingH4Bold
+                    } else {
+                        BuyOrNotTheme.typography.titleT1Bold
+                    },
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -167,7 +246,23 @@ fun FeedCard(
                 totalVoteCount = totalVoteCount,
                 voterProfileImageUrl = voterProfileImageUrl,
                 onVote = onVote,
-                modifier = Modifier.padding(horizontal = 20.dp),
+                commentCount = commentCount,
+                onCommentClick = onCommentClick,
+                modifier = Modifier.padding(start = contentStart, end = CardHorizontalPadding),
+            )
+        }
+
+        if (latestComment != null) {
+            Spacer(modifier = Modifier.height(14.dp))
+            CommentPreviewCard(
+                nickname = latestComment.nickname,
+                content = latestComment.content,
+                modifier =
+                    Modifier
+                        .onPlaced { previewTopPx = it.positionInParent().y }
+                        .padding(start = contentStart, end = CardHorizontalPadding)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable(onClick = onCommentClick),
             )
         }
     }
@@ -203,7 +298,7 @@ private fun FeedCardHeader(
                 Box(
                     modifier =
                         Modifier
-                            .size(32.dp)
+                            .size(ProfileAvatarSize)
                             .clip(CircleShape)
                             .background(BuyOrNotTheme.colors.gray400),
                 )
@@ -213,12 +308,12 @@ private fun FeedCardHeader(
                     contentDescription = null,
                     modifier =
                         Modifier
-                            .size(32.dp)
+                            .size(ProfileAvatarSize)
                             .clip(CircleShape),
                     contentScale = ContentScale.Crop,
                 )
             }
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(ProfileNicknameSpacing))
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -240,7 +335,7 @@ private fun FeedCardHeader(
                         color = BuyOrNotTheme.colors.gray800,
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = createdAt,
                     style = BuyOrNotTheme.typography.bodyB7Medium,
@@ -312,7 +407,10 @@ private fun FeedImageCarousel(
     onTooltipDismiss: () -> Unit,
     onFullscreenClick: (pageIndex: Int) -> Unit,
     onLinkClick: (url: String) -> Unit,
+    priceStyle: TextStyle,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp),
+    pageSpacing: Dp = ProductImageSpacing,
 ) {
     val isInPreviewMode = LocalInspectionMode.current
 
@@ -321,8 +419,8 @@ private fun FeedImageCarousel(
     Box(modifier = modifier) {
         HorizontalPager(
             state = pagerState,
-            contentPadding = PaddingValues(horizontal = 20.dp),
-            pageSpacing = 10.dp,
+            contentPadding = contentPadding,
+            pageSpacing = pageSpacing,
             modifier = Modifier.animateContentSize(),
         ) { page ->
             Box(
@@ -330,12 +428,8 @@ private fun FeedImageCarousel(
                     Modifier
                         .fillMaxWidth()
                         .aspectRatio(firstAspectRatio.ratio)
-                        .clip(RoundedCornerShape(16.dp))
-                        .border(
-                            width = 1.dp,
-                            color = BuyOrNotTheme.colors.gray300,
-                            shape = RoundedCornerShape(16.dp),
-                        ).clickable { onFullscreenClick(page) },
+                        .clip(RoundedCornerShape(ProductImageCornerRadius))
+                        .clickable { onFullscreenClick(page) },
             ) {
                 if (isInPreviewMode) {
                     Box(
@@ -402,10 +496,10 @@ private fun FeedImageCarousel(
                         modifier =
                             Modifier
                                 .align(Alignment.BottomStart)
-                                .padding(start = 14.dp, bottom = 16.dp),
+                                .padding(start = PriceTextPadding, bottom = PriceTextPadding),
                         color = BuyOrNotTheme.colors.gray0,
                         style =
-                            BuyOrNotTheme.typography.headingH4Bold.copy(
+                            priceStyle.copy(
                                 shadow =
                                     Shadow(
                                         color = Color.Black.copy(alpha = 0.3f),
@@ -432,6 +526,8 @@ private fun FeedVoteSection(
     voterProfileImageUrl: String,
     onVote: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    commentCount: Int? = null,
+    onCommentClick: () -> Unit = {},
 ) {
     val isTie = buyPercentage == maybePercentage
     val hasVotes = totalVoteCount > 0
@@ -505,22 +601,78 @@ private fun FeedVoteSection(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
             val statusText =
                 if (isVoteEnded) {
                     stringResource(R.string.feed_card_vote_status_ended)
                 } else {
                     stringResource(R.string.feed_card_vote_status_ongoing)
                 }
-            Text(
-                text = stringResource(R.string.feed_card_vote_count_format, totalVoteCount, statusText),
-                modifier = Modifier.padding(start = 6.dp),
-                style = BuyOrNotTheme.typography.bodyB7Medium,
-                color = BuyOrNotTheme.colors.gray600,
-            )
+            Row(
+                modifier = Modifier.padding(start = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.feed_card_vote_count_format, totalVoteCount.toDisplayCount()),
+                    style = BuyOrNotTheme.typography.bodyB5Medium,
+                    color = BuyOrNotTheme.colors.gray600,
+                )
+                Text(
+                    text = "∙",
+                    style = BuyOrNotTheme.typography.bodyB7Medium,
+                    color = BuyOrNotTheme.colors.gray600,
+                )
+                Text(
+                    text = statusText,
+                    style = BuyOrNotTheme.typography.bodyB5Medium,
+                    color = BuyOrNotTheme.colors.gray600,
+                )
+            }
+            if (commentCount != null) {
+                CommentCount(
+                    count = commentCount,
+                    onClick = onCommentClick,
+                    modifier = Modifier.padding(end = 4.dp),
+                )
+            }
         }
     }
 }
+
+@Composable
+private fun CommentCount(
+    count: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.nonRippleClickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            imageVector = BuyOrNotIcons.Comment.asImageVector(),
+            contentDescription = "댓글",
+            modifier = Modifier.size(13.dp),
+            tint = BuyOrNotTheme.colors.gray600,
+        )
+        Text(
+            text = count.toDisplayCount(),
+            style = BuyOrNotTheme.typography.bodyB5Medium,
+            color = BuyOrNotTheme.colors.gray600,
+        )
+    }
+}
+
+private const val MAX_DISPLAY_COUNT = 99
+
+/** 투표 수·댓글 수는 상한을 넘으면 "99+"처럼 줄여 보여준다. */
+private fun Int.toDisplayCount(): String = if (this > MAX_DISPLAY_COUNT) "$MAX_DISPLAY_COUNT+" else toString()
 
 @Composable
 private fun VoteOption(
@@ -543,7 +695,7 @@ private fun VoteOption(
             text = text,
             modifier =
                 Modifier.padding(
-                    horizontal = 16.dp,
+                    horizontal = 15.dp,
                     vertical = 14.dp,
                 ),
             style = BuyOrNotTheme.typography.subTitleS4SemiBold,
@@ -747,6 +899,70 @@ private fun FeedCardPortraitInteractivePreview() {
             },
             onDeleteClick = {},
             onReportClick = {},
+        )
+    }
+}
+
+@Preview(
+    name = "FeedCard - Thread (댓글 있음)",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+)
+@Composable
+private fun FeedCardThreadWithCommentPreview() {
+    BuyOrNotTheme {
+        FeedCard(
+            profileImageUrl = PreviewImages.avatar(),
+            nickname = "참새방앗간12456",
+            category = "패션 ∙ 잡화",
+            createdAt = "6시간 전",
+            title = "장화 살지말지 고민됩니다",
+            content = "장마가 이미 끝나버리긴 했는데 지금 할인기간이라 매우 고민됩니다..",
+            productImageUrls = listOf(PreviewImages.square()),
+            price = "31,900",
+            imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
+            isVoteEnded = false,
+            buyVoteCount = 12,
+            maybeVoteCount = 4,
+            totalVoteCount = 16,
+            onVote = {},
+            useThreadLayout = true,
+            commentCount = 120,
+            latestComment =
+                FeedCommentPreview(
+                    nickname = "토봉이날다12456",
+                    content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
+                ),
+        )
+    }
+}
+
+@Preview(
+    name = "FeedCard - Thread (댓글 없음)",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+)
+@Composable
+private fun FeedCardThreadWithoutCommentPreview() {
+    BuyOrNotTheme {
+        FeedCard(
+            profileImageUrl = PreviewImages.avatar(),
+            nickname = "참새방앗간12456",
+            category = "패션 ∙ 잡화",
+            createdAt = "6시간 전",
+            title = "장화 살지말지 고민됩니다",
+            content = "장마가 이미 끝나버리긴 했는데 지금 할인기간이라 매우 고민됩니다..",
+            productImageUrls = listOf(PreviewImages.square()),
+            price = "31,900",
+            imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
+            isVoteEnded = false,
+            userVotedOptionIndex = 0,
+            buyVoteCount = 12,
+            maybeVoteCount = 4,
+            totalVoteCount = 16,
+            onVote = {},
+            useThreadLayout = true,
+            commentCount = 0,
         )
     }
 }

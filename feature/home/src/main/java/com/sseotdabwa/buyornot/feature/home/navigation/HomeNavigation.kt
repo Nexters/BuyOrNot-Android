@@ -27,6 +27,7 @@ fun NavGraphBuilder.homeScreen(
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onFeedCommentsClick: (feedId: Long, focusCommentInput: Boolean) -> Unit = { _, _ -> },
 ) {
     composable<HomeRoute>(
         enterTransition = {
@@ -62,6 +63,7 @@ fun NavGraphBuilder.homeScreen(
             onLinkClick = onLinkClick,
             onShareClick = onShareClick,
             onImageClick = onImageClick,
+            onFeedCommentsClick = onFeedCommentsClick,
             initialTab = initialTab,
         )
     }

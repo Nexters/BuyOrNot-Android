@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.core.data.di
 import com.sseotdabwa.buyornot.core.data.repository.AppPreferencesRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.AppUpdateRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.AuthRepositoryImpl
+import com.sseotdabwa.buyornot.core.data.repository.CommentRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.FeedRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.NotificationRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.UserPreferencesRepositoryImpl
@@ -10,6 +11,7 @@ import com.sseotdabwa.buyornot.core.data.repository.UserRepositoryImpl
 import com.sseotdabwa.buyornot.domain.repository.AppPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.AppUpdateRepository
 import com.sseotdabwa.buyornot.domain.repository.AuthRepository
+import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
@@ -30,6 +32,9 @@ internal abstract class DataModule {
 
     @Binds
     abstract fun bindFeedRepository(impl: FeedRepositoryImpl): FeedRepository
+
+    @Binds
+    abstract fun bindCommentRepository(impl: CommentRepositoryImpl): CommentRepository
 
     @Binds
     abstract fun bindNotificationRepository(impl: NotificationRepositoryImpl): NotificationRepository

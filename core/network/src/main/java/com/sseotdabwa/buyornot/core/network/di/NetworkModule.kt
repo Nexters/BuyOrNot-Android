@@ -6,6 +6,7 @@ import com.sseotdabwa.buyornot.core.datastore.UserPreferencesDataSource
 import com.sseotdabwa.buyornot.core.network.AuthEventBus
 import com.sseotdabwa.buyornot.core.network.BuildConfig
 import com.sseotdabwa.buyornot.core.network.api.AuthApiService
+import com.sseotdabwa.buyornot.core.network.api.CommentApiService
 import com.sseotdabwa.buyornot.core.network.api.FeedApiService
 import com.sseotdabwa.buyornot.core.network.api.NotificationApiService
 import com.sseotdabwa.buyornot.core.network.api.UserApiService
@@ -126,6 +127,20 @@ object NetworkModule {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(FeedApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideCommentApiService(
+        @Named("AuthClient") okHttpClient: OkHttpClient,
+        json: Json,
+    ): CommentApiService =
+        Retrofit
+            .Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(CommentApiService::class.java)
 
     @Provides
     @Singleton

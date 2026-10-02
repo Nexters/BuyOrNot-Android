@@ -29,6 +29,9 @@ data class Feed(
     val hasVoted: Boolean,
     val myVoteChoice: VoteChoice?,
     val productLink: String? = null,
+    val commentCount: Int = 0,
+    /** 댓글이 하나도 없으면 null. */
+    val latestComment: CommentPreview? = null,
 ) {
     val viewUrls: List<String> get() = images.map { it.imageUrl }
 }

@@ -184,6 +184,8 @@ private fun FeedItemDto.toDomain(): Feed =
         hasVoted = hasVoted ?: false,
         myVoteChoice = myVoteChoice?.toVoteChoice(),
         productLink = link,
+        commentCount = commentCount,
+        latestComment = latestComment?.toDomain(),
     )
 
 private fun FeedImageDto.toDomain(): FeedImage =
@@ -204,13 +206,6 @@ private fun AuthorDto.toDomain(): Author =
         profileImage = profileImage,
     )
 
-private fun String.toVoteChoice(): VoteChoice? =
-    when (this) {
-        "YES" -> VoteChoice.YES
-        "NO" -> VoteChoice.NO
-        else -> null
-    }
-
 private fun String.toFeedStatus(): FeedStatus =
     when (this) {
         "OPEN" -> FeedStatus.OPEN
@@ -225,4 +220,5 @@ private fun VoteResponse.toDomain(): VoteResult =
         yesCount = yesCount,
         noCount = noCount,
         totalCount = totalCount,
+        feedImageUrl = feedImageUrl,
     )
