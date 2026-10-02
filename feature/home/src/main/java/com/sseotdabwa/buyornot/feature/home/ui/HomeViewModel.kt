@@ -448,6 +448,7 @@ class HomeViewModel @Inject constructor(
                     HomeSideEffect.ShowVoteCompletedSnackbar(
                         feedId = feedId.toLong(),
                         imageUrl = voteResult.feedImageUrl ?: targetFeed.productImageUrls.firstOrNull(),
+                        canComment = uiState.value.userType == UserType.SOCIAL,
                     ),
                 )
                 analytics.track(

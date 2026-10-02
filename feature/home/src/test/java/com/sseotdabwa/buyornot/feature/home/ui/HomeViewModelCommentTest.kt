@@ -55,7 +55,7 @@ class HomeViewModelCommentTest {
             viewModel.handleIntent(HomeIntent.OnVoteClicked(feedId = "1", optionIndex = 0))
 
             assertEquals(
-                HomeSideEffect.ShowVoteCompletedSnackbar(feedId = 1, imageUrl = "https://cdn/thumbnail.jpg"),
+                HomeSideEffect.ShowVoteCompletedSnackbar(feedId = 1, imageUrl = "https://cdn/thumbnail.jpg", canComment = true),
                 viewModel.sideEffect.first(),
             )
         }
@@ -68,7 +68,7 @@ class HomeViewModelCommentTest {
             viewModel.handleIntent(HomeIntent.OnVoteClicked(feedId = "1", optionIndex = 1))
 
             assertEquals(
-                HomeSideEffect.ShowVoteCompletedSnackbar(feedId = 1, imageUrl = "https://cdn/1.jpg"),
+                HomeSideEffect.ShowVoteCompletedSnackbar(feedId = 1, imageUrl = "https://cdn/1.jpg", canComment = true),
                 viewModel.sideEffect.first(),
             )
         }

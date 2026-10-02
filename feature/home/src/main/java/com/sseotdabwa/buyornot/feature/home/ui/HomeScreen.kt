@@ -151,7 +151,7 @@ fun HomeRoute(
                                 snackbarHostState = snackbarHostState,
                                 message = "투표를 완료했어요!",
                                 imageUrl = sideEffect.imageUrl,
-                                actionLabel = "의견 남기기",
+                                actionLabel = if (sideEffect.canComment) "의견 남기기" else null,
                             )
                         if (result == SnackbarResult.ActionPerformed) {
                             onFeedCommentsClick(sideEffect.feedId, true)

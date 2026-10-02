@@ -191,10 +191,14 @@ sealed interface HomeSideEffect {
 
     data object NavigateToUpload : HomeSideEffect
 
-    /** 투표 완료 스낵바 — [의견 남기기]를 누르면 댓글 입력창으로 이동한다. */
+    /**
+     * 투표 완료 스낵바 — [의견 남기기]를 누르면 댓글 입력창으로 이동한다.
+     * @property canComment 비회원은 댓글을 쓸 수 없어 [의견 남기기]를 숨긴다.
+     */
     data class ShowVoteCompletedSnackbar(
         val feedId: Long,
         val imageUrl: String?,
+        val canComment: Boolean,
     ) : HomeSideEffect
 
     data class NavigateToFeedComments(
