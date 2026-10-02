@@ -28,6 +28,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,8 +39,14 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,6 +72,12 @@ private val CardHorizontalPadding = 20.dp
 
 // thread 라인은 프로필 아바타 중심(20 + 32 / 2)에서 내려온다.
 private val ThreadLineX = 36.dp
+private val ThreadLineWidth = 1.2.dp
+private val ThreadCornerRadius = 10.dp
+private val ProfileAvatarSize = 32.dp
+
+// 시안: 라인은 미리보기 카드 상단에서 35.6 아래 높이에서 꺾여 카드 왼쪽 끝에 붙는다.
+private val ThreadJoinOffsetY = 35.6.dp
 
 enum class ImageAspectRatio(
     val ratio: Float,
@@ -117,7 +130,37 @@ fun FeedCard(
     val pagerState = rememberPagerState(pageCount = { productImageUrls.size })
     var tooltipVisible by remember(showProductLinkTooltip) { mutableStateOf(showProductLinkTooltip) }
 
-    Column(modifier = modifier) {
+    val contentStart = if (useThreadLayout) ThreadContentStart else CardHorizontalPadding
+    val showThreadLine = useThreadLayout && latestComment != null
+    val threadLineColor = BuyOrNotTheme.colors.gray300
+    // 라인이 헤더 아바타와 미리보기 카드를 잇도록 두 위치를 측정해 카드 전체 위에 그린다.
+    var headerHeightPx by remember { mutableFloatStateOf(0f) }
+    var previewTopPx by remember { mutableFloatStateOf(0f) }
+
+    Column(
+        modifier =
+            modifier.drawBehind {
+                if (showThreadLine && previewTopPx > 0f) {
+                    val x = ThreadLineX.toPx()
+                    // 아바타는 헤더 행 안에서 세로 가운데 정렬된다.
+                    val startY = (headerHeightPx + ProfileAvatarSize.toPx()) / 2f
+                    val joinY = previewTopPx + ThreadJoinOffsetY.toPx()
+                    val radius = ThreadCornerRadius.toPx()
+                    val path =
+                        Path().apply {
+                            moveTo(x, startY)
+                            lineTo(x, joinY - radius)
+                            quadraticTo(x, joinY, x + radius, joinY)
+                            lineTo(contentStart.toPx(), joinY)
+                        }
+                    drawPath(
+                        path = path,
+                        color = threadLineColor,
+                        style = Stroke(width = ThreadLineWidth.toPx(), cap = StrokeCap.Round),
+                    )
+                }
+            },
+    ) {
         FeedCardHeader(
             profileImageUrl = profileImageUrl,
             nickname = nickname,
@@ -130,25 +173,10 @@ fun FeedCard(
             onBlockClick = onBlockClick,
             onShareClick = onShareClick,
             canBlock = canBlock,
+            modifier = Modifier.onSizeChanged { headerHeightPx = it.height.toFloat() },
         )
 
-        val contentStart = if (useThreadLayout) ThreadContentStart else CardHorizontalPadding
-        val showThreadLine = useThreadLayout && latestComment != null
-        val threadLineColor = BuyOrNotTheme.colors.gray300
-
-        Column(
-            modifier =
-                Modifier.drawBehind {
-                    if (showThreadLine) {
-                        drawLine(
-                            color = threadLineColor,
-                            start = Offset(ThreadLineX.toPx(), 0f),
-                            end = Offset(ThreadLineX.toPx(), size.height),
-                            strokeWidth = 1.dp.toPx(),
-                        )
-                    }
-                },
-        ) {
+        Column {
             Spacer(modifier = Modifier.height(16.dp))
 
             Column(modifier = Modifier.padding(start = contentStart, end = CardHorizontalPadding)) {
@@ -214,6 +242,7 @@ fun FeedCard(
                 content = latestComment.content,
                 modifier =
                     Modifier
+                        .onPlaced { previewTopPx = it.positionInParent().y }
                         .padding(start = contentStart, end = CardHorizontalPadding)
                         .clip(RoundedCornerShape(12.dp))
                         .clickable(onClick = onCommentClick),
