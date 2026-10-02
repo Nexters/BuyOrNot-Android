@@ -190,9 +190,12 @@ class FakeCommentRepository : CommentRepository {
     }
 }
 
-class FakeUserRepository : UserRepository {
+class FakeUserRepository(
+    private val profileError: Throwable? = null,
+) : UserRepository {
     override suspend fun getMyProfile(): UserProfile =
-        UserProfile(id = MY_USER_ID, nickname = "서따봐", profileImage = "", socialAccount = "KAKAO", email = "")
+        profileError?.let { throw it }
+            ?: UserProfile(id = MY_USER_ID, nickname = "서따봐", profileImage = "", socialAccount = "KAKAO", email = "")
 
     override suspend fun deleteMyAccount() = Unit
 

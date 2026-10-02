@@ -27,6 +27,7 @@ class NotificationDetailViewModelTest {
     private fun createViewModel(
         feedRepository: FakeFeedRepository,
         scrollToComments: Boolean = false,
+        userRepository: FakeUserRepository = FakeUserRepository(),
     ) = NotificationDetailViewModel(
         savedStateHandle =
             SavedStateHandle(
@@ -39,7 +40,7 @@ class NotificationDetailViewModelTest {
         feedRepository = feedRepository,
         commentRepository = commentRepository,
         notificationRepository = FakeNotificationRepository(),
-        userRepository = FakeUserRepository(),
+        userRepository = userRepository,
         userPreferencesRepository = FakeUserPreferencesRepository(),
     )
 
@@ -76,6 +77,18 @@ class NotificationDetailViewModelTest {
     }
 
     @Test
+    fun `프로필_조회가_실패해도_저장된_id로_작성자를_판정해_댓글을_연다`() {
+        val viewModel =
+            createViewModel(
+                FakeFeedRepository(testFeed(authorUserId = MY_USER_ID, hasVoted = false)),
+                userRepository = FakeUserRepository(profileError = IllegalStateException("network")),
+            )
+
+        assertTrue(viewModel.uiState.value.isOwner)
+        assertTrue(viewModel.uiState.value.canWriteComment)
+    }
+
+    @Test
     fun `마감된_피드는_투표하지_않아도_댓글을_보지만_쓸_수는_없다`() {
         val viewModel = createViewModel(FakeFeedRepository(testFeed(feedStatus = FeedStatus.CLOSED)))
 
@@ -84,7 +97,7 @@ class NotificationDetailViewModelTest {
     }
 
     @Test
-    fun `댓글을_등록하면_입력을_비우고_댓글_수를_늘리고_목록을_다시_불러온다`() =
+    fun `댓글을_등록하면_입력을_비우고_댓글_수를_늘리고_최신순으로_다시_불러온다`() =
         runTest {
             val viewModel = createViewModel(FakeFeedRepository(testFeed(hasVoted = true, commentCount = 2)))
             viewModel.handleIntent(NotificationDetailIntent.OnCommentInputChanged("  저도 고민돼요  "))
@@ -96,6 +109,8 @@ class NotificationDetailViewModelTest {
             assertEquals("", state.commentInput)
             assertEquals(3, state.feed?.commentCount)
             assertEquals(2, commentRepository.getCalls.size)
+            assertEquals(CommentSort.LATEST, state.commentSort)
+            assertEquals(CommentSort.LATEST, commentRepository.getCalls.last().second)
             assertEquals(
                 NotificationDetailSideEffect.ShowSnackbar(message = "의견을 남겼어요!"),
                 viewModel.sideEffect.first(),

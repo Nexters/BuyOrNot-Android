@@ -9,6 +9,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.CommentErrorCode
+import com.sseotdabwa.buyornot.domain.model.CommentSort
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
@@ -18,6 +19,7 @@ import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -122,9 +124,11 @@ class NotificationDetailViewModel @Inject constructor(
                         Timber.w("Failed to get current user ID")
                     }
                 }
-                feedRepository.getFeed(feedId)
-            }.onSuccess { feed ->
-                val isOwner = currentUserId != null && feed.author.userId == currentUserId
+                // 프로필 조회가 실패해도 작성자는 투표 없이 댓글을 봐야 하므로 로그인 때 저장한 id로 판정한다.
+                val ownerId = currentUserId ?: userPreferencesRepository.userId.first().takeIf { it > 0L }
+                feedRepository.getFeed(feedId) to ownerId
+            }.onSuccess { (feed, ownerId) ->
+                val isOwner = ownerId != null && feed.author.userId == ownerId
                 updateState {
                     it.copy(
                         isLoading = false,
@@ -343,10 +347,12 @@ class NotificationDetailViewModel @Inject constructor(
             runCatchingCancellable {
                 commentRepository.createComment(feedId = feedId, content = content)
             }.onSuccess {
+                // 등록순은 새 댓글이 마지막 페이지에 붙어 첫 페이지에 안 보일 수 있어 최신순으로 바꿔 맨 위에 보여준다.
                 updateState {
                     it.copy(
                         isSubmittingComment = false,
                         commentInput = "",
+                        commentSort = CommentSort.LATEST,
                         feed = it.feed?.let { feed -> feed.copy(commentCount = feed.commentCount + 1) },
                     )
                 }
