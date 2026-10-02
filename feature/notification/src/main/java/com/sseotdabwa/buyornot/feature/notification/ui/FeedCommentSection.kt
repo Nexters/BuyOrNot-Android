@@ -34,7 +34,6 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 import com.sseotdabwa.buyornot.domain.model.Comment
-import com.sseotdabwa.buyornot.domain.model.CommentAuthorType
 import com.sseotdabwa.buyornot.domain.model.CommentSort
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 
@@ -100,17 +99,17 @@ internal fun LazyListScope.commentSection(
     }
 }
 
+// 투표한 사람을 부각하려고 회원/비회원은 구분하지 않고 작성자·투표자에게만 태그를 단다.
 private fun Comment.tag(): CommentTag? =
     when {
         isAuthor -> CommentTag("작성자", CommentTagStyle.BRAND)
-        authorType == CommentAuthorType.GUEST -> CommentTag("비회원")
         else -> voteChoice?.let { CommentTag(it.label()) }
     }
 
-// 피드 작성자·비회원은 투표 이모지를 붙이지 않는다 (서버도 voteChoice를 null로 준다).
+// 피드 작성자는 투표하지 않으므로 이모지를 붙이지 않는다.
 private fun Comment.voteBubble(): CommentVoteBubble? =
     when {
-        isAuthor || authorType == CommentAuthorType.GUEST -> null
+        isAuthor -> null
         voteChoice == VoteChoice.YES -> CommentVoteBubble.BUY
         voteChoice == VoteChoice.NO -> CommentVoteBubble.UNSURE
         else -> null

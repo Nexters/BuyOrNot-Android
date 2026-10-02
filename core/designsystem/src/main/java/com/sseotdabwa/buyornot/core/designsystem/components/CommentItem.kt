@@ -55,7 +55,7 @@ enum class CommentVoteBubble(
 }
 
 enum class CommentTagStyle {
-    /** 투표 선택지·비회원 태그 */
+    /** 작성자·투표 선택지 태그 */
     DEFAULT,
 
     /** "작성자" 태그 */
@@ -338,7 +338,6 @@ private fun CommentItemPreview() {
                 profileImageUrl = null,
                 createdAt = "2시간 전",
                 content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
-                tag = CommentTag("비회원"),
                 menuItems = listOf("신고하기" to {}),
             )
         }
