@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -187,10 +188,10 @@ fun NotificationDetailScreen(
                     enabled = uiState.canWriteComment,
                     submitEnabled = uiState.canSubmitComment,
                     disabledPlaceholder =
-                        if (feed.feedStatus == FeedStatus.CLOSED) {
-                            "마감된 투표에는 댓글을 남길 수 없어요."
-                        } else {
-                            "투표 후 댓글을 남길 수 있어요!"
+                        when {
+                            feed.feedStatus == FeedStatus.CLOSED -> "마감된 투표에는 댓글을 남길 수 없어요."
+                            uiState.isGuest -> "로그인 후 의견을 작성할 수 있어요."
+                            else -> "투표 후 의견을 작성할 수 있어요!"
                         },
                     maxLength = COMMENT_MAX_LENGTH,
                     focusRequester = commentFocusRequester,
@@ -288,7 +289,11 @@ fun NotificationDetailScreen(
                         commentSection(uiState = uiState, onIntent = onIntent)
                     }
 
-                    LoadNextCommentsEffect(listState = listState, onIntent = onIntent)
+                    LoadNextCommentsEffect(
+                        listState = listState,
+                        commentCount = uiState.comments.size,
+                        onIntent = onIntent,
+                    )
                 }
             }
         }
@@ -308,27 +313,34 @@ private fun CommentEntryEffects(
     onIntent: (NotificationDetailIntent) -> Unit,
 ) {
     val isFeedShown = uiState.feed != null && !uiState.isLoading
-    LaunchedEffect(uiState.pendingScrollToComments, isFeedShown) {
-        if (uiState.pendingScrollToComments && isFeedShown) {
-            listState.animateScrollToItem(commentHeaderIndex)
-            onIntent(NotificationDetailIntent.OnCommentScrollHandled)
+    val currentUiState by rememberUpdatedState(uiState)
+    // 스크롤 두 번이 서로를 취소하지 않도록 한 effect에서 처리하고, 중간에 취소돼도 다시 실행되지 않게 finally에서 완료 처리한다.
+    LaunchedEffect(isFeedShown) {
+        if (!isFeedShown) return@LaunchedEffect
+        val state = currentUiState
+        val shouldFocus = state.pendingFocusCommentInput && state.canWriteComment
+        if (!state.pendingScrollToComments && !shouldFocus) {
+            if (state.pendingFocusCommentInput) onIntent(NotificationDetailIntent.OnCommentFocusHandled)
+            return@LaunchedEffect
         }
-    }
-    LaunchedEffect(uiState.pendingFocusCommentInput, isFeedShown, uiState.canWriteComment) {
-        if (uiState.pendingFocusCommentInput && isFeedShown) {
-            if (uiState.canWriteComment) {
-                listState.animateScrollToItem(commentHeaderIndex)
-                focusRequester.requestFocus()
-            }
+        try {
+            listState.animateScrollToItem(commentHeaderIndex)
+            if (shouldFocus) focusRequester.requestFocus()
+        } finally {
+            onIntent(NotificationDetailIntent.OnCommentScrollHandled)
             onIntent(NotificationDetailIntent.OnCommentFocusHandled)
         }
     }
 }
 
-/** 끝에서 [COMMENT_PREFETCH_DISTANCE]개 안쪽까지 스크롤하면 다음 댓글 페이지를 부른다. */
+/**
+ * 끝에서 [COMMENT_PREFETCH_DISTANCE]개 안쪽까지 스크롤하면 다음 댓글 페이지를 부른다.
+ * 끝에 머문 채 목록이 새로 채워지면 [shouldLoadMore]가 바뀌지 않으므로 [commentCount]로도 다시 확인한다.
+ */
 @Composable
 private fun LoadNextCommentsEffect(
     listState: LazyListState,
+    commentCount: Int,
     onIntent: (NotificationDetailIntent) -> Unit,
 ) {
     val shouldLoadMore by remember {
@@ -338,7 +350,7 @@ private fun LoadNextCommentsEffect(
             lastVisible >= layoutInfo.totalItemsCount - COMMENT_PREFETCH_DISTANCE
         }
     }
-    LaunchedEffect(shouldLoadMore) {
+    LaunchedEffect(shouldLoadMore, commentCount) {
         if (shouldLoadMore) onIntent(NotificationDetailIntent.LoadNextComments)
     }
 }
