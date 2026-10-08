@@ -1,6 +1,8 @@
 package com.sseotdabwa.buyornot.feature.mypage.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +35,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
+import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
+import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.domain.model.UserProfile
@@ -44,6 +49,7 @@ import com.sseotdabwa.buyornot.feature.mypage.viewmodel.MyPageViewModel
 fun MyPageRoute(
     versionName: String,
     onBackClick: () -> Unit,
+    onProfileClick: () -> Unit,
     onAccountSettingClick: () -> Unit,
     onBlockedAccountsClick: () -> Unit,
     onPolicyClick: () -> Unit,
@@ -78,6 +84,7 @@ fun MyPageRoute(
         MyPageScreen(
             versionName = versionName,
             onBackClick = onBackClick,
+            onProfileClick = onProfileClick,
             onAccountSettingClick = onAccountSettingClick,
             onBlockedAccountsClick = onBlockedAccountsClick,
             onPolicyClick = onPolicyClick,
@@ -93,6 +100,7 @@ fun MyPageScreen(
     versionName: String,
     uiState: MyPageUiState,
     onBackClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {},
     onAccountSettingClick: () -> Unit = {},
     onBlockedAccountsClick: () -> Unit = {},
     onPolicyClick: () -> Unit = {},
@@ -107,40 +115,11 @@ fun MyPageScreen(
                     .weight(1f)
                     .fillMaxWidth(),
         ) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .padding(top = 10.dp, bottom = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AsyncImage(
-                    modifier =
-                        Modifier
-                            .background(
-                                color = BuyOrNotTheme.colors.gray500,
-                                shape = CircleShape,
-                            ).size(42.dp)
-                            .clip(CircleShape),
-                    model =
-                        ImageRequest
-                            .Builder(LocalContext.current)
-                            .data(uiState.userProfile?.profileImage)
-                            .crossfade(true)
-                            .build(),
-                    contentDescription = "UserProfileImage",
-                    contentScale = ContentScale.Crop,
-                )
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                Text(
-                    text = uiState.userProfile?.nickname ?: "...",
-                    style = BuyOrNotTheme.typography.subTitleS1SemiBold,
-                    color = BuyOrNotTheme.colors.gray950,
-                )
-            }
+            ProfileItem(
+                nickname = uiState.userProfile?.nickname ?: "...",
+                profileImage = uiState.userProfile?.profileImage,
+                onClick = onProfileClick,
+            )
 
             HorizontalDivider(
                 thickness = 2.dp,
@@ -179,6 +158,62 @@ fun MyPageScreen(
                     color = BuyOrNotTheme.colors.gray600,
                 )
             }
+        }
+    }
+}
+
+/** 프로필 이미지와 닉네임. 누르면 프로필 설정으로 이동한다. */
+@Composable
+private fun ProfileItem(
+    nickname: String,
+    profileImage: String?,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp, bottom = 20.dp)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AsyncImage(
+            modifier =
+                Modifier
+                    .size(42.dp)
+                    .background(color = BuyOrNotTheme.colors.gray100, shape = CircleShape)
+                    .border(width = 1.3125.dp, color = BuyOrNotTheme.colors.gray200, shape = CircleShape)
+                    .clip(CircleShape),
+            model =
+                ImageRequest
+                    .Builder(LocalContext.current)
+                    .data(profileImage)
+                    .crossfade(true)
+                    .build(),
+            contentDescription = "UserProfileImage",
+            contentScale = ContentScale.Crop,
+        )
+
+        Spacer(modifier = Modifier.width(10.dp))
+
+        Text(
+            text = nickname,
+            modifier = Modifier.weight(1f),
+            style = BuyOrNotTheme.typography.subTitleS1SemiBold,
+            color = BuyOrNotTheme.colors.gray950,
+        )
+
+        Box(
+            modifier = Modifier.size(40.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = BuyOrNotIcons.ArrowRight.asImageVector(),
+                contentDescription = "프로필 설정",
+                modifier = Modifier.size(20.dp),
+                tint = BuyOrNotTheme.colors.gray600,
+            )
         }
     }
 }
