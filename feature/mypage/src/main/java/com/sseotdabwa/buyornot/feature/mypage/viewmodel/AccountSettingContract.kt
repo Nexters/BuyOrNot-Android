@@ -14,9 +14,6 @@ data class AccountSettingUiState(
 sealed interface AccountSettingIntent {
     data object FetchProfile : AccountSettingIntent
 
-    /** 프로필 수정 후 돌아왔을 때 로딩 화면 없이 프로필만 다시 불러온다. */
-    data object RefreshProfile : AccountSettingIntent
-
     data class Logout(
         val context: Context,
     ) : AccountSettingIntent

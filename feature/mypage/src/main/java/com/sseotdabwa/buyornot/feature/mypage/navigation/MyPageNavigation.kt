@@ -20,8 +20,6 @@ import com.sseotdabwa.buyornot.core.ui.crop.state.AspectRatio
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToFeedBack
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToPrivacyPolicy
 import com.sseotdabwa.buyornot.core.ui.webview.navigateToTerms
-import com.sseotdabwa.buyornot.feature.mypage.viewmodel.AccountSettingIntent
-import com.sseotdabwa.buyornot.feature.mypage.viewmodel.AccountSettingViewModel
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.MyPageIntent
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.MyPageViewModel
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.ProfileEditIntent
@@ -55,7 +53,7 @@ data object BlockedAccountsRoute
 @Serializable
 data object ProfileEditRoute
 
-// 프로필 수정 성공 시 이전 화면들의 savedStateHandle에 남기는 갱신 신호
+// 프로필 수정 성공 시 이전 화면(마이페이지)의 savedStateHandle에 남기는 갱신 신호
 private const val PROFILE_UPDATED_KEY = "profileUpdated"
 
 fun NavController.navigateToMyPage() {
@@ -94,6 +92,7 @@ fun NavGraphBuilder.myPageGraph(
             MyPageScreen(
                 versionName = versionName,
                 onBackClick = navController::popBackStack,
+                onProfileClick = navController::navigateToProfileEdit,
                 onAccountSettingClick = navController::navigateToAccountSetting,
                 onBlockedAccountsClick = navController::navigateToBlockedAccounts,
                 onPolicyClick = navController::navigateToPolicy,
@@ -102,15 +101,11 @@ fun NavGraphBuilder.myPageGraph(
             )
         }
 
-        composable<AccountSettingRoute> { backStackEntry ->
-            val viewModel = hiltViewModel<AccountSettingViewModel>()
-            OnProfileUpdated(backStackEntry) { viewModel.handleIntent(AccountSettingIntent.RefreshProfile) }
+        composable<AccountSettingRoute> {
             AccountSettingScreen(
                 onBackClick = navController::popBackStack,
                 onNavigateToLogin = onNavigateToLogin,
                 onNavigateToWithdrawal = navController::navigateToWithdrawal,
-                onNavigateToProfileEdit = navController::navigateToProfileEdit,
-                viewModel = viewModel,
             )
         }
 
@@ -137,12 +132,7 @@ fun NavGraphBuilder.myPageGraph(
                     navController.navigateToEdit(uri = uri, lockedRatio = AspectRatio.R1x1)
                 },
                 onProfileUpdated = {
-                    // 계정 설정과 그 아래 마이페이지 모두 바뀐 프로필을 다시 불러오게 한다.
                     navController.previousBackStackEntry?.savedStateHandle?.set(PROFILE_UPDATED_KEY, true)
-                    runCatching { navController.getBackStackEntry<MyPageMainRoute>() }
-                        .getOrNull()
-                        ?.savedStateHandle
-                        ?.set(PROFILE_UPDATED_KEY, true)
                     navController.popBackStack()
                 },
                 viewModel = viewModel,
