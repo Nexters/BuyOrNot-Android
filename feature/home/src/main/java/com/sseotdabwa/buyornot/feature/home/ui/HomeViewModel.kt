@@ -832,5 +832,5 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun CommentPreview.toFeedCommentPreview(): FeedCommentPreview =
-        FeedCommentPreview(profileImageUrl = profileImage, nickname = nickname, content = content)
+        FeedCommentPreview(profileImageUrl = profileImage, content = content)
 }

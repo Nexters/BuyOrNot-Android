@@ -75,7 +75,6 @@ import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 /** 피드 카드 하단에 보여줄 최신 댓글 미리보기. */
 data class FeedCommentPreview(
     val profileImageUrl: String?,
-    val nickname: String,
     val content: String,
 )
 
@@ -268,7 +267,6 @@ fun FeedCard(
             Spacer(modifier = Modifier.height(14.dp))
             CommentPreviewCard(
                 profileImageUrl = latestComment.profileImageUrl,
-                nickname = latestComment.nickname,
                 content = latestComment.content,
                 modifier =
                     Modifier
@@ -979,7 +977,6 @@ private fun FeedCardThreadWithCommentPreview() {
             latestComment =
                 FeedCommentPreview(
                     profileImageUrl = null,
-                    nickname = "토봉이날다12456",
                     content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
                 ),
         )

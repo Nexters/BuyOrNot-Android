@@ -280,7 +280,6 @@ private fun VoteBubble(
 @Composable
 fun CommentPreviewCard(
     profileImageUrl: String?,
-    nickname: String,
     content: String,
     modifier: Modifier = Modifier,
 ) {
@@ -294,22 +293,13 @@ fun CommentPreviewCard(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         CommentAvatar(profileImageUrl = profileImageUrl, size = 24)
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = nickname,
-                style = BuyOrNotTheme.typography.titleT6Bold,
-                color = BuyOrNotTheme.colors.gray950,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = content,
-                style = BuyOrNotTheme.typography.bodyB5Medium,
-                color = BuyOrNotTheme.colors.gray900,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
+        Text(
+            text = content,
+            style = BuyOrNotTheme.typography.bodyB5Medium,
+            color = BuyOrNotTheme.colors.gray900,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -364,7 +354,6 @@ private fun CommentPreviewCardPreview() {
     BuyOrNotTheme {
         CommentPreviewCard(
             profileImageUrl = null,
-            nickname = "토봉이날다12456",
             content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
             modifier = Modifier.padding(20.dp),
         )
