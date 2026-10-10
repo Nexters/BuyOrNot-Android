@@ -33,7 +33,11 @@ class HomeViewModelCommentTest {
             createViewModel(
                 FakeFeedRepository(
                     listOf(
-                        testFeed(feedId = 1, commentCount = 12, latestComment = testCommentPreview("겁나 무거워요")),
+                        testFeed(
+                            feedId = 1,
+                            commentCount = 12,
+                            latestComment = testCommentPreview("겁나 무거워요", profileImage = "https://cdn.example.com/p.jpg"),
+                        ),
                         testFeed(feedId = 2),
                     ),
                 ),
@@ -41,7 +45,10 @@ class HomeViewModelCommentTest {
 
         val feeds = viewModel.uiState.value.feeds
         assertEquals(12, feeds[0].commentCount)
-        assertEquals(FeedCommentPreview(profileImageUrl = null, content = "겁나 무거워요"), feeds[0].latestComment)
+        assertEquals(
+            FeedCommentPreview(profileImageUrl = "https://cdn.example.com/p.jpg", content = "겁나 무거워요"),
+            feeds[0].latestComment,
+        )
         assertNull(feeds[1].latestComment)
     }
 

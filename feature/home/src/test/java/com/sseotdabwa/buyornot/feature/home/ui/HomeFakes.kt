@@ -61,15 +61,17 @@ fun testFeed(
     latestComment = latestComment,
 )
 
-fun testCommentPreview(content: String) =
-    CommentPreview(
-        authorType = CommentAuthorType.MEMBER,
-        nickname = "토봉이날다12456",
-        profileImage = null,
-        content = content,
-        isAuthor = false,
-        voteChoice = VoteChoice.YES,
-    )
+fun testCommentPreview(
+    content: String,
+    profileImage: String? = null,
+) = CommentPreview(
+    authorType = CommentAuthorType.MEMBER,
+    nickname = "토봉이날다12456",
+    profileImage = profileImage,
+    content = content,
+    isAuthor = false,
+    voteChoice = VoteChoice.YES,
+)
 
 class FakeFeedRepository(
     var feeds: List<Feed>,

@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,10 +53,10 @@ import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.node.Ref
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
@@ -434,16 +435,21 @@ private fun FeedImageCarousel(
             pageSpacing = pageSpacing,
             modifier = Modifier.animateContentSize(),
         ) { page ->
-            // 툴팁이 뒤에 깔린 상품 이미지를 흐리게 비추도록 이미지를 레이어에 기록해 둔다.
-            val imageLayer = rememberGraphicsLayer()
-            var imageCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+            // 툴팁이 떠 있는 동안만 이미지를 레이어에 기록한다. Android 12 미만은 renderEffect를
+            // 무시해 기록해도 보이는 게 없으니 원래대로 반투명 배경만 깔린다.
+            val showsBlurredTooltip =
+                page == 0 &&
+                    showTooltip &&
+                    !productLink.isNullOrEmpty() &&
+                    !isInPreviewMode &&
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            val backdrop = if (showsBlurredTooltip) rememberToolTipBackdrop() else null
 
             Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .aspectRatio(firstAspectRatio.ratio)
-                        .onGloballyPositioned { imageCoordinates = it }
                         .clip(RoundedCornerShape(ProductImageCornerRadius))
                         .clickable { onFullscreenClick(page) },
             ) {
@@ -461,10 +467,7 @@ private fun FeedImageCarousel(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .drawWithContent {
-                                    imageLayer.record { this@drawWithContent.drawContent() }
-                                    drawLayer(imageLayer)
-                                },
+                                .then(backdrop?.contentModifier() ?: Modifier),
                         contentScale = ContentScale.Crop,
                     )
                 }
@@ -504,7 +507,7 @@ private fun FeedImageCarousel(
                             // 시각적 버튼 높이(30dp) + 간격(6dp) = 36dp
                             FeedCardToolTip(
                                 modifier = Modifier.padding(top = 36.dp),
-                                backdrop = imageCoordinates?.let { ToolTipBackdrop(layer = imageLayer, coordinates = it) },
+                                backdrop = backdrop,
                                 onDismiss = onTooltipDismiss,
                             )
                         }
@@ -757,11 +760,30 @@ private fun LinkButton(
     }
 }
 
-/** 툴팁 뒤에 깔린 콘텐츠. [layer]는 [coordinates]의 좌표계로 기록돼 있어야 한다. */
-class ToolTipBackdrop(
-    val layer: GraphicsLayer,
-    val coordinates: LayoutCoordinates,
-)
+/**
+ * 툴팁이 흐리게 비출 뒤 콘텐츠. [contentModifier]를 건 노드가 레이어에 기록된다.
+ * 좌표를 상태가 아니라 배치 단계에서 받아 첫 프레임부터 흐림이 그려진다.
+ */
+@Stable
+class ToolTipBackdrop internal constructor(
+    internal val layer: GraphicsLayer,
+) {
+    internal val coordinates = Ref<LayoutCoordinates>()
+
+    fun contentModifier(): Modifier =
+        Modifier
+            .onPlaced { coordinates.value = it }
+            .drawWithContent {
+                layer.record { this@drawWithContent.drawContent() }
+                drawLayer(layer)
+            }
+}
+
+@Composable
+fun rememberToolTipBackdrop(): ToolTipBackdrop {
+    val layer = rememberGraphicsLayer()
+    return remember(layer) { ToolTipBackdrop(layer) }
+}
 
 private val ToolTipBackdropBlurRadius = 20.dp
 
@@ -782,22 +804,21 @@ fun FeedCardToolTip(
         }
     val blurLayer = rememberGraphicsLayer()
     val blurRadiusPx = with(LocalDensity.current) { ToolTipBackdropBlurRadius.toPx() }
-    blurLayer.renderEffect = BlurEffect(blurRadiusPx, blurRadiusPx, TileMode.Clamp)
-    var tooltipCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+    remember(blurLayer, blurRadiusPx) {
+        blurLayer.renderEffect = BlurEffect(blurRadiusPx, blurRadiusPx, TileMode.Clamp)
+    }
+    val tooltipCoordinates = remember { Ref<LayoutCoordinates>() }
 
     Row(
         modifier =
             modifier
-                .onGloballyPositioned { tooltipCoordinates = it }
+                .onPlaced { tooltipCoordinates.value = it }
                 .clip(tooltipShape)
                 .drawBehind {
-                    // Android 12 미만은 renderEffect를 무시해 뒤 이미지를 다시 그려도 보이는 게 없다.
-                    // 이때는 원래대로 선명한 이미지 위에 반투명 배경만 깔린다.
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return@drawBehind
-                    val tooltip = tooltipCoordinates ?: return@drawBehind
-                    if (backdrop == null) return@drawBehind
+                    val tooltip = tooltipCoordinates.value ?: return@drawBehind
+                    val content = backdrop?.coordinates?.value ?: return@drawBehind
                     // 툴팁 영역에 해당하는 부분만 보이도록 뒤 콘텐츠를 툴팁 원점으로 당겨 그린다.
-                    val offset = backdrop.coordinates.localPositionOf(tooltip, Offset.Zero)
+                    val offset = content.localPositionOf(tooltip, Offset.Zero)
                     blurLayer.record {
                         translate(left = -offset.x, top = -offset.y) { drawLayer(backdrop.layer) }
                     }

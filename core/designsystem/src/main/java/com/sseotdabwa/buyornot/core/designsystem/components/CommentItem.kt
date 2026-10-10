@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,9 +32,11 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
@@ -266,11 +269,15 @@ private fun VoteBubble(
                 ).background(BuyOrNotTheme.colors.gray0, VoteBubbleShape),
         contentAlignment = Alignment.TopCenter,
     ) {
-        Text(
-            text = bubble.emoji,
-            style = BuyOrNotTheme.typography.bodyB4Medium,
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        // 말풍선은 dp 고정이라 이모지도 글꼴 배율을 따르지 않게 한다.
+        val density = LocalDensity.current
+        CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = 1f)) {
+            Text(
+                text = bubble.emoji,
+                style = BuyOrNotTheme.typography.bodyB4Medium,
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
     }
 }
 
