@@ -191,8 +191,12 @@ fun NotificationDetailScreen(
                     votedOptionLabel = feed.myVoteChoice?.label(),
                     enabled = uiState.canWriteComment,
                     submitEnabled = uiState.canSubmitComment,
-                    // 투표 전·마감 피드는 시안대로 기본 문구를 흐리게 두고, 이유는 댓글 영역 안내 문구로 알린다.
-                    disabledPlaceholder = if (uiState.isGuest) "로그인 후 의견을 작성할 수 있어요." else "댓글을 남겨주세요!",
+                    disabledPlaceholder =
+                        when {
+                            uiState.isGuest -> "로그인 후 의견을 작성할 수 있어요."
+                            feed.feedStatus == FeedStatus.CLOSED -> "투표가 마감되었어요."
+                            else -> "댓글을 남겨주세요!"
+                        },
                     maxLength = COMMENT_MAX_LENGTH,
                     focusRequester = commentFocusRequester,
                     modifier =
