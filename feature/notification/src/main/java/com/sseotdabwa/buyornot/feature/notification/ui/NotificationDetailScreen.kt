@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -163,6 +164,7 @@ fun NotificationDetailScreen(
 
     val listState = rememberLazyListState()
     val commentFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
     val coroutineScope = rememberCoroutineScope()
     val commentHeaderIndex = 1
     val scrollToComments: () -> Unit = {
@@ -291,7 +293,14 @@ fun NotificationDetailScreen(
                             )
                         }
 
-                        commentSection(uiState = uiState, onIntent = onIntent)
+                        commentSection(
+                            uiState = uiState,
+                            onIntent = onIntent,
+                            onWriteCommentClick = {
+                                commentFocusRequester.requestFocus()
+                                keyboardController?.show()
+                            },
+                        )
                     }
 
                     LoadNextCommentsEffect(
