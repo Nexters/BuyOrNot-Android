@@ -203,7 +203,7 @@ fun CommentAvatar(
         modifier
             .size(size.dp)
             .clip(CircleShape)
-            .background(BuyOrNotTheme.colors.gray200)
+            .background(BuyOrNotTheme.colors.gray100)
             .border(width = 1.dp, color = BuyOrNotTheme.colors.gray300, shape = CircleShape)
     if (LocalInspectionMode.current || profileImageUrl.isNullOrEmpty()) {
         Box(modifier = avatarModifier)
