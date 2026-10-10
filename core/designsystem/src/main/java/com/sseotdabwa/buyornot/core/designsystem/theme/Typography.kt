@@ -216,7 +216,7 @@ internal val Typography =
             baseTextStyle.copy(
                 fontWeight = FontWeight.Medium,
                 fontSize = 14.sp,
-                lineHeight = (14 * 1.5f).sp,
+                lineHeight = (14 * 1.4f).sp,
             ),
         paragraphP4Medium =
             baseTextStyle.copy(

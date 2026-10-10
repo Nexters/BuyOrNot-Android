@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
+import android.os.Build
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -26,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -35,17 +37,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.layer.GraphicsLayer
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.node.Ref
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -63,7 +75,7 @@ import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 
 /** 피드 카드 하단에 보여줄 최신 댓글 미리보기. */
 data class FeedCommentPreview(
-    val nickname: String,
+    val profileImageUrl: String?,
     val content: String,
 )
 
@@ -255,7 +267,7 @@ fun FeedCard(
         if (latestComment != null) {
             Spacer(modifier = Modifier.height(14.dp))
             CommentPreviewCard(
-                nickname = latestComment.nickname,
+                profileImageUrl = latestComment.profileImageUrl,
                 content = latestComment.content,
                 modifier =
                     Modifier
@@ -423,6 +435,16 @@ private fun FeedImageCarousel(
             pageSpacing = pageSpacing,
             modifier = Modifier.animateContentSize(),
         ) { page ->
+            // 툴팁이 떠 있는 동안만 이미지를 레이어에 기록한다. Android 12 미만은 renderEffect를
+            // 무시해 기록해도 보이는 게 없으니 원래대로 반투명 배경만 깔린다.
+            val showsBlurredTooltip =
+                page == 0 &&
+                    showTooltip &&
+                    !productLink.isNullOrEmpty() &&
+                    !isInPreviewMode &&
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+            val backdrop = if (showsBlurredTooltip) rememberToolTipBackdrop() else null
+
             Box(
                 modifier =
                     Modifier
@@ -442,7 +464,10 @@ private fun FeedImageCarousel(
                     AsyncImage(
                         model = productImageUrls[page],
                         contentDescription = "Product Image",
-                        modifier = Modifier.fillMaxSize(),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .then(backdrop?.contentModifier() ?: Modifier),
                         contentScale = ContentScale.Crop,
                     )
                 }
@@ -458,10 +483,8 @@ private fun FeedImageCarousel(
                                             colors =
                                                 listOf(
                                                     Color.Transparent,
-                                                    Color(0xFF191919).copy(alpha = 0.3f),
+                                                    Color(0xFF191919).copy(alpha = 0.4f),
                                                 ),
-                                            endY = size.height,
-                                            startY = size.height * 0.64f,
                                         ),
                                 )
                             },
@@ -484,6 +507,7 @@ private fun FeedImageCarousel(
                             // 시각적 버튼 높이(30dp) + 간격(6dp) = 36dp
                             FeedCardToolTip(
                                 modifier = Modifier.padding(top = 36.dp),
+                                backdrop = backdrop,
                                 onDismiss = onTooltipDismiss,
                             )
                         }
@@ -717,7 +741,7 @@ private fun LinkButton(
             modifier =
                 Modifier
                     .background(
-                        color = BuyOrNotTheme.colors.gray1000.copy(alpha = 0.4f),
+                        color = BuyOrNotTheme.colors.black.copy(alpha = 0.4f),
                         shape = RoundedCornerShape(26.dp),
                     ).clip(RoundedCornerShape(26.dp))
                     .padding(
@@ -736,9 +760,37 @@ private fun LinkButton(
     }
 }
 
+/**
+ * 툴팁이 흐리게 비출 뒤 콘텐츠. [contentModifier]를 건 노드가 레이어에 기록된다.
+ * 좌표를 상태가 아니라 배치 단계에서 받아 첫 프레임부터 흐림이 그려진다.
+ */
+@Stable
+class ToolTipBackdrop internal constructor(
+    internal val layer: GraphicsLayer,
+) {
+    internal val coordinates = Ref<LayoutCoordinates>()
+
+    fun contentModifier(): Modifier =
+        Modifier
+            .onPlaced { coordinates.value = it }
+            .drawWithContent {
+                layer.record { this@drawWithContent.drawContent() }
+                drawLayer(layer)
+            }
+}
+
+@Composable
+fun rememberToolTipBackdrop(): ToolTipBackdrop {
+    val layer = rememberGraphicsLayer()
+    return remember(layer) { ToolTipBackdrop(layer) }
+}
+
+private val ToolTipBackdropBlurRadius = 20.dp
+
 @Composable
 fun FeedCardToolTip(
     modifier: Modifier = Modifier,
+    backdrop: ToolTipBackdrop? = null,
     onDismiss: () -> Unit = {},
 ) {
     val tooltipShape =
@@ -750,14 +802,29 @@ fun FeedCardToolTip(
                 arrowOffsetFromRight = 30.dp,
             )
         }
+    val blurLayer = rememberGraphicsLayer()
+    val blurRadiusPx = with(LocalDensity.current) { ToolTipBackdropBlurRadius.toPx() }
+    remember(blurLayer, blurRadiusPx) {
+        blurLayer.renderEffect = BlurEffect(blurRadiusPx, blurRadiusPx, TileMode.Clamp)
+    }
+    val tooltipCoordinates = remember { Ref<LayoutCoordinates>() }
 
     Row(
         modifier =
             modifier
-                .background(
-                    color = Color(0xCC3A3C3E),
-                    shape = tooltipShape,
-                ).nonRippleClickable(onClick = onDismiss)
+                .onPlaced { tooltipCoordinates.value = it }
+                .clip(tooltipShape)
+                .drawBehind {
+                    val tooltip = tooltipCoordinates.value ?: return@drawBehind
+                    val content = backdrop?.coordinates?.value ?: return@drawBehind
+                    // 툴팁 영역에 해당하는 부분만 보이도록 뒤 콘텐츠를 툴팁 원점으로 당겨 그린다.
+                    val offset = content.localPositionOf(tooltip, Offset.Zero)
+                    blurLayer.record {
+                        translate(left = -offset.x, top = -offset.y) { drawLayer(backdrop.layer) }
+                    }
+                    drawLayer(blurLayer)
+                }.background(color = Color(0xCC3A3C3E))
+                .nonRippleClickable(onClick = onDismiss)
                 .padding(top = 13.dp, bottom = 8.dp)
                 .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -930,7 +997,7 @@ private fun FeedCardThreadWithCommentPreview() {
             commentCount = 120,
             latestComment =
                 FeedCommentPreview(
-                    nickname = "토봉이날다12456",
+                    profileImageUrl = null,
                     content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
                 ),
         )

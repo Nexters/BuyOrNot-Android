@@ -26,10 +26,12 @@ import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.designsystem.components.ActionPopup
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
+import com.sseotdabwa.buyornot.core.designsystem.components.CommentEmpty
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentItem
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentTag
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentTagStyle
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentVoteBubble
+import com.sseotdabwa.buyornot.core.designsystem.components.CommentVoteLock
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -40,6 +42,9 @@ import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 
 private const val COMMENT_HEADER_KEY = "comment_header"
+
+/** 댓글 한 건의 위아래 여백. 목록 끝 여백 계산에도 쓴다. */
+internal val CommentItemVerticalPadding = 20.dp
 
 /** 투표 선택지 문구. 태그와 입력창 안내에 쓴다. */
 internal fun VoteChoice.label(): String =
@@ -59,6 +64,7 @@ private val CommentSort.label: String
 internal fun LazyListScope.commentSection(
     uiState: NotificationDetailUiState,
     onIntent: (NotificationDetailIntent) -> Unit,
+    onWriteCommentClick: () -> Unit,
 ) {
     item(key = COMMENT_HEADER_KEY) {
         CommentHeader(
@@ -69,18 +75,20 @@ internal fun LazyListScope.commentSection(
     }
 
     when {
-        !uiState.canViewComments -> item(key = "comment_locked") { CommentMessage("투표 후 댓글을 볼 수 있어요!") }
+        !uiState.canViewComments ->
+            item(key = "comment_locked") { CommentVoteLock(modifier = Modifier.padding(vertical = 40.dp)) }
         uiState.isCommentsLoading && uiState.comments.isEmpty() -> item(key = "comment_loading") { CommentLoading() }
         uiState.comments.isEmpty() ->
             item(key = "comment_empty") {
                 // 마감 피드는 입력창이 막혀 있어 의견을 권하지 않고 막힌 이유를 알린다.
-                CommentMessage(
-                    if (uiState.feed?.feedStatus == FeedStatus.CLOSED) {
-                        "마감된 투표에는 댓글을 남길 수 없어요."
-                    } else {
-                        "투표에 대한 의견을 남겨볼까요?"
-                    },
-                )
+                if (uiState.feed?.feedStatus == FeedStatus.CLOSED) {
+                    CommentMessage("마감된 투표에는 댓글을 남길 수 없어요.")
+                } else {
+                    CommentEmpty(
+                        onWriteClick = onWriteCommentClick.takeIf { uiState.canWriteComment },
+                        modifier = Modifier.padding(top = 50.dp, bottom = 20.dp),
+                    )
+                }
             }
         else -> {
             itemsIndexed(items = uiState.comments, key = { _, comment -> comment.id }) { index, comment ->
@@ -93,7 +101,7 @@ internal fun LazyListScope.commentSection(
                         tag = comment.tag(),
                         voteBubble = comment.voteBubble(),
                         menuItems = comment.menuItems(isGuestViewer = uiState.isGuest, onIntent = onIntent),
-                        modifier = Modifier.padding(vertical = 20.dp),
+                        modifier = Modifier.padding(vertical = CommentItemVerticalPadding),
                     )
                     // 댓글과 댓글 사이에만 두고 마지막 댓글 아래에는 없다.
                     if (index < uiState.comments.lastIndex) {

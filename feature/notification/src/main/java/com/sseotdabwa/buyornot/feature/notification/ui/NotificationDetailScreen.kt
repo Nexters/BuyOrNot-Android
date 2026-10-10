@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -23,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,6 +51,9 @@ import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import kotlinx.coroutines.launch
+
+/** 마지막 댓글과 댓글 입력 바 사이 여백. */
+private val CommentListBottomSpace = 60.dp
 
 /**
  * 알림 상세 화면
@@ -159,6 +164,7 @@ fun NotificationDetailScreen(
 
     val listState = rememberLazyListState()
     val commentFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
     val coroutineScope = rememberCoroutineScope()
     val commentHeaderIndex = 1
     val scrollToComments: () -> Unit = {
@@ -187,8 +193,12 @@ fun NotificationDetailScreen(
                     votedOptionLabel = feed.myVoteChoice?.label(),
                     enabled = uiState.canWriteComment,
                     submitEnabled = uiState.canSubmitComment,
-                    // 투표 전·마감 피드는 시안대로 기본 문구를 흐리게 두고, 이유는 댓글 영역 안내 문구로 알린다.
-                    disabledPlaceholder = if (uiState.isGuest) "로그인 후 의견을 작성할 수 있어요." else "댓글을 남겨주세요!",
+                    disabledPlaceholder =
+                        when {
+                            uiState.isGuest -> "로그인 후 의견을 작성할 수 있어요."
+                            feed.feedStatus == FeedStatus.CLOSED -> "투표가 마감되었어요."
+                            else -> "댓글을 남겨주세요!"
+                        },
                     maxLength = COMMENT_MAX_LENGTH,
                     focusRequester = commentFocusRequester,
                     modifier =
@@ -230,6 +240,7 @@ fun NotificationDetailScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = CommentListBottomSpace - CommentItemVerticalPadding),
                     ) {
                         item(key = "feed") {
                             FeedCard(
@@ -282,7 +293,14 @@ fun NotificationDetailScreen(
                             )
                         }
 
-                        commentSection(uiState = uiState, onIntent = onIntent)
+                        commentSection(
+                            uiState = uiState,
+                            onIntent = onIntent,
+                            onWriteCommentClick = {
+                                commentFocusRequester.requestFocus()
+                                keyboardController?.show()
+                            },
+                        )
                     }
 
                     LoadNextCommentsEffect(

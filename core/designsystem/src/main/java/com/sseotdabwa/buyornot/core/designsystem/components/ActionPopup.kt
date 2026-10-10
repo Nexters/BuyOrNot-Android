@@ -8,6 +8,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -140,12 +142,15 @@ fun ActionPopupContent(
         shadowElevation = shadowElevation,
     ) {
         val pressedColor = BuyOrNotTheme.colors.gray200
+        // 가장 긴 항목에 폭을 맞춰 모든 항목이 같은 폭 안에서 중앙 정렬되게 한다.
         Column(
             modifier =
-                Modifier.padding(
-                    horizontal = 6.dp,
-                    vertical = 10.dp,
-                ),
+                Modifier
+                    .width(IntrinsicSize.Max)
+                    .padding(
+                        horizontal = 6.dp,
+                        vertical = 10.dp,
+                    ),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             items.forEachIndexed { index, (label, onClick) ->
@@ -155,7 +160,7 @@ fun ActionPopupContent(
                     text = label,
                     modifier =
                         Modifier
-                            .then(if (isSelectable) Modifier.width(SelectableItemWidth) else Modifier)
+                            .then(if (isSelectable) Modifier.width(SelectableItemWidth) else Modifier.fillMaxWidth())
                             .clip(RoundedCornerShape(8.dp))
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
@@ -167,7 +172,7 @@ fun ActionPopupContent(
                             ),
                     style = if (isSelected) BuyOrNotTheme.typography.titleT3Bold else BuyOrNotTheme.typography.bodyB3Medium,
                     color = if (isSelected) BuyOrNotTheme.colors.gray950 else BuyOrNotTheme.colors.gray800,
-                    textAlign = if (isSelectable) TextAlign.Center else TextAlign.Start,
+                    textAlign = TextAlign.Center,
                 )
             }
         }
