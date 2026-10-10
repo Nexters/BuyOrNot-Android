@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
+import android.os.Build
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -783,7 +784,6 @@ fun FeedCardToolTip(
         }
     val blurLayer = rememberGraphicsLayer()
     val blurRadiusPx = with(LocalDensity.current) { ToolTipBackdropBlurRadius.toPx() }
-    // Android 12 미만은 renderEffect를 무시해 흐림 없이 배경색만 깔린다.
     blurLayer.renderEffect = BlurEffect(blurRadiusPx, blurRadiusPx, TileMode.Clamp)
     var tooltipCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
@@ -793,6 +793,9 @@ fun FeedCardToolTip(
                 .onGloballyPositioned { tooltipCoordinates = it }
                 .clip(tooltipShape)
                 .drawBehind {
+                    // Android 12 미만은 renderEffect를 무시해 뒤 이미지를 다시 그려도 보이는 게 없다.
+                    // 이때는 원래대로 선명한 이미지 위에 반투명 배경만 깔린다.
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return@drawBehind
                     val tooltip = tooltipCoordinates ?: return@drawBehind
                     if (backdrop == null) return@drawBehind
                     // 툴팁 영역에 해당하는 부분만 보이도록 뒤 콘텐츠를 툴팁 원점으로 당겨 그린다.
