@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -269,8 +268,8 @@ private fun VoteBubble(
     ) {
         Text(
             text = bubble.emoji,
-            style = BuyOrNotTheme.typography.bodyB6Medium,
-            modifier = Modifier.padding(top = 3.dp),
+            style = BuyOrNotTheme.typography.bodyB4Medium,
+            modifier = Modifier.padding(top = 4.dp),
         )
     }
 }
@@ -280,32 +279,37 @@ private fun VoteBubble(
  */
 @Composable
 fun CommentPreviewCard(
+    profileImageUrl: String?,
     nickname: String,
     content: String,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    Row(
         modifier =
             modifier
                 .fillMaxWidth()
                 .background(BuyOrNotTheme.colors.gray100, RoundedCornerShape(12.dp))
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = nickname,
-            style = BuyOrNotTheme.typography.titleT6Bold,
-            color = BuyOrNotTheme.colors.gray950,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = content,
-            style = BuyOrNotTheme.typography.bodyB5Medium,
-            color = BuyOrNotTheme.colors.gray900,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        CommentAvatar(profileImageUrl = profileImageUrl, size = 24)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = nickname,
+                style = BuyOrNotTheme.typography.titleT6Bold,
+                color = BuyOrNotTheme.colors.gray950,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = content,
+                style = BuyOrNotTheme.typography.bodyB5Medium,
+                color = BuyOrNotTheme.colors.gray900,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -359,6 +363,7 @@ private fun CommentItemPreview() {
 private fun CommentPreviewCardPreview() {
     BuyOrNotTheme {
         CommentPreviewCard(
+            profileImageUrl = null,
             nickname = "토봉이날다12456",
             content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
             modifier = Modifier.padding(20.dp),

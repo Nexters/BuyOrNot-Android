@@ -102,7 +102,7 @@ fun CommentInput(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
+                    .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Bottom,
         ) {

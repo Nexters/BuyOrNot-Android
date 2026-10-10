@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -49,6 +50,9 @@ import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import kotlinx.coroutines.launch
+
+/** 마지막 댓글과 댓글 입력 바 사이 여백. */
+private val CommentListBottomSpace = 60.dp
 
 /**
  * 알림 상세 화면
@@ -230,6 +234,7 @@ fun NotificationDetailScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = CommentListBottomSpace - CommentItemVerticalPadding),
                     ) {
                         item(key = "feed") {
                             FeedCard(

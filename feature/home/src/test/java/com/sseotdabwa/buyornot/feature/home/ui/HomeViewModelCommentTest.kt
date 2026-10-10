@@ -41,7 +41,10 @@ class HomeViewModelCommentTest {
 
         val feeds = viewModel.uiState.value.feeds
         assertEquals(12, feeds[0].commentCount)
-        assertEquals(FeedCommentPreview(nickname = "토봉이날다12456", content = "겁나 무거워요"), feeds[0].latestComment)
+        assertEquals(
+            FeedCommentPreview(profileImageUrl = null, nickname = "토봉이날다12456", content = "겁나 무거워요"),
+            feeds[0].latestComment,
+        )
         assertNull(feeds[1].latestComment)
     }
 

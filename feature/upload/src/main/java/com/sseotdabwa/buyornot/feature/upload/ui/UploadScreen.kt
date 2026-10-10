@@ -356,7 +356,7 @@ fun UploadScreen(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 30.dp),
             horizontalArrangement = if (isImeVisible) Arrangement.SpaceBetween else Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {

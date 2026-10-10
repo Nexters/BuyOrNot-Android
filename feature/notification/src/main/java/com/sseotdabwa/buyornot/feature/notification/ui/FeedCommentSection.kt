@@ -41,6 +41,9 @@ import com.sseotdabwa.buyornot.domain.model.VoteChoice
 
 private const val COMMENT_HEADER_KEY = "comment_header"
 
+/** 댓글 한 건의 위아래 여백. 목록 끝 여백 계산에도 쓴다. */
+internal val CommentItemVerticalPadding = 20.dp
+
 /** 투표 선택지 문구. 태그와 입력창 안내에 쓴다. */
 internal fun VoteChoice.label(): String =
     when (this) {
@@ -93,7 +96,7 @@ internal fun LazyListScope.commentSection(
                         tag = comment.tag(),
                         voteBubble = comment.voteBubble(),
                         menuItems = comment.menuItems(isGuestViewer = uiState.isGuest, onIntent = onIntent),
-                        modifier = Modifier.padding(vertical = 20.dp),
+                        modifier = Modifier.padding(vertical = CommentItemVerticalPadding),
                     )
                     // 댓글과 댓글 사이에만 두고 마지막 댓글 아래에는 없다.
                     if (index < uiState.comments.lastIndex) {
