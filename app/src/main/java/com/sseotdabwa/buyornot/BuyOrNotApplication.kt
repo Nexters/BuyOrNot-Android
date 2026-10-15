@@ -14,5 +14,6 @@ class BuyOrNotApplication : Application() {
             Timber.plant(Timber.DebugTree())
         }
         KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
+        installAppCheck()
     }
 }

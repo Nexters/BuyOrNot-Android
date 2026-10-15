@@ -59,11 +59,13 @@ metricsPerformance = "1.0.0"
 json = "20250517"
 
 # Firebase
-firebaseBom = "34.9.0"
+firebaseBom = "35.0.1"
 googleServices = "4.5.0"
 firebaseCrashlytics = "3.0.7"
 firebaseAppDistribution = "5.3.0"
 firebasePerf = "2.0.2"
+# Firebase BOM에 포함되지 않는 Experimental 아티팩트라 버전을 직접 지정한다.
+firebaseAiOndevice = "16.0.0-beta06"
 
 # Code Quality
 ktlint = "14.2.0"
@@ -152,6 +154,10 @@ firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 firebase-config = { group = "com.google.firebase", name = "firebase-config" }
 firebase-performance = { group = "com.google.firebase", name = "firebase-perf" }
+firebase-ai = { group = "com.google.firebase", name = "firebase-ai" }
+firebase-ai-ondevice = { group = "com.google.firebase", name = "firebase-ai-ondevice", version.ref = "firebaseAiOndevice" }
+firebase-appcheck-playintegrity = { group = "com.google.firebase", name = "firebase-appcheck-playintegrity" }
+firebase-appcheck-debug = { group = "com.google.firebase", name = "firebase-appcheck-debug" }
 
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
 

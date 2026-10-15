@@ -165,6 +165,9 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.performance)
+    implementation(libs.firebase.appcheck.playintegrity)
+    debugImplementation(libs.firebase.appcheck.debug)
+    "qaImplementation"(libs.firebase.appcheck.debug)
 
     ksp(libs.hilt.compiler)
 

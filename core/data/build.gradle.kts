@@ -22,6 +22,8 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.config)
+    implementation(libs.firebase.ai)
+    implementation(libs.firebase.ai.ondevice)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
