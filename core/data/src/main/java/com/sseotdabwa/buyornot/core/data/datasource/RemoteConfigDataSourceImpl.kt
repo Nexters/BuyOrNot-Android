@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.core.data.datasource
 
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
+import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.data.draft.PostDraftPrompt
 import com.sseotdabwa.buyornot.domain.model.AppUpdateInfo
 import com.sseotdabwa.buyornot.domain.model.UpdateStrategy
@@ -43,11 +44,15 @@ class RemoteConfigDataSourceImpl @Inject constructor() : RemoteConfigDataSource 
         )
     }
 
-    override suspend fun fetchAiDraftInstruction(): String {
-        // 사용자가 버튼을 누른 뒤 기다리는 중이라 네트워크가 느리면 캐시·기본값으로 진행한다.
-        withTimeoutOrNull(AI_DRAFT_FETCH_TIMEOUT_MILLIS) { fetchAndActivate() }
-        return remoteConfig.getString(KEY_AI_DRAFT_INSTRUCTION).ifBlank { PostDraftPrompt.DEFAULT_INSTRUCTION }
-    }
+    override suspend fun fetchAiDraftInstruction(): String =
+        runCatchingCancellable {
+            // 사용자가 버튼을 누른 뒤 기다리는 중이라 네트워크가 느리면 캐시·기본값으로 진행한다.
+            withTimeoutOrNull(AI_DRAFT_FETCH_TIMEOUT_MILLIS) { fetchAndActivate() }
+            remoteConfig.getString(KEY_AI_DRAFT_INSTRUCTION)
+        }.onFailure { Timber.tag(TAG).w(it, "ai_draft_instruction 조회 실패, 기본값 사용") }
+            .getOrNull()
+            .orEmpty()
+            .ifBlank { PostDraftPrompt.DEFAULT_INSTRUCTION }
 
     // setDefaultsAsync는 기본값 전체를 교체하므로 모든 키의 기본값을 한 번에 등록한다.
     private suspend fun ensureInitialized() {
