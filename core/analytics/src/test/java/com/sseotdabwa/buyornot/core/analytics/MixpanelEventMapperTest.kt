@@ -62,4 +62,25 @@ class MixpanelEventMapperTest {
         assertTrue(props.has("feed_id"))
         assertFalse(props.has("notification_id"))
     }
+
+    @Test
+    fun `AI_초안_생성_성공은_처리_경로와_함께_매핑된다`() {
+        val (name, props) = AnalyticsEvent.AiDraftGenerated(source = "cloud", durationMs = 1200L).toMixpanelEvent()
+
+        assertEquals("ai_draft_generated", name)
+        assertEquals("cloud", props.getString("source"))
+        assertEquals(1200L, props.getLong("duration_ms"))
+    }
+
+    @Test
+    fun `AI_초안_게시는_수정_여부와_함께_매핑된다`() {
+        val (name, props) =
+            AnalyticsEvent
+                .AiDraftSubmitted(source = "on_device", isTitleEdited = true, isContentEdited = false)
+                .toMixpanelEvent()
+
+        assertEquals("ai_draft_submitted", name)
+        assertTrue(props.getBoolean("is_title_edited"))
+        assertFalse(props.getBoolean("is_content_edited"))
+    }
 }

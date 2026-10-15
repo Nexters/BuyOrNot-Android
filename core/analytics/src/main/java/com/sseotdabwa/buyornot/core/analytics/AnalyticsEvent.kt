@@ -82,4 +82,29 @@ sealed class AnalyticsEvent {
         val feedId: Long,
         val isOwner: Boolean,
     ) : AnalyticsEvent()
+
+    /** 업로드 화면에서 AI 초안 생성을 요청. [hadInput]은 덮어쓸 제목·내용이 있었는지 여부. */
+    data class AiDraftRequested(
+        val imageCount: Int,
+        val hadInput: Boolean,
+    ) : AnalyticsEvent()
+
+    /** [source]는 처리 경로(`on_device` / `cloud`). */
+    data class AiDraftGenerated(
+        val source: String,
+        val durationMs: Long,
+    ) : AnalyticsEvent()
+
+    /** [reason]은 `limit_exceeded` / `error`. */
+    data class AiDraftFailed(
+        val reason: String,
+        val durationMs: Long,
+    ) : AnalyticsEvent()
+
+    /** AI 초안을 받은 뒤 게시 완료. 생성 결과를 고쳤는지로 초안 품질을 본다. */
+    data class AiDraftSubmitted(
+        val source: String,
+        val isTitleEdited: Boolean,
+        val isContentEdited: Boolean,
+    ) : AnalyticsEvent()
 }

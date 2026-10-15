@@ -95,6 +95,27 @@ internal fun AnalyticsEvent.toMixpanelEvent(): Pair<String, JSONObject> {
                 props.put("is_owner", isOwner)
                 "share_clicked"
             }
+            is AnalyticsEvent.AiDraftRequested -> {
+                props.put("image_count", imageCount)
+                props.put("had_input", hadInput)
+                "ai_draft_requested"
+            }
+            is AnalyticsEvent.AiDraftGenerated -> {
+                props.put("source", source)
+                props.put("duration_ms", durationMs)
+                "ai_draft_generated"
+            }
+            is AnalyticsEvent.AiDraftFailed -> {
+                props.put("reason", reason)
+                props.put("duration_ms", durationMs)
+                "ai_draft_failed"
+            }
+            is AnalyticsEvent.AiDraftSubmitted -> {
+                props.put("source", source)
+                props.put("is_title_edited", isTitleEdited)
+                props.put("is_content_edited", isContentEdited)
+                "ai_draft_submitted"
+            }
         }
     return name to props
 }

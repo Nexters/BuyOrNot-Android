@@ -27,6 +27,8 @@ data class UploadUiState(
     val showCategorySheet: Boolean = false,
     val showExitDialog: Boolean = false,
     val showPhotoPickerSheet: Boolean = false,
+    val showDraftDialog: Boolean = false,
+    val isGeneratingDraft: Boolean = false,
     val categories: List<FeedCategory> = FeedCategory.entries,
     val lastTouchedField: String? = null,
 ) {
@@ -109,6 +111,14 @@ sealed interface UploadIntent {
 
     data class UpdatePhotoPickerSheetVisibility(
         val isVisible: Boolean,
+    ) : UploadIntent
+
+    data class UpdateDraftDialogVisibility(
+        val isVisible: Boolean,
+    ) : UploadIntent
+
+    data class GenerateDraft(
+        val context: Context,
     ) : UploadIntent
 
     data object NavigateBack : UploadIntent

@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.upload.ui
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.SystemClock
 import android.provider.OpenableColumns
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.analytics.Analytics
@@ -10,22 +11,33 @@ import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
+import com.sseotdabwa.buyornot.domain.exception.PostDraftLimitExceededException
 import com.sseotdabwa.buyornot.domain.model.FeedImage
+import com.sseotdabwa.buyornot.domain.model.PostDraft
+import com.sseotdabwa.buyornot.domain.model.PostDraftSource
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
+import com.sseotdabwa.buyornot.domain.repository.PostDraftRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.feature.upload.util.LinkValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class UploadViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val postDraftRepository: PostDraftRepository,
     private val analytics: Analytics,
 ) : BaseViewModel<UploadUiState, UploadIntent, UploadSideEffect>(UploadUiState()) {
+    // 게시 시 사용자가 AI 초안을 고쳤는지 비교하기 위해 마지막으로 채운 초안을 기억한다.
+    private var appliedDraft: PostDraft? = null
+
     init {
         viewModelScope.launch {
             val userType = userPreferencesRepository.userType.first()
@@ -87,6 +99,11 @@ class UploadViewModel @Inject constructor(
                 updateState {
                     it.copy(showPhotoPickerSheet = intent.isVisible)
                 }
+            is UploadIntent.UpdateDraftDialogVisibility ->
+                updateState {
+                    it.copy(showDraftDialog = intent.isVisible)
+                }
+            is UploadIntent.GenerateDraft -> generateDraft(intent.context)
             UploadIntent.NavigateBack -> {
                 updateState {
                     it.copy(showExitDialog = false, showCategorySheet = false)
@@ -171,6 +188,77 @@ class UploadViewModel @Inject constructor(
         sendSideEffect(UploadSideEffect.LaunchCrop(entry.originalUri, entry.editSpec))
     }
 
+    private fun generateDraft(context: Context) {
+        val state = currentState
+        if (state.isGeneratingDraft) return
+        val imageUri = state.selectedImageUris.firstOrNull() ?: return
+
+        updateState { it.copy(showDraftDialog = false, isGeneratingDraft = true) }
+        analytics.track(
+            AnalyticsEvent.AiDraftRequested(
+                imageCount = state.selectedImages.size,
+                hadInput = state.title.isNotEmpty() || state.content.isNotEmpty(),
+            ),
+        )
+        val startedAt = SystemClock.elapsedRealtime()
+
+        viewModelScope.launch {
+            runCatchingCancellable {
+                val bytes =
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(imageUri)?.use { it.readBytes() }
+                    } ?: throw IllegalStateException("이미지를 읽을 수 없습니다.")
+                postDraftRepository.generateDraft(
+                    image = bytes,
+                    category = state.category,
+                    price = state.price.toIntOrNull(),
+                )
+            }.onSuccess { draft ->
+                appliedDraft = draft
+                updateState {
+                    it.copy(
+                        isGeneratingDraft = false,
+                        title = draft.title,
+                        content = draft.content,
+                        lastTouchedField = "ai_draft",
+                    )
+                }
+                analytics.track(
+                    AnalyticsEvent.AiDraftGenerated(
+                        source = draft.source.analyticsValue,
+                        durationMs = SystemClock.elapsedRealtime() - startedAt,
+                    ),
+                )
+            }.onFailure { e ->
+                Timber.w(e, "AI 초안 생성 실패")
+                updateState { it.copy(isGeneratingDraft = false) }
+                val isLimitExceeded = e is PostDraftLimitExceededException
+                sendSideEffect(
+                    UploadSideEffect.ShowSnackbar(
+                        if (isLimitExceeded) {
+                            "오늘은 AI 작성을 모두 사용했어요. 내일 다시 시도해 주세요."
+                        } else {
+                            "AI 작성에 실패했어요. 직접 입력해 주세요."
+                        },
+                    ),
+                )
+                analytics.track(
+                    AnalyticsEvent.AiDraftFailed(
+                        reason = if (isLimitExceeded) "limit_exceeded" else "error",
+                        durationMs = SystemClock.elapsedRealtime() - startedAt,
+                    ),
+                )
+            }
+        }
+    }
+
+    private val PostDraftSource.analyticsValue: String
+        get() =
+            when (this) {
+                PostDraftSource.ON_DEVICE -> "on_device"
+                PostDraftSource.CLOUD -> "cloud"
+            }
+
     private fun submitFeed(context: Context) {
         if (currentState.isLoading) return
 
@@ -235,6 +323,15 @@ class UploadViewModel @Inject constructor(
                         optionCount = currentState.selectedImageUris.size,
                     ),
                 )
+                appliedDraft?.let { draft ->
+                    analytics.track(
+                        AnalyticsEvent.AiDraftSubmitted(
+                            source = draft.source.analyticsValue,
+                            isTitleEdited = currentState.title != draft.title,
+                            isContentEdited = currentState.content != draft.content,
+                        ),
+                    )
+                }
             }.onFailure {
                 updateState { it.copy(isLoading = false) }
                 sendSideEffect(UploadSideEffect.ShowSnackbar("업로드에 실패했습니다."))

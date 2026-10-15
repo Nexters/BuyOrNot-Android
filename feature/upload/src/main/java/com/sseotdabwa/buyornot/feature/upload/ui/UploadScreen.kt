@@ -188,6 +188,10 @@ fun UploadRoute(
             keyboardController?.hide()
             viewModel.handleIntent(UploadIntent.Submit(context))
         },
+        onGenerateDraft = {
+            keyboardController?.hide()
+            viewModel.handleIntent(UploadIntent.GenerateDraft(context))
+        },
     )
 
     if (uiState.showPhotoPickerSheet) {
@@ -238,6 +242,7 @@ fun UploadScreen(
     onPickImage: () -> Unit,
     onReCropImage: (Int) -> Unit,
     onSubmit: () -> Unit,
+    onGenerateDraft: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val decimalFormat = remember { DecimalFormat("#,###") }
@@ -340,6 +345,7 @@ fun UploadScreen(
                 content = uiState.content,
                 onContentChange = { onIntent(UploadIntent.UpdateContent(it)) },
                 contentFocusRequester = contentFocusRequester,
+                readOnly = uiState.isGeneratingDraft,
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -350,6 +356,14 @@ fun UploadScreen(
                 onReCropImage = onReCropImage,
                 onRemoveImage = { index -> onIntent(UploadIntent.RemoveImage(index)) },
             )
+
+            if (uiState.selectedImages.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                AiDraftButton(
+                    isGenerating = uiState.isGeneratingDraft,
+                    onClick = { onIntent(UploadIntent.UpdateDraftDialogVisibility(true)) },
+                )
+            }
         }
 
         Row(
@@ -410,6 +424,24 @@ fun UploadScreen(
             onDismissRequest = {
                 onIntent(UploadIntent.UpdateCategorySheetVisibility(false))
             },
+        )
+    }
+
+    if (uiState.showDraftDialog) {
+        val willOverwrite = uiState.title.isNotEmpty() || uiState.content.isNotEmpty()
+        BuyOrNotAlertDialog(
+            onDismissRequest = { onIntent(UploadIntent.UpdateDraftDialogVisibility(false)) },
+            title = "AI로 제목·내용을 채울까요?",
+            subText =
+                buildString {
+                    append("첫 번째 사진을 보고 초안을 써 드려요.")
+                    if (willOverwrite) append(" 작성 중인 제목·내용은 바뀌어요.")
+                    append("\n사진은 분석을 위해 Google 서버로 전송될 수 있어요.")
+                },
+            confirmText = "채우기",
+            dismissText = "취소",
+            onConfirm = onGenerateDraft,
+            onDismiss = { onIntent(UploadIntent.UpdateDraftDialogVisibility(false)) },
         )
     }
 
@@ -601,6 +633,7 @@ private fun ContentInputField(
     content: String,
     onContentChange: (String) -> Unit,
     contentFocusRequester: FocusRequester,
+    readOnly: Boolean = false,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -609,6 +642,7 @@ private fun ContentInputField(
             value = title,
             onValueChange = { if (it.length <= 40) onTitleChange(it) },
             modifier = Modifier.fillMaxWidth(),
+            readOnly = readOnly,
             textStyle =
                 BuyOrNotTheme.typography.titleT2Bold.copy(
                     color = BuyOrNotTheme.colors.gray950,
@@ -636,6 +670,7 @@ private fun ContentInputField(
                     .fillMaxWidth()
                     .heightIn(min = 84.dp)
                     .focusRequester(contentFocusRequester),
+            readOnly = readOnly,
             textStyle =
                 BuyOrNotTheme.typography.paragraphP2Medium.copy(
                     color = BuyOrNotTheme.colors.gray950,
@@ -774,6 +809,37 @@ private fun SelectedImagePreview(
 }
 
 @Composable
+private fun AiDraftButton(
+    isGenerating: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = BuyOrNotTheme.colors.gray100,
+        onClick = onClick,
+        enabled = !isGenerating,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = BuyOrNotIcons.Pencil.asImageVector(),
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = BuyOrNotTheme.colors.gray700,
+            )
+            Text(
+                text = if (isGenerating) "AI가 작성하고 있어요…" else "AI로 제목·내용 채우기",
+                style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+                color = BuyOrNotTheme.colors.gray700,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ToolTip(modifier: Modifier = Modifier) {
     val tooltipShape =
         remember {
@@ -849,6 +915,7 @@ private fun UploadScreenPreview() {
             onPickImage = {},
             onReCropImage = {},
             onSubmit = {},
+            onGenerateDraft = {},
         )
     }
 }
