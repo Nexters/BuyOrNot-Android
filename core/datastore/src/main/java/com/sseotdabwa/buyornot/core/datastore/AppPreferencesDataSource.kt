@@ -42,4 +42,12 @@ interface AppPreferencesDataSource {
      * 소프트 업데이트 다이얼로그 마지막 노출 시각 업데이트
      */
     suspend fun updateLastSoftUpdateShownTime(timeMillis: Long)
+
+    /**
+     * [date]의 AI 초안 생성 횟수를 1 늘린다. 이미 [limit]에 도달했으면 늘리지 않고 false를 반환한다.
+     */
+    suspend fun tryConsumePostDraftQuota(
+        date: String,
+        limit: Int,
+    ): Boolean
 }

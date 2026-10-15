@@ -6,6 +6,7 @@ import com.sseotdabwa.buyornot.core.data.repository.AuthRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.CommentRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.FeedRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.NotificationRepositoryImpl
+import com.sseotdabwa.buyornot.core.data.repository.PostDraftRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.UserPreferencesRepositoryImpl
 import com.sseotdabwa.buyornot.core.data.repository.UserRepositoryImpl
 import com.sseotdabwa.buyornot.domain.repository.AppPreferencesRepository
@@ -14,6 +15,7 @@ import com.sseotdabwa.buyornot.domain.repository.AuthRepository
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
+import com.sseotdabwa.buyornot.domain.repository.PostDraftRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import dagger.Binds
@@ -47,4 +49,7 @@ internal abstract class DataModule {
 
     @Binds
     abstract fun bindAppUpdateRepository(impl: AppUpdateRepositoryImpl): AppUpdateRepository
+
+    @Binds
+    abstract fun bindPostDraftRepository(impl: PostDraftRepositoryImpl): PostDraftRepository
 }

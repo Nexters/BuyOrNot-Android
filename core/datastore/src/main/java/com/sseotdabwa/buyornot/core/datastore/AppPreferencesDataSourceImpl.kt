@@ -3,7 +3,9 @@ package com.sseotdabwa.buyornot.core.datastore
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +28,8 @@ class AppPreferencesDataSourceImpl @Inject constructor(
         val HAS_REQUESTED_NOTIFICATION_PERMISSION = booleanPreferencesKey("has_requested_notification_permission")
         val IS_FIRST_RUN = booleanPreferencesKey("is_first_run")
         val LAST_SOFT_UPDATE_SHOWN_TIME = longPreferencesKey("last_soft_update_shown_time")
+        val POST_DRAFT_QUOTA_DATE = stringPreferencesKey("post_draft_quota_date")
+        val POST_DRAFT_QUOTA_COUNT = intPreferencesKey("post_draft_quota_count")
     }
 
     override val preferences: Flow<AppPreferences> =
@@ -67,5 +71,21 @@ class AppPreferencesDataSourceImpl @Inject constructor(
         context.appPreferencesDataStore.edit { prefs ->
             prefs[Keys.LAST_SOFT_UPDATE_SHOWN_TIME] = timeMillis
         }
+    }
+
+    override suspend fun tryConsumePostDraftQuota(
+        date: String,
+        limit: Int,
+    ): Boolean {
+        var consumed = false
+        context.appPreferencesDataStore.edit { prefs ->
+            val count = if (prefs[Keys.POST_DRAFT_QUOTA_DATE] == date) prefs[Keys.POST_DRAFT_QUOTA_COUNT] ?: 0 else 0
+            if (count < limit) {
+                prefs[Keys.POST_DRAFT_QUOTA_DATE] = date
+                prefs[Keys.POST_DRAFT_QUOTA_COUNT] = count + 1
+                consumed = true
+            }
+        }
+        return consumed
     }
 }
