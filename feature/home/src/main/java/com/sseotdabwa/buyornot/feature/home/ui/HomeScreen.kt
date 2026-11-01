@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,6 +44,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -455,6 +457,21 @@ private fun HomeFeedList(
             }
     }
 
+    val currentFeeds by rememberUpdatedState(filteredFeeds)
+    LaunchedEffect(listState, uiState.selectedTab) {
+        if (uiState.selectedTab != HomeTab.FEED) return@LaunchedEffect
+        val tracker = CreateNudgeAnchorTracker()
+        snapshotFlow {
+            CreateNudgeAnchorObservation(
+                isAnchorVisible = listState.isItemBottomVisible(CREATE_NUDGE_ANCHOR_INDEX),
+                firstVisibleItemIndex = listState.firstVisibleItemIndex,
+                firstVisibleItemScrollOffset = listState.firstVisibleItemScrollOffset,
+                content = currentFeeds,
+            )
+        }.filter(tracker::observe)
+            .collect { onIntent(HomeIntent.OnCreateNudgeAnchorReached) }
+    }
+
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,
         onRefresh = { onIntent(HomeIntent.Refresh) },
@@ -472,22 +489,6 @@ private fun HomeFeedList(
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
-                if (filteredFeeds.isNotEmpty() && uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
-                    item {
-                        HomeBanner(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
-                            onClick = onUploadClick,
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        BuyOrNotDivider(
-                            size = BuyOrNotDividerSize.Small,
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                        )
-                    }
-                }
-
                 when {
                     // 1. 데이터가 있으면 로딩 여부와 상관없이 최우선 노출
                     filteredFeeds.isNotEmpty() -> {
@@ -638,7 +639,24 @@ private fun HomeFeedList(
                 onDismissRequest = { onIntent(HomeIntent.DismissSortSheet) },
             )
         }
+
+        if (uiState.showCreateNudge) {
+            FeedCreateNudgeSheet(
+                onRegisterClick = { onIntent(HomeIntent.OnCreateNudgeRegisterClicked) },
+                onDismissRequest = { onIntent(HomeIntent.DismissCreateNudge) },
+            )
+        }
     }
+}
+
+// 피드 카드는 아래 구분선까지 한 아이템이라, 앵커 아이템의 아랫변이 행 사이 경계다.
+private const val CREATE_NUDGE_ANCHOR_INDEX = 1
+
+// 위쪽 contentPadding 영역은 고정 헤더에 가려지므로 보이는 범위에서 뺀다.
+private fun LazyListState.isItemBottomVisible(index: Int): Boolean {
+    val item = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } ?: return false
+    val bottom = item.offset + item.size
+    return bottom >= 0 && bottom <= layoutInfo.viewportEndOffset - layoutInfo.afterContentPadding
 }
 
 /**
