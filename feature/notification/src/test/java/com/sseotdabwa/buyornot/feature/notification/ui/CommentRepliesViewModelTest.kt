@@ -8,8 +8,6 @@ import com.sseotdabwa.buyornot.domain.model.CommentReplyPage
 import com.sseotdabwa.buyornot.domain.model.CommentThread
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -109,21 +107,23 @@ class CommentRepliesViewModelTest {
     }
 
     @Test
-    fun `답글을_삭제하면_목록과_헤더_개수에서_뺀다`() {
-        givenThread(replyIds = listOf(11, 12), myReplyIds = setOf(11))
-        val viewModel = createViewModel()
+    fun `답글을_삭제하면_목록과_헤더_개수에서_빼고_이_화면에서_알린다`() =
+        runTest {
+            givenThread(replyIds = listOf(11, 12), myReplyIds = setOf(11))
+            val viewModel = createViewModel()
 
-        viewModel.handleIntent(CommentRepliesIntent.ShowDeleteDialog(CommentTarget(commentId = 1, replyId = 11)))
-        viewModel.handleIntent(CommentRepliesIntent.OnDeleteConfirmed)
+            viewModel.handleIntent(CommentRepliesIntent.ShowDeleteDialog(CommentTarget(commentId = 1, replyId = 11)))
+            viewModel.handleIntent(CommentRepliesIntent.OnDeleteConfirmed)
 
-        val state = viewModel.uiState.value
-        assertEquals(listOf(1L to 11L), commentRepository.deleteReplyCalls)
-        assertEquals(listOf(12L), state.replies.map { it.id })
-        assertEquals(2, state.totalCount)
-    }
+            val state = viewModel.uiState.value
+            assertEquals(listOf(1L to 11L), commentRepository.deleteReplyCalls)
+            assertEquals(listOf(12L), state.replies.map { it.id })
+            assertEquals(2, state.totalCount)
+            assertEquals(CommentRepliesSideEffect.ShowSnackbar(message = "삭제가 완료되었어요."), viewModel.sideEffect.first())
+        }
 
     @Test
-    fun `삭제된_원댓글의_마지막_답글을_지우면_상세로_돌아간다`() =
+    fun `삭제된_원댓글의_마지막_답글을_지우면_안내를_들고_바로_상세로_돌아간다`() =
         runTest {
             givenThread(replyIds = listOf(11), isDeleted = true, myReplyIds = setOf(11))
             val viewModel = createViewModel()
@@ -132,11 +132,23 @@ class CommentRepliesViewModelTest {
             viewModel.handleIntent(CommentRepliesIntent.OnDeleteConfirmed)
 
             assertEquals(
-                listOf(
-                    CommentRepliesSideEffect.ShowSnackbar(message = "삭제가 완료되었어요."),
-                    CommentRepliesSideEffect.NavigateBack,
-                ),
-                viewModel.sideEffect.take(2).toList(),
+                CommentRepliesSideEffect.NavigateBack(message = "삭제가 완료되었어요."),
+                viewModel.sideEffect.first(),
+            )
+        }
+
+    @Test
+    fun `원댓글을_신고하면_안내를_들고_바로_상세로_돌아간다`() =
+        runTest {
+            givenThread(replyIds = listOf(11))
+            val viewModel = createViewModel()
+
+            viewModel.handleIntent(CommentRepliesIntent.ShowReportDialog(CommentTarget(commentId = 1)))
+            viewModel.handleIntent(CommentRepliesIntent.OnReportConfirmed)
+
+            assertEquals(
+                CommentRepliesSideEffect.NavigateBack(message = "댓글 신고가 접수되었어요."),
+                viewModel.sideEffect.first(),
             )
         }
 
@@ -160,11 +172,8 @@ class CommentRepliesViewModelTest {
             val viewModel = createViewModel()
 
             assertEquals(
-                listOf(
-                    CommentRepliesSideEffect.ShowSnackbar(message = "이미 삭제된 댓글이에요."),
-                    CommentRepliesSideEffect.NavigateBack,
-                ),
-                viewModel.sideEffect.take(2).toList(),
+                CommentRepliesSideEffect.NavigateBack(message = "이미 삭제된 댓글이에요."),
+                viewModel.sideEffect.first(),
             )
         }
 }

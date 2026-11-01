@@ -81,13 +81,15 @@ fun NotificationDetailRoute(
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { sideEffect ->
             when (sideEffect) {
-                is NotificationDetailSideEffect.ShowSnackbar -> {
-                    showBuyOrNotSnackBar(
-                        snackbarHostState = snackbarHostState,
-                        message = sideEffect.message,
-                        iconResource = sideEffect.icon,
-                    )
-                }
+                // 스낵바가 떠 있는 동안에도 다음 이벤트(답글 페이지 이동 등)가 기다리지 않게 따로 띄운다.
+                is NotificationDetailSideEffect.ShowSnackbar ->
+                    launch {
+                        showBuyOrNotSnackBar(
+                            snackbarHostState = snackbarHostState,
+                            message = sideEffect.message,
+                            iconResource = sideEffect.icon,
+                        )
+                    }
                 NotificationDetailSideEffect.NavigateBack -> onBackClick()
                 is NotificationDetailSideEffect.NavigateToReplies -> onRepliesClick(sideEffect.feedId, sideEffect.commentId)
             }

@@ -72,5 +72,8 @@ sealed interface CommentRepliesSideEffect {
         val message: String,
     ) : CommentRepliesSideEffect
 
-    data object NavigateBack : CommentRepliesSideEffect
+    /** @property message 돌아간 화면에서 띄울 안내. 이 화면은 바로 닫히므로 앱 전역 스낵바로 보여준다. */
+    data class NavigateBack(
+        val message: String? = null,
+    ) : CommentRepliesSideEffect
 }

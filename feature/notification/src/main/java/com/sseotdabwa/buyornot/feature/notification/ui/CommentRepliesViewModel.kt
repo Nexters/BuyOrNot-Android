@@ -92,8 +92,7 @@ class CommentRepliesViewModel @Inject constructor(
             }.onFailure { e ->
                 Timber.e(e, "Failed to load comment thread: $commentId")
                 if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) {
-                    sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = "이미 삭제된 댓글이에요."))
-                    sendSideEffect(CommentRepliesSideEffect.NavigateBack)
+                    sendSideEffect(CommentRepliesSideEffect.NavigateBack(message = "이미 삭제된 댓글이에요."))
                     return@onFailure
                 }
                 updateState { it.copy(isLoading = false, isError = it.comment == null) }
@@ -168,16 +167,15 @@ class CommentRepliesViewModel @Inject constructor(
                     commentRepository.deleteReply(feedId = feedId, commentId = target.commentId, replyId = target.replyId)
                 }
             }.onSuccess {
-                sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = "삭제가 완료되었어요."))
-                removeTarget(target, isDeleted = true)
+                removeTarget(target, isDeleted = true, message = "삭제가 완료되었어요.")
             }.onFailure { e ->
                 Timber.e(e, "Failed to delete comment: $target")
-                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeTarget(target, isDeleted = false)
-                sendSideEffect(
-                    CommentRepliesSideEffect.ShowSnackbar(
-                        message = (e as? ApiException).commentActionErrorMessage(defaultMessage = "삭제에 실패했어요."),
-                    ),
-                )
+                val message = (e as? ApiException).commentActionErrorMessage(defaultMessage = "삭제에 실패했어요.")
+                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) {
+                    removeTarget(target, isDeleted = false, message = message)
+                } else {
+                    sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = message))
+                }
             }
         }
     }
@@ -193,53 +191,53 @@ class CommentRepliesViewModel @Inject constructor(
                     commentRepository.reportReply(feedId = feedId, commentId = target.commentId, replyId = target.replyId)
                 }
             }.onSuccess {
-                sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = "댓글 신고가 접수되었어요."))
-                removeTarget(target, isDeleted = false)
+                removeTarget(target, isDeleted = false, message = "댓글 신고가 접수되었어요.")
             }.onFailure { e ->
                 Timber.e(e, "Failed to report comment: $target")
-                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeTarget(target, isDeleted = false)
-                sendSideEffect(
-                    CommentRepliesSideEffect.ShowSnackbar(
-                        message = (e as? ApiException).commentActionErrorMessage(defaultMessage = "신고에 실패했어요."),
-                    ),
-                )
+                val message = (e as? ApiException).commentActionErrorMessage(defaultMessage = "신고에 실패했어요.")
+                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) {
+                    removeTarget(target, isDeleted = false, message = message)
+                } else {
+                    sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = message))
+                }
             }
         }
     }
 
-    /**
-     * 원댓글이 목록에서 완전히 사라지면 이 페이지는 더 보여줄 게 없으므로 상세로 돌아간다.
-     *
-     * @param isDeleted 작성자가 지웠으면 답글이 남은 원댓글을 "삭제된 댓글"로 남긴다. 신고·이미 없음이면 바로 뺀다.
-     */
+    // 원댓글이 목록에서 완전히 사라지면 이 페이지는 더 보여줄 게 없으므로 안내를 들고 상세로 돌아간다.
+    // 작성자가 지운 원댓글(isDeleted)만 답글이 남았을 때 "삭제된 댓글"로 남고, 신고·이미 없음은 바로 빠진다.
     private fun removeTarget(
         target: CommentTarget,
         isDeleted: Boolean,
+        message: String,
     ) {
         val comment = currentState.comment ?: return
         if (target.replyId != null) {
             val remaining = currentState.replies.filterNot { it.id == target.replyId }
-            if (remaining.size == currentState.replies.size) return
             // 삭제된 원댓글은 마지막 답글이 사라지면 서버에서도 정리된다.
             if (comment.isDeleted && remaining.isEmpty()) {
-                sendSideEffect(CommentRepliesSideEffect.NavigateBack)
+                sendSideEffect(CommentRepliesSideEffect.NavigateBack(message = message))
                 return
             }
-            updateState {
-                it.copy(
-                    comment = comment.copy(replyCount = remaining.size),
-                    replies = remaining,
-                    totalCount = (it.totalCount - 1).coerceAtLeast(0),
-                )
+            if (remaining.size != currentState.replies.size) {
+                updateState {
+                    it.copy(
+                        comment = comment.copy(replyCount = remaining.size),
+                        replies = remaining,
+                        totalCount = (it.totalCount - 1).coerceAtLeast(0),
+                    )
+                }
             }
+            sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = message))
             return
         }
         val updated = if (isDeleted) comment.copy(replyCount = currentState.replies.size).afterDeleted() else null
         if (updated == null) {
-            sendSideEffect(CommentRepliesSideEffect.NavigateBack)
+            sendSideEffect(CommentRepliesSideEffect.NavigateBack(message = message))
             return
         }
         updateState { it.copy(comment = updated, totalCount = (it.totalCount - 1).coerceAtLeast(0)) }
+        sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = message))
     }
 
     companion object {

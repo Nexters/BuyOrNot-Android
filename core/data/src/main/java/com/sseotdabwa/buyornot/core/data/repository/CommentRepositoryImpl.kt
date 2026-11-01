@@ -130,7 +130,6 @@ class CommentRepositoryImpl @Inject constructor(
         commentId: Long,
         replyId: Long,
     ) {
-        // 답글 삭제는 원댓글과 동일한 댓글 삭제 API를 replyId로 호출한다.
         withApiException { commentApiService.deleteComment(feedId, replyId).getOrThrow() }
         _commentChanges.tryEmit(feedId)
         _threadChanges.tryEmit(CommentThreadChange(feedId, commentId))

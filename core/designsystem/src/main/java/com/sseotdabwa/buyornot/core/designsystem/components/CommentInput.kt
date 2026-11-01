@@ -96,7 +96,6 @@ fun CommentInput(
             }
         if (inputLabel != null) {
             Spacer(modifier = Modifier.height(10.dp))
-            // 답글 대상 닉네임은 줄을 바꾸지 않고 한 줄로 줄인다.
             val isReplyLabel = replyTargetNickname != null
             Text(
                 text = inputLabel,

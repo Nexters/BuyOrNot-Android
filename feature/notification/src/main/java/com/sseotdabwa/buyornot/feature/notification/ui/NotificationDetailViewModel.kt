@@ -51,6 +51,9 @@ class NotificationDetailViewModel @Inject constructor(
     // 같은 댓글을 연달아 누르면 요청이 겹쳐 서버 상태와 화면이 엇갈리므로 응답 전에는 다시 받지 않는다.
     private val pendingLikeIds = mutableSetOf<Long>()
 
+    // 내 공감도 저장소가 스레드 변경 신호로 다시 알려주는데, 이미 응답으로 맞춘 상태라 그 신호만큼은 다시 받지 않는다.
+    private val ownLikeSignals = mutableMapOf<Long, Int>()
+
     init {
         observeUserPreferences()
         observeThreadChanges()
@@ -58,11 +61,17 @@ class NotificationDetailViewModel @Inject constructor(
         markAsRead()
     }
 
-    /** 답글 페이지에서 바뀐 스레드를 돌아왔을 때 목록에 반영한다. */
+    // 답글 페이지에서 바뀐 스레드를 돌아왔을 때 보던 위치를 잃지 않도록 그 스레드만 다시 받는다.
     private fun observeThreadChanges() {
         viewModelScope.launch {
             commentRepository.threadChanges.collect { change ->
-                if (change.feedId == feedId) refreshThread(change.commentId)
+                if (change.feedId != feedId) return@collect
+                val ownSignals = ownLikeSignals[change.commentId] ?: 0
+                if (ownSignals > 0) {
+                    ownLikeSignals[change.commentId] = ownSignals - 1
+                    return@collect
+                }
+                refreshThread(change.commentId)
             }
         }
     }
@@ -443,9 +452,8 @@ class NotificationDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * @param isDeleted 작성자가 지웠으면 답글이 남은 원댓글을 "삭제된 댓글"로 남긴다. 신고·이미 없음이면 바로 뺀다.
-     */
+    // 작성자가 지운 원댓글은 답글이 남았으면 "삭제된 댓글"로 남는다.
+    // 신고되거나 이미 없는 원댓글은 서버 개수에서 그 아래 답글까지 함께 빠지므로 화면 개수도 같이 줄인다.
     private fun removeTarget(
         target: CommentTarget,
         isDeleted: Boolean,
@@ -461,9 +469,15 @@ class NotificationDetailViewModel @Inject constructor(
                     isDeleted -> comment.afterDeleted()
                     else -> null
                 }
+            val removedCount =
+                if (target.replyId != null || isDeleted) {
+                    1
+                } else {
+                    (if (comment.isDeleted) 0 else 1) + comment.replyCount
+                }
             state.copy(
                 comments = if (updated == null) state.comments - comment else state.comments.updateComment(comment.id) { updated },
-                feed = state.feed?.let { feed -> feed.copy(commentCount = (feed.commentCount - 1).coerceAtLeast(0)) },
+                feed = state.feed?.let { feed -> feed.copy(commentCount = (feed.commentCount - removedCount).coerceAtLeast(0)) },
             )
         }
     }
@@ -472,6 +486,7 @@ class NotificationDetailViewModel @Inject constructor(
         val comment = currentState.comments.firstOrNull { it.id == commentId } ?: return
         if (!currentState.canWriteComment || comment.isDeleted || !pendingLikeIds.add(commentId)) return
         updateState { it.copy(comments = it.comments.updateComment(commentId) { c -> c.toggledLike() }) }
+        ownLikeSignals[commentId] = (ownLikeSignals[commentId] ?: 0) + 1
         viewModelScope.launch {
             runCatchingCancellable {
                 if (comment.isLiked) {
@@ -483,6 +498,8 @@ class NotificationDetailViewModel @Inject constructor(
                 updateState { it.copy(comments = it.comments.updateComment(commentId) { c -> c.withLike(like) }) }
             }.onFailure { e ->
                 Timber.e(e, "Failed to toggle like: $commentId")
+                // 실패한 요청은 저장소가 신호를 보내지 않는다.
+                ownLikeSignals[commentId] = ((ownLikeSignals[commentId] ?: 0) - 1).coerceAtLeast(0)
                 updateState {
                     it.copy(
                         comments =
@@ -516,9 +533,16 @@ class NotificationDetailViewModel @Inject constructor(
             }.onSuccess { refreshed ->
                 updateState { state ->
                     val previous = state.comments.firstOrNull { it.id == commentId } ?: return@updateState state
+                    // 응답을 기다리는 공감은 화면 값이 더 최신이다.
+                    val merged =
+                        if (commentId in pendingLikeIds) {
+                            refreshed.copy(likeCount = previous.likeCount, isLiked = previous.isLiked)
+                        } else {
+                            refreshed
+                        }
                     val countDiff = (refreshed.replyCount - previous.replyCount) + if (refreshed.isDeleted && !previous.isDeleted) -1 else 0
                     state.copy(
-                        comments = state.comments.updateComment(commentId) { refreshed },
+                        comments = state.comments.updateComment(commentId) { merged },
                         feed = state.feed?.let { feed -> feed.copy(commentCount = (feed.commentCount + countDiff).coerceAtLeast(0)) },
                     )
                 }

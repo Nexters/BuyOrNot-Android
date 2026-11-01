@@ -30,11 +30,13 @@ import com.sseotdabwa.buyornot.core.designsystem.components.CommentInput
 import com.sseotdabwa.buyornot.core.designsystem.components.showBuyOrNotSnackBar
 import com.sseotdabwa.buyornot.core.designsystem.components.toDisplayCount
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.domain.model.COMMENT_MAX_LENGTH
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentAuthorType
 import com.sseotdabwa.buyornot.domain.model.CommentReply
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
+import kotlinx.coroutines.launch
 
 @Composable
 fun CommentRepliesRoute(
@@ -43,13 +45,18 @@ fun CommentRepliesRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val appSnackbarState = LocalSnackbarState.current
 
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { sideEffect ->
             when (sideEffect) {
+                // 스낵바가 떠 있는 동안에도 화면 이동이 기다리지 않게 따로 띄운다.
                 is CommentRepliesSideEffect.ShowSnackbar ->
-                    showBuyOrNotSnackBar(snackbarHostState = snackbarHostState, message = sideEffect.message)
-                CommentRepliesSideEffect.NavigateBack -> onBackClick()
+                    launch { showBuyOrNotSnackBar(snackbarHostState = snackbarHostState, message = sideEffect.message) }
+                is CommentRepliesSideEffect.NavigateBack -> {
+                    sideEffect.message?.let(appSnackbarState::show)
+                    onBackClick()
+                }
             }
         }
     }

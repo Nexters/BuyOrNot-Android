@@ -75,7 +75,8 @@ fun NavHostController.navigateToCommentReplies(
     feedId: Long,
     commentId: Long,
 ) {
-    navigate(CommentRepliesRoute(feedId = feedId, commentId = commentId))
+    // 연달아 눌러도 답글 페이지가 겹겹이 쌓이지 않게 한다.
+    navigate(CommentRepliesRoute(feedId = feedId, commentId = commentId)) { launchSingleTop = true }
 }
 
 fun NavHostController.navigateToNotification(navOptions: NavOptions? = null) {

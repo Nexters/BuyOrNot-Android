@@ -20,7 +20,6 @@ internal fun List<Comment>.updateComment(
 
 internal fun Comment.withLike(like: CommentLike): Comment = copy(likeCount = like.likeCount, isLiked = like.isLiked)
 
-/** 서버 응답을 기다리지 않고 공감을 뒤집는다. */
 internal fun Comment.toggledLike(): Comment =
     if (isLiked) {
         copy(isLiked = false, likeCount = (likeCount - 1).coerceAtLeast(0))
