@@ -7,6 +7,7 @@ import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.HotFeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.PresignedUrlResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.VoteResponse
 import okhttp3.RequestBody
@@ -37,6 +38,19 @@ interface FeedApiService {
         @Query("feedStatus") feedStatus: String? = null,
         @Query("category") category: List<String>? = null,
     ): BaseResponse<FeedListResponse>
+
+    /**
+     * 핫플 투표 목록 조회 (페이징). 진행 중인 피드만 투표 수 많은 순으로 내려온다.
+     *
+     * @param cursor 이전 페이지의 nextCursor (첫 페이지는 생략)
+     * @param size 페이지 크기 (최대 50)
+     */
+    @GET("/api/v2/feeds/hot")
+    suspend fun getHotFeedList(
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int = 20,
+        @Query("category") category: List<String>? = null,
+    ): BaseResponse<HotFeedListResponse>
 
     /**
      * 피드 단건 조회

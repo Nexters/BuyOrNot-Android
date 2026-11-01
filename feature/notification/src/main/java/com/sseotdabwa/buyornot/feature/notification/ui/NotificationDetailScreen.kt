@@ -16,11 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -235,8 +233,6 @@ fun NotificationDetailScreen(
 
                 uiState.feed != null -> {
                     val feed = uiState.feed
-                    var showLinkTooltip by remember { mutableStateOf(true) }
-
                     LazyColumn(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
@@ -285,8 +281,6 @@ fun NotificationDetailScreen(
                                 showMoreButton = !uiState.isGuest,
                                 productLink = feed.productLink,
                                 onLinkClick = onLinkClick,
-                                showProductLinkTooltip = showLinkTooltip && feed.productLink != null,
-                                onTooltipDismiss = { showLinkTooltip = false },
                                 onImageClick = onImageClick,
                                 commentCount = feed.commentCount,
                                 onCommentClick = scrollToComments,

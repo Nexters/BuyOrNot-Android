@@ -32,6 +32,8 @@ data class Feed(
     val commentCount: Int = 0,
     /** 댓글이 하나도 없으면 null. */
     val latestComment: CommentPreview? = null,
+    /** 투표 마감 시각. 서버가 내려준 문자열 그대로이며, 내려주지 않는 응답이면 null. */
+    val voteClosedAt: String? = null,
 ) {
     val viewUrls: List<String> get() = images.map { it.imageUrl }
 }

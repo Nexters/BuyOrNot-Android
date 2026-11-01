@@ -23,6 +23,7 @@ import com.sseotdabwa.buyornot.domain.model.VoteResult
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 import com.sseotdabwa.buyornot.domain.repository.FeedList
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
+import com.sseotdabwa.buyornot.domain.repository.HotFeedList
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
@@ -110,6 +111,12 @@ class FakeFeedRepository(
         size: Int,
         feedStatus: String?,
     ): FeedList = error("not used")
+
+    override suspend fun getHotFeedList(
+        cursor: String?,
+        size: Int,
+        category: List<String>?,
+    ): HotFeedList = error("not used")
 
     override suspend fun getPresignedUrl(
         fileName: String,
