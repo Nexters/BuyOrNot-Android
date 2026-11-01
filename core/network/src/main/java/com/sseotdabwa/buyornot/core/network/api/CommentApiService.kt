@@ -3,7 +3,10 @@ package com.sseotdabwa.buyornot.core.network.api
 import com.sseotdabwa.buyornot.core.network.dto.request.CommentRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.CommentCreateResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.CommentLikeResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.CommentListResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.CommentReplyListResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.CommentThreadResponse
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -50,4 +53,37 @@ interface CommentApiService {
         @Path("feedId") feedId: Long,
         @Path("commentId") commentId: Long,
     ): BaseResponse<Unit>
+
+    @POST("/api/v1/feeds/{feedId}/comments/{commentId}/replies")
+    suspend fun createReply(
+        @Path("feedId") feedId: Long,
+        @Path("commentId") commentId: Long,
+        @Body request: CommentRequest,
+    ): BaseResponse<CommentCreateResponse>
+
+    @GET("/api/v1/feeds/{feedId}/comments/{commentId}")
+    suspend fun getCommentThread(
+        @Path("feedId") feedId: Long,
+        @Path("commentId") commentId: Long,
+    ): BaseResponse<CommentThreadResponse>
+
+    @GET("/api/v1/feeds/{feedId}/comments/{commentId}/replies")
+    suspend fun getReplies(
+        @Path("feedId") feedId: Long,
+        @Path("commentId") commentId: Long,
+        @Query("cursor") cursor: Long? = null,
+        @Query("size") size: Int = 20,
+    ): BaseResponse<CommentReplyListResponse>
+
+    @POST("/api/v1/feeds/{feedId}/comments/{commentId}/likes")
+    suspend fun likeComment(
+        @Path("feedId") feedId: Long,
+        @Path("commentId") commentId: Long,
+    ): BaseResponse<CommentLikeResponse>
+
+    @DELETE("/api/v1/feeds/{feedId}/comments/{commentId}/likes")
+    suspend fun unlikeComment(
+        @Path("feedId") feedId: Long,
+        @Path("commentId") commentId: Long,
+    ): BaseResponse<CommentLikeResponse>
 }

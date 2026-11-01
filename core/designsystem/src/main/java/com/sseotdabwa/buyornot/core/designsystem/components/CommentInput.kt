@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -52,7 +53,8 @@ private val VotedLabelMaxWidth = 197.dp
  * 입력이 길어지면 줄바꿈되며 높이가 늘어나고, [COMMENT_INPUT_MAX_LINES]줄부터는 내부 스크롤된다.
  *
  * @param votedOptionLabel 내가 투표한 선택지. null이 아니면 입력창 위에 "'…'에 투표했어요"를 보여준다.
- * @param enabled false면 입력 자체를 막고 [disabledPlaceholder]를 보여준다 (투표 전 등).
+ * @param replyTargetNickname 답글을 다는 원댓글 작성자. null이 아니면 [votedOptionLabel] 대신 "'…' 님에게 답글 남기는 중"을 보여준다.
+ * @param enabled false면 입력 자체를 막고 [disabledPlaceholder]를 보여준다 (로그인 전 등).
  * @param submitEnabled 등록 버튼 활성화 여부. 비어 있거나 금칙어로 거절된 뒤 수정 전이면 false.
  * @param maxLength 이 길이를 넘는 입력은 잘라낸다.
  */
@@ -64,6 +66,7 @@ fun CommentInput(
     profileImageUrl: String?,
     modifier: Modifier = Modifier,
     votedOptionLabel: String? = null,
+    replyTargetNickname: String? = null,
     enabled: Boolean = true,
     submitEnabled: Boolean = value.isNotBlank(),
     placeholder: String = "댓글을 남겨주세요!",
@@ -80,19 +83,34 @@ fun CommentInput(
     ) {
         HorizontalDivider(thickness = 1.dp, color = BuyOrNotTheme.colors.gray300)
 
-        if (votedOptionLabel != null) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text =
+        val inputLabel =
+            when {
+                replyTargetNickname != null ->
+                    AnnotatedString("‘$replyTargetNickname’ 님에게 답글 남기는 중")
+                votedOptionLabel != null ->
                     buildAnnotatedString {
                         append("‘")
                         withStyle(SpanStyle(color = BuyOrNotTheme.colors.orange100)) { append(votedOptionLabel) }
                         append("’에 투표했어요")
+                    }
+                else -> null
+            }
+        if (inputLabel != null) {
+            Spacer(modifier = Modifier.height(10.dp))
+            val isReplyLabel = replyTargetNickname != null
+            Text(
+                text = inputLabel,
+                modifier =
+                    if (isReplyLabel) {
+                        Modifier.padding(horizontal = 20.dp)
+                    } else {
+                        Modifier.widthIn(max = VotedLabelMaxWidth)
                     },
-                modifier = Modifier.widthIn(max = VotedLabelMaxWidth),
                 style = BuyOrNotTheme.typography.bodyB6Medium,
                 color = BuyOrNotTheme.colors.gray800,
                 textAlign = TextAlign.Center,
+                maxLines = if (isReplyLabel) 1 else Int.MAX_VALUE,
+                overflow = TextOverflow.Ellipsis,
             )
         }
 
@@ -197,6 +215,13 @@ private fun CommentInputPreview() {
                 onSubmit = {},
                 profileImageUrl = PreviewImages.avatar(),
                 votedOptionLabel = "사! 가즈아!",
+            )
+            CommentInput(
+                value = "",
+                onValueChange = {},
+                onSubmit = {},
+                profileImageUrl = PreviewImages.avatar(),
+                replyTargetNickname = "토봉이날다12345",
             )
             CommentInput(
                 value = "",

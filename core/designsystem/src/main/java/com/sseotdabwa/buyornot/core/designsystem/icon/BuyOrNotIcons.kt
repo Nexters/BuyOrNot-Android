@@ -55,6 +55,7 @@ object BuyOrNotIcons {
     val Notification = IconResource(R.drawable.ic_notification)
     val NotificationFilled = IconResource(R.drawable.ic_notification_filled)
     val Comment = IconResource(R.drawable.ic_comment)
+    val Heart = IconResource(R.drawable.ic_heart)
 
     // 자르기 비율 아이콘
     val RatioFree = IconResource(R.drawable.ic_ratio_free)

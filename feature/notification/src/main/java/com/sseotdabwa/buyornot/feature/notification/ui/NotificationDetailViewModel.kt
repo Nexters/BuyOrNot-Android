@@ -48,10 +48,32 @@ class NotificationDetailViewModel @Inject constructor(
     // 최신 목록을 덮어쓰지 않게 한다.
     private var commentGeneration = 0
 
+    // 같은 댓글을 연달아 누르면 요청이 겹쳐 서버 상태와 화면이 엇갈리므로 응답 전에는 다시 받지 않는다.
+    private val pendingLikeIds = mutableSetOf<Long>()
+
+    // 내 공감도 저장소가 스레드 변경 신호로 다시 알려주는데, 이미 응답으로 맞춘 상태라 그 신호만큼은 다시 받지 않는다.
+    private val ownLikeSignals = mutableMapOf<Long, Int>()
+
     init {
         observeUserPreferences()
+        observeThreadChanges()
         loadDetail()
         markAsRead()
+    }
+
+    // 답글 페이지에서 바뀐 스레드를 돌아왔을 때 보던 위치를 잃지 않도록 그 스레드만 다시 받는다.
+    private fun observeThreadChanges() {
+        viewModelScope.launch {
+            commentRepository.threadChanges.collect { change ->
+                if (change.feedId != feedId) return@collect
+                val ownSignals = ownLikeSignals[change.commentId] ?: 0
+                if (ownSignals > 0) {
+                    ownLikeSignals[change.commentId] = ownSignals - 1
+                    return@collect
+                }
+                refreshThread(change.commentId)
+            }
+        }
     }
 
     private fun observeUserPreferences() {
@@ -99,13 +121,16 @@ class NotificationDetailViewModel @Inject constructor(
             }
             NotificationDetailIntent.LoadNextComments -> loadNextComments()
             is NotificationDetailIntent.ShowDeleteCommentDialog ->
-                updateState { it.copy(deletingCommentId = intent.commentId) }
-            NotificationDetailIntent.DismissDeleteCommentDialog -> updateState { it.copy(deletingCommentId = null) }
+                updateState { it.copy(deletingComment = intent.target) }
+            NotificationDetailIntent.DismissDeleteCommentDialog -> updateState { it.copy(deletingComment = null) }
             NotificationDetailIntent.OnDeleteCommentConfirmed -> handleDeleteComment()
             is NotificationDetailIntent.ShowReportCommentDialog ->
-                updateState { it.copy(reportingCommentId = intent.commentId) }
-            NotificationDetailIntent.DismissReportCommentDialog -> updateState { it.copy(reportingCommentId = null) }
+                updateState { it.copy(reportingComment = intent.target) }
+            NotificationDetailIntent.DismissReportCommentDialog -> updateState { it.copy(reportingComment = null) }
             NotificationDetailIntent.OnReportCommentConfirmed -> handleReportComment()
+            is NotificationDetailIntent.OnReplyClicked ->
+                sendSideEffect(NotificationDetailSideEffect.NavigateToReplies(feedId = feedId, commentId = intent.commentId))
+            is NotificationDetailIntent.OnLikeClicked -> handleLike(intent.commentId)
             NotificationDetailIntent.OnCommentScrollHandled -> updateState { it.copy(pendingScrollToComments = false) }
             NotificationDetailIntent.OnCommentFocusHandled -> updateState { it.copy(pendingFocusCommentInput = false) }
         }
@@ -271,7 +296,7 @@ class NotificationDetailViewModel @Inject constructor(
                         feedCategory = feed.category.name,
                     ),
                 )
-                // 투표해야 댓글이 열린다.
+                // 내가 쓴 댓글에 투표 태그가 붙도록 다시 불러온다.
                 loadComments()
             }.onFailure { e ->
                 Timber.e(e, "Failed to vote feed: $feedId")
@@ -366,26 +391,28 @@ class NotificationDetailViewModel @Inject constructor(
                 updateState {
                     it.copy(
                         isSubmittingComment = false,
-                        isCommentSubmitBlocked = apiError?.code in SUBMIT_BLOCKING_ERROR_CODES,
+                        isCommentSubmitBlocked = apiError.blocksResubmit(),
                     )
                 }
-                sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = apiError.createErrorMessage()))
+                sendSideEffect(
+                    NotificationDetailSideEffect.ShowSnackbar(message = apiError.createErrorMessage(defaultMessage = "댓글 등록에 실패했어요.")),
+                )
             }
         }
     }
 
     private fun handleDeleteComment() {
-        val commentId = currentState.deletingCommentId ?: return
-        updateState { it.copy(deletingCommentId = null) }
+        val target = currentState.deletingComment ?: return
+        updateState { it.copy(deletingComment = null) }
         viewModelScope.launch {
             runCatchingCancellable {
-                commentRepository.deleteComment(feedId = feedId, commentId = commentId)
+                commentRepository.delete(feedId = feedId, target = target)
             }.onSuccess {
-                removeComment(commentId)
+                removeTarget(target, isDeleted = true)
                 sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = "삭제가 완료되었어요."))
             }.onFailure { e ->
-                Timber.e(e, "Failed to delete comment: $commentId")
-                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeComment(commentId)
+                Timber.e(e, "Failed to delete comment: $target")
+                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeTarget(target, isDeleted = false)
                 sendSideEffect(
                     NotificationDetailSideEffect.ShowSnackbar(
                         message = (e as? ApiException).commentActionErrorMessage(defaultMessage = "삭제에 실패했어요."),
@@ -396,18 +423,18 @@ class NotificationDetailViewModel @Inject constructor(
     }
 
     private fun handleReportComment() {
-        val commentId = currentState.reportingCommentId ?: return
-        updateState { it.copy(reportingCommentId = null) }
+        val target = currentState.reportingComment ?: return
+        updateState { it.copy(reportingComment = null) }
         viewModelScope.launch {
             runCatchingCancellable {
-                commentRepository.reportComment(feedId = feedId, commentId = commentId)
+                commentRepository.report(feedId = feedId, target = target)
             }.onSuccess {
                 // 신고된 댓글은 서버 목록에서 빠지므로 화면에서도 바로 뺀다.
-                removeComment(commentId)
+                removeTarget(target, isDeleted = false)
                 sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = "댓글 신고가 접수되었어요."))
             }.onFailure { e ->
-                Timber.e(e, "Failed to report comment: $commentId")
-                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeComment(commentId)
+                Timber.e(e, "Failed to report comment: $target")
+                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeTarget(target, isDeleted = false)
                 sendSideEffect(
                     NotificationDetailSideEffect.ShowSnackbar(
                         message = (e as? ApiException).commentActionErrorMessage(defaultMessage = "신고에 실패했어요."),
@@ -417,34 +444,96 @@ class NotificationDetailViewModel @Inject constructor(
         }
     }
 
-    private fun removeComment(commentId: Long) {
+    // 작성자가 지운 원댓글은 답글이 남았으면 "삭제된 댓글"로 남는다.
+    // 신고되거나 이미 없는 원댓글은 서버 개수에서 그 아래 답글까지 함께 빠지므로 화면 개수도 같이 줄인다.
+    private fun removeTarget(
+        target: CommentTarget,
+        isDeleted: Boolean,
+    ) {
         updateState { state ->
-            if (state.comments.none { it.id == commentId }) return@updateState state
+            val comment = state.comments.firstOrNull { it.id == target.commentId } ?: return@updateState state
+            val updated =
+                when {
+                    target.replyId != null -> {
+                        if (comment.replies.none { it.id == target.replyId }) return@updateState state
+                        comment.withoutReply(target.replyId)
+                    }
+                    isDeleted -> comment.afterDeleted()
+                    else -> null
+                }
+            val removedCount =
+                if (target.replyId != null || isDeleted) {
+                    1
+                } else {
+                    (if (comment.isDeleted) 0 else 1) + comment.replyCount
+                }
             state.copy(
-                comments = state.comments.filterNot { it.id == commentId },
-                feed = state.feed?.let { feed -> feed.copy(commentCount = (feed.commentCount - 1).coerceAtLeast(0)) },
+                comments = if (updated == null) state.comments - comment else state.comments.updateComment(comment.id) { updated },
+                feed = state.feed?.let { feed -> feed.copy(commentCount = (feed.commentCount - removedCount).coerceAtLeast(0)) },
             )
         }
     }
 
-    // 금칙어·빈도 제한은 서버 메시지를 그대로 보여준다 (API 명세).
-    private fun ApiException?.createErrorMessage(): String =
-        when (this?.code) {
-            CommentErrorCode.PROFANITY,
-            CommentErrorCode.RATE_LIMITED,
-            CommentErrorCode.PROFANITY_BLOCKED,
-            -> message ?: DEFAULT_CREATE_ERROR_MESSAGE
-            CommentErrorCode.CLOSED_FEED -> "마감된 투표에는 댓글을 남길 수 없어요."
-            else -> DEFAULT_CREATE_ERROR_MESSAGE
+    private fun handleLike(commentId: Long) {
+        val comment = currentState.comments.firstOrNull { it.id == commentId } ?: return
+        if (!currentState.canWriteComment || comment.isDeleted || !pendingLikeIds.add(commentId)) return
+        updateState { it.copy(comments = it.comments.updateComment(commentId) { c -> c.toggledLike() }) }
+        ownLikeSignals[commentId] = (ownLikeSignals[commentId] ?: 0) + 1
+        viewModelScope.launch {
+            runCatchingCancellable {
+                commentRepository.toggleLike(feedId = feedId, comment = comment)
+            }.onSuccess { like ->
+                updateState { it.copy(comments = it.comments.updateComment(commentId) { c -> c.withLike(like) }) }
+            }.onFailure { e ->
+                Timber.e(e, "Failed to toggle like: $commentId")
+                // 실패한 요청은 저장소가 신호를 보내지 않는다.
+                ownLikeSignals[commentId] = ((ownLikeSignals[commentId] ?: 0) - 1).coerceAtLeast(0)
+                updateState {
+                    it.copy(
+                        comments =
+                            it.comments.updateComment(commentId) { c ->
+                                c.copy(likeCount = comment.likeCount, isLiked = comment.isLiked)
+                            },
+                    )
+                }
+                sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = (e as? ApiException).likeErrorMessage()))
+            }
+            pendingLikeIds.remove(commentId)
         }
+    }
 
-    private fun ApiException?.commentActionErrorMessage(defaultMessage: String): String =
-        when (this?.code) {
-            CommentErrorCode.NOT_FOUND -> "이미 삭제된 댓글이에요."
-            CommentErrorCode.SELF_REPORT -> "내가 쓴 댓글은 신고할 수 없어요."
-            CommentErrorCode.ALREADY_REPORTED -> "이미 신고한 댓글이에요."
-            else -> defaultMessage
+    // 답글 목록은 원댓글 응답에 모두 들어 있지만, 한 스레드만 다시 받을 때는 답글 API를 끝까지 넘긴다.
+    private fun refreshThread(commentId: Long) {
+        if (currentState.comments.none { it.id == commentId }) return
+        viewModelScope.launch {
+            runCatchingCancellable {
+                val thread = commentRepository.getCommentThread(feedId = feedId, commentId = commentId)
+                thread.comment.copy(replies = commentRepository.getAllReplies(feedId = feedId, commentId = commentId))
+            }.onSuccess { refreshed ->
+                updateState { state ->
+                    val previous = state.comments.firstOrNull { it.id == commentId } ?: return@updateState state
+                    // 응답을 기다리는 공감은 화면 값이 더 최신이다.
+                    val merged =
+                        if (commentId in pendingLikeIds) {
+                            refreshed.copy(likeCount = previous.likeCount, isLiked = previous.isLiked)
+                        } else {
+                            refreshed
+                        }
+                    val countDiff = (refreshed.replyCount - previous.replyCount) + if (refreshed.isDeleted && !previous.isDeleted) -1 else 0
+                    state.copy(
+                        comments = state.comments.updateComment(commentId) { merged },
+                        feed = state.feed?.let { feed -> feed.copy(commentCount = (feed.commentCount + countDiff).coerceAtLeast(0)) },
+                    )
+                }
+            }.onFailure { e ->
+                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) {
+                    removeTarget(CommentTarget(commentId), isDeleted = false)
+                } else {
+                    Timber.w(e, "Failed to refresh comment thread: $commentId")
+                }
+            }
         }
+    }
 
     private fun markAsRead() {
         if (notificationId <= 0L) return
@@ -459,14 +548,5 @@ class NotificationDetailViewModel @Inject constructor(
         // NotificationDetailRoute의 인자 이름과 같아야 한다.
         const val KEY_SCROLL_TO_COMMENTS = "scrollToComments"
         const val KEY_FOCUS_COMMENT_INPUT = "focusCommentInput"
-        private const val DEFAULT_CREATE_ERROR_MESSAGE = "댓글 등록에 실패했어요."
-
-        // 같은 내용으로 다시 보내도 또 거절되는 에러라 내용을 고칠 때까지 등록 버튼을 막는다.
-        private val SUBMIT_BLOCKING_ERROR_CODES =
-            setOf(
-                CommentErrorCode.PROFANITY,
-                CommentErrorCode.RATE_LIMITED,
-                CommentErrorCode.PROFANITY_BLOCKED,
-            )
     }
 }
