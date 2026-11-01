@@ -274,7 +274,7 @@ private fun HomeTopBarSection(
     onProfileClick: () -> Unit,
 ) {
     // 비회원 진입 경로를 없앤 뒤로는 홈에 도달한 사용자가 곧 로그인 사용자다.
-    // 스플래시가 UserType.GUEST를 로그인 화면으로 보내므로 게스트는 여기까지 오지 못한다.
+    // 스플래시가 UserType.NOT_LOGGED_IN을 로그인 화면으로 보내므로 로그인하지 않은 사용자는 여기까지 오지 못한다.
     HomeTopBar(
         onNotificationClick = onNotificationClick,
         onProfileClick = onProfileClick,

@@ -70,7 +70,7 @@ private fun DatastoreUserPreferences.toTokenDomain(): UserToken =
  */
 private fun DatastoreUserType.toDomain(): UserType =
     when (this) {
-        DatastoreUserType.GUEST -> UserType.GUEST
+        DatastoreUserType.NOT_LOGGED_IN -> UserType.NOT_LOGGED_IN
         DatastoreUserType.SOCIAL -> UserType.SOCIAL
     }
 
@@ -79,6 +79,6 @@ private fun DatastoreUserType.toDomain(): UserType =
  */
 private fun UserType.toDatastore(): DatastoreUserType =
     when (this) {
-        UserType.GUEST -> DatastoreUserType.GUEST
+        UserType.NOT_LOGGED_IN -> DatastoreUserType.NOT_LOGGED_IN
         UserType.SOCIAL -> DatastoreUserType.SOCIAL
     }
