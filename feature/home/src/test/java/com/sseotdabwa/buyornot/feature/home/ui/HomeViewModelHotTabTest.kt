@@ -98,4 +98,30 @@ class HomeViewModelHotTabTest {
 
         assertEquals(5L, feedRepository.feedListRequests.last().cursor)
     }
+
+    @Test
+    fun `이미_적용한_초기_탭_요청이_다시_오면_사용자가_고른_탭을_유지한다`() {
+        val feedRepository = FakeFeedRepository(listOf(testFeed(feedId = 1)))
+        feedRepository.hotPages = mapOf(null to HotFeedList(feeds = listOf(testFeed(feedId = 7)), nextCursor = null, hasNext = false))
+        val viewModel = createViewModel(feedRepository)
+        viewModel.handleIntent(HomeIntent.ApplyInitialTab(tab = HomeTab.FEED, requestId = 0L))
+        viewModel.handleIntent(HomeIntent.OnTabSelected(HomeTab.HOT))
+
+        viewModel.handleIntent(HomeIntent.ApplyInitialTab(tab = HomeTab.FEED, requestId = 0L))
+
+        assertEquals(HomeTab.HOT, viewModel.uiState.value.selectedTab)
+    }
+
+    @Test
+    fun `새_초기_탭_요청은_사용자가_고른_탭보다_우선한다`() {
+        val feedRepository = FakeFeedRepository(listOf(testFeed(feedId = 1)))
+        feedRepository.hotPages = mapOf(null to HotFeedList(feeds = listOf(testFeed(feedId = 7)), nextCursor = null, hasNext = false))
+        val viewModel = createViewModel(feedRepository)
+        viewModel.handleIntent(HomeIntent.ApplyInitialTab(tab = HomeTab.FEED, requestId = 0L))
+        viewModel.handleIntent(HomeIntent.OnTabSelected(HomeTab.HOT))
+
+        viewModel.handleIntent(HomeIntent.ApplyInitialTab(tab = HomeTab.FEED, requestId = 1L))
+
+        assertEquals(HomeTab.FEED, viewModel.uiState.value.selectedTab)
+    }
 }

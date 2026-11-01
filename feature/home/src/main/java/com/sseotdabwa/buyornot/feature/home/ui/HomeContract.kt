@@ -103,6 +103,12 @@ data class HomeUiState(
  * 홈 화면에서 발생하는 사용자 액션 (MVI Intent)
  */
 sealed interface HomeIntent {
+    /** 네비게이션으로 받은 초기 탭. 같은 [requestId]는 한 번만 적용한다. */
+    data class ApplyInitialTab(
+        val tab: HomeTab,
+        val requestId: Long,
+    ) : HomeIntent
+
     data class OnTabSelected(
         val tab: HomeTab,
     ) : HomeIntent

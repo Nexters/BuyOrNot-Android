@@ -45,7 +45,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -126,14 +125,8 @@ fun HomeRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    // 댓글 등 다른 화면에서 돌아오면 이 컴포저블이 다시 시작되므로, 같은 요청을 또 적용하면 사용자가 고른 탭이 초기 탭으로 돌아간다.
-    var appliedTabRequestId by rememberSaveable { mutableStateOf<Long?>(null) }
     LaunchedEffect(tabRequestId) {
-        if (appliedTabRequestId == tabRequestId) return@LaunchedEffect
-        appliedTabRequestId = tabRequestId
-        if (uiState.selectedTab != initialTab) {
-            viewModel.handleIntent(HomeIntent.OnTabSelected(initialTab))
-        }
+        viewModel.handleIntent(HomeIntent.ApplyInitialTab(tab = initialTab, requestId = tabRequestId))
     }
 
     // SideEffect 처리

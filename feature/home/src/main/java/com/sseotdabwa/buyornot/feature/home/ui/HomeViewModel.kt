@@ -51,6 +51,9 @@ class HomeViewModel @Inject constructor(
     private val feedFirstLoadTrace = performance.newTrace(TraceNames.FEED_FIRST_LOAD)
 
     private var currentUserId: Long? = null
+
+    // 다른 화면에서 돌아오면 홈 컴포저블이 초기 탭 요청을 다시 보내므로, 이미 적용한 요청은 무시해 사용자가 고른 탭을 지킨다.
+    private var appliedTabRequestId: Long? = null
     private var isUserIdLoaded = false
     private var unreadCountJob: Job? = null
 
@@ -224,6 +227,7 @@ class HomeViewModel @Inject constructor(
 
     override fun handleIntent(intent: HomeIntent) {
         when (intent) {
+            is HomeIntent.ApplyInitialTab -> applyInitialTab(intent.tab, intent.requestId)
             is HomeIntent.OnTabSelected -> handleTabSelection(intent.tab)
             is HomeIntent.OnFilterSelected -> handleFilterSelection(intent.filter)
             is HomeIntent.OnCreateNudgeAnchorReached -> handleCreateNudgeAnchorReached()
@@ -281,6 +285,15 @@ class HomeViewModel @Inject constructor(
                     ),
                 )
         }
+    }
+
+    private fun applyInitialTab(
+        tab: HomeTab,
+        requestId: Long,
+    ) {
+        if (appliedTabRequestId == requestId) return
+        appliedTabRequestId = requestId
+        if (uiState.value.selectedTab != tab) handleTabSelection(tab)
     }
 
     private fun handleTabSelection(tab: HomeTab) {
