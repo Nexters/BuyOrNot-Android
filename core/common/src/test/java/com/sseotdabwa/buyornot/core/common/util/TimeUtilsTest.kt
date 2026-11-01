@@ -113,8 +113,13 @@ class TimeUtilsTest {
     }
 
     @Test
-    fun `1초가_안_되는_자투리는_버린다`() {
-        assertEquals("00:00:59", TimeUtils.formatRemainingTime(59_999L))
+    fun `1초가_안_되는_자투리는_올린다`() {
+        assertEquals("00:01:00", TimeUtils.formatRemainingTime(59_001L))
+    }
+
+    @Test
+    fun `마감_직전_1초_미만이_남으면_00시_00분_01초로_표시한다`() {
+        assertEquals("00:00:01", TimeUtils.formatRemainingTime(1L))
     }
 
     @Test

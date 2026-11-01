@@ -73,11 +73,11 @@ object TimeUtils {
             ?.toEpochMilli()
 
     /**
-     * 남은 시간을 `HH:MM:SS`로 표시한다. 시간 자리는 24에서 넘어가지 않고 그대로 쌓이며,
-     * 이미 지난 시각(음수)은 `00:00:00`이다.
+     * 남은 시간을 `HH:MM:SS`로 표시한다. 시간 자리는 하루를 넘겨도 일 단위로 넘어가지 않고 쌓인다.
+     * 초 단위에 못 미치는 자투리는 올려서, 마감 전에는 `00:00:00`이 보이지 않는다. 이미 지난 시각은 `00:00:00`이다.
      */
     fun formatRemainingTime(remainingMillis: Long): String {
-        val totalSeconds = remainingMillis.coerceAtLeast(0L) / MILLIS_PER_SECOND
+        val totalSeconds = (remainingMillis.coerceAtLeast(0L) + MILLIS_PER_SECOND - 1) / MILLIS_PER_SECOND
         val hours = totalSeconds / SECONDS_PER_HOUR
         val minutes = totalSeconds % SECONDS_PER_HOUR / SECONDS_PER_MINUTE
         val seconds = totalSeconds % SECONDS_PER_MINUTE

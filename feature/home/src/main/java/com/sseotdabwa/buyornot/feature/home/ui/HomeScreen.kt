@@ -45,6 +45,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -105,6 +106,7 @@ import kotlinx.coroutines.launch
  * @param onProfileClick 프로필 아이콘 클릭 콜백
  * @param onUploadClick 업로드 화면으로 이동 콜백
  * @param initialTab 초기 선택 탭 (기본값: FEED)
+ * @param tabRequestId [initialTab] 요청을 구분하는 값. 이미 적용한 값이면 다시 돌아와도 사용자가 고른 탭을 유지한다.
  * @param viewModel HomeViewModel (Hilt 주입)
  */
 @Composable
@@ -117,14 +119,18 @@ fun HomeRoute(
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     onFeedCommentsClick: (feedId: Long, focusCommentInput: Boolean) -> Unit = { _, _ -> },
     initialTab: HomeTab = HomeTab.FEED,
+    tabRequestId: Long = 0L,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    // 초기 탭 설정
-    LaunchedEffect(initialTab) {
+    // 댓글 등 다른 화면에서 돌아오면 이 컴포저블이 다시 시작되므로, 같은 요청을 또 적용하면 사용자가 고른 탭이 초기 탭으로 돌아간다.
+    var appliedTabRequestId by rememberSaveable { mutableStateOf<Long?>(null) }
+    LaunchedEffect(tabRequestId) {
+        if (appliedTabRequestId == tabRequestId) return@LaunchedEffect
+        appliedTabRequestId = tabRequestId
         if (uiState.selectedTab != initialTab) {
             viewModel.handleIntent(HomeIntent.OnTabSelected(initialTab))
         }
