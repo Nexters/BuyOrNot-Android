@@ -37,7 +37,7 @@ private object FeedCreateNudgeSheetDefaults {
 }
 
 /**
- * 홈 투표 피드를 2행 넘게 스크롤했을 때 투표 등록을 권하는 바텀시트.
+ * 투표 등록을 권하는 바텀시트.
  *
  * @param onRegisterClick [투표 등록] 클릭
  * @param onDismissRequest Dim 클릭·뒤로가기로 닫힐 때
