@@ -4,7 +4,7 @@ package com.sseotdabwa.buyornot.core.datastore
  * 사용자 유형 열거형
  */
 enum class UserType {
-    GUEST, // 비회원
+    GUEST, // 로그인하지 않은 상태 (비회원 이용은 없다)
     SOCIAL, // 소셜 로그인 (구글/카카오)
 }
 

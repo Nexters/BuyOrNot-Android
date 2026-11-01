@@ -72,21 +72,6 @@ private fun SubPageErrorPreview() {
     }
 }
 
-@Preview(name = "Guest Error", showBackground = true)
-@Composable
-private fun GuestErrorPreview() {
-    BuyOrNotTheme {
-        Column(modifier = Modifier.fillMaxSize()) {
-            HomeTopBar(onNotificationClick = {}, onProfileClick = {}, unreadCount = 0)
-            BuyOrNotDivider(size = BuyOrNotDividerSize.Small)
-            BuyOrNotErrorView(
-                message = "로그인 후 이용할 수 있는 서비스입니다",
-                onRefreshClick = {},
-            )
-        }
-    }
-}
-
 @Preview(name = "Back Only Error", showBackground = true)
 @Composable
 private fun BackOnlyErrorPreview() {

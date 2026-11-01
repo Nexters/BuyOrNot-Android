@@ -16,7 +16,6 @@ data class NotificationDetailUiState(
     val isOwner: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val showBlockDialog: Boolean = false,
-    val isGuest: Boolean = false,
     val isVoting: Boolean = false,
     val comments: List<Comment> = emptyList(),
     val commentSort: CommentSort = CommentSort.REGISTERED,
@@ -39,9 +38,9 @@ data class NotificationDetailUiState(
     val canViewComments: Boolean
         get() = feed != null
 
-    /** 투표 여부·마감과 상관없이 회원이면 댓글·답글을 쓰고 공감할 수 있다. */
+    /** 앱은 회원만 쓰므로 투표 여부·마감과 상관없이 피드를 불러왔으면 댓글·답글을 쓰고 공감할 수 있다. */
     val canWriteComment: Boolean
-        get() = feed != null && !isGuest
+        get() = feed != null
 
     val canSubmitComment: Boolean
         get() =

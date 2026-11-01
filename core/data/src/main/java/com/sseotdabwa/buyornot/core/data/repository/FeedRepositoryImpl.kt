@@ -157,19 +157,6 @@ class FeedRepositoryImpl @Inject constructor(
                 ).getOrThrow()
         return response.toDomain()
     }
-
-    override suspend fun voteGuestFeed(
-        feedId: Long,
-        choice: VoteChoice,
-    ): VoteResult {
-        val response =
-            feedApiService
-                .voteGuestFeed(
-                    feedId = feedId,
-                    request = VoteRequest(choice = choice.name),
-                ).getOrThrow()
-        return response.toDomain()
-    }
 }
 
 private fun FeedListResponse.toDomain(): FeedList =

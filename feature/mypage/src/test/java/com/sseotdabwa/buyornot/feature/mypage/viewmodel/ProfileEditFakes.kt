@@ -143,11 +143,6 @@ class FakeFeedRepository(
         feedId: Long,
         choice: VoteChoice,
     ): VoteResult = error("not used")
-
-    override suspend fun voteGuestFeed(
-        feedId: Long,
-        choice: VoteChoice,
-    ): VoteResult = error("not used")
 }
 
 class FakeUserPreferencesRepository : UserPreferencesRepository {

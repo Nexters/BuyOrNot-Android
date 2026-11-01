@@ -196,7 +196,6 @@ fun NotificationDetailScreen(
                     votedOptionLabel = feed.myVoteChoice?.label(),
                     enabled = uiState.canWriteComment,
                     submitEnabled = uiState.canSubmitComment,
-                    disabledPlaceholder = "로그인 후 의견을 작성할 수 있어요.",
                     maxLength = COMMENT_MAX_LENGTH,
                     focusRequester = commentFocusRequester,
                     modifier =
@@ -278,7 +277,6 @@ fun NotificationDetailScreen(
                                     onShareClick(feed.feedId, feed.title)
                                 },
                                 canBlock = !feed.author.isGuest,
-                                showMoreButton = !uiState.isGuest,
                                 productLink = feed.productLink,
                                 onLinkClick = onLinkClick,
                                 onImageClick = onImageClick,

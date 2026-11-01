@@ -123,9 +123,4 @@ private class FakeFeedApiService : FeedApiService {
         feedId: Long,
         request: VoteRequest,
     ): BaseResponse<VoteResponse> = error("not used")
-
-    override suspend fun voteGuestFeed(
-        feedId: Long,
-        request: VoteRequest,
-    ): BaseResponse<VoteResponse> = error("not used")
 }
