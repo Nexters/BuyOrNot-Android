@@ -92,3 +92,7 @@ docs/superpowers/
 
 # OMC 세션 상태 — 도구가 만드는 파일이라 커밋하지 않는다
 .omc/
+
+# Claude Code 개인 설정과 훅 실행 캐시
+.claude/settings.local.json
+.claude/hooks/__pycache__/

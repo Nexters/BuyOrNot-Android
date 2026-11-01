@@ -1,0 +1,23 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git *)",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check_comments.py",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "if": "Bash(gh pr *)",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/check_comments.py",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
