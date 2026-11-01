@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
  *   시트를 프로그래밍 방식으로 표시하거나 숨기거나 애니메이션화하는 데 사용할 수 있습니다.
  *   기본값은 `skipPartiallyExpanded = true`가 설정된 [rememberModalBottomSheetState]로,
  *   시트가 완전히 표시되거나 숨겨지도록 합니다.
+ * @param showDragHandle `false`면 상단 드래그 핸들을 그리지 않는다. 상단 여백은 [content]가 정한다.
  * @param content 바텀 시트 내부에 표시될 컴포저블 콘텐츠입니다.
  *   콘텐츠 내에서 프로그래밍 방식으로 시트를 애니메이션과 함께 숨기기 위해 호출할 수 있는
  *   `hideSheet: () -> Unit`를 리시버로 제공합니다.
@@ -65,6 +66,7 @@ import kotlinx.coroutines.launch
 fun BuyOrNotBottomSheet(
     onDismissRequest: () -> Unit,
     isHalfExpandedOnly: Boolean = false,
+    showDragHandle: Boolean = true,
     sheetShape: Shape = RoundedCornerShape(26.dp),
     sheetState: SheetState =
         rememberModalBottomSheetState(
@@ -130,24 +132,25 @@ fun BuyOrNotBottomSheet(
                                 },
                             ),
                 ) {
-                    // 드래그 핸들
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp),
-                    ) {
-                        Spacer(
+                    if (showDragHandle) {
+                        Box(
                             modifier =
                                 Modifier
-                                    .align(Alignment.Center)
-                                    .width(40.dp)
-                                    .height(4.dp)
-                                    .background(
-                                        color = Color(0xFFD9D9D9),
-                                        shape = RoundedCornerShape(18.dp),
-                                    ),
-                        )
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp),
+                        ) {
+                            Spacer(
+                                modifier =
+                                    Modifier
+                                        .align(Alignment.Center)
+                                        .width(40.dp)
+                                        .height(4.dp)
+                                        .background(
+                                            color = Color(0xFFD9D9D9),
+                                            shape = RoundedCornerShape(18.dp),
+                                        ),
+                            )
+                        }
                     }
 
                     // 콘텐츠

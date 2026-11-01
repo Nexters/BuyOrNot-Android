@@ -42,6 +42,7 @@ class HomeViewModel @Inject constructor(
     private val notificationRepository: NotificationRepository,
     private val analytics: Analytics,
     private val performance: Performance,
+    private val createNudgeSession: FeedCreateNudgeSession,
 ) : BaseViewModel<HomeUiState, HomeIntent, HomeSideEffect>(HomeUiState()) {
     // 최초 피드 로딩 구간만 계측한다. loadFeeds()는 로그인 상태에서 init과
     // userPreferences collect 양쪽에서 겹쳐 호출되므로, 중복 start/stop을 흘려보내는
@@ -224,7 +225,12 @@ class HomeViewModel @Inject constructor(
         when (intent) {
             is HomeIntent.OnTabSelected -> handleTabSelection(intent.tab)
             is HomeIntent.OnFilterSelected -> handleFilterSelection(intent.filter)
-            is HomeIntent.OnBannerDismissed -> handleBannerDismiss()
+            is HomeIntent.OnCreateNudgeAnchorReached -> handleCreateNudgeAnchorReached()
+            is HomeIntent.DismissCreateNudge -> updateState { it.copy(showCreateNudge = false) }
+            is HomeIntent.OnCreateNudgeRegisterClicked -> {
+                updateState { it.copy(showCreateNudge = false) }
+                sendSideEffect(HomeSideEffect.NavigateToUpload)
+            }
             is HomeIntent.OnVoteClicked -> handleVote(intent.feedId, intent.optionIndex)
             is HomeIntent.OnCommentClicked ->
                 intent.feedId.toLongOrNull()?.let { feedId ->
@@ -308,8 +314,10 @@ class HomeViewModel @Inject constructor(
         loadFeeds(clearFeeds = false)
     }
 
-    private fun handleBannerDismiss() {
-        updateState { it.copy(isBannerVisible = false) }
+    private fun handleCreateNudgeAnchorReached() {
+        if (uiState.value.selectedTab != HomeTab.FEED || createNudgeSession.hasShown) return
+        createNudgeSession.markShown()
+        updateState { it.copy(showCreateNudge = true) }
     }
 
     private fun handleCategoryToggled(category: FeedCategory) {

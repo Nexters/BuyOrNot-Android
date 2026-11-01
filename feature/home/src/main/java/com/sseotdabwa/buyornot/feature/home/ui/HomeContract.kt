@@ -61,20 +61,19 @@ data class FeedItem(
  * @property userType 현재 사용자 타입 (GUEST/SOCIAL)
  * @property selectedTab 현재 선택된 탭
  * @property selectedFilter 현재 선택된 필터 칩
- * @property isBannerVisible 배너 표시 여부
  * @property feeds 피드 목록
  * @property isLoading 로딩 상태
  * @property isNextPageLoading 다음 페이지 로딩 상태
  * @property hasNextPage 다음 페이지 존재 여부
  * @property nextCursor 다음 페이지를 위한 커서
  * @property hasError 에러 발생 여부
+ * @property showCreateNudge 투표 등록 넛지 바텀시트 표시 여부
  */
 @Immutable
 data class HomeUiState(
     val userType: UserType = UserType.GUEST,
     val selectedTab: HomeTab = HomeTab.FEED,
     val selectedFilter: FilterChip = FilterChip.ALL,
-    val isBannerVisible: Boolean = true,
     val voterProfileImageUrl: String = "",
     val allFeeds: List<FeedItem> = emptyList(),
     val selectedCategories: Set<FeedCategory> = emptySet(),
@@ -93,6 +92,7 @@ data class HomeUiState(
     val showSortSheet: Boolean = false,
     val isTooltipDismissed: Boolean = false,
     val unreadNotificationCount: Int = 0,
+    val showCreateNudge: Boolean = false,
 )
 
 /**
@@ -107,7 +107,12 @@ sealed interface HomeIntent {
         val filter: FilterChip,
     ) : HomeIntent
 
-    data object OnBannerDismissed : HomeIntent
+    /** 투표 피드의 등록 넛지 경계가 스크롤로 화면에 들어왔다. */
+    data object OnCreateNudgeAnchorReached : HomeIntent
+
+    data object DismissCreateNudge : HomeIntent
+
+    data object OnCreateNudgeRegisterClicked : HomeIntent
 
     data class OnVoteClicked(
         val feedId: String,

@@ -25,6 +25,7 @@ class HomeViewModelCommentTest {
             notificationRepository = FakeNotificationRepository(),
             analytics = FakeAnalytics(),
             performance = FakePerformance(),
+            createNudgeSession = FeedCreateNudgeSession(),
         )
 
     @Test

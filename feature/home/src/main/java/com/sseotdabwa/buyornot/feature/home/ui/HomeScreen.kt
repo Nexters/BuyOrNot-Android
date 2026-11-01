@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
@@ -455,6 +456,23 @@ private fun HomeFeedList(
             }
     }
 
+    // 진입하거나 목록을 다시 불러와 이미 보이는 경계는 스크롤해서 마주친 게 아니다.
+    // 스크롤 위치가 바뀌면서 경계가 새로 보일 때만 알린다.
+    LaunchedEffect(listState, uiState.selectedTab) {
+        if (uiState.selectedTab != HomeTab.FEED) return@LaunchedEffect
+        snapshotFlow {
+            CreateNudgeAnchorObservation(
+                isAnchorVisible = listState.isItemBottomVisible(CREATE_NUDGE_ANCHOR_INDEX),
+                firstVisibleItemIndex = listState.firstVisibleItemIndex,
+                firstVisibleItemScrollOffset = listState.firstVisibleItemScrollOffset,
+            )
+        }.scan(null as CreateNudgeAnchorObservation? to null as CreateNudgeAnchorObservation?) { (_, prev), curr ->
+            prev to curr
+        }.filter { (prev, curr) ->
+            prev != null && curr != null && !prev.isAnchorVisible && curr.isAnchorVisible && prev.hasScrolledTo(curr)
+        }.collect { onIntent(HomeIntent.OnCreateNudgeAnchorReached) }
+    }
+
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,
         onRefresh = { onIntent(HomeIntent.Refresh) },
@@ -472,22 +490,6 @@ private fun HomeFeedList(
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                // 배너 (투표 피드 탭이고 isBannerVisible이 true일 때만 표시)
-                if (filteredFeeds.isNotEmpty() && uiState.isBannerVisible && uiState.selectedTab == HomeTab.FEED) {
-                    item {
-                        HomeBanner(
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                            onDismiss = { onIntent(HomeIntent.OnBannerDismissed) },
-                            onClick = onUploadClick,
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        BuyOrNotDivider(
-                            size = BuyOrNotDividerSize.Small,
-                            modifier = Modifier.padding(horizontal = 20.dp),
-                        )
-                    }
-                }
-
                 when {
                     // 1. 데이터가 있으면 로딩 여부와 상관없이 최우선 노출
                     filteredFeeds.isNotEmpty() -> {
@@ -638,7 +640,34 @@ private fun HomeFeedList(
                 onDismissRequest = { onIntent(HomeIntent.DismissSortSheet) },
             )
         }
+
+        if (uiState.showCreateNudge) {
+            FeedCreateNudgeSheet(
+                onRegisterClick = { onIntent(HomeIntent.OnCreateNudgeRegisterClicked) },
+                onDismissRequest = { onIntent(HomeIntent.DismissCreateNudge) },
+            )
+        }
     }
+}
+
+// 피드 카드는 아래 구분선까지 한 아이템이라, 앵커 아이템의 아랫변이 행 사이 경계다.
+private const val CREATE_NUDGE_ANCHOR_INDEX = 1
+
+private data class CreateNudgeAnchorObservation(
+    val isAnchorVisible: Boolean,
+    val firstVisibleItemIndex: Int,
+    val firstVisibleItemScrollOffset: Int,
+) {
+    fun hasScrolledTo(next: CreateNudgeAnchorObservation): Boolean =
+        firstVisibleItemIndex != next.firstVisibleItemIndex ||
+            firstVisibleItemScrollOffset != next.firstVisibleItemScrollOffset
+}
+
+// 위쪽 contentPadding 영역은 고정 헤더에 가려지므로 보이는 범위에서 뺀다.
+private fun LazyListState.isItemBottomVisible(index: Int): Boolean {
+    val item = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index } ?: return false
+    val bottom = item.offset + item.size
+    return bottom >= 0 && bottom <= layoutInfo.viewportEndOffset - layoutInfo.afterContentPadding
 }
 
 /**
