@@ -1,6 +1,5 @@
 package com.sseotdabwa.buyornot.core.designsystem.components
 
-import android.os.Build
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -27,7 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -37,27 +36,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.graphics.layer.GraphicsLayer
-import androidx.compose.ui.graphics.layer.drawLayer
-import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.node.Ref
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -69,7 +58,6 @@ import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
-import com.sseotdabwa.buyornot.core.designsystem.shape.TopArrowBubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 
@@ -99,6 +87,12 @@ private val ProductImageSpacing = 10.dp
 private val ThreadProductImageSpacing = 8.dp
 private val PriceTextPadding = 16.dp
 
+// 이미지 위 참여 인원 배지와 링크 버튼은 같은 반투명 pill이다.
+private val ImageOverlayPadding = 16.dp
+private val ImageOverlayCornerRadius = 26.dp
+private val ImageOverlayContentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+private const val IMAGE_OVERLAY_SCRIM_ALPHA = 0.4f
+
 enum class ImageAspectRatio(
     val ratio: Float,
 ) {
@@ -107,6 +101,12 @@ enum class ImageAspectRatio(
     PORTRAIT(4f / 5f), // 4:5 비율 (가로 < 세로)
 }
 
+/**
+ * @param showVotingCountBadge 진행 중이고 투표가 하나라도 있으면 첫 이미지 왼쪽 위에 참여 인원 배지를 띄운다.
+ * @param isVoteExpired 서버 상태와 별개로 기기 시계로 본 마감 여부. true가 되면 [isVoteEnded]와 같이 투표를 막고 마감 상태로 그린다.
+ * @param voteRemainingTime 마감까지 남은 시간 문구. null이면 상태 줄에 투표 수와 진행 상태를 보인다.
+ * 시계 State를 읽는 람다를 넘기면 시각이 바뀔 때 상태 줄만 다시 그린다.
+ */
 @Composable
 fun FeedCard(
     modifier: Modifier = Modifier,
@@ -135,20 +135,23 @@ fun FeedCard(
     showMoreButton: Boolean = true,
     productLink: String? = null,
     onLinkClick: (url: String) -> Unit = {},
-    showProductLinkTooltip: Boolean = false,
-    onTooltipDismiss: () -> Unit = {},
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     useThreadLayout: Boolean = false,
     commentCount: Int? = null,
     latestComment: FeedCommentPreview? = null,
     onCommentClick: () -> Unit = {},
+    showVotingCountBadge: Boolean = false,
+    isVoteExpired: () -> Boolean = { false },
+    voteRemainingTime: (() -> String)? = null,
 ) {
+    // 시계를 읽는 람다라 매 초 다시 계산되지만, 카드는 마감 여부가 뒤집힐 때만 다시 그린다.
+    val hasExpired by remember(isVoteExpired) { derivedStateOf(isVoteExpired) }
+    val isEnded = isVoteEnded || hasExpired
     val hasVoted = userVotedOptionIndex != null
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
     val maybePercentage = if (totalVoteCount > 0) (maybeVoteCount * 100 / totalVoteCount) else 0
 
     val pagerState = rememberPagerState(pageCount = { productImageUrls.size })
-    var tooltipVisible by remember(showProductLinkTooltip) { mutableStateOf(showProductLinkTooltip) }
 
     val contentStart = if (useThreadLayout) ThreadContentStart else CardHorizontalPadding
     val showThreadLine = useThreadLayout && latestComment != null
@@ -227,11 +230,7 @@ fun FeedCard(
                 imageAspectRatios = imageAspectRatios,
                 price = price,
                 productLink = productLink,
-                showTooltip = tooltipVisible,
-                onTooltipDismiss = {
-                    tooltipVisible = false
-                    onTooltipDismiss()
-                },
+                votingCount = totalVoteCount.takeIf { showVotingCountBadge && !isEnded && it > 0 },
                 onFullscreenClick = { page -> onImageClick(productImageUrls, page) },
                 onLinkClick = onLinkClick,
                 contentPadding = PaddingValues(start = contentStart, end = CardHorizontalPadding),
@@ -248,7 +247,7 @@ fun FeedCard(
 
             FeedVoteSection(
                 hasVoted = hasVoted,
-                isVoteEnded = isVoteEnded,
+                isVoteEnded = isEnded,
                 isOwner = isOwner,
                 userVotedOptionIndex = userVotedOptionIndex,
                 buyPercentage = buyPercentage,
@@ -258,6 +257,7 @@ fun FeedCard(
                 onVote = onVote,
                 commentCount = commentCount,
                 onCommentClick = onCommentClick,
+                voteRemainingTime = voteRemainingTime.takeUnless { isEnded },
                 modifier = Modifier.padding(start = contentStart, end = CardHorizontalPadding),
             )
         }
@@ -413,8 +413,7 @@ private fun FeedImageCarousel(
     imageAspectRatios: List<ImageAspectRatio>,
     price: String,
     productLink: String?,
-    showTooltip: Boolean,
-    onTooltipDismiss: () -> Unit,
+    votingCount: Int?,
     onFullscreenClick: (pageIndex: Int) -> Unit,
     onLinkClick: (url: String) -> Unit,
     priceStyle: TextStyle,
@@ -433,16 +432,6 @@ private fun FeedImageCarousel(
             pageSpacing = pageSpacing,
             modifier = Modifier.animateContentSize(),
         ) { page ->
-            // 툴팁이 떠 있는 동안만 이미지를 레이어에 기록한다. Android 12 미만은 renderEffect를
-            // 무시해 기록해도 보이는 게 없으니 원래대로 반투명 배경만 깔린다.
-            val showsBlurredTooltip =
-                page == 0 &&
-                    showTooltip &&
-                    !productLink.isNullOrEmpty() &&
-                    !isInPreviewMode &&
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-            val backdrop = if (showsBlurredTooltip) rememberToolTipBackdrop() else null
-
             Box(
                 modifier =
                     Modifier
@@ -462,10 +451,7 @@ private fun FeedImageCarousel(
                     AsyncImage(
                         model = productImageUrls[page],
                         contentDescription = "Product Image",
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .then(backdrop?.contentModifier() ?: Modifier),
+                        modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
                     )
                 }
@@ -488,28 +474,24 @@ private fun FeedImageCarousel(
                             },
                 )
 
+                if (page == 0 && votingCount != null) {
+                    VotingCountBadge(
+                        count = votingCount,
+                        modifier =
+                            Modifier
+                                .align(Alignment.TopStart)
+                                .padding(top = ImageOverlayPadding, start = ImageOverlayPadding),
+                    )
+                }
+
                 if (page == 0 && !productLink.isNullOrEmpty()) {
-                    Box(
+                    LinkButton(
                         modifier =
                             Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(top = 16.dp, end = 6.dp),
-                        contentAlignment = Alignment.TopEnd,
-                    ) {
-                        LinkButton(
-                            modifier = Modifier.padding(end = 10.dp),
-                            onClick = { onLinkClick(productLink) },
-                        )
-
-                        if (showTooltip) {
-                            // 시각적 버튼 높이(30dp) + 간격(6dp) = 36dp
-                            FeedCardToolTip(
-                                modifier = Modifier.padding(top = 36.dp),
-                                backdrop = backdrop,
-                                onDismiss = onTooltipDismiss,
-                            )
-                        }
-                    }
+                                .padding(top = ImageOverlayPadding, end = ImageOverlayPadding),
+                        onClick = { onLinkClick(productLink) },
+                    )
                 }
 
                 if (page == 0) {
@@ -550,6 +532,7 @@ private fun FeedVoteSection(
     modifier: Modifier = Modifier,
     commentCount: Int? = null,
     onCommentClick: () -> Unit = {},
+    voteRemainingTime: (() -> String)? = null,
 ) {
     val isTie = buyPercentage == maybePercentage
     val hasVotes = totalVoteCount > 0
@@ -628,31 +611,16 @@ private fun FeedVoteSection(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            val statusText =
-                if (isVoteEnded) {
-                    stringResource(R.string.feed_card_vote_status_ended)
-                } else {
-                    stringResource(R.string.feed_card_vote_status_ongoing)
-                }
-            Row(
-                modifier = Modifier.padding(start = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.feed_card_vote_count_format, totalVoteCount.toDisplayCount()),
-                    style = BuyOrNotTheme.typography.bodyB5Medium,
-                    color = BuyOrNotTheme.colors.gray600,
+            if (voteRemainingTime != null) {
+                VoteClosingTimer(
+                    remainingTime = voteRemainingTime,
+                    modifier = Modifier.padding(start = 4.dp),
                 )
-                Text(
-                    text = "∙",
-                    style = BuyOrNotTheme.typography.bodyB7Medium,
-                    color = BuyOrNotTheme.colors.gray600,
-                )
-                Text(
-                    text = statusText,
-                    style = BuyOrNotTheme.typography.bodyB5Medium,
-                    color = BuyOrNotTheme.colors.gray600,
+            } else {
+                VoteStatusText(
+                    totalVoteCount = totalVoteCount,
+                    isVoteEnded = isVoteEnded,
+                    modifier = Modifier.padding(start = 4.dp),
                 )
             }
             if (commentCount != null) {
@@ -664,6 +632,73 @@ private fun FeedVoteSection(
             }
         }
     }
+}
+
+@Composable
+private fun VoteStatusText(
+    totalVoteCount: Int,
+    isVoteEnded: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val statusText =
+        if (isVoteEnded) {
+            stringResource(R.string.feed_card_vote_status_ended)
+        } else {
+            stringResource(R.string.feed_card_vote_status_ongoing)
+        }
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.feed_card_vote_count_format, totalVoteCount.toDisplayCount()),
+            style = BuyOrNotTheme.typography.bodyB5Medium,
+            color = BuyOrNotTheme.colors.gray600,
+        )
+        Text(
+            text = "∙",
+            style = BuyOrNotTheme.typography.bodyB7Medium,
+            color = BuyOrNotTheme.colors.gray600,
+        )
+        Text(
+            text = statusText,
+            style = BuyOrNotTheme.typography.bodyB5Medium,
+            color = BuyOrNotTheme.colors.gray600,
+        )
+    }
+}
+
+// 남은 시간을 이 컴포저블 안에서만 읽어, 시계가 갈 때 카드 전체가 아니라 이 줄만 다시 그린다.
+@Composable
+private fun VoteClosingTimer(
+    remainingTime: () -> String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = stringResource(R.string.feed_card_vote_closing_timer_format, remainingTime()),
+        modifier = modifier,
+        style = BuyOrNotTheme.typography.bodyB5Medium,
+        color = BuyOrNotTheme.colors.gray600,
+    )
+}
+
+@Composable
+private fun VotingCountBadge(
+    count: Int,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = stringResource(R.string.feed_card_voting_count_format, count.toDisplayCount()),
+        modifier =
+            modifier
+                .background(
+                    color = BuyOrNotTheme.colors.black.copy(alpha = IMAGE_OVERLAY_SCRIM_ALPHA),
+                    shape = RoundedCornerShape(ImageOverlayCornerRadius),
+                ).padding(ImageOverlayContentPadding),
+        style = BuyOrNotTheme.typography.subTitleS5SemiBold,
+        color = BuyOrNotTheme.colors.gray0,
+    )
 }
 
 @Composable
@@ -734,13 +769,11 @@ private fun LinkButton(
             modifier =
                 Modifier
                     .background(
-                        color = BuyOrNotTheme.colors.black.copy(alpha = 0.4f),
-                        shape = RoundedCornerShape(26.dp),
-                    ).clip(RoundedCornerShape(26.dp))
-                    .padding(
-                        horizontal = 10.dp,
-                        vertical = 6.dp,
-                    ).clickable(onClick = onClick),
+                        color = BuyOrNotTheme.colors.black.copy(alpha = IMAGE_OVERLAY_SCRIM_ALPHA),
+                        shape = RoundedCornerShape(ImageOverlayCornerRadius),
+                    ).clip(RoundedCornerShape(ImageOverlayCornerRadius))
+                    .padding(ImageOverlayContentPadding)
+                    .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -749,101 +782,6 @@ private fun LinkButton(
                 modifier = Modifier.size(18.dp),
                 tint = BuyOrNotTheme.colors.gray0,
             )
-        }
-    }
-}
-
-/**
- * 툴팁이 흐리게 비출 뒤 콘텐츠. [contentModifier]를 건 노드가 레이어에 기록된다.
- * 좌표를 상태가 아니라 배치 단계에서 받아 첫 프레임부터 흐림이 그려진다.
- */
-@Stable
-class ToolTipBackdrop internal constructor(
-    internal val layer: GraphicsLayer,
-) {
-    internal val coordinates = Ref<LayoutCoordinates>()
-
-    fun contentModifier(): Modifier =
-        Modifier
-            .onPlaced { coordinates.value = it }
-            .drawWithContent {
-                layer.record { this@drawWithContent.drawContent() }
-                drawLayer(layer)
-            }
-}
-
-@Composable
-fun rememberToolTipBackdrop(): ToolTipBackdrop {
-    val layer = rememberGraphicsLayer()
-    return remember(layer) { ToolTipBackdrop(layer) }
-}
-
-private val ToolTipBackdropBlurRadius = 20.dp
-
-@Composable
-fun FeedCardToolTip(
-    modifier: Modifier = Modifier,
-    backdrop: ToolTipBackdrop? = null,
-    onDismiss: () -> Unit = {},
-) {
-    val tooltipShape =
-        remember {
-            TopArrowBubbleShape(
-                cornerRadius = 10.dp,
-                arrowWidth = 10.dp,
-                arrowHeight = 5.dp,
-                arrowOffsetFromRight = 30.dp,
-            )
-        }
-    val blurLayer = rememberGraphicsLayer()
-    val blurRadiusPx = with(LocalDensity.current) { ToolTipBackdropBlurRadius.toPx() }
-    remember(blurLayer, blurRadiusPx) {
-        blurLayer.renderEffect = BlurEffect(blurRadiusPx, blurRadiusPx, TileMode.Clamp)
-    }
-    val tooltipCoordinates = remember { Ref<LayoutCoordinates>() }
-
-    Row(
-        modifier =
-            modifier
-                .onPlaced { tooltipCoordinates.value = it }
-                .clip(tooltipShape)
-                .drawBehind {
-                    val tooltip = tooltipCoordinates.value ?: return@drawBehind
-                    val content = backdrop?.coordinates?.value ?: return@drawBehind
-                    // 툴팁 영역에 해당하는 부분만 보이도록 뒤 콘텐츠를 툴팁 원점으로 당겨 그린다.
-                    val offset = content.localPositionOf(tooltip, Offset.Zero)
-                    blurLayer.record {
-                        translate(left = -offset.x, top = -offset.y) { drawLayer(backdrop.layer) }
-                    }
-                    drawLayer(blurLayer)
-                }.background(color = Color(0xCC3A3C3E))
-                .nonRippleClickable(onClick = onDismiss)
-                .padding(top = 13.dp, bottom = 8.dp)
-                .padding(horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "상품 링크를 확인해보세요!",
-            style = BuyOrNotTheme.typography.bodyB5Medium,
-            color = BuyOrNotTheme.colors.gray0,
-        )
-    }
-}
-
-@Preview(
-    name = "FeedCardToolTip",
-    showBackground = true,
-    backgroundColor = 0xFFFFFFFF,
-)
-@Composable
-private fun FeedCardToolTipPreview() {
-    BuyOrNotTheme {
-        Box(
-            modifier = Modifier.padding(24.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            FeedCardToolTip()
         }
     }
 }
@@ -884,7 +822,8 @@ private fun FeedCardSquareInteractivePreview() {
             onDeleteClick = {},
             onReportClick = {},
             productLink = "link",
-            showProductLinkTooltip = true,
+            showVotingCountBadge = true,
+            voteRemainingTime = { "47:59:50" },
         )
     }
 }

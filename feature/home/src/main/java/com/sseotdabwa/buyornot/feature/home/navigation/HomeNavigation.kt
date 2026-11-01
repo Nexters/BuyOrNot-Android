@@ -18,6 +18,7 @@ import com.sseotdabwa.buyornot.feature.home.ui.HomeRoute as HomeScreen
 @Serializable
 data class HomeRoute(
     val tab: String? = null,
+    val tabRequestId: Long = 0L,
 )
 
 fun NavGraphBuilder.homeScreen(
@@ -65,6 +66,7 @@ fun NavGraphBuilder.homeScreen(
             onImageClick = onImageClick,
             onFeedCommentsClick = onFeedCommentsClick,
             initialTab = initialTab,
+            tabRequestId = route.tabRequestId,
         )
     }
 }
@@ -77,5 +79,5 @@ fun NavHostController.navigateToHomeWithTab(
     tab: HomeTab,
     navOptions: NavOptions? = null,
 ) {
-    navigate(HomeRoute(tab = tab.name), navOptions)
+    navigate(HomeRoute(tab = tab.name, tabRequestId = System.currentTimeMillis()), navOptions)
 }

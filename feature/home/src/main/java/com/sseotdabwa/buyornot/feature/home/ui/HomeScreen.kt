@@ -66,6 +66,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.designsystem.components.ButtonSize
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotAlertDialog
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotButtonDefaults
@@ -104,6 +105,7 @@ import kotlinx.coroutines.launch
  * @param onProfileClick 프로필 아이콘 클릭 콜백
  * @param onUploadClick 업로드 화면으로 이동 콜백
  * @param initialTab 초기 선택 탭 (기본값: FEED)
+ * @param tabRequestId [initialTab] 요청을 구분하는 값. 이미 적용한 값이면 다시 돌아와도 사용자가 고른 탭을 유지한다.
  * @param viewModel HomeViewModel (Hilt 주입)
  */
 @Composable
@@ -116,17 +118,15 @@ fun HomeRoute(
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     onFeedCommentsClick: (feedId: Long, focusCommentInput: Boolean) -> Unit = { _, _ -> },
     initialTab: HomeTab = HomeTab.FEED,
+    tabRequestId: Long = 0L,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    // 초기 탭 설정
-    LaunchedEffect(initialTab) {
-        if (uiState.selectedTab != initialTab) {
-            viewModel.handleIntent(HomeIntent.OnTabSelected(initialTab))
-        }
+    LaunchedEffect(tabRequestId) {
+        viewModel.handleIntent(HomeIntent.ApplyInitialTab(tab = initialTab, requestId = tabRequestId))
     }
 
     // SideEffect 처리
@@ -170,6 +170,9 @@ fun HomeRoute(
         onRendered = viewModel::onFeedFirstContentRendered,
     )
 
+    // 여기서 값을 읽으면 홈 전체가 매 초 다시 그려지므로 람다로만 넘긴다.
+    val clock = rememberSecondTickingClock()
+
     HomeScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
@@ -180,6 +183,7 @@ fun HomeRoute(
         onShareClick = onShareClick,
         onImageClick = onImageClick,
         onIntent = viewModel::handleIntent,
+        currentTimeMillis = { clock.value },
     )
 }
 
@@ -197,6 +201,7 @@ fun HomeScreen(
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
+    currentTimeMillis: () -> Long = System::currentTimeMillis,
 ) {
     // 화면 전용 일시적 상태 (ViewModel에서 관리하지 않음)
     var isFabExpanded by remember { mutableStateOf(false) }
@@ -251,6 +256,7 @@ fun HomeScreen(
                 onLinkClick = onLinkClick,
                 onShareClick = onShareClick,
                 onImageClick = onImageClick,
+                currentTimeMillis = currentTimeMillis,
             )
 
             FabDimOverlay(
@@ -286,23 +292,18 @@ private fun HomeTabSection(
     onTabSelected: (HomeTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val tabs = if (userType == UserType.GUEST) listOf(HomeTab.FEED) else HomeTab.entries.toList()
+    val tabs = if (userType == UserType.GUEST) HomeTab.entries - HomeTab.MY_FEED else HomeTab.entries
 
     Column(modifier = modifier) {
         BuyOrNotTabRow(
             selectedTabIndex = tabs.indexOf(selectedTab).coerceAtLeast(0),
             modifier = Modifier.padding(start = 20.dp),
         ) {
-            BuyOrNotTab(
-                title = "투표 피드",
-                selected = selectedTab == HomeTab.FEED,
-                onClick = { onTabSelected(HomeTab.FEED) },
-            )
-            if (userType == UserType.SOCIAL) {
+            tabs.forEach { tab ->
                 BuyOrNotTab(
-                    title = "내 투표",
-                    selected = selectedTab == HomeTab.MY_FEED,
-                    onClick = { onTabSelected(HomeTab.MY_FEED) },
+                    title = tab.title,
+                    selected = selectedTab == tab,
+                    onClick = { onTabSelected(tab) },
                 )
             }
         }
@@ -310,6 +311,14 @@ private fun HomeTabSection(
         BuyOrNotDivider(size = BuyOrNotDividerSize.Small)
     }
 }
+
+private val HomeTab.title: String
+    get() =
+        when (this) {
+            HomeTab.FEED -> "투표 피드"
+            HomeTab.HOT -> "핫플 투표🔥"
+            HomeTab.MY_FEED -> "내 투표"
+        }
 
 /**
  * FAB (Floating Action Button) 컴포넌트
@@ -384,6 +393,7 @@ private fun HomeFeedList(
     onLinkClick: (url: String) -> Unit,
     onShareClick: (feedId: Long, title: String) -> Unit,
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit,
+    currentTimeMillis: () -> Long,
     modifier: Modifier = Modifier,
 ) {
     val filteredFeeds = uiState.feeds
@@ -414,11 +424,6 @@ private fun HomeFeedList(
     val isAtTop by remember {
         derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
     }
-
-    val tooltipTargetIndex =
-        remember(filteredFeeds) {
-            filteredFeeds.indexOfFirst { it.productLink != null }
-        }
 
     // 스크롤 방향 감지: 위로 스크롤하면 헤더 노출, 아래로 스크롤하면 헤더 숨김
     var isHeaderVisible by remember { mutableStateOf(true) }
@@ -498,7 +503,7 @@ private fun HomeFeedList(
                                 voterProfileImageUrl = uiState.voterProfileImageUrl,
                                 isGuest = uiState.userType == UserType.GUEST,
                                 modifier = Modifier.animateItem(),
-                                showProductLinkTooltip = !uiState.isTooltipDismissed && index == tooltipTargetIndex,
+                                currentTimeMillis = currentTimeMillis,
                                 onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
                                 onDelete = { id -> onIntent(HomeIntent.ShowDeleteDialog(id)) },
                                 onReport = { id -> onIntent(HomeIntent.OnReportClicked(id)) },
@@ -508,7 +513,6 @@ private fun HomeFeedList(
                                     onIntent(HomeIntent.OnShareClicked(id, isOwner))
                                     id.toLongOrNull()?.let { feedId -> onShareClick(feedId, title) }
                                 },
-                                onTooltipDismissed = { onIntent(HomeIntent.DismissTooltip) },
                                 onImageClick = onImageClick,
                                 onCommentClick = { id -> onIntent(HomeIntent.OnCommentClicked(id)) },
                             )
@@ -619,6 +623,7 @@ private fun HomeFeedList(
                             onAllCategorySelected = { onIntent(HomeIntent.OnAllCategorySelected) },
                             onCategoryToggled = { onIntent(HomeIntent.OnCategoryToggled(it)) },
                             onShowSortSheet = { onIntent(HomeIntent.ShowSortSheet) },
+                            showStatusFilter = uiState.selectedTab != HomeTab.HOT,
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                     }
@@ -627,7 +632,7 @@ private fun HomeFeedList(
         }
 
         // 투표 상태 필터 시트 (PullToRefreshBox 최상단 → full-screen dim 적용)
-        if (uiState.showSortSheet) {
+        if (uiState.showSortSheet && uiState.selectedTab != HomeTab.HOT) {
             OptionSheet(
                 title = "투표 상태",
                 options = FilterChip.entries.map { it.label },
@@ -661,7 +666,7 @@ private fun LazyListState.isItemBottomVisible(index: Int): Boolean {
 
 /**
  * 필터 칩 행 컴포넌트
- * - 맨 좌측: 정렬 아이콘 (클릭 시 투표 상태 OptionSheet 표시 요청)
+ * - 맨 좌측: 정렬 아이콘 (클릭 시 투표 상태 OptionSheet 표시 요청). [showStatusFilter]가 false면 숨긴다.
  * - 이후: FeedCategory 카테고리 칩 (다중 선택, 없으면 전체)
  */
 @Composable
@@ -670,6 +675,7 @@ private fun FilterChipRow(
     onAllCategorySelected: () -> Unit,
     onCategoryToggled: (FeedCategory) -> Unit,
     onShowSortSheet: () -> Unit,
+    showStatusFilter: Boolean,
 ) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -701,12 +707,14 @@ private fun FilterChipRow(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BuyOrNotIconChip(
-            imageVector = BuyOrNotIcons.Sort.asImageVector(),
-            contentDescription = "투표 상태 필터",
-            onClick = onShowSortSheet,
-            modifier = Modifier.padding(start = 20.dp),
-        )
+        if (showStatusFilter) {
+            BuyOrNotIconChip(
+                imageVector = BuyOrNotIcons.Sort.asImageVector(),
+                contentDescription = "투표 상태 필터",
+                onClick = onShowSortSheet,
+                modifier = Modifier.padding(start = 20.dp),
+            )
+        }
 
         LazyRow(
             state = listState,
@@ -742,7 +750,7 @@ private fun FilterChipRow(
                     },
             contentPadding =
                 PaddingValues(
-                    start = 6.dp,
+                    start = if (showStatusFilter) 6.dp else 20.dp,
                     end = 20.dp,
                 ),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -785,15 +793,14 @@ private fun FeedItemCard(
     feed: FeedItem,
     voterProfileImageUrl: String,
     isGuest: Boolean,
+    currentTimeMillis: () -> Long,
     modifier: Modifier = Modifier,
-    showProductLinkTooltip: Boolean = false,
     onVote: (String, Int) -> Unit,
     onDelete: (String) -> Unit,
     onReport: (String) -> Unit,
     onBlock: (String) -> Unit,
     onLinkClick: (url: String) -> Unit,
     onShare: (feedId: String, title: String, isOwner: Boolean) -> Unit,
-    onTooltipDismissed: () -> Unit = {},
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
     onCommentClick: (feedId: String) -> Unit = {},
 ) {
@@ -827,13 +834,17 @@ private fun FeedItemCard(
             showMoreButton = !isGuest,
             productLink = feed.productLink,
             onLinkClick = onLinkClick,
-            showProductLinkTooltip = showProductLinkTooltip,
-            onTooltipDismiss = onTooltipDismissed,
             onImageClick = onImageClick,
             useThreadLayout = true,
             commentCount = feed.commentCount,
             latestComment = feed.latestComment,
             onCommentClick = { onCommentClick(feed.id) },
+            showVotingCountBadge = true,
+            isVoteExpired = { feed.isVoteEndedAt(currentTimeMillis()) },
+            voteRemainingTime =
+                feed.voteClosedAtMillis?.let { closedAt ->
+                    { TimeUtils.formatRemainingTime(closedAt - currentTimeMillis()) }
+                },
         )
 
         BuyOrNotDivider(

@@ -9,6 +9,7 @@ import com.sseotdabwa.buyornot.core.network.dto.response.AuthorDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedImageDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedListResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.HotFeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.VoteResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
 import com.sseotdabwa.buyornot.domain.model.Author
@@ -21,6 +22,7 @@ import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
 import com.sseotdabwa.buyornot.domain.repository.FeedList
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
+import com.sseotdabwa.buyornot.domain.repository.HotFeedList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -45,6 +47,16 @@ class FeedRepositoryImpl @Inject constructor(
     ): FeedList =
         feedApiService
             .getFeedList(cursor, size, feedStatus, category)
+            .getOrThrow()
+            .toDomain()
+
+    override suspend fun getHotFeedList(
+        cursor: String?,
+        size: Int,
+        category: List<String>?,
+    ): HotFeedList =
+        feedApiService
+            .getHotFeedList(cursor, size, category)
             .getOrThrow()
             .toDomain()
 
@@ -167,6 +179,13 @@ private fun FeedListResponse.toDomain(): FeedList =
         hasNext = hasNext,
     )
 
+private fun HotFeedListResponse.toDomain(): HotFeedList =
+    HotFeedList(
+        feeds = content.map { it.toDomain() },
+        nextCursor = nextCursor,
+        hasNext = hasNext,
+    )
+
 private fun FeedItemDto.toDomain(): Feed =
     Feed(
         feedId = feedId,
@@ -186,6 +205,7 @@ private fun FeedItemDto.toDomain(): Feed =
         productLink = link,
         commentCount = commentCount,
         latestComment = latestComment?.toDomain(),
+        voteClosedAt = voteClosedAt,
     )
 
 private fun FeedImageDto.toDomain(): FeedImage =

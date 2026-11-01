@@ -11,7 +11,7 @@ import com.sseotdabwa.buyornot.domain.model.UserType
 /**
  * 홈 화면의 탭 정의
  */
-enum class HomeTab { FEED, MY_FEED }
+enum class HomeTab { FEED, HOT, MY_FEED }
 
 /**
  * 필터 칩의 종류
@@ -50,9 +50,14 @@ data class FeedItem(
     val commentCount: Int = 0,
     /** 댓글이 없으면 null — 카드의 thread 라인과 미리보기를 숨긴다. */
     val latestComment: FeedCommentPreview? = null,
+    /** 투표 마감 시각(epoch ms). 서버가 내려주지 않으면 null이고 타이머를 띄우지 않는다. */
+    val voteClosedAtMillis: Long? = null,
 ) {
     /** 비회원 작성 글. 차단 대상 유저가 없다 — [GUEST_AUTHOR_USER_ID] 참고. */
     val isGuestAuthor: Boolean get() = authorUserId == GUEST_AUTHOR_USER_ID
+
+    /** 서버가 아직 마감 처리하지 않았어도 [nowMillis]에 마감 시각이 지났으면 마감으로 본다. */
+    fun isVoteEndedAt(nowMillis: Long): Boolean = isVoteEnded || (voteClosedAtMillis != null && nowMillis >= voteClosedAtMillis)
 }
 
 /**
@@ -65,7 +70,7 @@ data class FeedItem(
  * @property isLoading 로딩 상태
  * @property isNextPageLoading 다음 페이지 로딩 상태
  * @property hasNextPage 다음 페이지 존재 여부
- * @property nextCursor 다음 페이지를 위한 커서
+ * @property nextCursor 다음 페이지를 위한 커서. 핫플 투표는 복합 커서 문자열이고, 나머지 탭은 feedId를 문자열로 담는다.
  * @property hasError 에러 발생 여부
  * @property showCreateNudge 투표 등록 넛지 바텀시트 표시 여부
  */
@@ -82,7 +87,7 @@ data class HomeUiState(
     val isRefreshing: Boolean = false,
     val isNextPageLoading: Boolean = false,
     val hasNextPage: Boolean = false,
-    val nextCursor: Long? = null,
+    val nextCursor: String? = null,
     val hasError: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val deletingFeedId: String? = null,
@@ -90,7 +95,6 @@ data class HomeUiState(
     val blockingNickname: String? = null,
     val blockingUserId: Long? = null,
     val showSortSheet: Boolean = false,
-    val isTooltipDismissed: Boolean = false,
     val unreadNotificationCount: Int = 0,
     val showCreateNudge: Boolean = false,
 )
@@ -99,6 +103,12 @@ data class HomeUiState(
  * 홈 화면에서 발생하는 사용자 액션 (MVI Intent)
  */
 sealed interface HomeIntent {
+    /** 네비게이션으로 받은 초기 탭. 같은 [requestId]는 한 번만 적용한다. */
+    data class ApplyInitialTab(
+        val tab: HomeTab,
+        val requestId: Long,
+    ) : HomeIntent
+
     data class OnTabSelected(
         val tab: HomeTab,
     ) : HomeIntent
@@ -168,8 +178,6 @@ sealed interface HomeIntent {
     data object ShowSortSheet : HomeIntent
 
     data object DismissSortSheet : HomeIntent
-
-    data object DismissTooltip : HomeIntent
 
     data class OnFeedScreenEntered(
         val firstVisibleItemIndex: Int,

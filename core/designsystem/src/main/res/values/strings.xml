@@ -9,4 +9,6 @@
     <string name="feed_card_vote_count_format">%1$s명이 투표했어요</string>
     <string name="feed_card_vote_status_ended">종료됨</string>
     <string name="feed_card_vote_status_ongoing">진행중</string>
+    <string name="feed_card_vote_closing_timer_format">투표 종료까지 %1$s</string>
+    <string name="feed_card_voting_count_format">🔥%1$s명이 투표중</string>
 </resources>

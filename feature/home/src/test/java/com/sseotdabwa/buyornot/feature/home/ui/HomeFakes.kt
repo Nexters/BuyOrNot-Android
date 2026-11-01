@@ -30,6 +30,7 @@ import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 import com.sseotdabwa.buyornot.domain.repository.CommentThreadChange
 import com.sseotdabwa.buyornot.domain.repository.FeedList
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
+import com.sseotdabwa.buyornot.domain.repository.HotFeedList
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
@@ -46,6 +47,7 @@ fun testFeed(
     feedId: Long,
     commentCount: Int = 0,
     latestComment: CommentPreview? = null,
+    voteClosedAt: String? = null,
 ) = Feed(
     feedId = feedId,
     title = "장화 살지말지 고민됩니다",
@@ -63,6 +65,7 @@ fun testFeed(
     myVoteChoice = null,
     commentCount = commentCount,
     latestComment = latestComment,
+    voteClosedAt = voteClosedAt,
 )
 
 fun testCommentPreview(
@@ -77,10 +80,30 @@ fun testCommentPreview(
     voteChoice = VoteChoice.YES,
 )
 
+data class FeedListRequest(
+    val cursor: Long?,
+    val feedStatus: String?,
+)
+
+data class HotFeedListRequest(
+    val cursor: String?,
+    val category: List<String>?,
+)
+
 class FakeFeedRepository(
     var feeds: List<Feed>,
 ) : FeedRepository {
     var voteImageUrl: String? = null
+
+    /** null이 아니면 투표 피드 응답에 다음 페이지가 있다고 알린다. */
+    var feedListNextCursor: Long? = null
+    val feedListRequests = mutableListOf<FeedListRequest>()
+
+    /** 커서별 핫플 투표 응답. 첫 페이지의 키는 null이다. */
+    var hotPages: Map<String?, HotFeedList> = emptyMap()
+    val hotRequests = mutableListOf<HotFeedListRequest>()
+
+    var voteRequestCount = 0
 
     override val feedCreatedRevision: StateFlow<Long> = MutableStateFlow(0L)
 
@@ -89,14 +112,29 @@ class FakeFeedRepository(
         size: Int,
         feedStatus: String?,
         category: List<String>?,
-    ): FeedList = FeedList(feeds = feeds, nextCursor = null, hasNext = false)
+    ): FeedList {
+        feedListRequests += FeedListRequest(cursor, feedStatus)
+        return FeedList(feeds = feeds, nextCursor = feedListNextCursor, hasNext = feedListNextCursor != null)
+    }
+
+    override suspend fun getHotFeedList(
+        cursor: String?,
+        size: Int,
+        category: List<String>?,
+    ): HotFeedList {
+        hotRequests += HotFeedListRequest(cursor, category)
+        return hotPages[cursor] ?: HotFeedList(feeds = emptyList(), nextCursor = null, hasNext = false)
+    }
 
     override suspend fun getFeed(feedId: Long): Feed = feeds.first { it.feedId == feedId }
 
     override suspend fun voteFeed(
         feedId: Long,
         choice: VoteChoice,
-    ): VoteResult = VoteResult(feedId = feedId, choice = choice, yesCount = 4, noCount = 1, totalCount = 5, feedImageUrl = voteImageUrl)
+    ): VoteResult {
+        voteRequestCount++
+        return VoteResult(feedId = feedId, choice = choice, yesCount = 4, noCount = 1, totalCount = 5, feedImageUrl = voteImageUrl)
+    }
 
     override suspend fun voteGuestFeed(
         feedId: Long,

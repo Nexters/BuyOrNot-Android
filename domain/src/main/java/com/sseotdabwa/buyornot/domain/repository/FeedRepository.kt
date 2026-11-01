@@ -17,6 +17,15 @@ data class FeedList(
     val hasNext: Boolean,
 )
 
+/**
+ * 핫플 투표 목록. 투표 수 순 정렬이라 커서가 feedId 하나가 아니라 서버가 만든 문자열이다.
+ */
+data class HotFeedList(
+    val feeds: List<Feed>,
+    val nextCursor: String?,
+    val hasNext: Boolean,
+)
+
 interface FeedRepository {
     /**
      * 피드 생성 횟수. [createFeed] 성공 시마다 증가한다.
@@ -40,6 +49,18 @@ interface FeedRepository {
         feedStatus: String? = null,
         category: List<String>? = null,
     ): FeedList
+
+    /**
+     * 핫플 투표 목록 조회. 진행 중인 피드만 투표 수 많은 순으로 내려오고,
+     * 페이지 사이에 같은 피드가 다시 나올 수 있다.
+     *
+     * @param cursor 이전 페이지의 [HotFeedList.nextCursor] (첫 페이지는 null)
+     */
+    suspend fun getHotFeedList(
+        cursor: String? = null,
+        size: Int = 20,
+        category: List<String>? = null,
+    ): HotFeedList
 
     /**
      * 피드 단건 조회

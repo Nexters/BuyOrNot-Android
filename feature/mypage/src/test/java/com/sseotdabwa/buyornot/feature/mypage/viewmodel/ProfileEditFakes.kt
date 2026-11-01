@@ -13,6 +13,7 @@ import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
 import com.sseotdabwa.buyornot.domain.repository.FeedList
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
+import com.sseotdabwa.buyornot.domain.repository.HotFeedList
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import com.sseotdabwa.buyornot.feature.mypage.image.ProfileImageFile
@@ -118,6 +119,12 @@ class FakeFeedRepository(
         size: Int,
         feedStatus: String?,
     ): FeedList = error("not used")
+
+    override suspend fun getHotFeedList(
+        cursor: String?,
+        size: Int,
+        category: List<String>?,
+    ): HotFeedList = error("not used")
 
     override suspend fun createFeed(
         category: FeedCategory,

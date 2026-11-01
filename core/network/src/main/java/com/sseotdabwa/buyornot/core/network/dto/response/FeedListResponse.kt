@@ -14,6 +14,17 @@ data class FeedListResponse(
 )
 
 @Serializable
+data class HotFeedListResponse(
+    @SerialName("content")
+    val content: List<FeedItemDto>,
+    // 투표 수가 같은 피드끼리도 순서가 갈리도록 "{투표수}_{feedId}" 복합 커서를 쓴다.
+    @SerialName("nextCursor")
+    val nextCursor: String?,
+    @SerialName("hasNext")
+    val hasNext: Boolean,
+)
+
+@Serializable
 data class FeedImageDto(
     @SerialName("s3ObjectKey")
     val s3ObjectKey: String,
@@ -61,6 +72,8 @@ data class FeedItemDto(
     val commentCount: Int = 0,
     @SerialName("latestComment")
     val latestComment: LatestCommentDto? = null,
+    @SerialName("voteClosedAt")
+    val voteClosedAt: String? = null,
 )
 
 @Serializable

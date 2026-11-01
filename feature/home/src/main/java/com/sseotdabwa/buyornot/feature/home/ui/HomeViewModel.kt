@@ -18,6 +18,7 @@ import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
+import com.sseotdabwa.buyornot.domain.repository.FeedList
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
@@ -50,6 +51,9 @@ class HomeViewModel @Inject constructor(
     private val feedFirstLoadTrace = performance.newTrace(TraceNames.FEED_FIRST_LOAD)
 
     private var currentUserId: Long? = null
+
+    // 다른 화면에서 돌아오면 홈 컴포저블이 초기 탭 요청을 다시 보내므로, 이미 적용한 요청은 무시해 사용자가 고른 탭을 지킨다.
+    private var appliedTabRequestId: Long? = null
     private var isUserIdLoaded = false
     private var unreadCountJob: Job? = null
 
@@ -223,6 +227,7 @@ class HomeViewModel @Inject constructor(
 
     override fun handleIntent(intent: HomeIntent) {
         when (intent) {
+            is HomeIntent.ApplyInitialTab -> applyInitialTab(intent.tab, intent.requestId)
             is HomeIntent.OnTabSelected -> handleTabSelection(intent.tab)
             is HomeIntent.OnFilterSelected -> handleFilterSelection(intent.filter)
             is HomeIntent.OnCreateNudgeAnchorReached -> handleCreateNudgeAnchorReached()
@@ -263,9 +268,9 @@ class HomeViewModel @Inject constructor(
                 updateState { it.copy(selectedCategories = emptySet()) }
                 loadFeeds()
             }
-            is HomeIntent.ShowSortSheet -> updateState { it.copy(showSortSheet = true) }
+            is HomeIntent.ShowSortSheet ->
+                if (uiState.value.selectedTab != HomeTab.HOT) updateState { it.copy(showSortSheet = true) }
             is HomeIntent.DismissSortSheet -> updateState { it.copy(showSortSheet = false) }
-            is HomeIntent.DismissTooltip -> updateState { it.copy(isTooltipDismissed = true) }
             is HomeIntent.OnFeedScreenEntered ->
                 analytics.track(
                     AnalyticsEvent.FeedViewed(
@@ -280,6 +285,15 @@ class HomeViewModel @Inject constructor(
                     ),
                 )
         }
+    }
+
+    private fun applyInitialTab(
+        tab: HomeTab,
+        requestId: Long,
+    ) {
+        if (appliedTabRequestId == requestId) return
+        appliedTabRequestId = requestId
+        if (uiState.value.selectedTab != tab) handleTabSelection(tab)
     }
 
     private fun handleTabSelection(tab: HomeTab) {
@@ -303,6 +317,8 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun handleFilterSelection(filter: FilterChip) {
+        // 핫플 투표는 진행 중인 투표만 내려와 상태 필터가 의미 없다.
+        if (uiState.value.selectedTab == HomeTab.HOT) return
         updateState {
             it.copy(
                 selectedFilter = filter,
@@ -345,19 +361,12 @@ class HomeViewModel @Inject constructor(
             val requestedCategories = currentState.selectedCategories
             val requestedCategory = requestedCategories.map { it.name }.takeIf { it.isNotEmpty() }
             runCatchingCancellable {
-                when (requestedTab) {
-                    HomeTab.FEED ->
-                        feedRepository.getFeedList(
-                            cursor = currentState.nextCursor,
-                            feedStatus = requestedFilter.toFeedStatus(),
-                            category = requestedCategory,
-                        )
-                    HomeTab.MY_FEED ->
-                        feedRepository.getMyFeeds(
-                            cursor = currentState.nextCursor,
-                            feedStatus = requestedFilter.toFeedStatus(),
-                        )
-                }
+                fetchFeedPage(
+                    tab = requestedTab,
+                    cursor = currentState.nextCursor,
+                    feedStatus = requestedFilter.toFeedStatus(),
+                    category = requestedCategory,
+                )
             }.onSuccess { feedList ->
                 // 요청 중 새 로드/새로고침/필터·카테고리·탭 변경이 있었으면(세대 불일치)
                 // 오래된 페이지 병합과 hasNextPage/nextCursor 갱신을 건너뛴다. (PR #129 리뷰)
@@ -399,7 +408,7 @@ class HomeViewModel @Inject constructor(
         val targetFeed = uiState.value.feeds.find { it.id == feedId } ?: return
 
         when {
-            targetFeed.isOwner || targetFeed.isVoteEnded -> return
+            targetFeed.isOwner || targetFeed.isVoteEndedAt(System.currentTimeMillis()) -> return
             targetFeed.userVotedOptionIndex != null -> return
         }
 
@@ -669,10 +678,7 @@ class HomeViewModel @Inject constructor(
                 val feedStatus = uiState.value.selectedFilter.toFeedStatus()
                 val selectedCategories = uiState.value.selectedCategories
                 val category = selectedCategories.map { it.name }.takeIf { it.isNotEmpty() }
-                when (currentTab) {
-                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = feedStatus, category = category)
-                    HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
-                }
+                fetchFeedPage(tab = currentTab, cursor = null, feedStatus = feedStatus, category = category)
             }.onSuccess { feedList ->
                 // 요청 중 새 로드/새로고침(탭·필터·카테고리 변경, 업로드 후 재로드 포함)이 있었으면
                 // 오래된 응답이 최신 목록/커서를 덮어쓰지 않도록 버린다. (PR #148 리뷰)
@@ -729,10 +735,7 @@ class HomeViewModel @Inject constructor(
             val selectedCategories = currentState.selectedCategories
             val category = selectedCategories.map { it.name }.takeIf { it.isNotEmpty() }
             runCatchingCancellable {
-                when (currentTab) {
-                    HomeTab.FEED -> feedRepository.getFeedList(feedStatus = feedStatus, category = category)
-                    HomeTab.MY_FEED -> feedRepository.getMyFeeds(feedStatus = feedStatus)
-                }
+                fetchFeedPage(tab = currentTab, cursor = null, feedStatus = feedStatus, category = category)
             }.onSuccess { feedList ->
                 if (feedGeneration != requestGeneration) {
                     updateState { it.copy(isRefreshing = false) }
@@ -770,6 +773,35 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    private suspend fun fetchFeedPage(
+        tab: HomeTab,
+        cursor: String?,
+        feedStatus: String?,
+        category: List<String>?,
+    ): FeedPage =
+        when (tab) {
+            HomeTab.FEED ->
+                feedRepository
+                    .getFeedList(cursor = cursor?.toLongOrNull(), feedStatus = feedStatus, category = category)
+                    .toFeedPage()
+            HomeTab.HOT ->
+                feedRepository
+                    .getHotFeedList(cursor = cursor, category = category)
+                    .let { FeedPage(it.feeds, it.nextCursor, it.hasNext) }
+            HomeTab.MY_FEED ->
+                feedRepository
+                    .getMyFeeds(cursor = cursor?.toLongOrNull(), feedStatus = feedStatus)
+                    .toFeedPage()
+        }
+
+    private class FeedPage(
+        val feeds: List<Feed>,
+        val nextCursor: String?,
+        val hasNext: Boolean,
+    )
+
+    private fun FeedList.toFeedPage(): FeedPage = FeedPage(feeds, nextCursor?.toString(), hasNext)
 
     /**
      * allFeeds에 카테고리 필터를 로컬 적용한다.
@@ -836,6 +868,7 @@ class HomeViewModel @Inject constructor(
             productLink = productLink,
             commentCount = commentCount,
             latestComment = latestComment?.toFeedCommentPreview(),
+            voteClosedAtMillis = voteClosedAt?.let(TimeUtils::parseEpochMillis),
         )
     }
 
