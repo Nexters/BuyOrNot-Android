@@ -8,9 +8,12 @@ import com.sseotdabwa.buyornot.core.analytics.performance.Performance
 import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.BlockedUser
 import com.sseotdabwa.buyornot.domain.model.CommentAuthorType
+import com.sseotdabwa.buyornot.domain.model.CommentLike
 import com.sseotdabwa.buyornot.domain.model.CommentPage
 import com.sseotdabwa.buyornot.domain.model.CommentPreview
+import com.sseotdabwa.buyornot.domain.model.CommentReplyPage
 import com.sseotdabwa.buyornot.domain.model.CommentSort
+import com.sseotdabwa.buyornot.domain.model.CommentThread
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
@@ -24,6 +27,7 @@ import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
+import com.sseotdabwa.buyornot.domain.repository.CommentThreadChange
 import com.sseotdabwa.buyornot.domain.repository.FeedList
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
@@ -132,6 +136,7 @@ class FakeFeedRepository(
 
 class FakeCommentRepository : CommentRepository {
     override val commentChanges = MutableSharedFlow<Long>()
+    override val threadChanges = MutableSharedFlow<CommentThreadChange>()
 
     override suspend fun getComments(
         feedId: Long,
@@ -154,6 +159,46 @@ class FakeCommentRepository : CommentRepository {
         feedId: Long,
         commentId: Long,
     ) = error("not used")
+
+    override suspend fun getCommentThread(
+        feedId: Long,
+        commentId: Long,
+    ): CommentThread = error("not used")
+
+    override suspend fun getReplies(
+        feedId: Long,
+        commentId: Long,
+        cursor: Long?,
+        size: Int,
+    ): CommentReplyPage = error("not used")
+
+    override suspend fun createReply(
+        feedId: Long,
+        commentId: Long,
+        content: String,
+    ): Long = error("not used")
+
+    override suspend fun deleteReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ) = error("not used")
+
+    override suspend fun reportReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ) = error("not used")
+
+    override suspend fun likeComment(
+        feedId: Long,
+        commentId: Long,
+    ): CommentLike = error("not used")
+
+    override suspend fun unlikeComment(
+        feedId: Long,
+        commentId: Long,
+    ): CommentLike = error("not used")
 }
 
 class FakeUserRepository : UserRepository {

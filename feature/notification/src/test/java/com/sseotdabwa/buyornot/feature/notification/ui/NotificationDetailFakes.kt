@@ -6,8 +6,12 @@ import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.BlockedUser
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentAuthorType
+import com.sseotdabwa.buyornot.domain.model.CommentLike
 import com.sseotdabwa.buyornot.domain.model.CommentPage
+import com.sseotdabwa.buyornot.domain.model.CommentReply
+import com.sseotdabwa.buyornot.domain.model.CommentReplyPage
 import com.sseotdabwa.buyornot.domain.model.CommentSort
+import com.sseotdabwa.buyornot.domain.model.CommentThread
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
@@ -21,6 +25,7 @@ import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
+import com.sseotdabwa.buyornot.domain.repository.CommentThreadChange
 import com.sseotdabwa.buyornot.domain.repository.FeedList
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
@@ -74,6 +79,22 @@ fun testComment(
     isAuthor = false,
     voteChoice = VoteChoice.YES,
     createdAt = "2026-09-20T10:35:17",
+)
+
+fun testReply(
+    id: Long,
+    parentId: Long,
+    isMine: Boolean = false,
+) = CommentReply(
+    id = id,
+    parentId = parentId,
+    authorType = CommentAuthorType.MEMBER,
+    nickname = "토봉이$id",
+    profileImage = null,
+    content = "답글 $id",
+    isMine = isMine,
+    isAuthor = false,
+    createdAt = "2026-09-20T11:35:17",
 )
 
 class FakeFeedRepository(
@@ -149,7 +170,28 @@ class FakeCommentRepository : CommentRepository {
     /** 목록 응답을 붙잡아 두고 싶을 때 바꿔 끼운다 (늦게 도착하는 응답 흉내). */
     var beforeGet: suspend (cursor: Long?, sort: CommentSort) -> Unit = { _, _ -> }
 
+    val threads = mutableMapOf<Long, CommentThread>()
+    val replyPages = mutableMapOf<Long, CommentReplyPage>()
+    var threadError: Throwable? = null
+    var likeResult: CommentLike? = null
+    var unlikeResult: CommentLike? = null
+    var createReplyError: Throwable? = null
+    var deleteReplyError: Throwable? = null
+    var reportReplyError: Throwable? = null
+    var likeError: Throwable? = null
+    var unlikeError: Throwable? = null
+    val createReplyCalls = mutableListOf<Pair<Long, String>>()
+    val deleteReplyCalls = mutableListOf<Pair<Long, Long>>()
+    val reportReplyCalls = mutableListOf<Pair<Long, Long>>()
+    val likeCalls = mutableListOf<Long>()
+    val unlikeCalls = mutableListOf<Long>()
+
+    private val _threadChanges = MutableSharedFlow<CommentThreadChange>()
+
     override val commentChanges: SharedFlow<Long> = MutableSharedFlow()
+    override val threadChanges: SharedFlow<CommentThreadChange> = _threadChanges
+
+    suspend fun emitThreadChange(change: CommentThreadChange) = _threadChanges.emit(change)
 
     override suspend fun getComments(
         feedId: Long,
@@ -187,6 +229,67 @@ class FakeCommentRepository : CommentRepository {
         commentId: Long,
     ) {
         reportError?.let { throw it }
+    }
+
+    override suspend fun getCommentThread(
+        feedId: Long,
+        commentId: Long,
+    ): CommentThread {
+        threadError?.let { throw it }
+        return threads.getValue(commentId)
+    }
+
+    override suspend fun getReplies(
+        feedId: Long,
+        commentId: Long,
+        cursor: Long?,
+        size: Int,
+    ): CommentReplyPage = replyPages[commentId] ?: CommentReplyPage(emptyList(), nextCursor = null, hasNext = false)
+
+    override suspend fun createReply(
+        feedId: Long,
+        commentId: Long,
+        content: String,
+    ): Long {
+        createReplyError?.let { throw it }
+        createReplyCalls += commentId to content
+        return 201
+    }
+
+    override suspend fun deleteReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ) {
+        deleteReplyError?.let { throw it }
+        deleteReplyCalls += commentId to replyId
+    }
+
+    override suspend fun reportReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ) {
+        reportReplyError?.let { throw it }
+        reportReplyCalls += commentId to replyId
+    }
+
+    override suspend fun likeComment(
+        feedId: Long,
+        commentId: Long,
+    ): CommentLike {
+        likeError?.let { throw it }
+        likeCalls += commentId
+        return likeResult ?: CommentLike(likeCount = 1, isLiked = true)
+    }
+
+    override suspend fun unlikeComment(
+        feedId: Long,
+        commentId: Long,
+    ): CommentLike {
+        unlikeError?.let { throw it }
+        unlikeCalls += commentId
+        return unlikeResult ?: CommentLike(likeCount = 0, isLiked = false)
     }
 }
 

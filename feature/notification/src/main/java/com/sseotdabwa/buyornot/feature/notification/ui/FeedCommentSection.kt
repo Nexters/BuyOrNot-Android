@@ -28,17 +28,21 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDivider
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotDividerSize
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentEmpty
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentItem
+import com.sseotdabwa.buyornot.core.designsystem.components.CommentItemSize
+import com.sseotdabwa.buyornot.core.designsystem.components.CommentLikeButton
+import com.sseotdabwa.buyornot.core.designsystem.components.CommentReplyButton
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentTag
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentTagStyle
+import com.sseotdabwa.buyornot.core.designsystem.components.CommentThread
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentVoteBubble
-import com.sseotdabwa.buyornot.core.designsystem.components.CommentVoteLock
+import com.sseotdabwa.buyornot.core.designsystem.components.DeletedCommentItem
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 import com.sseotdabwa.buyornot.domain.model.Comment
+import com.sseotdabwa.buyornot.domain.model.CommentReply
 import com.sseotdabwa.buyornot.domain.model.CommentSort
-import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 
 private const val COMMENT_HEADER_KEY = "comment_header"
@@ -75,32 +79,24 @@ internal fun LazyListScope.commentSection(
     }
 
     when {
-        !uiState.canViewComments ->
-            item(key = "comment_locked") { CommentVoteLock(modifier = Modifier.padding(vertical = 40.dp)) }
         uiState.isCommentsLoading && uiState.comments.isEmpty() -> item(key = "comment_loading") { CommentLoading() }
         uiState.comments.isEmpty() ->
             item(key = "comment_empty") {
-                // 마감 피드는 입력창이 막혀 있어 의견을 권하지 않고 막힌 이유를 알린다.
-                if (uiState.feed?.feedStatus == FeedStatus.CLOSED) {
-                    CommentMessage("마감된 투표에는 댓글을 남길 수 없어요.")
-                } else {
-                    CommentEmpty(
-                        onWriteClick = onWriteCommentClick.takeIf { uiState.canWriteComment },
-                        modifier = Modifier.padding(top = 50.dp, bottom = 20.dp),
-                    )
-                }
+                CommentEmpty(
+                    onWriteClick = onWriteCommentClick.takeIf { uiState.canWriteComment },
+                    modifier = Modifier.padding(top = 50.dp, bottom = 20.dp),
+                )
             }
         else -> {
             itemsIndexed(items = uiState.comments, key = { _, comment -> comment.id }) { index, comment ->
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                    CommentItem(
-                        nickname = comment.nickname,
-                        profileImageUrl = comment.profileImage,
-                        createdAt = TimeUtils.formatRelativeTime(comment.createdAt),
-                        content = comment.content,
-                        tag = comment.tag(),
-                        voteBubble = comment.voteBubble(),
-                        menuItems = comment.menuItems(isGuestViewer = uiState.isGuest, onIntent = onIntent),
+                    FeedCommentThread(
+                        comment = comment,
+                        isGuestViewer = uiState.isGuest,
+                        onReplyClick = { onIntent(NotificationDetailIntent.OnReplyClicked(comment.id)) }.takeIf { uiState.canWriteComment },
+                        onLikeClick = { onIntent(NotificationDetailIntent.OnLikeClicked(comment.id)) }.takeIf { uiState.canWriteComment },
+                        onDelete = { onIntent(NotificationDetailIntent.ShowDeleteCommentDialog(it)) },
+                        onReport = { onIntent(NotificationDetailIntent.ShowReportCommentDialog(it)) },
                         modifier = Modifier.padding(vertical = CommentItemVerticalPadding),
                     )
                     // 댓글과 댓글 사이에만 두고 마지막 댓글 아래에는 없다.
@@ -114,6 +110,67 @@ internal fun LazyListScope.commentSection(
             }
         }
     }
+}
+
+/**
+ * 원댓글과 그 아래 답글 스레드.
+ *
+ * @param onReplyClick null이면 [답글쓰기]를 숨긴다 (비회원·답글 페이지의 고정 원댓글).
+ * @param onLikeClick null이면 [공감]을 숨긴다 (비회원).
+ */
+@Composable
+internal fun FeedCommentThread(
+    comment: Comment,
+    isGuestViewer: Boolean,
+    onReplyClick: (() -> Unit)?,
+    onLikeClick: (() -> Unit)?,
+    onDelete: (CommentTarget) -> Unit,
+    onReport: (CommentTarget) -> Unit,
+    modifier: Modifier = Modifier,
+    replies: List<CommentReply> = comment.replies,
+) {
+    CommentThread(
+        parent = {
+            if (comment.isDeleted) {
+                DeletedCommentItem()
+            } else {
+                CommentItem(
+                    nickname = comment.nickname,
+                    profileImageUrl = comment.profileImage,
+                    createdAt = TimeUtils.formatRelativeTime(comment.createdAt),
+                    content = comment.content,
+                    tag = comment.tag(),
+                    voteBubble = comment.voteBubble(),
+                    menuItems = menuItems(isMine = comment.isMine, isGuestViewer, CommentTarget(comment.id), onDelete, onReport),
+                    actions =
+                        if (onReplyClick == null && onLikeClick == null) {
+                            null
+                        } else {
+                            {
+                                if (onReplyClick != null) CommentReplyButton(replyCount = comment.replyCount, onClick = onReplyClick)
+                                if (onLikeClick != null) {
+                                    CommentLikeButton(likeCount = comment.likeCount, isLiked = comment.isLiked, onClick = onLikeClick)
+                                }
+                            }
+                        },
+                )
+            }
+        },
+        replies = replies,
+        replyKey = { it.id },
+        reply = { reply ->
+            CommentItem(
+                nickname = reply.nickname,
+                profileImageUrl = reply.profileImage,
+                createdAt = TimeUtils.formatRelativeTime(reply.createdAt),
+                content = reply.content,
+                size = CommentItemSize.REPLY,
+                tag = reply.tag(),
+                menuItems = menuItems(reply.isMine, isGuestViewer, CommentTarget(comment.id, reply.id), onDelete, onReport),
+            )
+        },
+        modifier = modifier,
+    )
 }
 
 // 투표한 사람을 부각하려고 회원/비회원은 구분하지 않고 작성자·투표자에게만 태그를 단다.
@@ -132,15 +189,21 @@ private fun Comment.voteBubble(): CommentVoteBubble? =
         else -> null
     }
 
+// 투표 내용은 투표 페이지에서 남긴 원댓글에만 붙이므로 답글에는 작성자 태그만 단다.
+private fun CommentReply.tag(): CommentTag? = if (isAuthor) CommentTag("작성자", CommentTagStyle.BRAND) else null
+
 // 내 댓글은 삭제만, 남의 댓글은 신고만 — 본인 댓글 신고는 서버가 거절한다(COMMENT_008).
-private fun Comment.menuItems(
+private fun menuItems(
+    isMine: Boolean,
     isGuestViewer: Boolean,
-    onIntent: (NotificationDetailIntent) -> Unit,
+    target: CommentTarget,
+    onDelete: (CommentTarget) -> Unit,
+    onReport: (CommentTarget) -> Unit,
 ): List<Pair<String, () -> Unit>> =
     when {
         isGuestViewer -> emptyList()
-        isMine -> listOf("삭제하기" to { onIntent(NotificationDetailIntent.ShowDeleteCommentDialog(id)) })
-        else -> listOf("신고하기" to { onIntent(NotificationDetailIntent.ShowReportCommentDialog(id)) })
+        isMine -> listOf("삭제하기" to { onDelete(target) })
+        else -> listOf("신고하기" to { onReport(target) })
     }
 
 @Composable
@@ -199,24 +262,7 @@ private fun CommentHeader(
 }
 
 @Composable
-private fun CommentMessage(text: String) {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 40.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text,
-            style = BuyOrNotTheme.typography.bodyB4Medium,
-            color = BuyOrNotTheme.colors.gray600,
-        )
-    }
-}
-
-@Composable
-private fun CommentLoading() {
+internal fun CommentLoading() {
     Box(
         modifier =
             Modifier

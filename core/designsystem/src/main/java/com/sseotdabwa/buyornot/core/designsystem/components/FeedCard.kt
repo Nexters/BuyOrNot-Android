@@ -88,8 +88,6 @@ private val ThreadContentStart = CardHorizontalPadding + ProfileAvatarSize + Pro
 
 // thread 라인은 프로필 아바타 중심에서 내려온다.
 private val ThreadLineX = CardHorizontalPadding + ProfileAvatarSize / 2
-private val ThreadLineWidth = 1.2.dp
-private val ThreadCornerRadius = 10.dp
 
 // 라인이 꺾여 미리보기 카드 왼쪽 끝에 붙는 높이 (미리보기 카드 상단 기준).
 private val ThreadJoinOffsetY = 35.dp
@@ -167,7 +165,7 @@ fun FeedCard(
                     // 아바타는 헤더 행 안에서 세로 가운데 정렬된다.
                     val startY = (headerHeightPx + ProfileAvatarSize.toPx()) / 2f
                     val joinY = previewTopPx + ThreadJoinOffsetY.toPx()
-                    val radius = ThreadCornerRadius.toPx()
+                    val radius = ThreadLine.CornerRadius.toPx()
                     val path =
                         Path().apply {
                             moveTo(x, startY)
@@ -178,7 +176,7 @@ fun FeedCard(
                     drawPath(
                         path = path,
                         color = threadLineColor,
-                        style = Stroke(width = ThreadLineWidth.toPx(), cap = StrokeCap.Round),
+                        style = Stroke(width = ThreadLine.Width.toPx(), cap = StrokeCap.Round),
                     )
                 }
             },
@@ -692,11 +690,6 @@ private fun CommentCount(
         )
     }
 }
-
-private const val MAX_DISPLAY_COUNT = 99
-
-/** 투표 수·댓글 수는 상한을 넘으면 "99+"처럼 줄여 보여준다. */
-private fun Int.toDisplayCount(): String = if (this > MAX_DISPLAY_COUNT) "$MAX_DISPLAY_COUNT+" else toString()
 
 @Composable
 private fun VoteOption(

@@ -45,6 +45,7 @@ import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.COMMENT_MAX_LENGTH
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentAuthorType
+import com.sseotdabwa.buyornot.domain.model.CommentReply
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
@@ -70,6 +71,7 @@ fun NotificationDetailRoute(
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onRepliesClick: (feedId: Long, commentId: Long) -> Unit = { _, _ -> },
     viewModel: NotificationDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -87,6 +89,7 @@ fun NotificationDetailRoute(
                     )
                 }
                 NotificationDetailSideEffect.NavigateBack -> onBackClick()
+                is NotificationDetailSideEffect.NavigateToReplies -> onRepliesClick(sideEffect.feedId, sideEffect.commentId)
             }
         }
     }
@@ -137,7 +140,7 @@ fun NotificationDetailScreen(
         )
     }
 
-    if (uiState.deletingCommentId != null) {
+    if (uiState.deletingComment != null) {
         BuyOrNotAlertDialog(
             onDismissRequest = { onIntent(NotificationDetailIntent.DismissDeleteCommentDialog) },
             title = "정말 삭제하시겠어요?",
@@ -150,7 +153,7 @@ fun NotificationDetailScreen(
         )
     }
 
-    if (uiState.reportingCommentId != null) {
+    if (uiState.reportingComment != null) {
         BuyOrNotAlertDialog(
             onDismissRequest = { onIntent(NotificationDetailIntent.DismissReportCommentDialog) },
             title = "이 댓글을 신고할까요?",
@@ -193,12 +196,7 @@ fun NotificationDetailScreen(
                     votedOptionLabel = feed.myVoteChoice?.label(),
                     enabled = uiState.canWriteComment,
                     submitEnabled = uiState.canSubmitComment,
-                    disabledPlaceholder =
-                        when {
-                            uiState.isGuest -> "로그인 후 의견을 작성할 수 있어요."
-                            feed.feedStatus == FeedStatus.CLOSED -> "투표가 마감되었어요."
-                            else -> "댓글을 남겨주세요!"
-                        },
+                    disabledPlaceholder = "로그인 후 의견을 작성할 수 있어요.",
                     maxLength = COMMENT_MAX_LENGTH,
                     focusRequester = commentFocusRequester,
                     modifier =
@@ -453,7 +451,12 @@ private fun NotificationDetailScreenWithCommentsPreview() {
                     comments =
                         listOf(
                             previewComment(1, voteChoice = VoteChoice.YES),
-                            previewComment(2, voteChoice = VoteChoice.NO, isMine = true),
+                            previewComment(2, voteChoice = VoteChoice.NO, isMine = true).copy(
+                                likeCount = 3,
+                                isLiked = true,
+                                replyCount = 2,
+                                replies = listOf(previewReply(21, parentId = 2), previewReply(22, parentId = 2, isAuthor = true)),
+                            ),
                             previewComment(3, voteChoice = null, isAuthor = true),
                             previewComment(4, voteChoice = null, authorType = CommentAuthorType.GUEST),
                         ),
@@ -521,4 +524,20 @@ private fun previewComment(
     isAuthor = isAuthor,
     voteChoice = voteChoice,
     createdAt = "2026-09-20T10:35:17",
+)
+
+private fun previewReply(
+    id: Long,
+    parentId: Long,
+    isAuthor: Boolean = false,
+) = CommentReply(
+    id = id,
+    parentId = parentId,
+    authorType = CommentAuthorType.MEMBER,
+    nickname = if (isAuthor) "참새방앗간12456" else "토봉이날다1245$id",
+    profileImage = null,
+    content = "저도 비슷하게 느꼈어요. 그래도 가격 생각하면 괜찮은 듯?",
+    isMine = false,
+    isAuthor = isAuthor,
+    createdAt = "2026-09-20T11:35:17",
 )

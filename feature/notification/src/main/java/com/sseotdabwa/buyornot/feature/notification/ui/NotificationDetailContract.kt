@@ -6,7 +6,6 @@ import com.sseotdabwa.buyornot.domain.model.COMMENT_MAX_LENGTH
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentSort
 import com.sseotdabwa.buyornot.domain.model.Feed
-import com.sseotdabwa.buyornot.domain.model.FeedStatus
 
 @Immutable
 data class NotificationDetailUiState(
@@ -29,22 +28,20 @@ data class NotificationDetailUiState(
     val isSubmittingComment: Boolean = false,
     /** 금칙어로 거절된 뒤 내용을 고치기 전까지 등록을 막는다. */
     val isCommentSubmitBlocked: Boolean = false,
-    val deletingCommentId: Long? = null,
-    val reportingCommentId: Long? = null,
+    val deletingComment: CommentTarget? = null,
+    val reportingComment: CommentTarget? = null,
     /** 댓글 진입점으로 들어왔을 때 댓글 영역으로 한 번 스크롤한다. */
     val pendingScrollToComments: Boolean = false,
     /** [의견 남기기]로 들어왔을 때 입력창에 한 번 포커스한다. */
     val pendingFocusCommentInput: Boolean = false,
 ) {
-    private val hasJoinedVote: Boolean get() = isOwner || feed?.hasVoted == true
-
-    /** 투표 후에만 댓글을 볼 수 있다. 마감된 투표는 더 이상 투표할 수 없으니 누구나 본다. */
+    /** 투표 여부·마감과 상관없이 누구나 댓글을 본다. */
     val canViewComments: Boolean
-        get() = feed != null && (hasJoinedVote || feed.feedStatus == FeedStatus.CLOSED)
+        get() = feed != null
 
-    /** 진행 중인 투표에 참여한 회원만 쓸 수 있다. 피드 작성자는 자기 글에 투표하지 않으므로 예외. */
+    /** 투표 여부·마감과 상관없이 회원이면 댓글·답글을 쓰고 공감할 수 있다. */
     val canWriteComment: Boolean
-        get() = feed != null && !isGuest && hasJoinedVote && feed.feedStatus == FeedStatus.OPEN
+        get() = feed != null && !isGuest
 
     val canSubmitComment: Boolean
         get() =
@@ -91,7 +88,7 @@ sealed interface NotificationDetailIntent {
     data object LoadNextComments : NotificationDetailIntent
 
     data class ShowDeleteCommentDialog(
-        val commentId: Long,
+        val target: CommentTarget,
     ) : NotificationDetailIntent
 
     data object DismissDeleteCommentDialog : NotificationDetailIntent
@@ -99,12 +96,21 @@ sealed interface NotificationDetailIntent {
     data object OnDeleteCommentConfirmed : NotificationDetailIntent
 
     data class ShowReportCommentDialog(
-        val commentId: Long,
+        val target: CommentTarget,
     ) : NotificationDetailIntent
 
     data object DismissReportCommentDialog : NotificationDetailIntent
 
     data object OnReportCommentConfirmed : NotificationDetailIntent
+
+    /** 원댓글의 [답글쓰기]·답글 수 탭 */
+    data class OnReplyClicked(
+        val commentId: Long,
+    ) : NotificationDetailIntent
+
+    data class OnLikeClicked(
+        val commentId: Long,
+    ) : NotificationDetailIntent
 
     data object OnCommentScrollHandled : NotificationDetailIntent
 
@@ -118,4 +124,9 @@ sealed interface NotificationDetailSideEffect {
     ) : NotificationDetailSideEffect
 
     data object NavigateBack : NotificationDetailSideEffect
+
+    data class NavigateToReplies(
+        val feedId: Long,
+        val commentId: Long,
+    ) : NotificationDetailSideEffect
 }

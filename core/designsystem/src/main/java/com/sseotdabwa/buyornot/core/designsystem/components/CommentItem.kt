@@ -4,10 +4,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,30 +25,40 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
+import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -75,10 +87,20 @@ data class CommentTag(
     val style: CommentTagStyle = CommentTagStyle.DEFAULT,
 )
 
+/** 원댓글과 답글은 아바타 크기와 본문 글꼴이 다르다. */
+enum class CommentItemSize(
+    internal val avatarSize: Int,
+    internal val avatarSpacing: Dp,
+) {
+    COMMENT(avatarSize = 32, avatarSpacing = 12.dp),
+    REPLY(avatarSize = 24, avatarSpacing = 8.dp),
+}
+
 /**
- * 피드 상세의 댓글 한 줄.
+ * 피드 상세·답글 페이지의 댓글 한 줄.
  *
  * @param menuItems 더보기(⋯) 메뉴 항목. 비어 있으면 더보기 버튼을 숨긴다.
+ * @param actions 본문 아래 [CommentReplyButton]·[CommentLikeButton] 줄. null이면 그리지 않는다.
  */
 @Composable
 fun CommentItem(
@@ -87,16 +109,18 @@ fun CommentItem(
     createdAt: String,
     content: String,
     modifier: Modifier = Modifier,
+    size: CommentItemSize = CommentItemSize.COMMENT,
     tag: CommentTag? = null,
     voteBubble: CommentVoteBubble? = null,
     menuItems: List<Pair<String, () -> Unit>> = emptyList(),
+    actions: (@Composable RowScope.() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(size.avatarSpacing),
     ) {
         Box {
-            CommentAvatar(profileImageUrl = profileImageUrl, size = 32)
+            CommentAvatar(profileImageUrl = profileImageUrl, size = size.avatarSize)
             if (voteBubble != null) {
                 VoteBubble(
                     bubble = voteBubble,
@@ -107,7 +131,7 @@ fun CommentItem(
 
         Column(
             modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Row(
@@ -146,9 +170,193 @@ fun CommentItem(
             }
             Text(
                 text = content,
-                style = BuyOrNotTheme.typography.bodyB4Medium,
+                style =
+                    when (size) {
+                        CommentItemSize.COMMENT -> BuyOrNotTheme.typography.bodyB4Medium
+                        CommentItemSize.REPLY -> BuyOrNotTheme.typography.paragraphP3Medium
+                    },
                 color = BuyOrNotTheme.colors.gray900,
             )
+            if (actions != null) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = actions,
+                )
+            }
+        }
+    }
+}
+
+/** 답글이 남아 있어 자리만 지키는 삭제된 원댓글. */
+@Composable
+fun DeletedCommentItem(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(CommentItemSize.COMMENT.avatarSpacing),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        CommentAvatar(profileImageUrl = null, size = CommentItemSize.COMMENT.avatarSize)
+        Text(
+            text = "삭제된 댓글입니다",
+            style = BuyOrNotTheme.typography.bodyB4Medium,
+            color = BuyOrNotTheme.colors.gray600,
+        )
+    }
+}
+
+/**
+ * 답글 페이지로 들어가는 버튼.
+ *
+ * @param replyCount 0이면 "답글쓰기", 아니면 답글 수를 보여준다.
+ */
+@Composable
+fun CommentReplyButton(
+    replyCount: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    CommentActionButton(
+        icon = BuyOrNotIcons.Comment,
+        label = if (replyCount > 0) replyCount.toDisplayCount() else "답글쓰기",
+        color = BuyOrNotTheme.colors.gray600,
+        contentDescription = "답글",
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
+
+/**
+ * 공감 토글 버튼.
+ *
+ * @param likeCount 0이면 "공감", 아니면 공감 수를 보여준다.
+ * @param isLiked 내가 공감했는지. 공감했으면 강조색으로 칠한다.
+ */
+@Composable
+fun CommentLikeButton(
+    likeCount: Int,
+    isLiked: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    CommentActionButton(
+        icon = BuyOrNotIcons.Heart,
+        label = if (likeCount > 0) likeCount.toDisplayCount() else "공감",
+        color = if (isLiked) BuyOrNotTheme.colors.orange100 else BuyOrNotTheme.colors.gray600,
+        contentDescription = if (isLiked) "공감 취소" else "공감",
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun CommentActionButton(
+    icon: IconResource,
+    label: String,
+    color: Color,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .semantics(mergeDescendants = true) { this.contentDescription = contentDescription }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onClick,
+                ),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon.asImageVector(),
+            contentDescription = null,
+            modifier = Modifier.size(13.dp),
+            tint = color,
+        )
+        Text(
+            text = label,
+            style = BuyOrNotTheme.typography.bodyB6Medium,
+            color = color,
+        )
+    }
+}
+
+private val ThreadSpacing = 26.dp
+
+// 답글은 원댓글 본문 시작점(아바타 + 간격)만큼 들여쓴다.
+private val ReplyIndent = (CommentItemSize.COMMENT.avatarSize.dp + CommentItemSize.COMMENT.avatarSpacing)
+
+// 연결선은 원댓글 아바타 중심에서 내려와 답글 아바타 중심 높이에서 꺾인다.
+private val ThreadLineX = CommentItemSize.COMMENT.avatarSize.dp / 2
+private val ThreadLineTopGap = 4.dp
+private val ThreadLineEndGap = 4.dp
+private val ReplyAvatarCenterY = CommentItemSize.REPLY.avatarSize.dp / 2
+
+/**
+ * 원댓글 아래로 답글을 들여 쌓고 연결선으로 잇는다.
+ *
+ * @param parent 원댓글. [CommentItemSize.COMMENT] 크기의 아바타가 왼쪽 위에 있어야 연결선이 맞는다.
+ * @param reply 답글 하나. [CommentItemSize.REPLY] 크기의 아바타가 왼쪽 위에 있어야 연결선이 맞는다.
+ */
+@Composable
+fun <T> CommentThread(
+    parent: @Composable () -> Unit,
+    replies: List<T>,
+    modifier: Modifier = Modifier,
+    replyKey: (T) -> Any,
+    reply: @Composable (T) -> Unit,
+) {
+    val replyTops = remember { mutableStateMapOf<Any, Float>() }
+    val lineColor = BuyOrNotTheme.colors.gray300
+    Column(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    val centers =
+                        replies.mapNotNull { replyTops[replyKey(it)] }.map { it + ReplyAvatarCenterY.toPx() }
+                    if (centers.isEmpty()) return@drawBehind
+                    val x = ThreadLineX.toPx()
+                    val radius = ThreadLine.CornerRadius.toPx()
+                    val endX = (ReplyIndent - ThreadLineEndGap).toPx()
+                    val path =
+                        Path().apply {
+                            moveTo(
+                                x,
+                                CommentItemSize.COMMENT.avatarSize.dp
+                                    .toPx() + ThreadLineTopGap.toPx(),
+                            )
+                            lineTo(x, centers.last() - radius)
+                            centers.forEach { y ->
+                                moveTo(x, y - radius)
+                                quadraticTo(x, y, x + radius, y)
+                                lineTo(endX, y)
+                            }
+                        }
+                    drawPath(
+                        path = path,
+                        color = lineColor,
+                        style = Stroke(width = ThreadLine.Width.toPx(), cap = StrokeCap.Round),
+                    )
+                },
+        verticalArrangement = Arrangement.spacedBy(ThreadSpacing),
+    ) {
+        parent()
+        replies.forEach { item ->
+            val key = replyKey(item)
+            key(key) {
+                Box(
+                    modifier =
+                        Modifier
+                            .padding(start = ReplyIndent)
+                            .onPlaced { replyTops[key] = it.positionInParent().y },
+                ) {
+                    reply(item)
+                }
+            }
         }
     }
 }
@@ -270,9 +478,6 @@ private const val BASE_TAIL_WIDTH = 6f
 private val AvatarBubble =
     TailBubbleSpec(width = 24f, bodyHeight = 22f, height = 25.5f, cornerRadius = 6.31f, tailStartX = 12.4f, tailEndX = 18.4f)
 
-private val LockBubble =
-    TailBubbleSpec(width = 72f, bodyHeight = 55f, height = 63f, cornerRadius = 15.43f, tailStartX = 37f, tailEndX = 54f)
-
 /** 말풍선은 dp 고정이라 이모지도 글꼴 배율을 따르지 않게 한다. */
 @Composable
 private fun FixedScaleEmoji(
@@ -307,83 +512,6 @@ private fun VoteBubble(
             emoji = bubble.emoji,
             style = BuyOrNotTheme.typography.bodyB4Medium,
             modifier = Modifier.padding(top = 4.dp),
-        )
-    }
-}
-
-// 하드웨어 그림자는 색 알파에 시스템 그림자 알파(약 0.2)를 곱하므로, 시안의 20%를 내려면 불투명하게 준다.
-private val LockBubbleShadow = Color(0xFF696E77)
-private val LockEmojiSize = 35.dp
-
-/**
- * 투표 전 댓글 영역을 가리는 안내. 두 선택지 말풍선이 마주 보며 기울어져 있다.
- */
-@Composable
-fun CommentVoteLock(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Box(modifier = Modifier.size(width = 170.dp, height = 100.dp)) {
-            VoteLockBubble(
-                emoji = CommentVoteBubble.BUY.emoji,
-                mirrored = true,
-                rotation = -7.59f,
-                modifier = Modifier.offset(x = 6.dp, y = 27.dp),
-            )
-            VoteLockBubble(
-                emoji = CommentVoteBubble.UNSURE.emoji,
-                mirrored = false,
-                rotation = 6.87f,
-                modifier = Modifier.offset(x = 91.dp, y = 11.dp),
-            )
-        }
-        Spacer(modifier = Modifier.height(21.dp))
-        Text(
-            text = "투표 후 댓글을 볼 수 있어요!",
-            style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-            color = BuyOrNotTheme.colors.gray950,
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "당신의 선택은?",
-            style = BuyOrNotTheme.typography.subTitleS3SemiBold,
-            color = BuyOrNotTheme.colors.gray1000,
-        )
-    }
-}
-
-@Composable
-private fun VoteLockBubble(
-    emoji: String,
-    mirrored: Boolean,
-    rotation: Float,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier =
-            modifier
-                .size(width = LockBubble.width.dp, height = LockBubble.height.dp)
-                .graphicsLayer { rotationZ = rotation },
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        // 꼬리 방향만 뒤집고 이모지는 뒤집지 않는다.
-        Box(
-            modifier =
-                Modifier
-                    .matchParentSize()
-                    .graphicsLayer { scaleX = if (mirrored) -1f else 1f }
-                    .shadow(
-                        elevation = 16.dp,
-                        shape = LockBubble.shape,
-                        ambientColor = LockBubbleShadow,
-                        spotColor = LockBubbleShadow,
-                    ).background(BuyOrNotTheme.colors.gray0, LockBubble.shape),
-        )
-        FixedScaleEmoji(
-            emoji = emoji,
-            style = BuyOrNotTheme.typography.bodyB4Medium.copy(fontSize = 30.sp, lineHeight = LockEmojiSize.value.sp),
-            modifier = Modifier.padding(top = ((LockBubble.bodyHeight.dp - LockEmojiSize) / 2)),
         )
     }
 }
@@ -475,6 +603,10 @@ private fun CommentItemPreview() {
                 tag = CommentTag("사! 가즈아!"),
                 voteBubble = CommentVoteBubble.BUY,
                 menuItems = listOf("신고하기" to {}),
+                actions = {
+                    CommentReplyButton(replyCount = 0, onClick = {})
+                    CommentLikeButton(likeCount = 0, isLiked = false, onClick = {})
+                },
             )
             CommentItem(
                 nickname = "토봉이날다12456",
@@ -484,6 +616,10 @@ private fun CommentItemPreview() {
                 tag = CommentTag("애매하긴 해"),
                 voteBubble = CommentVoteBubble.UNSURE,
                 menuItems = listOf("삭제하기" to {}),
+                actions = {
+                    CommentReplyButton(replyCount = 2, onClick = {})
+                    CommentLikeButton(likeCount = 120, isLiked = true, onClick = {})
+                },
             )
             CommentItem(
                 nickname = "토봉이날다12456",
@@ -504,6 +640,62 @@ private fun CommentItemPreview() {
     }
 }
 
+@Preview(name = "CommentThread", showBackground = true, backgroundColor = 0xFFFFFFFF, widthDp = 375)
+@Composable
+private fun CommentThreadPreview() {
+    BuyOrNotTheme {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(40.dp),
+        ) {
+            CommentThread(
+                parent = {
+                    CommentItem(
+                        nickname = "토봉이날다12456",
+                        profileImageUrl = PreviewImages.avatar(),
+                        createdAt = "2시간 전",
+                        content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
+                        tag = CommentTag("애매하긴 해"),
+                        voteBubble = CommentVoteBubble.UNSURE,
+                        menuItems = listOf("신고하기" to {}),
+                        actions = {
+                            CommentReplyButton(replyCount = 2, onClick = {})
+                            CommentLikeButton(likeCount = 1, isLiked = true, onClick = {})
+                        },
+                    )
+                },
+                replies = listOf(1L, 2L),
+                replyKey = { it },
+                reply = {
+                    CommentItem(
+                        nickname = "거북이날다12456",
+                        profileImageUrl = PreviewImages.avatar(),
+                        createdAt = "2시간 전",
+                        content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요.. 이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
+                        size = CommentItemSize.REPLY,
+                        tag = if (it == 2L) CommentTag("작성자", CommentTagStyle.BRAND) else null,
+                        menuItems = listOf("신고하기" to {}),
+                    )
+                },
+            )
+            CommentThread(
+                parent = { DeletedCommentItem() },
+                replies = listOf(3L),
+                replyKey = { it },
+                reply = {
+                    CommentItem(
+                        nickname = "거북이날다12456",
+                        profileImageUrl = null,
+                        createdAt = "2시간 전",
+                        content = "원댓글이 지워져도 답글은 남아요.",
+                        size = CommentItemSize.REPLY,
+                    )
+                },
+            )
+        }
+    }
+}
+
 @Preview(name = "CommentPreviewCard", showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 private fun CommentPreviewCardPreview() {
@@ -513,14 +705,6 @@ private fun CommentPreviewCardPreview() {
             content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
             modifier = Modifier.padding(20.dp),
         )
-    }
-}
-
-@Preview(name = "CommentVoteLock", showBackground = true, backgroundColor = 0xFFFFFFFF, widthDp = 375)
-@Composable
-private fun CommentVoteLockPreview() {
-    BuyOrNotTheme {
-        CommentVoteLock(modifier = Modifier.padding(vertical = 40.dp))
     }
 }
 

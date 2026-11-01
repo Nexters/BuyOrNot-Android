@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import kotlinx.serialization.Serializable
+import com.sseotdabwa.buyornot.feature.notification.ui.CommentRepliesRoute as CommentRepliesScreen
 import com.sseotdabwa.buyornot.feature.notification.ui.NotificationDetailRoute as NotificationDetailScreen
 import com.sseotdabwa.buyornot.feature.notification.ui.NotificationRoute as NotificationScreen
 
@@ -28,12 +29,25 @@ data class NotificationDetailRoute(
     val focusCommentInput: Boolean = false,
 )
 
+/**
+ * 원댓글 하나와 그 답글을 모아 보는 답글 페이지.
+ *
+ * 인자 이름은 [com.sseotdabwa.buyornot.feature.notification.ui.CommentRepliesViewModel]이
+ * SavedStateHandle에서 같은 이름으로 읽는다.
+ */
+@Serializable
+data class CommentRepliesRoute(
+    val feedId: Long,
+    val commentId: Long,
+)
+
 fun NavGraphBuilder.notificationGraph(
     onBackClick: () -> Unit,
     onNotificationClick: (Long, Long) -> Unit,
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onRepliesClick: (feedId: Long, commentId: Long) -> Unit = { _, _ -> },
 ) {
     composable<NotificationRoute> {
         NotificationScreen(
@@ -48,8 +62,20 @@ fun NavGraphBuilder.notificationGraph(
             onLinkClick = onLinkClick,
             onShareClick = onShareClick,
             onImageClick = onImageClick,
+            onRepliesClick = onRepliesClick,
         )
     }
+
+    composable<CommentRepliesRoute> {
+        CommentRepliesScreen(onBackClick = onBackClick)
+    }
+}
+
+fun NavHostController.navigateToCommentReplies(
+    feedId: Long,
+    commentId: Long,
+) {
+    navigate(CommentRepliesRoute(feedId = feedId, commentId = commentId))
 }
 
 fun NavHostController.navigateToNotification(navOptions: NavOptions? = null) {
