@@ -406,11 +406,7 @@ class NotificationDetailViewModel @Inject constructor(
         updateState { it.copy(deletingComment = null) }
         viewModelScope.launch {
             runCatchingCancellable {
-                if (target.replyId == null) {
-                    commentRepository.deleteComment(feedId = feedId, commentId = target.commentId)
-                } else {
-                    commentRepository.deleteReply(feedId = feedId, commentId = target.commentId, replyId = target.replyId)
-                }
+                commentRepository.delete(feedId = feedId, target = target)
             }.onSuccess {
                 removeTarget(target, isDeleted = true)
                 sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = "삭제가 완료되었어요."))
@@ -431,11 +427,7 @@ class NotificationDetailViewModel @Inject constructor(
         updateState { it.copy(reportingComment = null) }
         viewModelScope.launch {
             runCatchingCancellable {
-                if (target.replyId == null) {
-                    commentRepository.reportComment(feedId = feedId, commentId = target.commentId)
-                } else {
-                    commentRepository.reportReply(feedId = feedId, commentId = target.commentId, replyId = target.replyId)
-                }
+                commentRepository.report(feedId = feedId, target = target)
             }.onSuccess {
                 // 신고된 댓글은 서버 목록에서 빠지므로 화면에서도 바로 뺀다.
                 removeTarget(target, isDeleted = false)
@@ -489,11 +481,7 @@ class NotificationDetailViewModel @Inject constructor(
         ownLikeSignals[commentId] = (ownLikeSignals[commentId] ?: 0) + 1
         viewModelScope.launch {
             runCatchingCancellable {
-                if (comment.isLiked) {
-                    commentRepository.unlikeComment(feedId = feedId, commentId = commentId)
-                } else {
-                    commentRepository.likeComment(feedId = feedId, commentId = commentId)
-                }
+                commentRepository.toggleLike(feedId = feedId, comment = comment)
             }.onSuccess { like ->
                 updateState { it.copy(comments = it.comments.updateComment(commentId) { c -> c.withLike(like) }) }
             }.onFailure { e ->
@@ -520,16 +508,7 @@ class NotificationDetailViewModel @Inject constructor(
         viewModelScope.launch {
             runCatchingCancellable {
                 val thread = commentRepository.getCommentThread(feedId = feedId, commentId = commentId)
-                val replies =
-                    buildList {
-                        var cursor: Long? = null
-                        do {
-                            val page = commentRepository.getReplies(feedId = feedId, commentId = commentId, cursor = cursor)
-                            addAll(page.replies)
-                            cursor = page.nextCursor
-                        } while (page.hasNext && cursor != null)
-                    }
-                thread.comment.copy(replies = replies)
+                thread.comment.copy(replies = commentRepository.getAllReplies(feedId = feedId, commentId = commentId))
             }.onSuccess { refreshed ->
                 updateState { state ->
                     val previous = state.comments.firstOrNull { it.id == commentId } ?: return@updateState state

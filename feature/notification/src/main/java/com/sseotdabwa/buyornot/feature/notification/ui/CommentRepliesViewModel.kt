@@ -6,7 +6,6 @@ import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.CommentErrorCode
-import com.sseotdabwa.buyornot.domain.model.CommentReply
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
@@ -75,7 +74,7 @@ class CommentRepliesViewModel @Inject constructor(
             runCatchingCancellable {
                 coroutineScope {
                     val thread = async { commentRepository.getCommentThread(feedId = feedId, commentId = commentId) }
-                    val replies = async { loadAllReplies() }
+                    val replies = async { commentRepository.getAllReplies(feedId = feedId, commentId = commentId) }
                     thread.await() to replies.await()
                 }
             }.onSuccess { (thread, replies) ->
@@ -99,17 +98,6 @@ class CommentRepliesViewModel @Inject constructor(
             }
         }
     }
-
-    // 한 스레드의 답글은 많지 않아 한 화면에 모두 그린다.
-    private suspend fun loadAllReplies(): List<CommentReply> =
-        buildList {
-            var cursor: Long? = null
-            do {
-                val page = commentRepository.getReplies(feedId = feedId, commentId = commentId, cursor = cursor)
-                addAll(page.replies)
-                cursor = page.nextCursor
-            } while (page.hasNext && cursor != null)
-        }.distinctBy { it.id }
 
     private fun handleReplySubmit() {
         if (!currentState.canSubmitReply) return
@@ -140,11 +128,7 @@ class CommentRepliesViewModel @Inject constructor(
         updateState { it.copy(comment = comment.toggledLike()) }
         viewModelScope.launch {
             runCatchingCancellable {
-                if (comment.isLiked) {
-                    commentRepository.unlikeComment(feedId = feedId, commentId = commentId)
-                } else {
-                    commentRepository.likeComment(feedId = feedId, commentId = commentId)
-                }
+                commentRepository.toggleLike(feedId = feedId, comment = comment)
             }.onSuccess { like ->
                 updateState { it.copy(comment = it.comment?.withLike(like)) }
             }.onFailure { e ->
@@ -161,11 +145,7 @@ class CommentRepliesViewModel @Inject constructor(
         updateState { it.copy(deletingComment = null) }
         viewModelScope.launch {
             runCatchingCancellable {
-                if (target.replyId == null) {
-                    commentRepository.deleteComment(feedId = feedId, commentId = target.commentId)
-                } else {
-                    commentRepository.deleteReply(feedId = feedId, commentId = target.commentId, replyId = target.replyId)
-                }
+                commentRepository.delete(feedId = feedId, target = target)
             }.onSuccess {
                 removeTarget(target, isDeleted = true, message = "삭제가 완료되었어요.")
             }.onFailure { e ->
@@ -185,11 +165,7 @@ class CommentRepliesViewModel @Inject constructor(
         updateState { it.copy(reportingComment = null) }
         viewModelScope.launch {
             runCatchingCancellable {
-                if (target.replyId == null) {
-                    commentRepository.reportComment(feedId = feedId, commentId = target.commentId)
-                } else {
-                    commentRepository.reportReply(feedId = feedId, commentId = target.commentId, replyId = target.replyId)
-                }
+                commentRepository.report(feedId = feedId, target = target)
             }.onSuccess {
                 removeTarget(target, isDeleted = false, message = "댓글 신고가 접수되었어요.")
             }.onFailure { e ->

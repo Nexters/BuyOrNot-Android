@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -85,7 +86,7 @@ fun CommentInput(
         val inputLabel =
             when {
                 replyTargetNickname != null ->
-                    buildAnnotatedString { append("‘$replyTargetNickname’ 님에게 답글 남기는 중") }
+                    AnnotatedString("‘$replyTargetNickname’ 님에게 답글 남기는 중")
                 votedOptionLabel != null ->
                     buildAnnotatedString {
                         append("‘")

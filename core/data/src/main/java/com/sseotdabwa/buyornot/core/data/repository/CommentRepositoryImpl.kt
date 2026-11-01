@@ -196,9 +196,9 @@ private fun CommentDto.toDomain(): Comment =
         voteChoice = voteChoice?.toVoteChoice(),
         createdAt = createdAt,
         isDeleted = isDeleted,
-        likeCount = likeCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+        likeCount = likeCount.toIntSaturated(),
         isLiked = isLiked,
-        replyCount = replyCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+        replyCount = replyCount.toIntSaturated(),
         replies = replies.map { it.toDomain() },
     )
 
@@ -218,7 +218,7 @@ private fun CommentReplyDto.toDomain(): CommentReply =
 private fun CommentThreadResponseDto.toDomain(): CommentThread =
     CommentThread(
         comment = comment.toDomain(),
-        totalCount = totalCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+        totalCount = totalCount.toIntSaturated(),
     )
 
 private fun CommentReplyListResponse.toDomain(): CommentReplyPage =
@@ -230,6 +230,9 @@ private fun CommentReplyListResponse.toDomain(): CommentReplyPage =
 
 private fun CommentLikeResponse.toDomain(): CommentLike =
     CommentLike(
-        likeCount = likeCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
+        likeCount = likeCount.toIntSaturated(),
         isLiked = isLiked,
     )
+
+// 서버 개수는 Long이지만 화면은 Int로 다루므로 넘치면 Int 상한에서 멈춘다.
+private fun Long.toIntSaturated(): Int = coerceAtMost(Int.MAX_VALUE.toLong()).toInt()

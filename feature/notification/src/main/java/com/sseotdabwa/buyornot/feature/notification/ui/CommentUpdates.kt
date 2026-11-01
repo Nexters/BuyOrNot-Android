@@ -4,6 +4,8 @@ import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentErrorCode
 import com.sseotdabwa.buyornot.domain.model.CommentLike
+import com.sseotdabwa.buyornot.domain.model.CommentReply
+import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 
 /**
  * 삭제·신고 대상. [replyId]가 있으면 [commentId]에 달린 답글이고, 없으면 원댓글이다.
@@ -12,6 +14,53 @@ data class CommentTarget(
     val commentId: Long,
     val replyId: Long? = null,
 )
+
+internal suspend fun CommentRepository.delete(
+    feedId: Long,
+    target: CommentTarget,
+) {
+    if (target.replyId == null) {
+        deleteComment(feedId = feedId, commentId = target.commentId)
+    } else {
+        deleteReply(feedId = feedId, commentId = target.commentId, replyId = target.replyId)
+    }
+}
+
+internal suspend fun CommentRepository.report(
+    feedId: Long,
+    target: CommentTarget,
+) {
+    if (target.replyId == null) {
+        reportComment(feedId = feedId, commentId = target.commentId)
+    } else {
+        reportReply(feedId = feedId, commentId = target.commentId, replyId = target.replyId)
+    }
+}
+
+/** [comment]의 현재 공감 상태를 뒤집는다. */
+internal suspend fun CommentRepository.toggleLike(
+    feedId: Long,
+    comment: Comment,
+): CommentLike =
+    if (comment.isLiked) {
+        unlikeComment(feedId = feedId, commentId = comment.id)
+    } else {
+        likeComment(feedId = feedId, commentId = comment.id)
+    }
+
+// 한 스레드의 답글은 많지 않아 커서를 끝까지 넘겨 모두 받는다.
+internal suspend fun CommentRepository.getAllReplies(
+    feedId: Long,
+    commentId: Long,
+): List<CommentReply> =
+    buildList {
+        var cursor: Long? = null
+        do {
+            val page = getReplies(feedId = feedId, commentId = commentId, cursor = cursor)
+            addAll(page.replies)
+            cursor = page.nextCursor
+        } while (page.hasNext && cursor != null)
+    }.distinctBy { it.id }
 
 internal fun List<Comment>.updateComment(
     commentId: Long,

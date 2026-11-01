@@ -262,7 +262,7 @@ private fun CommentHeader(
 }
 
 @Composable
-internal fun CommentLoading() {
+private fun CommentLoading() {
     Box(
         modifier =
             Modifier
