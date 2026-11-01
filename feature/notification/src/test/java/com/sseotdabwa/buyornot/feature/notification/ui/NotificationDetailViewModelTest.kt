@@ -378,6 +378,49 @@ class NotificationDetailViewModelTest {
     }
 
     @Test
+    fun `답글을_신고하면_답글_신고로_보내고_원댓글의_답글과_전체_댓글_수를_줄인다`() {
+        val parent =
+            testComment(1).copy(replyCount = 2, replies = listOf(testReply(11, parentId = 1), testReply(12, parentId = 1)))
+        commentRepository.firstPages[CommentSort.REGISTERED] = CommentPage(listOf(parent), nextCursor = null, hasNext = false)
+        val viewModel = createViewModel(FakeFeedRepository(testFeed(commentCount = 3)))
+
+        viewModel.handleIntent(NotificationDetailIntent.ShowReportCommentDialog(CommentTarget(commentId = 1, replyId = 11)))
+        viewModel.handleIntent(NotificationDetailIntent.OnReportCommentConfirmed)
+
+        val state = viewModel.uiState.value
+        assertEquals(listOf(1L to 11L), commentRepository.reportReplyCalls)
+        assertEquals(
+            listOf(12L),
+            state.comments
+                .single()
+                .replies
+                .map { it.id },
+        )
+        assertEquals(2, state.feed?.commentCount)
+    }
+
+    @Test
+    fun `스레드를_다시_받을_때_중복된_답글은_한_번만_남긴다`() =
+        runTest {
+            commentRepository.firstPages[CommentSort.REGISTERED] =
+                CommentPage(listOf(testComment(1)), nextCursor = null, hasNext = false)
+            commentRepository.threads[1] = CommentThread(testComment(1).copy(replyCount = 1), totalCount = 2)
+            commentRepository.replyPages[1] =
+                CommentReplyPage(listOf(testReply(11, parentId = 1), testReply(11, parentId = 1)), nextCursor = null, hasNext = false)
+            val viewModel = createViewModel(FakeFeedRepository(testFeed(commentCount = 1)))
+
+            commentRepository.emitThreadChange(CommentThreadChange(feedId = 10, commentId = 1))
+
+            assertEquals(
+                listOf(11L),
+                viewModel.uiState.value.comments
+                    .single()
+                    .replies
+                    .map { it.id },
+            )
+        }
+
+    @Test
     fun `답글이_남은_원댓글을_삭제하면_삭제된_댓글로_남긴다`() {
         val parent = testComment(1, isMine = true).copy(replyCount = 1, replies = listOf(testReply(11, parentId = 1)))
         commentRepository.firstPages[CommentSort.REGISTERED] = CommentPage(listOf(parent), nextCursor = null, hasNext = false)
