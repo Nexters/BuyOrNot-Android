@@ -153,7 +153,7 @@ fun HomeRoute(
                                 snackbarHostState = snackbarHostState,
                                 message = "투표를 완료했어요!",
                                 imageUrl = sideEffect.imageUrl,
-                                actionLabel = if (sideEffect.canComment) "의견 남기기" else null,
+                                actionLabel = "의견 남기기",
                             )
                         if (result == SnackbarResult.ActionPerformed) {
                             onFeedCommentsClick(sideEffect.feedId, true)
@@ -274,7 +274,7 @@ private fun HomeTopBarSection(
     onProfileClick: () -> Unit,
 ) {
     // 비회원 진입 경로를 없앤 뒤로는 홈에 도달한 사용자가 곧 로그인 사용자다.
-    // 스플래시가 UserType.GUEST를 로그인 화면으로 보내므로 게스트는 여기까지 오지 못한다.
+    // 스플래시가 UserType.NOT_LOGGED_IN을 로그인 화면으로 보내므로 로그인하지 않은 사용자는 여기까지 오지 못한다.
     HomeTopBar(
         onNotificationClick = onNotificationClick,
         onProfileClick = onProfileClick,
@@ -287,19 +287,16 @@ private fun HomeTopBarSection(
  */
 @Composable
 private fun HomeTabSection(
-    userType: UserType,
     selectedTab: HomeTab,
     onTabSelected: (HomeTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val tabs = if (userType == UserType.GUEST) HomeTab.entries - HomeTab.MY_FEED else HomeTab.entries
-
     Column(modifier = modifier) {
         BuyOrNotTabRow(
-            selectedTabIndex = tabs.indexOf(selectedTab).coerceAtLeast(0),
+            selectedTabIndex = selectedTab.ordinal,
             modifier = Modifier.padding(start = 20.dp),
         ) {
-            tabs.forEach { tab ->
+            HomeTab.entries.forEach { tab ->
                 BuyOrNotTab(
                     title = tab.title,
                     selected = selectedTab == tab,
@@ -501,7 +498,6 @@ private fun HomeFeedList(
                             FeedItemCard(
                                 feed = filteredFeeds[index],
                                 voterProfileImageUrl = uiState.voterProfileImageUrl,
-                                isGuest = uiState.userType == UserType.GUEST,
                                 modifier = Modifier.animateItem(),
                                 currentTimeMillis = currentTimeMillis,
                                 onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
@@ -600,7 +596,6 @@ private fun HomeFeedList(
                     }
 
                     HomeTabSection(
-                        userType = uiState.userType,
                         selectedTab = uiState.selectedTab,
                         onTabSelected = { onIntent(HomeIntent.OnTabSelected(it)) },
                     )
@@ -792,7 +787,6 @@ private fun FilterChipRow(
 private fun FeedItemCard(
     feed: FeedItem,
     voterProfileImageUrl: String,
-    isGuest: Boolean,
     currentTimeMillis: () -> Long,
     modifier: Modifier = Modifier,
     onVote: (String, Int) -> Unit,
@@ -831,7 +825,6 @@ private fun FeedItemCard(
             onBlockClick = { onBlock(feed.id) },
             onShareClick = { onShare(feed.id, feed.title, feed.isOwner) },
             canBlock = !feed.isGuestAuthor,
-            showMoreButton = !isGuest,
             productLink = feed.productLink,
             onLinkClick = onLinkClick,
             onImageClick = onImageClick,

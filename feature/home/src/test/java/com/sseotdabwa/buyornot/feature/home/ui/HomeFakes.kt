@@ -136,11 +136,6 @@ class FakeFeedRepository(
         return VoteResult(feedId = feedId, choice = choice, yesCount = 4, noCount = 1, totalCount = 5, feedImageUrl = voteImageUrl)
     }
 
-    override suspend fun voteGuestFeed(
-        feedId: Long,
-        choice: VoteChoice,
-    ): VoteResult = voteFeed(feedId, choice)
-
     override suspend fun getMyFeeds(
         cursor: Long?,
         size: Int,

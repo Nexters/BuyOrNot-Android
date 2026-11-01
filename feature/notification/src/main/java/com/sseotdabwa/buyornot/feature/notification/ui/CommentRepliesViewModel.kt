@@ -6,7 +6,6 @@ import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.CommentErrorCode
-import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,12 +34,7 @@ class CommentRepliesViewModel @Inject constructor(
     private fun observeUserPreferences() {
         viewModelScope.launch {
             userPreferencesRepository.userPreferences.collect { preferences ->
-                updateState {
-                    it.copy(
-                        voterProfileImageUrl = preferences.profileImageUrl,
-                        isGuest = preferences.userType == UserType.GUEST,
-                    )
-                }
+                updateState { it.copy(voterProfileImageUrl = preferences.profileImageUrl) }
             }
         }
     }
@@ -123,7 +117,7 @@ class CommentRepliesViewModel @Inject constructor(
 
     private fun handleLike() {
         val comment = currentState.comment ?: return
-        if (currentState.isGuest || comment.isDeleted || isLikePending) return
+        if (comment.isDeleted || isLikePending) return
         isLikePending = true
         updateState { it.copy(comment = comment.toggledLike()) }
         viewModelScope.launch {

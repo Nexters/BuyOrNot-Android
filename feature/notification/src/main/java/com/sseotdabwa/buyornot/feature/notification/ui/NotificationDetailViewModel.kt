@@ -11,7 +11,6 @@ import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.CommentErrorCode
 import com.sseotdabwa.buyornot.domain.model.CommentSort
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
-import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
@@ -83,7 +82,6 @@ class NotificationDetailViewModel @Inject constructor(
                     updateState {
                         it.copy(
                             voterProfileImageUrl = preferences.profileImageUrl,
-                            isGuest = preferences.userType == UserType.GUEST,
                         )
                     }
                 }
@@ -270,11 +268,7 @@ class NotificationDetailViewModel @Inject constructor(
         updateState { it.copy(isVoting = true) }
         viewModelScope.launch {
             runCatchingCancellable {
-                if (state.isGuest) {
-                    feedRepository.voteGuestFeed(feedId, choice)
-                } else {
-                    feedRepository.voteFeed(feedId, choice)
-                }
+                feedRepository.voteFeed(feedId, choice)
             }.onSuccess { result ->
                 updateState {
                     it.copy(

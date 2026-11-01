@@ -101,7 +101,7 @@ class SplashViewModel @Inject constructor(
 
             val hasValidToken =
                 try {
-                    userPreferencesRepository.userType.first() != UserType.GUEST
+                    userPreferencesRepository.userType.first() != UserType.NOT_LOGGED_IN
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

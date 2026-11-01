@@ -129,16 +129,4 @@ interface FeedRepository {
         feedId: Long,
         choice: VoteChoice,
     ): VoteResult
-
-    /**
-     * 비회원 투표
-     *
-     * @param feedId 투표할 피드 ID
-     * @param choice 투표 선택 (YES or NO)
-     * @return 투표 결과
-     */
-    suspend fun voteGuestFeed(
-        feedId: Long,
-        choice: VoteChoice,
-    ): VoteResult
 }

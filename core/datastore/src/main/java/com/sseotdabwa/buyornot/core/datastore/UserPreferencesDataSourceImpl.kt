@@ -39,14 +39,7 @@ class UserPreferencesDataSourceImpl @Inject constructor(
                 profileImageUrl = prefs[Keys.PROFILE_IMAGE_URL] ?: UserPreferences().profileImageUrl,
                 accessToken = prefs[Keys.ACCESS_TOKEN] ?: UserPreferences().accessToken,
                 refreshToken = prefs[Keys.REFRESH_TOKEN] ?: UserPreferences().refreshToken,
-                userType =
-                    prefs[Keys.USER_TYPE]?.let {
-                        try {
-                            UserType.valueOf(it)
-                        } catch (e: IllegalArgumentException) {
-                            UserPreferences().userType
-                        }
-                    } ?: UserPreferences().userType,
+                userType = parseUserType(prefs[Keys.USER_TYPE]),
             )
         }
 
@@ -56,15 +49,7 @@ class UserPreferencesDataSourceImpl @Inject constructor(
     override val accessToken: Flow<String> = context.userPreferencesDataStore.data.map { it[Keys.ACCESS_TOKEN] ?: "" }
 
     override val userType: Flow<UserType> =
-        context.userPreferencesDataStore.data.map { prefs ->
-            prefs[Keys.USER_TYPE]?.let {
-                try {
-                    UserType.valueOf(it)
-                } catch (e: IllegalArgumentException) {
-                    UserType.GUEST
-                }
-            } ?: UserType.GUEST
-        }
+        context.userPreferencesDataStore.data.map { prefs -> parseUserType(prefs[Keys.USER_TYPE]) }
 
     override suspend fun updateUserId(userId: Long) {
         context.userPreferencesDataStore.edit { prefs ->
@@ -107,7 +92,10 @@ class UserPreferencesDataSourceImpl @Inject constructor(
             prefs.remove(Keys.REFRESH_TOKEN)
             prefs.remove(Keys.PROFILE_IMAGE_URL)
             prefs.remove(Keys.DISPLAY_NAME)
-            prefs[Keys.USER_TYPE] = UserType.GUEST.name
+            prefs[Keys.USER_TYPE] = UserType.NOT_LOGGED_IN.name
         }
     }
 }
+
+// 이전 버전이 저장한 "GUEST"처럼 지금 없는 값은 로그인하지 않은 상태로 읽는다.
+private fun parseUserType(stored: String?): UserType = UserType.entries.firstOrNull { it.name == stored } ?: UserType.NOT_LOGGED_IN

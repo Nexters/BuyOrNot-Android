@@ -13,7 +13,6 @@ data class CommentRepliesUiState(
     val replies: List<CommentReply> = emptyList(),
     /** 헤더 "댓글 (n)"의 n. */
     val totalCount: Int = 0,
-    val isGuest: Boolean = false,
     val voterProfileImageUrl: String = "",
     val replyInput: String = "",
     val isSubmittingReply: Boolean = false,
@@ -26,7 +25,7 @@ data class CommentRepliesUiState(
 ) {
     /** 지워진 원댓글에는 서버가 답글을 받지 않는다(COMMENT_014). */
     val canWriteReply: Boolean
-        get() = comment != null && !isGuest && !comment.isDeleted
+        get() = comment != null && !comment.isDeleted
 
     val canSubmitReply: Boolean
         get() =

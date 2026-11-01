@@ -92,7 +92,6 @@ internal fun LazyListScope.commentSection(
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                     FeedCommentThread(
                         comment = comment,
-                        isGuestViewer = uiState.isGuest,
                         onReplyClick = { onIntent(NotificationDetailIntent.OnReplyClicked(comment.id)) }.takeIf { uiState.canWriteComment },
                         onLikeClick = { onIntent(NotificationDetailIntent.OnLikeClicked(comment.id)) }.takeIf { uiState.canWriteComment },
                         onDelete = { onIntent(NotificationDetailIntent.ShowDeleteCommentDialog(it)) },
@@ -115,13 +114,12 @@ internal fun LazyListScope.commentSection(
 /**
  * 원댓글과 그 아래 답글 스레드.
  *
- * @param onReplyClick null이면 [답글쓰기]를 숨긴다 (비회원·답글 페이지의 고정 원댓글).
- * @param onLikeClick null이면 [공감]을 숨긴다 (비회원).
+ * @param onReplyClick null이면 [답글쓰기]를 숨긴다 (답글 페이지의 고정 원댓글).
+ * @param onLikeClick null이면 [공감]을 숨긴다.
  */
 @Composable
 internal fun FeedCommentThread(
     comment: Comment,
-    isGuestViewer: Boolean,
     onReplyClick: (() -> Unit)?,
     onLikeClick: (() -> Unit)?,
     onDelete: (CommentTarget) -> Unit,
@@ -141,7 +139,7 @@ internal fun FeedCommentThread(
                     content = comment.content,
                     tag = comment.tag(),
                     voteBubble = comment.voteBubble(),
-                    menuItems = menuItems(isMine = comment.isMine, isGuestViewer, CommentTarget(comment.id), onDelete, onReport),
+                    menuItems = menuItems(isMine = comment.isMine, CommentTarget(comment.id), onDelete, onReport),
                     actions =
                         if (onReplyClick == null && onLikeClick == null) {
                             null
@@ -166,7 +164,7 @@ internal fun FeedCommentThread(
                 content = reply.content,
                 size = CommentItemSize.REPLY,
                 tag = reply.tag(),
-                menuItems = menuItems(reply.isMine, isGuestViewer, CommentTarget(comment.id, reply.id), onDelete, onReport),
+                menuItems = menuItems(reply.isMine, CommentTarget(comment.id, reply.id), onDelete, onReport),
             )
         },
         modifier = modifier,
@@ -195,16 +193,10 @@ private fun CommentReply.tag(): CommentTag? = if (isAuthor) CommentTag("작성�
 // 내 댓글은 삭제만, 남의 댓글은 신고만 — 본인 댓글 신고는 서버가 거절한다(COMMENT_008).
 private fun menuItems(
     isMine: Boolean,
-    isGuestViewer: Boolean,
     target: CommentTarget,
     onDelete: (CommentTarget) -> Unit,
     onReport: (CommentTarget) -> Unit,
-): List<Pair<String, () -> Unit>> =
-    when {
-        isGuestViewer -> emptyList()
-        isMine -> listOf("삭제하기" to { onDelete(target) })
-        else -> listOf("신고하기" to { onReport(target) })
-    }
+): List<Pair<String, () -> Unit>> = if (isMine) listOf("삭제하기" to { onDelete(target) }) else listOf("신고하기" to { onReport(target) })
 
 @Composable
 private fun CommentHeader(

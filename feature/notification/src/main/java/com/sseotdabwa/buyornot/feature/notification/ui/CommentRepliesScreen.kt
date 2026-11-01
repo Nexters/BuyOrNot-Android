@@ -130,8 +130,7 @@ fun CommentRepliesScreen(
                     replyTargetNickname = comment.nickname.takeUnless { comment.isDeleted },
                     enabled = uiState.canWriteReply,
                     submitEnabled = uiState.canSubmitReply,
-                    disabledPlaceholder =
-                        if (uiState.isGuest) "로그인 후 의견을 작성할 수 있어요." else "삭제된 댓글에는 답글을 남길 수 없어요.",
+                    disabledPlaceholder = "삭제된 댓글에는 답글을 남길 수 없어요.",
                     maxLength = COMMENT_MAX_LENGTH,
                     modifier =
                         Modifier
@@ -171,10 +170,9 @@ fun CommentRepliesScreen(
                         FeedCommentThread(
                             comment = comment,
                             replies = uiState.replies,
-                            isGuestViewer = uiState.isGuest,
                             // 입력창이 이미 이 원댓글에 답글을 다는 중이라 [답글쓰기]는 두지 않는다.
                             onReplyClick = null,
-                            onLikeClick = { onIntent(CommentRepliesIntent.OnLikeClicked) }.takeUnless { uiState.isGuest },
+                            onLikeClick = { onIntent(CommentRepliesIntent.OnLikeClicked) },
                             onDelete = { onIntent(CommentRepliesIntent.ShowDeleteDialog(it)) },
                             onReport = { onIntent(CommentRepliesIntent.ShowReportDialog(it)) },
                         )

@@ -297,8 +297,6 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun handleTabSelection(tab: HomeTab) {
-        if (uiState.value.userType == UserType.GUEST && tab == HomeTab.MY_FEED) return
-
         updateState {
             it.copy(
                 selectedTab = tab,
@@ -434,10 +432,7 @@ class HomeViewModel @Inject constructor(
                 }
 
             runCatchingCancellable {
-                when (uiState.value.userType) {
-                    UserType.SOCIAL -> feedRepository.voteFeed(feedId.toLong(), choice)
-                    UserType.GUEST -> feedRepository.voteGuestFeed(feedId.toLong(), choice)
-                }
+                feedRepository.voteFeed(feedId.toLong(), choice)
             }.onSuccess { voteResult ->
                 voteTrace.putAttribute("result", "success")
                 voteTrace.stop()
@@ -465,7 +460,6 @@ class HomeViewModel @Inject constructor(
                     HomeSideEffect.ShowVoteCompletedSnackbar(
                         feedId = feedId.toLong(),
                         imageUrl = voteResult.feedImageUrl ?: targetFeed.productImageUrls.firstOrNull(),
-                        canComment = uiState.value.userType == UserType.SOCIAL,
                     ),
                 )
                 analytics.track(

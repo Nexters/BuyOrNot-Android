@@ -63,7 +63,7 @@ data class FeedItem(
 /**
  * 홈 화면의 UI 상태 (MVI State)
  *
- * @property userType 현재 사용자 타입 (GUEST/SOCIAL)
+ * @property userType 로그인 상태. 저장된 값을 읽기 전과 로그아웃 직후에는 [UserType.NOT_LOGGED_IN]다.
  * @property selectedTab 현재 선택된 탭
  * @property selectedFilter 현재 선택된 필터 칩
  * @property feeds 피드 목록
@@ -76,7 +76,7 @@ data class FeedItem(
  */
 @Immutable
 data class HomeUiState(
-    val userType: UserType = UserType.GUEST,
+    val userType: UserType = UserType.NOT_LOGGED_IN,
     val selectedTab: HomeTab = HomeTab.FEED,
     val selectedFilter: FilterChip = FilterChip.ALL,
     val voterProfileImageUrl: String = "",
@@ -206,12 +206,10 @@ sealed interface HomeSideEffect {
 
     /**
      * 투표 완료 스낵바 — [의견 남기기]를 누르면 댓글 입력창으로 이동한다.
-     * @property canComment 비회원은 댓글을 쓸 수 없어 [의견 남기기]를 숨긴다.
      */
     data class ShowVoteCompletedSnackbar(
         val feedId: Long,
         val imageUrl: String?,
-        val canComment: Boolean,
     ) : HomeSideEffect
 
     data class NavigateToFeedComments(

@@ -129,17 +129,4 @@ interface FeedApiService {
         @Path("feedId") feedId: Long,
         @Body request: VoteRequest,
     ): BaseResponse<VoteResponse>
-
-    /**
-     * 비회원 투표
-     *
-     * @param feedId 투표할 피드 ID
-     * @param request 투표 선택 (YES or NO)
-     */
-    @POST("/api/v1/feeds/{feedId}/votes/guest")
-    @Headers("No-Authentication: true")
-    suspend fun voteGuestFeed(
-        @Path("feedId") feedId: Long,
-        @Body request: VoteRequest,
-    ): BaseResponse<VoteResponse>
 }
