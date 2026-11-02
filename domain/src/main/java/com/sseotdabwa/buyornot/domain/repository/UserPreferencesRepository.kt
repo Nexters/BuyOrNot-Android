@@ -1,5 +1,6 @@
 package com.sseotdabwa.buyornot.domain.repository
 
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.UserPreferences
 import com.sseotdabwa.buyornot.domain.model.UserToken
 import com.sseotdabwa.buyornot.domain.model.UserType
@@ -45,7 +46,7 @@ interface UserPreferencesRepository {
     suspend fun updateDisplayName(newName: String)
 
     /**
-     * 프로필 이미지 URL 업데이트
+     * 프로필 이미지 업데이트
      */
-    suspend fun updateProfileImageUrl(newUrl: String)
+    suspend fun updateProfileImage(newImage: ImageSource)
 }

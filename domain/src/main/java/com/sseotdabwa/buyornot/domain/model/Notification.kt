@@ -10,7 +10,7 @@ data class Notification(
     val voteClosedAt: String,
     val resultPercent: Int,
     val resultLabel: String,
-    val viewUrl: String,
+    val feedImage: ImageSource,
     val feedTitle: String,
 )
 

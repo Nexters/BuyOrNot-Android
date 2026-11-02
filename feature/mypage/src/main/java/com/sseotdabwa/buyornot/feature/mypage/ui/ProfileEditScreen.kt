@@ -56,6 +56,8 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotTextField
 import com.sseotdabwa.buyornot.core.designsystem.components.PrimaryButton
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
+import com.sseotdabwa.buyornot.core.designsystem.image.toCoilModel
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.nickname.NicknamePolicy
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
@@ -241,7 +243,7 @@ fun ProfileEditScreen(
 
             ProfileImageEditor(
                 // 새로 고른 이미지가 있으면 저장 전이라도 미리 보여준다.
-                imageModel = uiState.selectedImageUri ?: uiState.profileImageUrl,
+                image = uiState.selectedImageUri?.let { ImageModel.Local(Uri.parse(it)) } ?: uiState.profileImage,
                 onClick = onImageClick,
             )
 
@@ -295,7 +297,7 @@ fun ProfileEditScreen(
 /** 120dp 원형 프로필 이미지와 우하단 편집 배지. 어디를 눌러도 사진 변경 메뉴를 연다. */
 @Composable
 private fun ProfileImageEditor(
-    imageModel: String,
+    image: ImageModel?,
     onClick: () -> Unit,
 ) {
     Box(modifier = Modifier.size(120.dp)) {
@@ -310,7 +312,7 @@ private fun ProfileImageEditor(
             model =
                 ImageRequest
                     .Builder(LocalContext.current)
-                    .data(imageModel)
+                    .data(image?.toCoilModel())
                     .crossfade(true)
                     .build(),
             contentDescription = "UserProfileImage",

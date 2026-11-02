@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
+import com.sseotdabwa.buyornot.core.designsystem.image.toCoilModel
 import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import kotlinx.coroutines.coroutineScope
@@ -94,14 +96,14 @@ internal fun computeFocalOffset(
 
 @Composable
 fun ImageViewerScreen(
-    imageUrls: List<String>,
+    images: List<ImageModel>,
     initialPage: Int,
     onBackClick: () -> Unit,
 ) {
     val pagerState =
         rememberPagerState(
             initialPage = initialPage,
-            pageCount = { imageUrls.size },
+            pageCount = { images.size },
         )
     val scope = rememberCoroutineScope()
 
@@ -117,7 +119,7 @@ fun ImageViewerScreen(
                 modifier = Modifier.fillMaxSize(),
                 userScrollEnabled = false,
             ) { page ->
-                ZoomableImage(imageUrl = imageUrls[page])
+                ZoomableImage(image = images[page])
             }
 
             if (pagerState.currentPage > 0) {
@@ -140,7 +142,7 @@ fun ImageViewerScreen(
                 }
             }
 
-            if (pagerState.currentPage < imageUrls.size - 1) {
+            if (pagerState.currentPage < images.size - 1) {
                 Box(
                     modifier =
                         Modifier
@@ -182,7 +184,7 @@ fun ImageViewerScreen(
 }
 
 @Composable
-private fun ZoomableImage(imageUrl: String) {
+private fun ZoomableImage(image: ImageModel) {
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var containerSize by remember { mutableStateOf(IntSize.Zero) }
@@ -283,7 +285,7 @@ private fun ZoomableImage(imageUrl: String) {
             )
         } else {
             AsyncImage(
-                model = imageUrl,
+                model = image.toCoilModel(),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit,
@@ -327,11 +329,11 @@ private suspend fun animateResetZoom(
 private fun ImageViewerScreenPreview() {
     BuyOrNotTheme {
         ImageViewerScreen(
-            imageUrls =
+            images =
                 listOf(
-                    PreviewImages.square(),
-                    PreviewImages.landscape(),
-                    PreviewImages.portrait(),
+                    PreviewImages.square,
+                    PreviewImages.landscape,
+                    PreviewImages.portrait,
                 ),
             initialPage = 0,
             onBackClick = {},
@@ -344,11 +346,11 @@ private fun ImageViewerScreenPreview() {
 private fun ImageViewerScreenSecondPagePreview() {
     BuyOrNotTheme {
         ImageViewerScreen(
-            imageUrls =
+            images =
                 listOf(
-                    PreviewImages.square(),
-                    PreviewImages.landscape(),
-                    PreviewImages.portrait(),
+                    PreviewImages.square,
+                    PreviewImages.landscape,
+                    PreviewImages.portrait,
                 ),
             initialPage = 1,
             onBackClick = {},

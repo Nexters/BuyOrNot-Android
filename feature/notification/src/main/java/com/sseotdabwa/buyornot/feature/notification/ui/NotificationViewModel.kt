@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.core.ui.image.toImageModel
 import com.sseotdabwa.buyornot.domain.model.NotificationFilter
 import com.sseotdabwa.buyornot.domain.repository.AppPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
@@ -132,7 +133,7 @@ class NotificationViewModel @Inject constructor(
                         NotificationItem(
                             id = it.notificationId,
                             feedId = it.feedId,
-                            imageUrl = it.viewUrl,
+                            image = it.feedImage.toImageModel(),
                             title = it.title,
                             description = it.feedTitle,
                             time = TimeUtils.formatRelativeTime(it.voteClosedAt),

@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.home.ui
 
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCommentPreview
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -47,7 +48,7 @@ class HomeViewModelCommentTest {
         val feeds = viewModel.uiState.value.feeds
         assertEquals(12, feeds[0].commentCount)
         assertEquals(
-            FeedCommentPreview(profileImageUrl = "https://cdn.example.com/p.jpg", content = "겁나 무거워요"),
+            FeedCommentPreview(profileImage = ImageModel.Network("https://cdn.example.com/p.jpg"), content = "겁나 무거워요"),
             feeds[0].latestComment,
         )
         assertNull(feeds[1].latestComment)
@@ -63,7 +64,7 @@ class HomeViewModelCommentTest {
             viewModel.handleIntent(HomeIntent.OnVoteClicked(feedId = "1", optionIndex = 0))
 
             assertEquals(
-                HomeSideEffect.ShowVoteCompletedSnackbar(feedId = 1, imageUrl = "https://cdn/thumbnail.jpg"),
+                HomeSideEffect.ShowVoteCompletedSnackbar(feedId = 1, image = ImageModel.Network("https://cdn/thumbnail.jpg")),
                 viewModel.sideEffect.first(),
             )
         }
@@ -76,7 +77,7 @@ class HomeViewModelCommentTest {
             viewModel.handleIntent(HomeIntent.OnVoteClicked(feedId = "1", optionIndex = 1))
 
             assertEquals(
-                HomeSideEffect.ShowVoteCompletedSnackbar(feedId = 1, imageUrl = "https://cdn/1.jpg"),
+                HomeSideEffect.ShowVoteCompletedSnackbar(feedId = 1, image = ImageModel.Network("https://cdn/1.jpg")),
                 viewModel.sideEffect.first(),
             )
         }

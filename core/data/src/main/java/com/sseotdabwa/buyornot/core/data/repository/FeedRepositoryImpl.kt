@@ -17,6 +17,7 @@ import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
@@ -198,7 +199,7 @@ private fun FeedItemDto.toDomain(): Feed =
 private fun FeedImageDto.toDomain(): FeedImage =
     FeedImage(
         s3ObjectKey = s3ObjectKey,
-        imageUrl = imageUrl,
+        image = ImageSource(imageUrl),
         imageWidth = imageWidth,
         imageHeight = imageHeight,
     )
@@ -210,7 +211,7 @@ private fun AuthorDto.toDomain(): Author =
     Author(
         userId = userId,
         nickname = nickname,
-        profileImage = profileImage,
+        profileImage = profileImage?.let(::ImageSource),
     )
 
 private fun String.toFeedStatus(): FeedStatus =
@@ -227,5 +228,5 @@ private fun VoteResponse.toDomain(): VoteResult =
         yesCount = yesCount,
         noCount = noCount,
         totalCount = totalCount,
-        feedImageUrl = feedImageUrl,
+        feedImage = feedImageUrl?.let(::ImageSource),
     )

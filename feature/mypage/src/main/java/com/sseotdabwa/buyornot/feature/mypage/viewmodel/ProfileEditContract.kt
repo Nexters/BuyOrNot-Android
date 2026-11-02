@@ -3,13 +3,14 @@ package com.sseotdabwa.buyornot.feature.mypage.viewmodel
 import androidx.compose.runtime.Immutable
 import com.sseotdabwa.buyornot.core.designsystem.components.SnackBarIconTint
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 
 /**
  * 프로필 설정(수정) 화면의 UI 상태
  *
  * @property originalNickname 서버에 저장된 현재 닉네임. 변경 여부 판단 기준
  * @property nickname 입력 중인 닉네임 (최대 10자)
- * @property profileImageUrl 서버에 저장된 현재 프로필 이미지 URL
+ * @property profileImage 서버에 저장된 현재 프로필 이미지. 불러오기 전에는 null
  * @property selectedImageUri 새로 고른(자른) 이미지 URI. 고르지 않았으면 null
  * @property errorMessage 서버가 거절한 사유. 입력이 바뀌면 지운다.
  * @property isLoading 프로필 조회·수정 요청 중 여부
@@ -20,7 +21,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 data class ProfileEditUiState(
     val originalNickname: String = "",
     val nickname: String = "",
-    val profileImageUrl: String = "",
+    val profileImage: ImageModel? = null,
     val selectedImageUri: String? = null,
     val errorMessage: String? = null,
     val isLoading: Boolean = false,

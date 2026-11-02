@@ -11,6 +11,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import com.sseotdabwa.buyornot.feature.home.ui.HomeTab
 import kotlinx.serialization.Serializable
 import com.sseotdabwa.buyornot.feature.home.ui.HomeRoute as HomeScreen
@@ -27,7 +28,7 @@ fun NavGraphBuilder.homeScreen(
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
-    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onImageClick: (images: List<ImageModel>, page: Int) -> Unit = { _, _ -> },
     onFeedCommentsClick: (feedId: Long, focusCommentInput: Boolean) -> Unit = { _, _ -> },
 ) {
     composable<HomeRoute>(

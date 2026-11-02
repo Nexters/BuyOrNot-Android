@@ -85,6 +85,8 @@ import com.sseotdabwa.buyornot.core.designsystem.components.CapsuleButton
 import com.sseotdabwa.buyornot.core.designsystem.components.OptionSheet
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
+import com.sseotdabwa.buyornot.core.designsystem.image.toCoilModel
 import com.sseotdabwa.buyornot.core.designsystem.shape.BubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
@@ -681,7 +683,7 @@ private fun ImagePickerRow(
 
         selectedImages.forEachIndexed { index, entry ->
             SelectedImagePreview(
-                imageUri = entry.displayUri,
+                image = ImageModel.Local(entry.displayUri),
                 onReCrop = { onReCropImage(index) },
                 onRemove = { onRemoveImage(index) },
             )
@@ -727,7 +729,7 @@ private fun CameraButton(
 
 @Composable
 private fun SelectedImagePreview(
-    imageUri: Uri,
+    image: ImageModel,
     onReCrop: () -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -744,7 +746,7 @@ private fun SelectedImagePreview(
         contentAlignment = Alignment.TopEnd,
     ) {
         AsyncImage(
-            model = imageUri,
+            model = image.toCoilModel(),
             contentDescription = "Selected Image",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,

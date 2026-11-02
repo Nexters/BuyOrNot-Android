@@ -17,6 +17,7 @@ import com.sseotdabwa.buyornot.domain.model.CommentReply
 import com.sseotdabwa.buyornot.domain.model.CommentReplyPage
 import com.sseotdabwa.buyornot.domain.model.CommentSort
 import com.sseotdabwa.buyornot.domain.model.CommentThread
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 import com.sseotdabwa.buyornot.domain.repository.CommentThreadChange
 import kotlinx.coroutines.channels.BufferOverflow
@@ -189,7 +190,7 @@ private fun CommentDto.toDomain(): Comment =
         id = id,
         authorType = authorType.toCommentAuthorType(),
         nickname = nickname.orEmpty(),
-        profileImage = profileImage,
+        profileImage = profileImage?.let(::ImageSource),
         content = content.orEmpty(),
         isMine = isMine,
         isAuthor = isAuthor,
@@ -208,7 +209,7 @@ private fun CommentReplyDto.toDomain(): CommentReply =
         parentId = parentId,
         authorType = authorType.toCommentAuthorType(),
         nickname = nickname.orEmpty(),
-        profileImage = profileImage,
+        profileImage = profileImage?.let(::ImageSource),
         content = content.orEmpty(),
         isMine = isMine,
         isAuthor = isAuthor,

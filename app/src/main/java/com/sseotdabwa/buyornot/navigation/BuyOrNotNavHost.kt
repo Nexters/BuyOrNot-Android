@@ -147,7 +147,7 @@ fun BuyOrNotNavHost(
             onUploadClick = navController::navigateToUpload,
             onLinkClick = { url -> navController.navigateToWebView("", url) },
             onShareClick = shareFeed,
-            onImageClick = { urls, page -> navController.navigateToImageViewer(urls, page) },
+            onImageClick = { images, page -> navController.navigateToImageViewer(images, page) },
             onFeedCommentsClick = { feedId, focusCommentInput ->
                 navController.navigateToFeedComments(feedId = feedId, focusCommentInput = focusCommentInput)
             },
@@ -157,7 +157,7 @@ fun BuyOrNotNavHost(
             onNotificationClick = navController::navigateToNotificationDetail,
             onLinkClick = { url -> navController.navigateToWebView("", url) },
             onShareClick = shareFeed,
-            onImageClick = { urls, page -> navController.navigateToImageViewer(urls, page) },
+            onImageClick = { images, page -> navController.navigateToImageViewer(images, page) },
             onRepliesClick = navController::navigateToCommentReplies,
         )
         uploadScreen(

@@ -88,6 +88,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.showBuyOrNotSnackBar
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.performance.ReportScreenRendered
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
@@ -115,7 +116,7 @@ fun HomeRoute(
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
-    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onImageClick: (images: List<ImageModel>, page: Int) -> Unit = { _, _ -> },
     onFeedCommentsClick: (feedId: Long, focusCommentInput: Boolean) -> Unit = { _, _ -> },
     initialTab: HomeTab = HomeTab.FEED,
     tabRequestId: Long = 0L,
@@ -152,7 +153,7 @@ fun HomeRoute(
                             showBuyOrNotSnackBar(
                                 snackbarHostState = snackbarHostState,
                                 message = "투표를 완료했어요!",
-                                imageUrl = sideEffect.imageUrl,
+                                image = sideEffect.image,
                                 actionLabel = "의견 남기기",
                             )
                         if (result == SnackbarResult.ActionPerformed) {
@@ -199,7 +200,7 @@ fun HomeScreen(
     onUploadClick: () -> Unit = {},
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
-    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onImageClick: (images: List<ImageModel>, page: Int) -> Unit = { _, _ -> },
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     currentTimeMillis: () -> Long = System::currentTimeMillis,
 ) {
@@ -389,7 +390,7 @@ private fun HomeFeedList(
     onUploadClick: () -> Unit,
     onLinkClick: (url: String) -> Unit,
     onShareClick: (feedId: Long, title: String) -> Unit,
-    onImageClick: (imageUrls: List<String>, page: Int) -> Unit,
+    onImageClick: (images: List<ImageModel>, page: Int) -> Unit,
     currentTimeMillis: () -> Long,
     modifier: Modifier = Modifier,
 ) {
@@ -497,7 +498,7 @@ private fun HomeFeedList(
                         items(filteredFeeds.size, key = { index -> filteredFeeds[index].id }) { index ->
                             FeedItemCard(
                                 feed = filteredFeeds[index],
-                                voterProfileImageUrl = uiState.voterProfileImageUrl,
+                                voterProfileImage = uiState.voterProfileImage,
                                 modifier = Modifier.animateItem(),
                                 currentTimeMillis = currentTimeMillis,
                                 onVote = { id, opt -> onIntent(HomeIntent.OnVoteClicked(id, opt)) },
@@ -786,7 +787,7 @@ private fun FilterChipRow(
 @Composable
 private fun FeedItemCard(
     feed: FeedItem,
-    voterProfileImageUrl: String,
+    voterProfileImage: ImageModel?,
     currentTimeMillis: () -> Long,
     modifier: Modifier = Modifier,
     onVote: (String, Int) -> Unit,
@@ -795,19 +796,19 @@ private fun FeedItemCard(
     onBlock: (String) -> Unit,
     onLinkClick: (url: String) -> Unit,
     onShare: (feedId: String, title: String, isOwner: Boolean) -> Unit,
-    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onImageClick: (images: List<ImageModel>, page: Int) -> Unit = { _, _ -> },
     onCommentClick: (feedId: String) -> Unit = {},
 ) {
     Column {
         FeedCard(
             modifier = modifier.padding(vertical = 26.dp),
-            profileImageUrl = feed.profileImageUrl,
+            profileImage = feed.profileImage,
             nickname = feed.nickname,
             category = feed.category,
             createdAt = feed.createdAt,
             title = feed.title,
             content = feed.content,
-            productImageUrls = feed.productImageUrls,
+            productImages = feed.productImages,
             price = feed.price,
             imageAspectRatios = feed.imageAspectRatios,
             isVoteEnded = feed.isVoteEnded,
@@ -816,7 +817,7 @@ private fun FeedItemCard(
             maybeVoteCount = feed.maybeVoteCount,
             totalVoteCount = feed.totalVoteCount,
             isOwner = feed.isOwner,
-            voterProfileImageUrl = voterProfileImageUrl,
+            voterProfileImage = voterProfileImage,
             onVote = { option ->
                 onVote(feed.id, option)
             },

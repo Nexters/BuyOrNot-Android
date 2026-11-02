@@ -1,6 +1,8 @@
 package com.sseotdabwa.buyornot.feature.mypage.viewmodel
 
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import com.sseotdabwa.buyornot.domain.exception.ApiException
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.first
@@ -39,7 +41,7 @@ class ProfileEditViewModelTest {
         val state = viewModel.uiState.value
         assertEquals("서따봐", state.originalNickname)
         assertEquals("서따봐", state.nickname)
-        assertEquals("https://cdn/old.jpg", state.profileImageUrl)
+        assertEquals(ImageModel.Network("https://cdn/old.jpg"), state.profileImage)
     }
 
     @Test
@@ -216,7 +218,7 @@ class ProfileEditViewModelTest {
         assertEquals("https://s3/put", feedRepository.uploadedUrl)
         assertTrue(imageReader.bytes.contentEquals(feedRepository.uploadedBytes))
         assertEquals("https://cdn/new.jpg", userRepository.updatedProfileImage)
-        assertEquals("https://cdn/new.jpg", userPreferencesRepository.profileImageUrl)
+        assertEquals(ImageSource("https://cdn/new.jpg"), userPreferencesRepository.profileImage)
     }
 
     @Test

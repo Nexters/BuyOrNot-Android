@@ -55,7 +55,7 @@ class NicknameSetupViewModel @Inject constructor(
             }.onSuccess { profile ->
                 runCatchingCancellable {
                     profile.nickname?.let { userPreferencesRepository.updateDisplayName(it) }
-                    userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
+                    userPreferencesRepository.updateProfileImage(profile.profileImage)
                 }.onFailure { Timber.w(it, "Failed to update user preferences") }
                 // 로그인 시점에는 닉네임이 없어 403으로 막혔으므로 여기서 등록한다.
                 updateFcmToken()

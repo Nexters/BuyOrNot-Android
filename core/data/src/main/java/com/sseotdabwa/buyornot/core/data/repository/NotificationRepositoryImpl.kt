@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.core.data.repository
 import com.sseotdabwa.buyornot.core.network.api.NotificationApiService
 import com.sseotdabwa.buyornot.core.network.dto.response.NotificationResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.Notification
 import com.sseotdabwa.buyornot.domain.model.NotificationType
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
@@ -31,7 +32,7 @@ class NotificationRepositoryImpl @Inject constructor(
             voteClosedAt = voteClosedAt,
             resultPercent = resultPercent,
             resultLabel = resultLabel,
-            viewUrl = viewUrl,
+            feedImage = ImageSource(viewUrl),
             feedTitle = feedTitle.orEmpty(),
         )
 }

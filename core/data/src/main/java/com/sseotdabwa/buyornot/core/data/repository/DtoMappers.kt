@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.core.data.repository
 import com.sseotdabwa.buyornot.core.network.dto.response.LatestCommentDto
 import com.sseotdabwa.buyornot.domain.model.CommentAuthorType
 import com.sseotdabwa.buyornot.domain.model.CommentPreview
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 
 internal fun String.toVoteChoice(): VoteChoice? =
@@ -19,7 +20,7 @@ internal fun LatestCommentDto.toDomain(): CommentPreview =
     CommentPreview(
         authorType = authorType.toCommentAuthorType(),
         nickname = nickname,
-        profileImage = profileImage,
+        profileImage = profileImage?.let(::ImageSource),
         content = content,
         isAuthor = isAuthor,
         voteChoice = voteChoice?.toVoteChoice(),

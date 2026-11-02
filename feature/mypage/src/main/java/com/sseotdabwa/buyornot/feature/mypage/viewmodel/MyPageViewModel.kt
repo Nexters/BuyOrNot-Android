@@ -38,7 +38,7 @@ class MyPageViewModel @Inject constructor(
                 updateState { it.copy(isLoading = false, userProfile = profile) }
                 runCatchingCancellable {
                     profile.nickname?.let { userPreferencesRepository.updateDisplayName(it) }
-                    userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
+                    userPreferencesRepository.updateProfileImage(profile.profileImage)
                 }.onFailure {
                     Timber.w("Failed to update user preferences")
                 }

@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.mypage.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.core.ui.image.toProfileImageModel
 import com.sseotdabwa.buyornot.core.ui.nickname.NicknamePolicy
 import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
@@ -56,7 +57,7 @@ class ProfileEditViewModel @Inject constructor(
                         isLoading = false,
                         originalNickname = nickname,
                         nickname = nickname,
-                        profileImageUrl = profile.profileImage,
+                        profileImage = profile.profileImage.toProfileImageModel(),
                         isProfileLoaded = true,
                     )
                 }
@@ -108,7 +109,7 @@ class ProfileEditViewModel @Inject constructor(
             }.onSuccess { profile ->
                 runCatchingCancellable {
                     profile.nickname?.let { userPreferencesRepository.updateDisplayName(it) }
-                    userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
+                    userPreferencesRepository.updateProfileImage(profile.profileImage)
                 }.onFailure { Timber.w(it, "Failed to update user preferences") }
                 sendSideEffect(ProfileEditSideEffect.ShowSnackbar(message = "프로필을 수정했어요."))
                 // 화면을 떠날 때까지 isLoading을 유지해 CTA가 다시 눌리지 않게 한다.

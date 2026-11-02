@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.core.data.repository
 
 import com.sseotdabwa.buyornot.core.datastore.UserPreferencesDataSource
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.UserPreferences
 import com.sseotdabwa.buyornot.domain.model.UserToken
 import com.sseotdabwa.buyornot.domain.model.UserType
@@ -41,8 +42,8 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         userPreferencesDataSource.updateDisplayName(newName)
     }
 
-    override suspend fun updateProfileImageUrl(newUrl: String) {
-        userPreferencesDataSource.updateProfileImageUrl(newUrl)
+    override suspend fun updateProfileImage(newImage: ImageSource) {
+        userPreferencesDataSource.updateProfileImageUrl(newImage.url)
     }
 }
 
@@ -52,7 +53,7 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 private fun DatastoreUserPreferences.toDomain(): UserPreferences =
     UserPreferences(
         displayName = displayName,
-        profileImageUrl = profileImageUrl,
+        profileImage = ImageSource(profileImageUrl),
         userType = userType.toDomain(),
     )
 

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCommentPreview
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.GUEST_AUTHOR_USER_ID
 import com.sseotdabwa.buyornot.domain.model.UserType
@@ -30,13 +31,13 @@ enum class FilterChip(
 @Immutable
 data class FeedItem(
     val id: String,
-    val profileImageUrl: String,
+    val profileImage: ImageModel?,
     val nickname: String,
     val category: String,
     val createdAt: String,
     val title: String,
     val content: String,
-    val productImageUrls: List<String>,
+    val productImages: List<ImageModel>,
     val price: String,
     val imageAspectRatios: List<ImageAspectRatio>,
     val isVoteEnded: Boolean,
@@ -79,7 +80,7 @@ data class HomeUiState(
     val userType: UserType = UserType.NOT_LOGGED_IN,
     val selectedTab: HomeTab = HomeTab.FEED,
     val selectedFilter: FilterChip = FilterChip.ALL,
-    val voterProfileImageUrl: String = "",
+    val voterProfileImage: ImageModel? = null,
     val allFeeds: List<FeedItem> = emptyList(),
     val selectedCategories: Set<FeedCategory> = emptySet(),
     val feeds: List<FeedItem> = emptyList(),
@@ -209,7 +210,7 @@ sealed interface HomeSideEffect {
      */
     data class ShowVoteCompletedSnackbar(
         val feedId: Long,
-        val imageUrl: String?,
+        val image: ImageModel?,
     ) : HomeSideEffect
 
     data class NavigateToFeedComments(

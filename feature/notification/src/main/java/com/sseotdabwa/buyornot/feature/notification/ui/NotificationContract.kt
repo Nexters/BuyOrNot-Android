@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.notification.ui
 import androidx.compose.runtime.Immutable
 import com.sseotdabwa.buyornot.core.designsystem.components.SnackBarIconTint
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import com.sseotdabwa.buyornot.domain.model.NotificationFilter
 
 /**
@@ -12,7 +13,7 @@ import com.sseotdabwa.buyornot.domain.model.NotificationFilter
 data class NotificationItem(
     val id: Long,
     val feedId: Long,
-    val imageUrl: String,
+    val image: ImageModel,
     val title: String,
     val description: String,
     val time: String,

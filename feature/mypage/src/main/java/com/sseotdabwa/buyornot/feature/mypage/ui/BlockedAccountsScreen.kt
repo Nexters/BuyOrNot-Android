@@ -36,6 +36,8 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotChip
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotEmptyView
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotImgs
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
+import com.sseotdabwa.buyornot.core.designsystem.image.toCoilModel
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.BlockedAccountsIntent
@@ -44,7 +46,7 @@ import com.sseotdabwa.buyornot.feature.mypage.viewmodel.BlockedAccountsViewModel
 
 data class BlockedUserItem(
     val userId: Long,
-    val profileImageUrl: String,
+    val profileImage: ImageModel?,
     val nickname: String,
     val isBlocked: Boolean = true,
 )
@@ -120,7 +122,7 @@ fun BlockedAccountsScreen(
             ) {
                 items(blockedUsers, key = { it.userId }) { user ->
                     BlockedUser(
-                        profileImageUrl = user.profileImageUrl,
+                        profileImage = user.profileImage,
                         nickname = user.nickname,
                         isBlocked = user.isBlocked,
                         onUnblockClick = { onUnblockClick(user.userId, user.nickname) },
@@ -134,7 +136,7 @@ fun BlockedAccountsScreen(
 
 @Composable
 private fun BlockedUser(
-    profileImageUrl: String,
+    profileImage: ImageModel?,
     nickname: String,
     isBlocked: Boolean,
     onUnblockClick: () -> Unit,
@@ -160,7 +162,7 @@ private fun BlockedUser(
                 model =
                     ImageRequest
                         .Builder(LocalContext.current)
-                        .data(profileImageUrl)
+                        .data(profileImage?.toCoilModel())
                         .crossfade(true)
                         .build(),
                 contentDescription = "UserProfileImage",
@@ -189,7 +191,7 @@ private fun BlockedUser(
 private fun BlockedUserPreview() {
     BuyOrNotTheme {
         BlockedUser(
-            profileImageUrl = "",
+            profileImage = null,
             nickname = "결정장애",
             isBlocked = false,
             onUnblockClick = {},
@@ -225,8 +227,8 @@ private fun BlockedAccountsScreenPreview() {
                 modifier = Modifier.padding(paddingValues),
                 blockedUsers =
                     listOf(
-                        BlockedUserItem(userId = 1L, profileImageUrl = "", nickname = "결정장애"),
-                        BlockedUserItem(userId = 2L, profileImageUrl = "", nickname = "패션피플"),
+                        BlockedUserItem(userId = 1L, profileImage = null, nickname = "결정장애"),
+                        BlockedUserItem(userId = 2L, profileImage = null, nickname = "패션피플"),
                     ),
                 onBackClick = {},
             )

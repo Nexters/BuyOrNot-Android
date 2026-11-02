@@ -5,7 +5,7 @@ package com.sseotdabwa.buyornot.domain.model
  */
 data class FeedImage(
     val s3ObjectKey: String,
-    val imageUrl: String,
+    val image: ImageSource,
     val imageWidth: Int,
     val imageHeight: Int,
 )
@@ -34,9 +34,7 @@ data class Feed(
     val latestComment: CommentPreview? = null,
     /** 투표 마감 시각. 서버가 내려준 문자열 그대로이며, 내려주지 않는 응답이면 null. */
     val voteClosedAt: String? = null,
-) {
-    val viewUrls: List<String> get() = images.map { it.imageUrl }
-}
+)
 
 /**
  * 작성자 정보 도메인 모델
@@ -44,7 +42,7 @@ data class Feed(
 data class Author(
     val userId: Long,
     val nickname: String,
-    val profileImage: String?,
+    val profileImage: ImageSource?,
 ) {
     /**
      * 비회원이 작성한 글인가.

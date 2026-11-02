@@ -18,6 +18,7 @@ import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.Notification
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.UserPreferences
@@ -58,7 +59,7 @@ fun testFeed(
     noCount = 1,
     totalCount = 4,
     feedStatus = FeedStatus.OPEN,
-    images = listOf(FeedImage(s3ObjectKey = "", imageUrl = "https://cdn/$feedId.jpg", imageWidth = 1, imageHeight = 1)),
+    images = listOf(FeedImage(s3ObjectKey = "", image = ImageSource("https://cdn/$feedId.jpg"), imageWidth = 1, imageHeight = 1)),
     author = Author(userId = 2L, nickname = "참새방앗간12456", profileImage = null),
     createdAt = "2026-09-20T10:35:17",
     hasVoted = false,
@@ -74,7 +75,7 @@ fun testCommentPreview(
 ) = CommentPreview(
     authorType = CommentAuthorType.MEMBER,
     nickname = "토봉이날다12456",
-    profileImage = profileImage,
+    profileImage = profileImage?.let(::ImageSource),
     content = content,
     isAuthor = false,
     voteChoice = VoteChoice.YES,
@@ -133,7 +134,14 @@ class FakeFeedRepository(
         choice: VoteChoice,
     ): VoteResult {
         voteRequestCount++
-        return VoteResult(feedId = feedId, choice = choice, yesCount = 4, noCount = 1, totalCount = 5, feedImageUrl = voteImageUrl)
+        return VoteResult(
+            feedId = feedId,
+            choice = choice,
+            yesCount = 4,
+            noCount = 1,
+            totalCount = 5,
+            feedImage = voteImageUrl?.let(::ImageSource),
+        )
     }
 
     override suspend fun getMyFeeds(
@@ -236,7 +244,7 @@ class FakeCommentRepository : CommentRepository {
 
 class FakeUserRepository : UserRepository {
     override suspend fun getMyProfile(): UserProfile =
-        UserProfile(id = MY_USER_ID, nickname = "서따봐", profileImage = "", socialAccount = "KAKAO", email = "")
+        UserProfile(id = MY_USER_ID, nickname = "서따봐", profileImage = ImageSource(""), socialAccount = "KAKAO", email = "")
 
     override suspend fun deleteMyAccount() = Unit
 
@@ -258,7 +266,7 @@ class FakeUserRepository : UserRepository {
 
 class FakeUserPreferencesRepository : UserPreferencesRepository {
     override val userPreferences: Flow<UserPreferences> =
-        flowOf(UserPreferences(displayName = "서따봐", profileImageUrl = "", userType = UserType.SOCIAL))
+        flowOf(UserPreferences(displayName = "서따봐", profileImage = ImageSource(""), userType = UserType.SOCIAL))
     override val userToken: Flow<UserToken> = emptyFlow()
     override val userType: Flow<UserType> = flowOf(UserType.SOCIAL)
     override val userId: Flow<Long> = flowOf(MY_USER_ID)
@@ -269,7 +277,7 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
 
     override suspend fun updateDisplayName(newName: String) = Unit
 
-    override suspend fun updateProfileImageUrl(newUrl: String) = Unit
+    override suspend fun updateProfileImage(newImage: ImageSource) = Unit
 }
 
 class FakeNotificationRepository : NotificationRepository {

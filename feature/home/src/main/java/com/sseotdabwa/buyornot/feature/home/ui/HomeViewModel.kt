@@ -8,9 +8,11 @@ import com.sseotdabwa.buyornot.core.analytics.performance.TraceNames
 import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCommentPreview
-import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.core.ui.image.toAspectRatio
+import com.sseotdabwa.buyornot.core.ui.image.toImageModel
+import com.sseotdabwa.buyornot.core.ui.image.toProfileImageModel
 import com.sseotdabwa.buyornot.domain.model.CommentPreview
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
@@ -146,7 +148,7 @@ class HomeViewModel @Inject constructor(
                     updateState {
                         it.copy(
                             userType = userType,
-                            voterProfileImageUrl = preferences.profileImageUrl,
+                            voterProfileImage = preferences.profileImage.toProfileImageModel(),
                         )
                     }
 
@@ -180,7 +182,7 @@ class HomeViewModel @Inject constructor(
             if (uiState.value.userType == UserType.SOCIAL) {
                 val profile = userRepository.getMyProfile()
                 profile.nickname?.let { userPreferencesRepository.updateDisplayName(it) }
-                userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
+                userPreferencesRepository.updateProfileImage(profile.profileImage)
                 profile.id
             } else {
                 null
@@ -459,7 +461,7 @@ class HomeViewModel @Inject constructor(
                 sendSideEffect(
                     HomeSideEffect.ShowVoteCompletedSnackbar(
                         feedId = feedId.toLong(),
-                        imageUrl = voteResult.feedImageUrl ?: targetFeed.productImageUrls.firstOrNull(),
+                        image = voteResult.feedImage?.toImageModel() ?: targetFeed.productImages.firstOrNull(),
                     ),
                 )
                 analytics.track(
@@ -826,27 +828,18 @@ class HomeViewModel @Inject constructor(
     /**
      * Domain Feed를 UI FeedItem으로 변환
      */
-    private fun Feed.toFeedItem(isOwner: Boolean): FeedItem {
-        val aspectRatios =
-            images.map { image ->
-                when {
-                    image.imageWidth > image.imageHeight -> ImageAspectRatio.LANDSCAPE
-                    image.imageWidth < image.imageHeight -> ImageAspectRatio.PORTRAIT
-                    else -> ImageAspectRatio.SQUARE
-                }
-            }
-
-        return FeedItem(
+    private fun Feed.toFeedItem(isOwner: Boolean): FeedItem =
+        FeedItem(
             id = feedId.toString(),
-            profileImageUrl = author.profileImage ?: "",
+            profileImage = author.profileImage.toProfileImageModel(),
             nickname = author.nickname,
             category = category.displayName,
             createdAt = TimeUtils.formatRelativeTime(createdAt),
             title = title,
             content = content,
-            productImageUrls = viewUrls,
+            productImages = images.map { it.image.toImageModel() },
             price = price,
-            imageAspectRatios = aspectRatios,
+            imageAspectRatios = images.map { it.toAspectRatio() },
             isVoteEnded = feedStatus == FeedStatus.CLOSED,
             userVotedOptionIndex =
                 when (myVoteChoice) {
@@ -864,8 +857,7 @@ class HomeViewModel @Inject constructor(
             latestComment = latestComment?.toFeedCommentPreview(),
             voteClosedAtMillis = voteClosedAt?.let(TimeUtils::parseEpochMillis),
         )
-    }
 
     private fun CommentPreview.toFeedCommentPreview(): FeedCommentPreview =
-        FeedCommentPreview(profileImageUrl = profileImage, content = content)
+        FeedCommentPreview(profileImage = profileImage.toProfileImageModel(), content = content)
 }

@@ -11,12 +11,12 @@ import kotlinx.coroutines.Dispatchers
 /**
  * 스크린샷 테스트용 Application (#153).
  *
- * 프리뷰는 core:designsystem 의 PreviewImages 가 주는 로컬 리소스 URI만 쓰기로 했지만,
+ * 프리뷰는 core:designsystem 의 PreviewImages 가 주는 로컬 리소스만 쓰기로 했지만,
  * 그건 사람이 지키는 규율이다. 새 프리뷰가 실수로 http URL을 들고 오면
  * 아무도 UI를 건드리지 않은 PR에서 diff가 뜨는데, 원인이 코드가 아니라 네트워크 상태라
  * 추적하기가 어렵다.
  *
- * 그래서 http/https 요청은 인터셉터에서 끊는다. `android.resource://`는 통과시켜 비율별 샘플
+ * 그래서 http/https 요청은 인터셉터에서 끊는다. 로컬 리소스는 통과시켜 비율별 샘플
  * 이미지가 살아있게 한다.
  *
  * 인터셉터가 던지는 예외는 Coil이 삼켜 ErrorResult로 바꾸므로 테스트가 실패하지는 않는다.

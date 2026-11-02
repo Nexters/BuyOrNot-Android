@@ -126,7 +126,7 @@ fun CommentRepliesScreen(
                     value = uiState.replyInput,
                     onValueChange = { onIntent(CommentRepliesIntent.OnReplyInputChanged(it)) },
                     onSubmit = { onIntent(CommentRepliesIntent.OnReplySubmit) },
-                    profileImageUrl = uiState.voterProfileImageUrl,
+                    profileImage = uiState.voterProfileImage,
                     replyTargetNickname = comment.nickname.takeUnless { comment.isDeleted },
                     enabled = uiState.canWriteReply,
                     submitEnabled = uiState.canSubmitReply,

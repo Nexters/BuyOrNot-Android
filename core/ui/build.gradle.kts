@@ -15,6 +15,8 @@ android {
 
 dependencies {
     implementation(projects.core.designsystem)
+    implementation(projects.domain)
+    implementation(libs.kotlinx.serialization.json)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.coil.compose)
     implementation(libs.androidx.compose.ui)
@@ -25,4 +27,5 @@ dependencies {
     implementation(libs.androidx.exifinterface)
     debugImplementation(libs.androidx.compose.ui.tooling)
     testImplementation(libs.junit)
+    testImplementation(libs.androidx.navigation.testing)
 }

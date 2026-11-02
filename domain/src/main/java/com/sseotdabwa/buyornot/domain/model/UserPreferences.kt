@@ -5,6 +5,6 @@ package com.sseotdabwa.buyornot.domain.model
  */
 data class UserPreferences(
     val displayName: String,
-    val profileImageUrl: String,
+    val profileImage: ImageSource,
     val userType: UserType,
 )
