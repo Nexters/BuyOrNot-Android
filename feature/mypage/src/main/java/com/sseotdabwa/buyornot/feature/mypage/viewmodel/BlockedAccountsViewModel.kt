@@ -3,6 +3,7 @@ package com.sseotdabwa.buyornot.feature.mypage.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.core.ui.image.toProfileImageModel
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import com.sseotdabwa.buyornot.feature.mypage.ui.BlockedUserItem
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -85,7 +86,7 @@ class BlockedAccountsViewModel @Inject constructor(
                             blockedUsers.map { user ->
                                 BlockedUserItem(
                                     userId = user.userId,
-                                    profileImageUrl = user.profileImage,
+                                    profileImage = user.profileImage.toProfileImageModel(),
                                     nickname = user.nickname,
                                 )
                             },

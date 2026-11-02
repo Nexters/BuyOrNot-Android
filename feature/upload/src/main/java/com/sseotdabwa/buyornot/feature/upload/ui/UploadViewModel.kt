@@ -11,6 +11,7 @@ import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import com.sseotdabwa.buyornot.domain.model.FeedImage
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
@@ -211,7 +212,7 @@ class UploadViewModel @Inject constructor(
                         feedRepository.uploadImage(uploadInfo.uploadUrl, bytes, contentType)
                         FeedImage(
                             s3ObjectKey = uploadInfo.s3ObjectKey,
-                            imageUrl = uploadInfo.viewUrl,
+                            image = ImageSource(uploadInfo.viewUrl),
                             imageWidth = width,
                             imageHeight = height,
                         )

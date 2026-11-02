@@ -60,6 +60,8 @@ import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
+import com.sseotdabwa.buyornot.core.designsystem.image.toCoilModel
 import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
@@ -105,7 +107,7 @@ enum class CommentItemSize(
 @Composable
 fun CommentItem(
     nickname: String,
-    profileImageUrl: String?,
+    profileImage: ImageModel?,
     createdAt: String,
     content: String,
     modifier: Modifier = Modifier,
@@ -120,7 +122,7 @@ fun CommentItem(
         horizontalArrangement = Arrangement.spacedBy(size.avatarSpacing),
     ) {
         Box {
-            CommentAvatar(profileImageUrl = profileImageUrl, size = size.avatarSize)
+            CommentAvatar(profileImage = profileImage, size = size.avatarSize)
             if (voteBubble != null) {
                 VoteBubble(
                     bubble = voteBubble,
@@ -196,7 +198,7 @@ fun DeletedCommentItem(modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(CommentItemSize.COMMENT.avatarSpacing),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CommentAvatar(profileImageUrl = null, size = CommentItemSize.COMMENT.avatarSize)
+        CommentAvatar(profileImage = null, size = CommentItemSize.COMMENT.avatarSize)
         Text(
             text = "삭제된 댓글입니다",
             style = BuyOrNotTheme.typography.bodyB4Medium,
@@ -413,7 +415,7 @@ private fun CommentTagChip(tag: CommentTag) {
  */
 @Composable
 fun CommentAvatar(
-    profileImageUrl: String?,
+    profileImage: ImageModel?,
     size: Int,
     modifier: Modifier = Modifier,
 ) {
@@ -423,11 +425,11 @@ fun CommentAvatar(
             .clip(CircleShape)
             .background(BuyOrNotTheme.colors.gray100)
             .border(width = 1.dp, color = BuyOrNotTheme.colors.gray300, shape = CircleShape)
-    if (LocalInspectionMode.current || profileImageUrl.isNullOrEmpty()) {
+    if (LocalInspectionMode.current || profileImage == null) {
         Box(modifier = avatarModifier)
     } else {
         AsyncImage(
-            model = profileImageUrl,
+            model = profileImage.toCoilModel(),
             contentDescription = null,
             modifier = avatarModifier,
             contentScale = ContentScale.Crop,
@@ -563,7 +565,7 @@ fun CommentEmpty(
  */
 @Composable
 fun CommentPreviewCard(
-    profileImageUrl: String?,
+    profileImage: ImageModel?,
     content: String,
     modifier: Modifier = Modifier,
 ) {
@@ -576,7 +578,7 @@ fun CommentPreviewCard(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        CommentAvatar(profileImageUrl = profileImageUrl, size = 24)
+        CommentAvatar(profileImage = profileImage, size = 24)
         Text(
             text = content,
             style = BuyOrNotTheme.typography.bodyB5Medium,
@@ -597,7 +599,7 @@ private fun CommentItemPreview() {
         ) {
             CommentItem(
                 nickname = "거북이날다12456",
-                profileImageUrl = PreviewImages.avatar(),
+                profileImage = PreviewImages.avatar,
                 createdAt = "2시간 전",
                 content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
                 tag = CommentTag("사! 가즈아!"),
@@ -610,7 +612,7 @@ private fun CommentItemPreview() {
             )
             CommentItem(
                 nickname = "토봉이날다12456",
-                profileImageUrl = PreviewImages.avatar(),
+                profileImage = PreviewImages.avatar,
                 createdAt = "2시간 전",
                 content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
                 tag = CommentTag("애매하긴 해"),
@@ -623,7 +625,7 @@ private fun CommentItemPreview() {
             )
             CommentItem(
                 nickname = "토봉이날다12456",
-                profileImageUrl = PreviewImages.avatar(),
+                profileImage = PreviewImages.avatar,
                 createdAt = "2시간 전",
                 content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
                 tag = CommentTag("작성자", CommentTagStyle.BRAND),
@@ -631,7 +633,7 @@ private fun CommentItemPreview() {
             )
             CommentItem(
                 nickname = "지름신들린수달_1234",
-                profileImageUrl = null,
+                profileImage = null,
                 createdAt = "2시간 전",
                 content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
                 menuItems = listOf("신고하기" to {}),
@@ -652,7 +654,7 @@ private fun CommentThreadPreview() {
                 parent = {
                     CommentItem(
                         nickname = "토봉이날다12456",
-                        profileImageUrl = PreviewImages.avatar(),
+                        profileImage = PreviewImages.avatar,
                         createdAt = "2시간 전",
                         content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
                         tag = CommentTag("애매하긴 해"),
@@ -669,7 +671,7 @@ private fun CommentThreadPreview() {
                 reply = {
                     CommentItem(
                         nickname = "거북이날다12456",
-                        profileImageUrl = PreviewImages.avatar(),
+                        profileImage = PreviewImages.avatar,
                         createdAt = "2시간 전",
                         content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요.. 이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
                         size = CommentItemSize.REPLY,
@@ -685,7 +687,7 @@ private fun CommentThreadPreview() {
                 reply = {
                     CommentItem(
                         nickname = "거북이날다12456",
-                        profileImageUrl = null,
+                        profileImage = null,
                         createdAt = "2시간 전",
                         content = "원댓글이 지워져도 답글은 남아요.",
                         size = CommentItemSize.REPLY,
@@ -701,7 +703,7 @@ private fun CommentThreadPreview() {
 private fun CommentPreviewCardPreview() {
     BuyOrNotTheme {
         CommentPreviewCard(
-            profileImageUrl = null,
+            profileImage = null,
             content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
             modifier = Modifier.padding(20.dp),
         )

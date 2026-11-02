@@ -50,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
+import com.sseotdabwa.buyornot.core.designsystem.image.toCoilModel
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
@@ -72,7 +74,7 @@ class BuyOrNotSnackBarVisuals(
     val iconResource: IconResource? = null,
     val iconTint: SnackBarIconTint = SnackBarIconTint.Success,
     /** 메시지 왼쪽에 보여줄 썸네일 (투표 완료 스낵바의 피드 대표 이미지 등). */
-    val imageUrl: String? = null,
+    val image: ImageModel? = null,
     override val actionLabel: String? = null,
     override val withDismissAction: Boolean = false,
     override val duration: SnackbarDuration = SnackbarDuration.Short,
@@ -108,14 +110,14 @@ fun BuyOrNotSnackBar(
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier =
-                if (visuals?.imageUrl != null) {
+                if (visuals?.image != null) {
                     Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
                 } else {
                     Modifier.padding(horizontal = 14.dp, vertical = 12.dp)
                 },
         ) {
-            visuals?.imageUrl?.let { imageUrl ->
-                SnackBarThumbnail(imageUrl = imageUrl)
+            visuals?.image?.let { image ->
+                SnackBarThumbnail(image = image)
                 Spacer(modifier = Modifier.width(10.dp))
             }
             icon?.let {
@@ -149,7 +151,7 @@ fun BuyOrNotSnackBar(
 }
 
 @Composable
-private fun SnackBarThumbnail(imageUrl: String) {
+private fun SnackBarThumbnail(image: ImageModel) {
     val thumbnailModifier =
         Modifier
             .size(31.dp)
@@ -158,7 +160,7 @@ private fun SnackBarThumbnail(imageUrl: String) {
         Box(modifier = thumbnailModifier.background(BuyOrNotTheme.colors.gray600))
     } else {
         AsyncImage(
-            model = imageUrl,
+            model = image.toCoilModel(),
             contentDescription = null,
             modifier = thumbnailModifier,
             contentScale = ContentScale.Crop,
@@ -199,7 +201,7 @@ fun BuyOrNotSnackBarHost(hostState: SnackbarHostState) {
  * @param iconResource 메시지 좌측에 표시할 아이콘 리소스 (null이면 아이콘 없음)
  * @param iconTint 아이콘의 색상 틴트 (기본값: [SnackBarIconTint.Success])
  * @param duration 스낵바 표시 시간 (기본값: [SnackbarDuration.Short] = 4초)
- * @param imageUrl 메시지 왼쪽에 보여줄 썸네일 URL (null이면 표시하지 않음)
+ * @param image 메시지 왼쪽에 보여줄 썸네일 (null이면 표시하지 않음)
  * @param actionLabel 오른쪽 액션 문구. 누르면 [SnackbarResult.ActionPerformed]가 반환된다.
  * @return 스낵바가 어떻게 닫혔는지를 나타내는 [SnackbarResult]
  *
@@ -223,7 +225,7 @@ suspend fun showBuyOrNotSnackBar(
     iconResource: IconResource? = null,
     iconTint: SnackBarIconTint = SnackBarIconTint.Success,
     duration: SnackbarDuration = SnackbarDuration.Short,
-    imageUrl: String? = null,
+    image: ImageModel? = null,
     actionLabel: String? = null,
 ): SnackbarResult =
     snackbarMutex.withLock {
@@ -234,7 +236,7 @@ suspend fun showBuyOrNotSnackBar(
                         message = message,
                         iconResource = iconResource,
                         iconTint = iconTint,
-                        imageUrl = imageUrl,
+                        image = image,
                         actionLabel = actionLabel,
                         duration = SnackbarDuration.Indefinite, // 직접 타이머 제어
                     ),
@@ -317,7 +319,7 @@ private fun BuyOrNotSnackBarPreview() {
                         override val visuals =
                             BuyOrNotSnackBarVisuals(
                                 message = "투표를 완료했어요!",
-                                imageUrl = "preview",
+                                image = ImageModel.Network("preview"),
                                 actionLabel = "의견 남기기",
                             )
 

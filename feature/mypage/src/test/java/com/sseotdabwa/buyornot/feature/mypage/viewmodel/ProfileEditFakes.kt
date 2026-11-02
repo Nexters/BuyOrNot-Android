@@ -4,6 +4,7 @@ import com.sseotdabwa.buyornot.domain.model.BlockedUser
 import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.UserPreferences
 import com.sseotdabwa.buyornot.domain.model.UserProfile
@@ -34,7 +35,7 @@ class FakeUserRepository(
         UserProfile(
             id = 1,
             nickname = "서따봐",
-            profileImage = "https://cdn/old.jpg",
+            profileImage = ImageSource("https://cdn/old.jpg"),
             socialAccount = "KAKAO",
             email = "buyornot@gmail.com",
         ),
@@ -61,7 +62,7 @@ class FakeUserRepository(
         profile =
             profile.copy(
                 nickname = nickname ?: profile.nickname,
-                profileImage = profileImage ?: profile.profileImage,
+                profileImage = profileImage?.let(::ImageSource) ?: profile.profileImage,
             )
         return profile
     }
@@ -147,7 +148,7 @@ class FakeFeedRepository(
 
 class FakeUserPreferencesRepository : UserPreferencesRepository {
     var displayName: String? = null
-    var profileImageUrl: String? = null
+    var profileImage: ImageSource? = null
 
     override val userPreferences: Flow<UserPreferences> = emptyFlow()
     override val userToken: Flow<UserToken> = emptyFlow()
@@ -162,8 +163,8 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
         displayName = newName
     }
 
-    override suspend fun updateProfileImageUrl(newUrl: String) {
-        profileImageUrl = newUrl
+    override suspend fun updateProfileImage(newImage: ImageSource) {
+        profileImage = newImage
     }
 }
 

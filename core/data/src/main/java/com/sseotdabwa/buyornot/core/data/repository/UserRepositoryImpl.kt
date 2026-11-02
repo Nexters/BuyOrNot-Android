@@ -8,6 +8,7 @@ import com.sseotdabwa.buyornot.core.network.dto.response.errorCodeOrNull
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
 import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.BlockedUser
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.domain.repository.UserRepository
 import retrofit2.HttpException
@@ -58,7 +59,7 @@ class UserRepositoryImpl @Inject constructor(
         UserProfile(
             id = id,
             nickname = nickname,
-            profileImage = profileImage,
+            profileImage = ImageSource(profileImage),
             socialAccount = socialAccount,
             email = email,
         )
@@ -67,6 +68,6 @@ class UserRepositoryImpl @Inject constructor(
         BlockedUser(
             userId = userId,
             nickname = nickname,
-            profileImage = profileImage,
+            profileImage = ImageSource(profileImage),
         )
 }

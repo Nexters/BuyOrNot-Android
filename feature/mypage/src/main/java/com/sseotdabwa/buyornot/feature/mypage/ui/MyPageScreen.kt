@@ -37,8 +37,12 @@ import coil.request.ImageRequest
 import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBar
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
+import com.sseotdabwa.buyornot.core.designsystem.image.toCoilModel
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
+import com.sseotdabwa.buyornot.core.ui.image.toProfileImageModel
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.feature.mypage.components.SettingItem
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.MyPageSideEffect
@@ -117,7 +121,7 @@ fun MyPageScreen(
         ) {
             ProfileItem(
                 nickname = uiState.userProfile?.nickname ?: "...",
-                profileImage = uiState.userProfile?.profileImage,
+                profileImage = uiState.userProfile?.profileImage.toProfileImageModel(),
                 onClick = onProfileClick,
             )
 
@@ -166,7 +170,7 @@ fun MyPageScreen(
 @Composable
 private fun ProfileItem(
     nickname: String,
-    profileImage: String?,
+    profileImage: ImageModel?,
     onClick: () -> Unit,
 ) {
     Row(
@@ -188,7 +192,7 @@ private fun ProfileItem(
             model =
                 ImageRequest
                     .Builder(LocalContext.current)
-                    .data(profileImage)
+                    .data(profileImage?.toCoilModel())
                     .crossfade(true)
                     .build(),
             contentDescription = "UserProfileImage",
@@ -238,7 +242,7 @@ fun MyPageScreenPreview() {
                             UserProfile(
                                 id = 0,
                                 nickname = "서따봐",
-                                profileImage = "",
+                                profileImage = ImageSource(""),
                                 socialAccount = "KAKAO",
                                 email = "buyornot@gmail.com",
                             ),

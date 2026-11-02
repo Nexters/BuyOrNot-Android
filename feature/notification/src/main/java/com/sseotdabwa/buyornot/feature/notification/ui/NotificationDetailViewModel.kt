@@ -7,9 +7,13 @@ import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.core.ui.image.toAspectRatio
+import com.sseotdabwa.buyornot.core.ui.image.toImageModel
+import com.sseotdabwa.buyornot.core.ui.image.toProfileImageModel
 import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.CommentErrorCode
 import com.sseotdabwa.buyornot.domain.model.CommentSort
+import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
@@ -81,7 +85,7 @@ class NotificationDetailViewModel @Inject constructor(
                 .collect { preferences ->
                     updateState {
                         it.copy(
-                            voterProfileImageUrl = preferences.profileImageUrl,
+                            voterProfileImage = preferences.profileImage.toProfileImageModel(),
                         )
                     }
                 }
@@ -155,7 +159,7 @@ class NotificationDetailViewModel @Inject constructor(
                 updateState {
                     it.copy(
                         isLoading = false,
-                        feed = feed,
+                        feed = feed.toNotificationDetailFeed(),
                         isOwner = isOwner,
                     )
                 }
@@ -194,12 +198,10 @@ class NotificationDetailViewModel @Inject constructor(
         updateState { it.copy(showBlockDialog = false) }
         val userId =
             uiState.value.feed
-                ?.author
-                ?.userId ?: return
+                ?.authorUserId ?: return
         val nickname =
             uiState.value.feed
-                ?.author
-                ?.nickname
+                ?.authorNickname
         viewModelScope.launch {
             runCatchingCancellable {
                 userRepository.blockUser(userId)
@@ -544,3 +546,27 @@ class NotificationDetailViewModel @Inject constructor(
         const val KEY_FOCUS_COMMENT_INPUT = "focusCommentInput"
     }
 }
+
+private fun Feed.toNotificationDetailFeed(): NotificationDetailFeed =
+    NotificationDetailFeed(
+        feedId = feedId,
+        title = title,
+        content = content,
+        price = price,
+        category = category,
+        yesCount = yesCount,
+        noCount = noCount,
+        totalCount = totalCount,
+        feedStatus = feedStatus,
+        productImages = images.map { it.image.toImageModel() },
+        imageAspectRatios = images.map { it.toAspectRatio() },
+        authorUserId = author.userId,
+        authorNickname = author.nickname,
+        authorProfileImage = author.profileImage.toProfileImageModel(),
+        canBlockAuthor = !author.isGuest,
+        createdAt = createdAt,
+        hasVoted = hasVoted,
+        myVoteChoice = myVoteChoice,
+        productLink = productLink,
+        commentCount = commentCount,
+    )

@@ -16,6 +16,7 @@ import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.Notification
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.UserPreferences
@@ -59,7 +60,7 @@ fun testFeed(
     noCount = 1,
     totalCount = 4,
     feedStatus = feedStatus,
-    images = listOf(FeedImage(s3ObjectKey = "", imageUrl = "https://cdn/1.jpg", imageWidth = 1, imageHeight = 1)),
+    images = listOf(FeedImage(s3ObjectKey = "", image = ImageSource("https://cdn/1.jpg"), imageWidth = 1, imageHeight = 1)),
     author = Author(userId = authorUserId, nickname = "참새방앗간12456", profileImage = null),
     createdAt = "2026-09-20T10:35:17",
     hasVoted = hasVoted,
@@ -300,7 +301,7 @@ class FakeUserRepository(
 ) : UserRepository {
     override suspend fun getMyProfile(): UserProfile =
         profileError?.let { throw it }
-            ?: UserProfile(id = MY_USER_ID, nickname = "서따봐", profileImage = "", socialAccount = "KAKAO", email = "")
+            ?: UserProfile(id = MY_USER_ID, nickname = "서따봐", profileImage = ImageSource(""), socialAccount = "KAKAO", email = "")
 
     override suspend fun deleteMyAccount() = Unit
 
@@ -322,7 +323,7 @@ class FakeUserRepository(
 
 class FakeUserPreferencesRepository : UserPreferencesRepository {
     override val userPreferences: Flow<UserPreferences> =
-        flowOf(UserPreferences(displayName = "서따봐", profileImageUrl = "", userType = UserType.SOCIAL))
+        flowOf(UserPreferences(displayName = "서따봐", profileImage = ImageSource(""), userType = UserType.SOCIAL))
     override val userToken: Flow<UserToken> = emptyFlow()
     override val userType: Flow<UserType> = flowOf(UserType.SOCIAL)
     override val userId: Flow<Long> = flowOf(MY_USER_ID)
@@ -333,7 +334,7 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
 
     override suspend fun updateDisplayName(newName: String) = Unit
 
-    override suspend fun updateProfileImageUrl(newUrl: String) = Unit
+    override suspend fun updateProfileImage(newImage: ImageSource) = Unit
 }
 
 class FakeNotificationRepository : NotificationRepository {

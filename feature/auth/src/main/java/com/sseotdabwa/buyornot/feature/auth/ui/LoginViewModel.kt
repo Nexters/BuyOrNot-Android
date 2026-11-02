@@ -169,7 +169,7 @@ class LoginViewModel @Inject constructor(
         }.onSuccess { profile ->
             userPreferencesRepository.updateUserId(profile.id)
             profile.nickname?.let { userPreferencesRepository.updateDisplayName(it) }
-            userPreferencesRepository.updateProfileImageUrl(profile.profileImage)
+            userPreferencesRepository.updateProfileImage(profile.profileImage)
         }.onFailure { e ->
             Timber.e(e, "Failed to fetch user profile after login")
         }.getOrNull()

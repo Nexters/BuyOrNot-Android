@@ -4,6 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import kotlinx.serialization.Serializable
 import com.sseotdabwa.buyornot.feature.notification.ui.CommentRepliesRoute as CommentRepliesScreen
 import com.sseotdabwa.buyornot.feature.notification.ui.NotificationDetailRoute as NotificationDetailScreen
@@ -46,7 +47,7 @@ fun NavGraphBuilder.notificationGraph(
     onNotificationClick: (Long, Long) -> Unit,
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
-    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onImageClick: (images: List<ImageModel>, page: Int) -> Unit = { _, _ -> },
     onRepliesClick: (feedId: Long, commentId: Long) -> Unit = { _, _ -> },
 ) {
     composable<NotificationRoute> {

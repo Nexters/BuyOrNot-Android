@@ -40,6 +40,7 @@ import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
+import com.sseotdabwa.buyornot.core.ui.image.toProfileImageModel
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentReply
 import com.sseotdabwa.buyornot.domain.model.CommentSort
@@ -134,7 +135,7 @@ internal fun FeedCommentThread(
             } else {
                 CommentItem(
                     nickname = comment.nickname,
-                    profileImageUrl = comment.profileImage,
+                    profileImage = comment.profileImage.toProfileImageModel(),
                     createdAt = TimeUtils.formatRelativeTime(comment.createdAt),
                     content = comment.content,
                     tag = comment.tag(),
@@ -159,7 +160,7 @@ internal fun FeedCommentThread(
         reply = { reply ->
             CommentItem(
                 nickname = reply.nickname,
-                profileImageUrl = reply.profileImage,
+                profileImage = reply.profileImage.toProfileImageModel(),
                 createdAt = TimeUtils.formatRelativeTime(reply.createdAt),
                 content = reply.content,
                 size = CommentItemSize.REPLY,

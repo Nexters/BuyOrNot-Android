@@ -24,6 +24,7 @@ import com.sseotdabwa.buyornot.core.designsystem.components.BackTopBarWithTitle
 import com.sseotdabwa.buyornot.core.designsystem.components.BuyOrNotConfirmDialog
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
+import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.model.UserProfile
 import com.sseotdabwa.buyornot.feature.mypage.components.SettingItem
 import com.sseotdabwa.buyornot.feature.mypage.viewmodel.AccountSettingIntent
@@ -171,7 +172,7 @@ fun AccountSettingScreenPreview() {
                             UserProfile(
                                 id = 0,
                                 nickname = "서따봐",
-                                profileImage = "",
+                                profileImage = ImageSource(""),
                                 socialAccount = "KAKAO",
                                 email = "buyornot@gmail.com",
                             ),

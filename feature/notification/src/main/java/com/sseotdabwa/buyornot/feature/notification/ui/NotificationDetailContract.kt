@@ -1,18 +1,49 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
 import androidx.compose.runtime.Immutable
+import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import com.sseotdabwa.buyornot.domain.model.COMMENT_MAX_LENGTH
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentSort
-import com.sseotdabwa.buyornot.domain.model.Feed
+import com.sseotdabwa.buyornot.domain.model.FeedCategory
+import com.sseotdabwa.buyornot.domain.model.FeedStatus
+import com.sseotdabwa.buyornot.domain.model.VoteChoice
+
+/**
+ * @property canBlockAuthor 비회원이 쓴 글은 차단할 유저가 없어 false.
+ */
+@Immutable
+data class NotificationDetailFeed(
+    val feedId: Long,
+    val title: String,
+    val content: String,
+    val price: String,
+    val category: FeedCategory,
+    val yesCount: Int,
+    val noCount: Int,
+    val totalCount: Int,
+    val feedStatus: FeedStatus,
+    val productImages: List<ImageModel>,
+    val imageAspectRatios: List<ImageAspectRatio>,
+    val authorUserId: Long,
+    val authorNickname: String,
+    val authorProfileImage: ImageModel?,
+    val canBlockAuthor: Boolean,
+    val createdAt: String,
+    val hasVoted: Boolean,
+    val myVoteChoice: VoteChoice?,
+    val productLink: String? = null,
+    val commentCount: Int = 0,
+)
 
 @Immutable
 data class NotificationDetailUiState(
     val isLoading: Boolean = true,
     val isError: Boolean = false,
-    val feed: Feed? = null,
-    val voterProfileImageUrl: String = "",
+    val feed: NotificationDetailFeed? = null,
+    val voterProfileImage: ImageModel? = null,
     val isOwner: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val showBlockDialog: Boolean = false,

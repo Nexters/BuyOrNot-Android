@@ -236,7 +236,7 @@ fun NotificationScreen(
                 ) { notification ->
                     NotificationItem(
                         id = notification.id,
-                        imageUrl = notification.imageUrl,
+                        image = notification.image,
                         label = notification.title,
                         message = notification.description,
                         time = notification.time,
@@ -327,7 +327,7 @@ private fun NotificationScreenPreview() {
                             NotificationItem(
                                 id = 1L,
                                 feedId = 101L,
-                                imageUrl = PreviewImages.square(),
+                                image = PreviewImages.square,
                                 title = "투표 종료",
                                 description = "78% '애매하긴 해!'",
                                 time = "2시간 전",
@@ -336,7 +336,7 @@ private fun NotificationScreenPreview() {
                             NotificationItem(
                                 id = 2L,
                                 feedId = 102L,
-                                imageUrl = PreviewImages.square(),
+                                image = PreviewImages.square,
                                 title = "투표 종료",
                                 description = "56% '사! 가즈아!'",
                                 time = "3시간 전",

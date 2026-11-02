@@ -10,5 +10,5 @@ data class VoteResult(
     val noCount: Int,
     val totalCount: Int,
     /** 투표 완료 스낵바에 쓰는 피드 대표(첫 번째) 이미지. */
-    val feedImageUrl: String? = null,
+    val feedImage: ImageSource? = null,
 )

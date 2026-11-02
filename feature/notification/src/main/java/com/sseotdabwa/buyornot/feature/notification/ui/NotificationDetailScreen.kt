@@ -37,16 +37,14 @@ import com.sseotdabwa.buyornot.core.designsystem.components.CommentInput
 import com.sseotdabwa.buyornot.core.designsystem.components.FeedCard
 import com.sseotdabwa.buyornot.core.designsystem.components.ImageAspectRatio
 import com.sseotdabwa.buyornot.core.designsystem.components.showBuyOrNotSnackBar
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
-import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.COMMENT_MAX_LENGTH
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentAuthorType
 import com.sseotdabwa.buyornot.domain.model.CommentReply
-import com.sseotdabwa.buyornot.domain.model.Feed
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
-import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import kotlinx.coroutines.launch
@@ -68,7 +66,7 @@ fun NotificationDetailRoute(
     onBackClick: () -> Unit,
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
-    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onImageClick: (images: List<ImageModel>, page: Int) -> Unit = { _, _ -> },
     onRepliesClick: (feedId: Long, commentId: Long) -> Unit = { _, _ -> },
     viewModel: NotificationDetailViewModel = hiltViewModel(),
 ) {
@@ -112,14 +110,14 @@ fun NotificationDetailScreen(
     onIntent: (NotificationDetailIntent) -> Unit,
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
-    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onImageClick: (images: List<ImageModel>, page: Int) -> Unit = { _, _ -> },
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     if (uiState.showBlockDialog) {
         BuyOrNotAlertDialog(
             onDismissRequest = { onIntent(NotificationDetailIntent.DismissBlockDialog) },
             title = "이 글의 사용자를 차단하시겠어요?",
-            subText = "${uiState.feed?.author?.nickname}님의 투표를 볼 수 없어요.",
+            subText = "${uiState.feed?.authorNickname}님의 투표를 볼 수 없어요.",
             confirmText = "차단하기",
             dismissText = "취소",
             onConfirm = { onIntent(NotificationDetailIntent.OnBlockConfirmed) },
@@ -192,7 +190,7 @@ fun NotificationDetailScreen(
                     value = uiState.commentInput,
                     onValueChange = { onIntent(NotificationDetailIntent.OnCommentInputChanged(it)) },
                     onSubmit = { onIntent(NotificationDetailIntent.OnCommentSubmit) },
-                    profileImageUrl = uiState.voterProfileImageUrl,
+                    profileImage = uiState.voterProfileImage,
                     votedOptionLabel = feed.myVoteChoice?.label(),
                     enabled = uiState.canWriteComment,
                     submitEnabled = uiState.canSubmitComment,
@@ -240,22 +238,15 @@ fun NotificationDetailScreen(
                         item(key = "feed") {
                             FeedCard(
                                 modifier = Modifier.padding(top = 26.dp, bottom = 16.dp),
-                                profileImageUrl = feed.author.profileImage ?: "",
-                                nickname = feed.author.nickname,
+                                profileImage = feed.authorProfileImage,
+                                nickname = feed.authorNickname,
                                 category = feed.category.displayName,
                                 createdAt = TimeUtils.formatRelativeTime(feed.createdAt),
                                 title = feed.title,
                                 content = feed.content,
-                                productImageUrls = feed.viewUrls,
+                                productImages = feed.productImages,
                                 price = feed.price,
-                                imageAspectRatios =
-                                    feed.images.map { image ->
-                                        when {
-                                            image.imageWidth > image.imageHeight -> ImageAspectRatio.LANDSCAPE
-                                            image.imageWidth < image.imageHeight -> ImageAspectRatio.PORTRAIT
-                                            else -> ImageAspectRatio.SQUARE
-                                        }
-                                    },
+                                imageAspectRatios = feed.imageAspectRatios,
                                 isVoteEnded = feed.feedStatus == FeedStatus.CLOSED,
                                 userVotedOptionIndex =
                                     when (feed.myVoteChoice) {
@@ -267,7 +258,7 @@ fun NotificationDetailScreen(
                                 maybeVoteCount = feed.noCount,
                                 totalVoteCount = feed.totalCount,
                                 isOwner = uiState.isOwner,
-                                voterProfileImageUrl = uiState.voterProfileImageUrl,
+                                voterProfileImage = uiState.voterProfileImage,
                                 onVote = { optionIndex -> onIntent(NotificationDetailIntent.OnVoteClicked(optionIndex)) },
                                 onDeleteClick = { onIntent(NotificationDetailIntent.ShowDeleteDialog) },
                                 onReportClick = { onIntent(NotificationDetailIntent.OnReportClicked) },
@@ -276,7 +267,7 @@ fun NotificationDetailScreen(
                                     onIntent(NotificationDetailIntent.OnShareClicked)
                                     onShareClick(feed.feedId, feed.title)
                                 },
-                                canBlock = !feed.author.isGuest,
+                                canBlock = feed.canBlockAuthor,
                                 productLink = feed.productLink,
                                 onLinkClick = onLinkClick,
                                 onImageClick = onImageClick,
@@ -372,7 +363,7 @@ private fun NotificationDetailScreenPreview() {
                 NotificationDetailUiState(
                     isLoading = false,
                     feed =
-                        Feed(
+                        NotificationDetailFeed(
                             feedId = 1L,
                             title = "",
                             content = "이거 어때요? 투표 결과가 궁금해요!",
@@ -382,21 +373,12 @@ private fun NotificationDetailScreenPreview() {
                             noCount = 20,
                             totalCount = 100,
                             feedStatus = FeedStatus.CLOSED,
-                            images =
-                                listOf(
-                                    FeedImage(
-                                        s3ObjectKey = "",
-                                        imageUrl = PreviewImages.square(),
-                                        imageWidth = 800,
-                                        imageHeight = 800,
-                                    ),
-                                ),
-                            author =
-                                Author(
-                                    userId = 1L,
-                                    nickname = "결정장애",
-                                    profileImage = PreviewImages.avatar(),
-                                ),
+                            productImages = listOf(PreviewImages.square),
+                            imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
+                            authorUserId = 1L,
+                            authorNickname = "결정장애",
+                            authorProfileImage = PreviewImages.avatar,
+                            canBlockAuthor = true,
                             createdAt = "2026-02-21T15:00:53.552Z",
                             hasVoted = true,
                             myVoteChoice = VoteChoice.YES,
@@ -417,7 +399,7 @@ private fun NotificationDetailScreenWithCommentsPreview() {
                 NotificationDetailUiState(
                     isLoading = false,
                     feed =
-                        Feed(
+                        NotificationDetailFeed(
                             feedId = 1L,
                             title = "장화 살지말지 고민됩니다",
                             content = "장마가 이미 끝나버리긴 했는데 지금 할인기간이라 매우 고민됩니다..",
@@ -427,16 +409,12 @@ private fun NotificationDetailScreenWithCommentsPreview() {
                             noCount = 1,
                             totalCount = 4,
                             feedStatus = FeedStatus.OPEN,
-                            images =
-                                listOf(
-                                    FeedImage(
-                                        s3ObjectKey = "",
-                                        imageUrl = PreviewImages.square(),
-                                        imageWidth = 800,
-                                        imageHeight = 800,
-                                    ),
-                                ),
-                            author = Author(userId = 2L, nickname = "참새방앗간12456", profileImage = null),
+                            productImages = listOf(PreviewImages.square),
+                            imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
+                            authorUserId = 2L,
+                            authorNickname = "참새방앗간12456",
+                            authorProfileImage = null,
+                            canBlockAuthor = true,
                             createdAt = "2026-09-20T10:35:17",
                             hasVoted = true,
                             myVoteChoice = VoteChoice.YES,
@@ -470,7 +448,7 @@ private fun NotificationDetailScreenBeforeVotePreview() {
                 NotificationDetailUiState(
                     isLoading = false,
                     feed =
-                        Feed(
+                        NotificationDetailFeed(
                             feedId = 1L,
                             title = "장화 살지말지 고민됩니다",
                             content = "장마가 이미 끝나버리긴 했는데 지금 할인기간이라 매우 고민됩니다..",
@@ -480,16 +458,12 @@ private fun NotificationDetailScreenBeforeVotePreview() {
                             noCount = 1,
                             totalCount = 4,
                             feedStatus = FeedStatus.OPEN,
-                            images =
-                                listOf(
-                                    FeedImage(
-                                        s3ObjectKey = "",
-                                        imageUrl = PreviewImages.square(),
-                                        imageWidth = 800,
-                                        imageHeight = 800,
-                                    ),
-                                ),
-                            author = Author(userId = 2L, nickname = "참새방앗간12456", profileImage = null),
+                            productImages = listOf(PreviewImages.square),
+                            imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
+                            authorUserId = 2L,
+                            authorNickname = "참새방앗간12456",
+                            authorProfileImage = null,
+                            canBlockAuthor = true,
                             createdAt = "2026-09-20T10:35:17",
                             hasVoted = false,
                             myVoteChoice = null,

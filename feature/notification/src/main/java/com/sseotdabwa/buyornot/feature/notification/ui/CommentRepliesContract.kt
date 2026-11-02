@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.notification.ui
 
 import androidx.compose.runtime.Immutable
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import com.sseotdabwa.buyornot.domain.model.COMMENT_MAX_LENGTH
 import com.sseotdabwa.buyornot.domain.model.Comment
 import com.sseotdabwa.buyornot.domain.model.CommentReply
@@ -13,7 +14,7 @@ data class CommentRepliesUiState(
     val replies: List<CommentReply> = emptyList(),
     /** 헤더 "댓글 (n)"의 n. */
     val totalCount: Int = 0,
-    val voterProfileImageUrl: String = "",
+    val voterProfileImage: ImageModel? = null,
     val replyInput: String = "",
     val isSubmittingReply: Boolean = false,
     /** 금칙어로 거절된 뒤 내용을 고치기 전까지 등록을 막는다. */

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
+import com.sseotdabwa.buyornot.core.ui.image.toProfileImageModel
 import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.CommentErrorCode
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
@@ -34,7 +35,7 @@ class CommentRepliesViewModel @Inject constructor(
     private fun observeUserPreferences() {
         viewModelScope.launch {
             userPreferencesRepository.userPreferences.collect { preferences ->
-                updateState { it.copy(voterProfileImageUrl = preferences.profileImageUrl) }
+                updateState { it.copy(voterProfileImage = preferences.profileImage.toProfileImageModel()) }
             }
         }
     }

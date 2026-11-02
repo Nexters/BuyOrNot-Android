@@ -39,6 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
 import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
@@ -63,7 +64,7 @@ fun CommentInput(
     value: String,
     onValueChange: (String) -> Unit,
     onSubmit: () -> Unit,
-    profileImageUrl: String?,
+    profileImage: ImageModel?,
     modifier: Modifier = Modifier,
     votedOptionLabel: String? = null,
     replyTargetNickname: String? = null,
@@ -125,7 +126,7 @@ fun CommentInput(
             verticalAlignment = Alignment.Bottom,
         ) {
             CommentAvatar(
-                profileImageUrl = profileImageUrl,
+                profileImage = profileImage,
                 size = 38,
                 modifier = Modifier.padding(bottom = 2.dp),
             )
@@ -206,28 +207,28 @@ private fun CommentInputPreview() {
                 value = "",
                 onValueChange = {},
                 onSubmit = {},
-                profileImageUrl = PreviewImages.avatar(),
+                profileImage = PreviewImages.avatar,
                 votedOptionLabel = "사! 가즈아!",
             )
             CommentInput(
                 value = "댓글을 남겨주세요!댓글을 남겨주세",
                 onValueChange = {},
                 onSubmit = {},
-                profileImageUrl = PreviewImages.avatar(),
+                profileImage = PreviewImages.avatar,
                 votedOptionLabel = "사! 가즈아!",
             )
             CommentInput(
                 value = "",
                 onValueChange = {},
                 onSubmit = {},
-                profileImageUrl = PreviewImages.avatar(),
+                profileImage = PreviewImages.avatar,
                 replyTargetNickname = "토봉이날다12345",
             )
             CommentInput(
                 value = "",
                 onValueChange = {},
                 onSubmit = {},
-                profileImageUrl = PreviewImages.avatar(),
+                profileImage = PreviewImages.avatar,
                 enabled = false,
             )
         }
@@ -243,7 +244,7 @@ private fun CommentInputTypingPreview() {
             value = text,
             onValueChange = { text = it },
             onSubmit = {},
-            profileImageUrl = PreviewImages.avatar(),
+            profileImage = PreviewImages.avatar,
             votedOptionLabel = "애매하긴 해",
         )
     }

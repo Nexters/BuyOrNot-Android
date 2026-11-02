@@ -57,13 +57,15 @@ import coil.compose.AsyncImage
 import com.sseotdabwa.buyornot.core.designsystem.R
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
+import com.sseotdabwa.buyornot.core.designsystem.image.toCoilModel
 import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.designsystem.util.nonRippleClickable
 
 /** 피드 카드 하단에 보여줄 최신 댓글 미리보기. */
 data class FeedCommentPreview(
-    val profileImageUrl: String?,
+    val profileImage: ImageModel?,
     val content: String,
 )
 
@@ -110,13 +112,13 @@ enum class ImageAspectRatio(
 @Composable
 fun FeedCard(
     modifier: Modifier = Modifier,
-    profileImageUrl: String,
+    profileImage: ImageModel?,
     nickname: String,
     category: String,
     createdAt: String,
     title: String,
     content: String,
-    productImageUrls: List<String>,
+    productImages: List<ImageModel>,
     price: String,
     imageAspectRatios: List<ImageAspectRatio> = listOf(ImageAspectRatio.SQUARE),
     isVoteEnded: Boolean,
@@ -126,7 +128,7 @@ fun FeedCard(
     totalVoteCount: Int,
     onVote: (Int) -> Unit,
     isOwner: Boolean = false,
-    voterProfileImageUrl: String = "",
+    voterProfileImage: ImageModel? = null,
     onDeleteClick: () -> Unit = {},
     onReportClick: () -> Unit = {},
     onBlockClick: () -> Unit = {},
@@ -135,7 +137,7 @@ fun FeedCard(
     showMoreButton: Boolean = true,
     productLink: String? = null,
     onLinkClick: (url: String) -> Unit = {},
-    onImageClick: (imageUrls: List<String>, page: Int) -> Unit = { _, _ -> },
+    onImageClick: (images: List<ImageModel>, page: Int) -> Unit = { _, _ -> },
     useThreadLayout: Boolean = false,
     commentCount: Int? = null,
     latestComment: FeedCommentPreview? = null,
@@ -151,7 +153,7 @@ fun FeedCard(
     val buyPercentage = if (totalVoteCount > 0) (buyVoteCount * 100 / totalVoteCount) else 0
     val maybePercentage = if (totalVoteCount > 0) (maybeVoteCount * 100 / totalVoteCount) else 0
 
-    val pagerState = rememberPagerState(pageCount = { productImageUrls.size })
+    val pagerState = rememberPagerState(pageCount = { productImages.size })
 
     val contentStart = if (useThreadLayout) ThreadContentStart else CardHorizontalPadding
     val showThreadLine = useThreadLayout && latestComment != null
@@ -185,7 +187,7 @@ fun FeedCard(
             },
     ) {
         FeedCardHeader(
-            profileImageUrl = profileImageUrl,
+            profileImage = profileImage,
             nickname = nickname,
             category = category,
             createdAt = createdAt,
@@ -225,13 +227,13 @@ fun FeedCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             FeedImageCarousel(
-                productImageUrls = productImageUrls,
+                productImages = productImages,
                 pagerState = pagerState,
                 imageAspectRatios = imageAspectRatios,
                 price = price,
                 productLink = productLink,
                 votingCount = totalVoteCount.takeIf { showVotingCountBadge && !isEnded && it > 0 },
-                onFullscreenClick = { page -> onImageClick(productImageUrls, page) },
+                onFullscreenClick = { page -> onImageClick(productImages, page) },
                 onLinkClick = onLinkClick,
                 contentPadding = PaddingValues(start = contentStart, end = CardHorizontalPadding),
                 pageSpacing = if (useThreadLayout) ThreadProductImageSpacing else ProductImageSpacing,
@@ -253,7 +255,7 @@ fun FeedCard(
                 buyPercentage = buyPercentage,
                 maybePercentage = maybePercentage,
                 totalVoteCount = totalVoteCount,
-                voterProfileImageUrl = voterProfileImageUrl,
+                voterProfileImage = voterProfileImage,
                 onVote = onVote,
                 commentCount = commentCount,
                 onCommentClick = onCommentClick,
@@ -265,7 +267,7 @@ fun FeedCard(
         if (latestComment != null) {
             Spacer(modifier = Modifier.height(14.dp))
             CommentPreviewCard(
-                profileImageUrl = latestComment.profileImageUrl,
+                profileImage = latestComment.profileImage,
                 content = latestComment.content,
                 modifier =
                     Modifier
@@ -280,7 +282,7 @@ fun FeedCard(
 
 @Composable
 private fun FeedCardHeader(
-    profileImageUrl: String,
+    profileImage: ImageModel?,
     nickname: String,
     category: String,
     createdAt: String,
@@ -314,7 +316,7 @@ private fun FeedCardHeader(
                 )
             } else {
                 AsyncImage(
-                    model = profileImageUrl,
+                    model = profileImage?.toCoilModel(),
                     contentDescription = null,
                     modifier =
                         Modifier
@@ -408,7 +410,7 @@ private fun FeedCardHeader(
 
 @Composable
 private fun FeedImageCarousel(
-    productImageUrls: List<String>,
+    productImages: List<ImageModel>,
     pagerState: PagerState,
     imageAspectRatios: List<ImageAspectRatio>,
     price: String,
@@ -449,7 +451,7 @@ private fun FeedImageCarousel(
                     )
                 } else {
                     AsyncImage(
-                        model = productImageUrls[page],
+                        model = productImages[page].toCoilModel(),
                         contentDescription = "Product Image",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,
@@ -527,7 +529,7 @@ private fun FeedVoteSection(
     buyPercentage: Int,
     maybePercentage: Int,
     totalVoteCount: Int,
-    voterProfileImageUrl: String,
+    voterProfileImage: ImageModel?,
     onVote: (Int) -> Unit,
     modifier: Modifier = Modifier,
     commentCount: Int? = null,
@@ -552,7 +554,7 @@ private fun FeedVoteSection(
                         if (userVotedOptionIndex == 0) {
                             {
                                 AsyncImage(
-                                    model = voterProfileImageUrl,
+                                    model = voterProfileImage?.toCoilModel(),
                                     contentDescription = null,
                                     modifier =
                                         Modifier
@@ -578,7 +580,7 @@ private fun FeedVoteSection(
                         if (userVotedOptionIndex == 1) {
                             {
                                 AsyncImage(
-                                    model = voterProfileImageUrl,
+                                    model = voterProfileImage?.toCoilModel(),
                                     contentDescription = null,
                                     modifier =
                                         Modifier
@@ -797,17 +799,17 @@ private fun FeedCardSquareInteractivePreview() {
         var userVotedOption by remember { mutableStateOf<Int?>(null) }
 
         FeedCard(
-            profileImageUrl = PreviewImages.avatar(),
+            profileImage = PreviewImages.avatar,
             nickname = "결정장애",
             category = "뷰티",
             createdAt = "10분 전",
             title = "립스틱 살까요?",
             content = "이 립스틱 색상 어때요? 평소에 안 바르던 색인데 도전해볼까 고민중이에요!",
-            productImageUrls =
+            productImages =
                 listOf(
-                    PreviewImages.square(),
-                    PreviewImages.square(),
-                    PreviewImages.square(),
+                    PreviewImages.square,
+                    PreviewImages.square,
+                    PreviewImages.square,
                 ),
             price = "35,000",
             imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
@@ -839,15 +841,15 @@ private fun FeedCardLandscapeInteractivePreview() {
         var userVotedOption by remember { mutableStateOf<Int?>(null) }
 
         FeedCard(
-            profileImageUrl = PreviewImages.avatar(),
+            profileImage = PreviewImages.avatar,
             nickname = "가로러버",
             category = "가전",
             createdAt = "1시간 전",
             title = "이 모니터 살까요?",
             content = "가로로 긴 제품은 5:4 비율로 보면 좋아요!",
-            productImageUrls =
+            productImages =
                 listOf(
-                    PreviewImages.landscape(),
+                    PreviewImages.landscape,
                 ),
             price = "299,000",
             imageAspectRatios = listOf(ImageAspectRatio.LANDSCAPE),
@@ -876,15 +878,15 @@ private fun FeedCardPortraitInteractivePreview() {
         var userVotedOption by remember { mutableStateOf<Int?>(null) }
 
         FeedCard(
-            profileImageUrl = PreviewImages.avatar(),
+            profileImage = PreviewImages.avatar,
             nickname = "패션피플",
             category = "의류",
             createdAt = "2시간 전",
             title = "이 원피스 어때요?",
             content = "이 원피스 4:5 비율로 보면 더 예쁜 것 같아요! 세로로 긴 옷 사진은 이 비율이 딱이에요.",
-            productImageUrls =
+            productImages =
                 listOf(
-                    PreviewImages.portrait(),
+                    PreviewImages.portrait,
                 ),
             price = "89,000",
             imageAspectRatios = listOf(ImageAspectRatio.PORTRAIT),
@@ -911,13 +913,13 @@ private fun FeedCardPortraitInteractivePreview() {
 private fun FeedCardThreadWithCommentPreview() {
     BuyOrNotTheme {
         FeedCard(
-            profileImageUrl = PreviewImages.avatar(),
+            profileImage = PreviewImages.avatar,
             nickname = "참새방앗간12456",
             category = "패션 ∙ 잡화",
             createdAt = "6시간 전",
             title = "장화 살지말지 고민됩니다",
             content = "장마가 이미 끝나버리긴 했는데 지금 할인기간이라 매우 고민됩니다..",
-            productImageUrls = listOf(PreviewImages.square()),
+            productImages = listOf(PreviewImages.square),
             price = "31,900",
             imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
             isVoteEnded = false,
@@ -929,7 +931,7 @@ private fun FeedCardThreadWithCommentPreview() {
             commentCount = 120,
             latestComment =
                 FeedCommentPreview(
-                    profileImageUrl = null,
+                    profileImage = null,
                     content = "이거 저 사봤는데 겁나 무겁고.. 그냥 그래요..",
                 ),
         )
@@ -945,13 +947,13 @@ private fun FeedCardThreadWithCommentPreview() {
 private fun FeedCardThreadWithoutCommentPreview() {
     BuyOrNotTheme {
         FeedCard(
-            profileImageUrl = PreviewImages.avatar(),
+            profileImage = PreviewImages.avatar,
             nickname = "참새방앗간12456",
             category = "패션 ∙ 잡화",
             createdAt = "6시간 전",
             title = "장화 살지말지 고민됩니다",
             content = "장마가 이미 끝나버리긴 했는데 지금 할인기간이라 매우 고민됩니다..",
-            productImageUrls = listOf(PreviewImages.square()),
+            productImages = listOf(PreviewImages.square),
             price = "31,900",
             imageAspectRatios = listOf(ImageAspectRatio.SQUARE),
             isVoteEnded = false,

@@ -21,13 +21,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.sseotdabwa.buyornot.core.designsystem.image.ImageModel
+import com.sseotdabwa.buyornot.core.designsystem.image.toCoilModel
 import com.sseotdabwa.buyornot.core.designsystem.preview.PreviewImages
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 
 @Composable
 fun NotificationItem(
     id: Long,
-    imageUrl: String,
+    image: ImageModel,
     label: String,
     message: String,
     time: String,
@@ -47,7 +49,7 @@ fun NotificationItem(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
-            model = imageUrl,
+            model = image.toCoilModel(),
             contentDescription = null,
             modifier =
                 Modifier
@@ -96,7 +98,7 @@ private fun UnreadNotiPreview() {
     BuyOrNotTheme {
         NotificationItem(
             id = 1L,
-            imageUrl = PreviewImages.square(),
+            image = PreviewImages.square,
             label = "투표 종료",
             message = "90% '애매하긴 해!'",
             time = "3일 전",
@@ -112,7 +114,7 @@ private fun ReadNotiPreview() {
     BuyOrNotTheme {
         NotificationItem(
             id = 2L,
-            imageUrl = PreviewImages.square(),
+            image = PreviewImages.square,
             label = "투표 종료",
             message = "56% '사! 가즈아!'",
             time = "3일 전",
