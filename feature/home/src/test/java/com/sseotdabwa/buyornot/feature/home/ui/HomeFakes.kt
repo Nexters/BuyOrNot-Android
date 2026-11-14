@@ -240,6 +240,18 @@ class FakeCommentRepository : CommentRepository {
         feedId: Long,
         commentId: Long,
     ): CommentLike = error("not used")
+
+    override suspend fun likeReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ): CommentLike = error("not used")
+
+    override suspend fun unlikeReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ): CommentLike = error("not used")
 }
 
 class FakeUserRepository : UserRepository {

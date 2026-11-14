@@ -188,6 +188,8 @@ class FakeCommentRepository : CommentRepository {
     val reportReplyCalls = mutableListOf<Pair<Long, Long>>()
     val likeCalls = mutableListOf<Long>()
     val unlikeCalls = mutableListOf<Long>()
+    val likeReplyCalls = mutableListOf<Pair<Long, Long>>()
+    val unlikeReplyCalls = mutableListOf<Pair<Long, Long>>()
 
     private val _threadChanges = MutableSharedFlow<CommentThreadChange>()
 
@@ -292,6 +294,26 @@ class FakeCommentRepository : CommentRepository {
     ): CommentLike {
         unlikeError?.let { throw it }
         unlikeCalls += commentId
+        return unlikeResult ?: CommentLike(likeCount = 0, isLiked = false)
+    }
+
+    override suspend fun likeReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ): CommentLike {
+        likeError?.let { throw it }
+        likeReplyCalls += commentId to replyId
+        return likeResult ?: CommentLike(likeCount = 1, isLiked = true)
+    }
+
+    override suspend fun unlikeReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ): CommentLike {
+        unlikeError?.let { throw it }
+        unlikeReplyCalls += commentId to replyId
         return unlikeResult ?: CommentLike(likeCount = 0, isLiked = false)
     }
 }

@@ -297,7 +297,7 @@ class NotificationDetailViewModelTest {
         commentRepository.likeResult = CommentLike(likeCount = 5, isLiked = true)
         val viewModel = createViewModel(FakeFeedRepository(testFeed()))
 
-        viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(commentId = 1))
+        viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(CommentTarget(commentId = 1)))
 
         val comment =
             viewModel.uiState.value.comments
@@ -315,7 +315,7 @@ class NotificationDetailViewModelTest {
             commentRepository.unlikeError = IllegalStateException("network")
             val viewModel = createViewModel(FakeFeedRepository(testFeed()))
 
-            viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(commentId = 1))
+            viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(CommentTarget(commentId = 1)))
 
             val comment =
                 viewModel.uiState.value.comments
@@ -329,15 +329,88 @@ class NotificationDetailViewModelTest {
         }
 
     @Test
-    fun `삭제된_댓글은_공감할_수_없다`() {
-        commentRepository.firstPages[CommentSort.REGISTERED] =
-            CommentPage(listOf(testComment(1).copy(isDeleted = true, replyCount = 1)), nextCursor = null, hasNext = false)
+    fun `답글에_공감하면_답글_공감으로_보내고_그_답글만_서버_값으로_맞춘다`() {
+        val parent = testComment(1).copy(replyCount = 2, replies = listOf(testReply(11, parentId = 1), testReply(12, parentId = 1)))
+        commentRepository.firstPages[CommentSort.REGISTERED] = CommentPage(listOf(parent), nextCursor = null, hasNext = false)
+        commentRepository.likeResult = CommentLike(likeCount = 4, isLiked = true)
         val viewModel = createViewModel(FakeFeedRepository(testFeed()))
 
-        viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(commentId = 1))
+        viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(CommentTarget(commentId = 1, replyId = 11)))
 
+        val comment =
+            viewModel.uiState.value.comments
+                .single()
+        assertEquals(listOf(1L to 11L), commentRepository.likeReplyCalls)
         assertTrue(commentRepository.likeCalls.isEmpty())
+        assertEquals(4, comment.replies[0].likeCount)
+        assertTrue(comment.replies[0].isLiked)
+        assertEquals(0, comment.replies[1].likeCount)
+        assertEquals(0, comment.likeCount)
     }
+
+    @Test
+    fun `공감한_답글을_다시_누르면_답글_공감을_취소한다`() {
+        val reply = testReply(11, parentId = 1).copy(likeCount = 1, isLiked = true)
+        commentRepository.firstPages[CommentSort.REGISTERED] =
+            CommentPage(listOf(testComment(1).copy(replyCount = 1, replies = listOf(reply))), nextCursor = null, hasNext = false)
+        val viewModel = createViewModel(FakeFeedRepository(testFeed()))
+
+        viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(CommentTarget(commentId = 1, replyId = 11)))
+
+        val updated =
+            viewModel.uiState.value.comments
+                .single()
+                .replies
+                .single()
+        assertEquals(listOf(1L to 11L), commentRepository.unlikeReplyCalls)
+        assertEquals(0, updated.likeCount)
+        assertFalse(updated.isLiked)
+    }
+
+    @Test
+    fun `답글_공감에_실패하면_그_답글을_원래_상태로_되돌리고_안내한다`() =
+        runTest {
+            val parent = testComment(1).copy(replyCount = 1, replies = listOf(testReply(11, parentId = 1)))
+            commentRepository.firstPages[CommentSort.REGISTERED] = CommentPage(listOf(parent), nextCursor = null, hasNext = false)
+            commentRepository.likeError = ApiException(code = CommentErrorCode.LIKE_UNAVAILABLE, message = null)
+            val viewModel = createViewModel(FakeFeedRepository(testFeed()))
+
+            viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(CommentTarget(commentId = 1, replyId = 11)))
+
+            val reply =
+                viewModel.uiState.value.comments
+                    .single()
+                    .replies
+                    .single()
+            assertEquals(0, reply.likeCount)
+            assertFalse(reply.isLiked)
+            assertEquals(
+                NotificationDetailSideEffect.ShowSnackbar(message = "공감할 수 없는 댓글이에요."),
+                viewModel.sideEffect.first(),
+            )
+        }
+
+    @Test
+    fun `내가_누른_답글_공감으로_온_원댓글_스레드_변경_신호는_다시_받지_않는다`() =
+        runTest {
+            val parent = testComment(1).copy(replyCount = 1, replies = listOf(testReply(11, parentId = 1)))
+            commentRepository.firstPages[CommentSort.REGISTERED] = CommentPage(listOf(parent), nextCursor = null, hasNext = false)
+            commentRepository.likeResult = CommentLike(likeCount = 1, isLiked = true)
+            commentRepository.threads[1] = CommentThread(testComment(1).copy(replyCount = 1), totalCount = 2)
+            commentRepository.replyPages[1] = CommentReplyPage(listOf(testReply(11, parentId = 1)), nextCursor = null, hasNext = false)
+            val viewModel = createViewModel(FakeFeedRepository(testFeed()))
+
+            viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(CommentTarget(commentId = 1, replyId = 11)))
+            commentRepository.emitThreadChange(CommentThreadChange(feedId = 10, commentId = 1))
+
+            assertTrue(
+                viewModel.uiState.value.comments
+                    .single()
+                    .replies
+                    .single()
+                    .isLiked,
+            )
+        }
 
     @Test
     fun `답글쓰기를_누르면_그_댓글의_답글_페이지로_이동한다`() =
@@ -421,33 +494,19 @@ class NotificationDetailViewModelTest {
         }
 
     @Test
-    fun `답글이_남은_원댓글을_삭제하면_삭제된_댓글로_남긴다`() {
+    fun `답글이_남은_원댓글을_삭제하면_답글까지_목록에서_뺀다`() {
         val parent = testComment(1, isMine = true).copy(replyCount = 1, replies = listOf(testReply(11, parentId = 1)))
-        commentRepository.firstPages[CommentSort.REGISTERED] = CommentPage(listOf(parent), nextCursor = null, hasNext = false)
-        val viewModel = createViewModel(FakeFeedRepository(testFeed(commentCount = 2)))
+        commentRepository.firstPages[CommentSort.REGISTERED] =
+            CommentPage(listOf(parent, testComment(2)), nextCursor = null, hasNext = false)
+        val viewModel = createViewModel(FakeFeedRepository(testFeed(commentCount = 3)))
 
         viewModel.handleIntent(NotificationDetailIntent.ShowDeleteCommentDialog(CommentTarget(commentId = 1)))
         viewModel.handleIntent(NotificationDetailIntent.OnDeleteCommentConfirmed)
 
-        val comment =
+        assertEquals(
+            listOf(2L),
             viewModel.uiState.value.comments
-                .single()
-        assertTrue(comment.isDeleted)
-        assertEquals(listOf(11L), comment.replies.map { it.id })
-    }
-
-    @Test
-    fun `삭제된_원댓글의_마지막_답글을_지우면_원댓글도_목록에서_뺀다`() {
-        val parent = testComment(1).copy(isDeleted = true, replyCount = 1, replies = listOf(testReply(11, parentId = 1, isMine = true)))
-        commentRepository.firstPages[CommentSort.REGISTERED] = CommentPage(listOf(parent), nextCursor = null, hasNext = false)
-        val viewModel = createViewModel(FakeFeedRepository(testFeed(commentCount = 1)))
-
-        viewModel.handleIntent(NotificationDetailIntent.ShowDeleteCommentDialog(CommentTarget(commentId = 1, replyId = 11)))
-        viewModel.handleIntent(NotificationDetailIntent.OnDeleteCommentConfirmed)
-
-        assertTrue(
-            viewModel.uiState.value.comments
-                .isEmpty(),
+                .map { it.id },
         )
     }
 
@@ -496,7 +555,7 @@ class NotificationDetailViewModelTest {
             commentRepository.threads[1] = CommentThread(testComment(1).copy(likeCount = 0, isLiked = false), totalCount = 1)
             val viewModel = createViewModel(FakeFeedRepository(testFeed()))
 
-            viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(commentId = 1))
+            viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(CommentTarget(commentId = 1)))
             commentRepository.emitThreadChange(CommentThreadChange(feedId = 10, commentId = 1))
 
             val comment =
@@ -513,7 +572,7 @@ class NotificationDetailViewModelTest {
                 CommentPage(listOf(testComment(1)), nextCursor = null, hasNext = false)
             commentRepository.threads[1] = CommentThread(testComment(1).copy(likeCount = 7, isLiked = true), totalCount = 1)
             val viewModel = createViewModel(FakeFeedRepository(testFeed()))
-            viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(commentId = 1))
+            viewModel.handleIntent(NotificationDetailIntent.OnLikeClicked(CommentTarget(commentId = 1)))
             commentRepository.emitThreadChange(CommentThreadChange(feedId = 10, commentId = 1))
 
             commentRepository.emitThreadChange(CommentThreadChange(feedId = 10, commentId = 1))
@@ -542,7 +601,7 @@ class NotificationDetailViewModelTest {
     }
 
     @Test
-    fun `답글이_달린_원댓글을_지우면_원댓글_하나만_댓글_수에서_뺀다`() {
+    fun `답글이_달린_원댓글을_지우면_답글_수까지_댓글_수에서_뺀다`() {
         val parent =
             testComment(
                 1,
@@ -555,7 +614,7 @@ class NotificationDetailViewModelTest {
         viewModel.handleIntent(NotificationDetailIntent.OnDeleteCommentConfirmed)
 
         assertEquals(
-            9,
+            6,
             viewModel.uiState.value.feed
                 ?.commentCount,
         )

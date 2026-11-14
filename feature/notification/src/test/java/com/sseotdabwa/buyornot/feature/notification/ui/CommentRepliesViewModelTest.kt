@@ -37,13 +37,12 @@ class CommentRepliesViewModelTest {
 
     private fun givenThread(
         replyIds: List<Long>,
-        isDeleted: Boolean = false,
         myReplyIds: Set<Long> = emptySet(),
     ) {
         commentRepository.threads[1] =
             CommentThread(
-                comment = testComment(1).copy(replyCount = replyIds.size, isDeleted = isDeleted),
-                totalCount = replyIds.size + if (isDeleted) 0 else 1,
+                comment = testComment(1).copy(replyCount = replyIds.size),
+                totalCount = replyIds.size + 1,
             )
         commentRepository.replyPages[1] =
             CommentReplyPage(
@@ -63,7 +62,6 @@ class CommentRepliesViewModelTest {
         assertEquals(1L, state.comment?.id)
         assertEquals(listOf(11L, 12L), state.replies.map { it.id })
         assertEquals(3, state.totalCount)
-        assertTrue(state.canWriteReply)
     }
 
     @Test
@@ -100,13 +98,6 @@ class CommentRepliesViewModelTest {
     }
 
     @Test
-    fun `삭제된_원댓글에는_답글을_쓸_수_없다`() {
-        givenThread(replyIds = listOf(11), isDeleted = true)
-
-        assertFalse(createViewModel().uiState.value.canWriteReply)
-    }
-
-    @Test
     fun `답글을_삭제하면_목록과_헤더_개수에서_빼고_이_화면에서_알린다`() =
         runTest {
             givenThread(replyIds = listOf(11, 12), myReplyIds = setOf(11))
@@ -123,12 +114,12 @@ class CommentRepliesViewModelTest {
         }
 
     @Test
-    fun `삭제된_원댓글의_마지막_답글을_지우면_안내를_들고_바로_상세로_돌아간다`() =
+    fun `원댓글을_삭제하면_답글도_함께_지워지므로_안내를_들고_바로_상세로_돌아간다`() =
         runTest {
-            givenThread(replyIds = listOf(11), isDeleted = true, myReplyIds = setOf(11))
+            givenThread(replyIds = listOf(11))
             val viewModel = createViewModel()
 
-            viewModel.handleIntent(CommentRepliesIntent.ShowDeleteDialog(CommentTarget(commentId = 1, replyId = 11)))
+            viewModel.handleIntent(CommentRepliesIntent.ShowDeleteDialog(CommentTarget(commentId = 1)))
             viewModel.handleIntent(CommentRepliesIntent.OnDeleteConfirmed)
 
             assertEquals(
@@ -158,12 +149,47 @@ class CommentRepliesViewModelTest {
         commentRepository.likeResult = CommentLike(likeCount = 4, isLiked = true)
         val viewModel = createViewModel()
 
-        viewModel.handleIntent(CommentRepliesIntent.OnLikeClicked)
+        viewModel.handleIntent(CommentRepliesIntent.OnLikeClicked(CommentTarget(commentId = 1)))
 
         val comment = viewModel.uiState.value.comment
         assertEquals(4, comment?.likeCount)
         assertEquals(true, comment?.isLiked)
     }
+
+    @Test
+    fun `답글에_공감하면_답글_공감으로_보내고_그_답글만_서버_값으로_맞춘다`() {
+        givenThread(replyIds = listOf(11, 12))
+        commentRepository.likeResult = CommentLike(likeCount = 2, isLiked = true)
+        val viewModel = createViewModel()
+
+        viewModel.handleIntent(CommentRepliesIntent.OnLikeClicked(CommentTarget(commentId = 1, replyId = 12)))
+
+        val state = viewModel.uiState.value
+        assertEquals(listOf(1L to 12L), commentRepository.likeReplyCalls)
+        assertEquals(listOf(0, 2), state.replies.map { it.likeCount })
+        assertEquals(listOf(false, true), state.replies.map { it.isLiked })
+        assertEquals(0, state.comment?.likeCount)
+    }
+
+    @Test
+    fun `답글_공감에_실패하면_그_답글을_원래_상태로_되돌리고_안내한다`() =
+        runTest {
+            givenThread(replyIds = listOf(11))
+            commentRepository.likeError = IllegalStateException("network")
+            val viewModel = createViewModel()
+
+            viewModel.handleIntent(CommentRepliesIntent.OnLikeClicked(CommentTarget(commentId = 1, replyId = 11)))
+
+            val reply =
+                viewModel.uiState.value.replies
+                    .single()
+            assertEquals(0, reply.likeCount)
+            assertFalse(reply.isLiked)
+            assertEquals(
+                CommentRepliesSideEffect.ShowSnackbar(message = "공감에 실패했어요. 다시 시도해 주세요."),
+                viewModel.sideEffect.first(),
+            )
+        }
 
     @Test
     fun `이미_삭제된_원댓글로_들어오면_알리고_돌아간다`() =

@@ -190,23 +190,6 @@ fun CommentItem(
     }
 }
 
-/** 답글이 남아 있어 자리만 지키는 삭제된 원댓글. */
-@Composable
-fun DeletedCommentItem(modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(CommentItemSize.COMMENT.avatarSpacing),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        CommentAvatar(profileImage = null, size = CommentItemSize.COMMENT.avatarSize)
-        Text(
-            text = "삭제된 댓글입니다",
-            style = BuyOrNotTheme.typography.bodyB4Medium,
-            color = BuyOrNotTheme.colors.gray600,
-        )
-    }
-}
-
 /**
  * 답글 페이지로 들어가는 버튼.
  *
@@ -677,20 +660,7 @@ private fun CommentThreadPreview() {
                         size = CommentItemSize.REPLY,
                         tag = if (it == 2L) CommentTag("작성자", CommentTagStyle.BRAND) else null,
                         menuItems = listOf("신고하기" to {}),
-                    )
-                },
-            )
-            CommentThread(
-                parent = { DeletedCommentItem() },
-                replies = listOf(3L),
-                replyKey = { it },
-                reply = {
-                    CommentItem(
-                        nickname = "거북이날다12456",
-                        profileImage = null,
-                        createdAt = "2시간 전",
-                        content = "원댓글이 지워져도 답글은 남아요.",
-                        size = CommentItemSize.REPLY,
+                        actions = { CommentLikeButton(likeCount = if (it == 2L) 3 else 0, isLiked = it == 2L, onClick = {}) },
                     )
                 },
             )

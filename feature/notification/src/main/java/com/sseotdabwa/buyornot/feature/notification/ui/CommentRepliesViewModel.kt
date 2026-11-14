@@ -7,6 +7,7 @@ import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.core.ui.image.toProfileImageModel
 import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.CommentErrorCode
+import com.sseotdabwa.buyornot.domain.model.CommentLike
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +26,8 @@ class CommentRepliesViewModel @Inject constructor(
     private val feedId: Long = checkNotNull(savedStateHandle[KEY_FEED_ID])
     private val commentId: Long = checkNotNull(savedStateHandle[KEY_COMMENT_ID])
 
-    private var isLikePending = false
+    // 같은 댓글을 연달아 누르면 요청이 겹쳐 서버 상태와 화면이 엇갈리므로 응답 전에는 다시 받지 않는다.
+    private val pendingLikes = mutableSetOf<CommentTarget>()
 
     init {
         observeUserPreferences()
@@ -52,7 +54,7 @@ class CommentRepliesViewModel @Inject constructor(
                     )
                 }
             CommentRepliesIntent.OnReplySubmit -> handleReplySubmit()
-            CommentRepliesIntent.OnLikeClicked -> handleLike()
+            is CommentRepliesIntent.OnLikeClicked -> handleLike(intent.target)
             is CommentRepliesIntent.ShowDeleteDialog -> updateState { it.copy(deletingComment = intent.target) }
             CommentRepliesIntent.DismissDeleteDialog -> updateState { it.copy(deletingComment = null) }
             CommentRepliesIntent.OnDeleteConfirmed -> handleDelete()
@@ -116,22 +118,21 @@ class CommentRepliesViewModel @Inject constructor(
         }
     }
 
-    private fun handleLike() {
-        val comment = currentState.comment ?: return
-        if (comment.isDeleted || isLikePending) return
-        isLikePending = true
-        updateState { it.copy(comment = comment.toggledLike()) }
+    private fun handleLike(target: CommentTarget) {
+        val before = currentState.likeOf(target) ?: return
+        if (!pendingLikes.add(target)) return
+        updateState { it.withLike(target, before.toggled()) }
         viewModelScope.launch {
             runCatchingCancellable {
-                commentRepository.toggleLike(feedId = feedId, comment = comment)
+                commentRepository.toggleLike(feedId = feedId, target = target, isLiked = before.isLiked)
             }.onSuccess { like ->
-                updateState { it.copy(comment = it.comment?.withLike(like)) }
+                updateState { it.withLike(target, like) }
             }.onFailure { e ->
-                Timber.e(e, "Failed to toggle like: $commentId")
-                updateState { it.copy(comment = it.comment?.copy(likeCount = comment.likeCount, isLiked = comment.isLiked)) }
+                Timber.e(e, "Failed to toggle like: $target")
+                updateState { it.withLike(target, before) }
                 sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = (e as? ApiException).likeErrorMessage()))
             }
-            isLikePending = false
+            pendingLikes.remove(target)
         }
     }
 
@@ -142,12 +143,12 @@ class CommentRepliesViewModel @Inject constructor(
             runCatchingCancellable {
                 commentRepository.delete(feedId = feedId, target = target)
             }.onSuccess {
-                removeTarget(target, isDeleted = true, message = "삭제가 완료되었어요.")
+                removeTarget(target, message = "삭제가 완료되었어요.")
             }.onFailure { e ->
                 Timber.e(e, "Failed to delete comment: $target")
                 val message = (e as? ApiException).commentActionErrorMessage(defaultMessage = "삭제에 실패했어요.")
                 if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) {
-                    removeTarget(target, isDeleted = false, message = message)
+                    removeTarget(target, message = message)
                 } else {
                     sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = message))
                 }
@@ -162,12 +163,12 @@ class CommentRepliesViewModel @Inject constructor(
             runCatchingCancellable {
                 commentRepository.report(feedId = feedId, target = target)
             }.onSuccess {
-                removeTarget(target, isDeleted = false, message = "댓글 신고가 접수되었어요.")
+                removeTarget(target, message = "댓글 신고가 접수되었어요.")
             }.onFailure { e ->
                 Timber.e(e, "Failed to report comment: $target")
                 val message = (e as? ApiException).commentActionErrorMessage(defaultMessage = "신고에 실패했어요.")
                 if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) {
-                    removeTarget(target, isDeleted = false, message = message)
+                    removeTarget(target, message = message)
                 } else {
                     sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = message))
                 }
@@ -175,40 +176,42 @@ class CommentRepliesViewModel @Inject constructor(
         }
     }
 
-    // 원댓글이 목록에서 완전히 사라지면 이 페이지는 더 보여줄 게 없으므로 안내를 들고 상세로 돌아간다.
-    // 작성자가 지운 원댓글(isDeleted)만 답글이 남았을 때 "삭제된 댓글"로 남고, 신고·이미 없음은 바로 빠진다.
+    // 원댓글이 지워지거나 신고되면 서버가 답글까지 함께 지우므로, 더 보여줄 게 없는 이 페이지는 안내를 들고 상세로 돌아간다.
     private fun removeTarget(
         target: CommentTarget,
-        isDeleted: Boolean,
         message: String,
     ) {
         val comment = currentState.comment ?: return
-        if (target.replyId != null) {
-            val remaining = currentState.replies.filterNot { it.id == target.replyId }
-            // 삭제된 원댓글은 마지막 답글이 사라지면 서버에서도 정리된다.
-            if (comment.isDeleted && remaining.isEmpty()) {
-                sendSideEffect(CommentRepliesSideEffect.NavigateBack(message = message))
-                return
-            }
-            if (remaining.size != currentState.replies.size) {
-                updateState {
-                    it.copy(
-                        comment = comment.copy(replyCount = remaining.size),
-                        replies = remaining,
-                        totalCount = (it.totalCount - 1).coerceAtLeast(0),
-                    )
-                }
-            }
-            sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = message))
-            return
-        }
-        val updated = if (isDeleted) comment.copy(replyCount = currentState.replies.size).afterDeleted() else null
-        if (updated == null) {
+        val replyId = target.replyId
+        if (replyId == null) {
             sendSideEffect(CommentRepliesSideEffect.NavigateBack(message = message))
             return
         }
-        updateState { it.copy(comment = updated, totalCount = (it.totalCount - 1).coerceAtLeast(0)) }
+        val remaining = currentState.replies.filterNot { it.id == replyId }
+        if (remaining.size != currentState.replies.size) {
+            updateState {
+                it.copy(
+                    comment = comment.copy(replyCount = remaining.size),
+                    replies = remaining,
+                    totalCount = (it.totalCount - 1).coerceAtLeast(0),
+                )
+            }
+        }
         sendSideEffect(CommentRepliesSideEffect.ShowSnackbar(message = message))
+    }
+
+    // 고정 원댓글은 답글 목록을 따로 들고 있어 원댓글과 답글을 나눠 찾는다.
+    private fun CommentRepliesUiState.likeOf(target: CommentTarget): CommentLike? {
+        val replyId = target.replyId ?: return comment?.let { CommentLike(likeCount = it.likeCount, isLiked = it.isLiked) }
+        return replies.firstOrNull { it.id == replyId }?.let { CommentLike(likeCount = it.likeCount, isLiked = it.isLiked) }
+    }
+
+    private fun CommentRepliesUiState.withLike(
+        target: CommentTarget,
+        like: CommentLike,
+    ): CommentRepliesUiState {
+        val replyId = target.replyId ?: return copy(comment = comment?.copy(likeCount = like.likeCount, isLiked = like.isLiked))
+        return copy(replies = replies.updateReply(replyId) { it.copy(likeCount = like.likeCount, isLiked = like.isLiked) })
     }
 
     companion object {

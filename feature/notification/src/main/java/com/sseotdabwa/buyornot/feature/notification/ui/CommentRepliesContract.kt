@@ -24,13 +24,9 @@ data class CommentRepliesUiState(
     /** 답글을 등록한 뒤 방금 쓴 답글이 보이도록 한 번 끝까지 스크롤한다. */
     val pendingScrollToLatest: Boolean = false,
 ) {
-    /** 지워진 원댓글에는 서버가 답글을 받지 않는다(COMMENT_014). */
-    val canWriteReply: Boolean
-        get() = comment != null && !comment.isDeleted
-
     val canSubmitReply: Boolean
         get() =
-            canWriteReply &&
+            comment != null &&
                 replyInput.isNotBlank() &&
                 replyInput.trim().length <= COMMENT_MAX_LENGTH &&
                 !isSubmittingReply &&
@@ -46,7 +42,9 @@ sealed interface CommentRepliesIntent {
 
     data object OnReplySubmit : CommentRepliesIntent
 
-    data object OnLikeClicked : CommentRepliesIntent
+    data class OnLikeClicked(
+        val target: CommentTarget,
+    ) : CommentRepliesIntent
 
     data class ShowDeleteDialog(
         val target: CommentTarget,

@@ -139,7 +139,7 @@ sealed interface NotificationDetailIntent {
     ) : NotificationDetailIntent
 
     data class OnLikeClicked(
-        val commentId: Long,
+        val target: CommentTarget,
     ) : NotificationDetailIntent
 
     data object OnCommentScrollHandled : NotificationDetailIntent

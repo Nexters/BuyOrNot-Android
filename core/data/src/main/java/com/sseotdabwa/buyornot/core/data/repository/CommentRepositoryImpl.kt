@@ -168,6 +168,31 @@ class CommentRepositoryImpl @Inject constructor(
                 .toDomain()
         }.also { _threadChanges.tryEmit(CommentThreadChange(feedId, commentId)) }
 
+    // 답글 공감도 같은 공감 API를 쓰고, 바뀐 것은 원댓글의 스레드라 원댓글 id로 알린다.
+    override suspend fun likeReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ): CommentLike =
+        withApiException {
+            commentApiService
+                .likeComment(feedId, replyId)
+                .getOrThrow()
+                .toDomain()
+        }.also { _threadChanges.tryEmit(CommentThreadChange(feedId, commentId)) }
+
+    override suspend fun unlikeReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ): CommentLike =
+        withApiException {
+            commentApiService
+                .unlikeComment(feedId, replyId)
+                .getOrThrow()
+                .toDomain()
+        }.also { _threadChanges.tryEmit(CommentThreadChange(feedId, commentId)) }
+
     // 금칙어·빈도 제한은 서버 메시지를 그대로 노출하므로 코드와 함께 메시지도 옮긴다.
     private inline fun <T> withApiException(block: () -> T): T =
         try {
@@ -196,7 +221,6 @@ private fun CommentDto.toDomain(): Comment =
         isAuthor = isAuthor,
         voteChoice = voteChoice?.toVoteChoice(),
         createdAt = createdAt,
-        isDeleted = isDeleted,
         likeCount = likeCount.toIntSaturated(),
         isLiked = isLiked,
         replyCount = replyCount.toIntSaturated(),
@@ -214,6 +238,8 @@ private fun CommentReplyDto.toDomain(): CommentReply =
         isMine = isMine,
         isAuthor = isAuthor,
         createdAt = createdAt,
+        likeCount = likeCount.toIntSaturated(),
+        isLiked = isLiked,
     )
 
 private fun CommentThreadResponseDto.toDomain(): CommentThread =
