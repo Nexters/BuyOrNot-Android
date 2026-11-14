@@ -176,6 +176,9 @@ class FakeCommentRepository : CommentRepository {
     val threads = mutableMapOf<Long, CommentThread>()
     val replyPages = mutableMapOf<Long, CommentReplyPage>()
     var threadError: Throwable? = null
+
+    /** 스레드 응답을 붙잡아 두고 싶을 때 바꿔 끼운다. */
+    var beforeGetThread: suspend () -> Unit = {}
     var likeResult: CommentLike? = null
     var unlikeResult: CommentLike? = null
     var createReplyError: Throwable? = null
@@ -188,6 +191,8 @@ class FakeCommentRepository : CommentRepository {
     val reportReplyCalls = mutableListOf<Pair<Long, Long>>()
     val likeCalls = mutableListOf<Long>()
     val unlikeCalls = mutableListOf<Long>()
+    val likeReplyCalls = mutableListOf<Pair<Long, Long>>()
+    val unlikeReplyCalls = mutableListOf<Pair<Long, Long>>()
 
     private val _threadChanges = MutableSharedFlow<CommentThreadChange>()
 
@@ -238,6 +243,7 @@ class FakeCommentRepository : CommentRepository {
         feedId: Long,
         commentId: Long,
     ): CommentThread {
+        beforeGetThread()
         threadError?.let { throw it }
         return threads.getValue(commentId)
     }
@@ -292,6 +298,26 @@ class FakeCommentRepository : CommentRepository {
     ): CommentLike {
         unlikeError?.let { throw it }
         unlikeCalls += commentId
+        return unlikeResult ?: CommentLike(likeCount = 0, isLiked = false)
+    }
+
+    override suspend fun likeReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ): CommentLike {
+        likeError?.let { throw it }
+        likeReplyCalls += commentId to replyId
+        return likeResult ?: CommentLike(likeCount = 1, isLiked = true)
+    }
+
+    override suspend fun unlikeReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ): CommentLike {
+        unlikeError?.let { throw it }
+        unlikeReplyCalls += commentId to replyId
         return unlikeResult ?: CommentLike(likeCount = 0, isLiked = false)
     }
 }

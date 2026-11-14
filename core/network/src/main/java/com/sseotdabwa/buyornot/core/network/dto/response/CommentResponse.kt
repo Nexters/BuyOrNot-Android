@@ -39,8 +39,6 @@ data class CommentDto(
     val voteChoice: String? = null, // "YES", "NO" or null
     @SerialName("createdAt")
     val createdAt: String,
-    @SerialName("isDeleted")
-    val isDeleted: Boolean = false,
     @SerialName("likeCount")
     val likeCount: Long = 0,
     @SerialName("isLiked")
@@ -71,6 +69,10 @@ data class CommentReplyDto(
     val isAuthor: Boolean = false,
     @SerialName("createdAt")
     val createdAt: String,
+    @SerialName("likeCount")
+    val likeCount: Long = 0,
+    @SerialName("isLiked")
+    val isLiked: Boolean = false,
 )
 
 @Serializable

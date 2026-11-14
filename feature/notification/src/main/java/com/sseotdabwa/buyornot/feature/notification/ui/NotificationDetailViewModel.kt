@@ -52,7 +52,11 @@ class NotificationDetailViewModel @Inject constructor(
     private var commentGeneration = 0
 
     // 같은 댓글을 연달아 누르면 요청이 겹쳐 서버 상태와 화면이 엇갈리므로 응답 전에는 다시 받지 않는다.
-    private val pendingLikeIds = mutableSetOf<Long>()
+    private val pendingLikes = mutableSetOf<CommentTarget>()
+
+    // 스레드 조회가 시작된 뒤 누른 공감은 응답이 끝났어도 조회 결과보다 최신이라, 누른 순서를 기록해 병합 때 지킨다.
+    private var likeVersion = 0L
+    private val likeVersions = mutableMapOf<CommentTarget, Long>()
 
     // 내 공감도 저장소가 스레드 변경 신호로 다시 알려주는데, 이미 응답으로 맞춘 상태라 그 신호만큼은 다시 받지 않는다.
     private val ownLikeSignals = mutableMapOf<Long, Int>()
@@ -132,7 +136,7 @@ class NotificationDetailViewModel @Inject constructor(
             NotificationDetailIntent.OnReportCommentConfirmed -> handleReportComment()
             is NotificationDetailIntent.OnReplyClicked ->
                 sendSideEffect(NotificationDetailSideEffect.NavigateToReplies(feedId = feedId, commentId = intent.commentId))
-            is NotificationDetailIntent.OnLikeClicked -> handleLike(intent.commentId)
+            is NotificationDetailIntent.OnLikeClicked -> handleLike(intent.target)
             NotificationDetailIntent.OnCommentScrollHandled -> updateState { it.copy(pendingScrollToComments = false) }
             NotificationDetailIntent.OnCommentFocusHandled -> updateState { it.copy(pendingFocusCommentInput = false) }
         }
@@ -404,11 +408,11 @@ class NotificationDetailViewModel @Inject constructor(
             runCatchingCancellable {
                 commentRepository.delete(feedId = feedId, target = target)
             }.onSuccess {
-                removeTarget(target, isDeleted = true)
+                removeTarget(target)
                 sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = "삭제가 완료되었어요."))
             }.onFailure { e ->
                 Timber.e(e, "Failed to delete comment: $target")
-                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeTarget(target, isDeleted = false)
+                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeTarget(target)
                 sendSideEffect(
                     NotificationDetailSideEffect.ShowSnackbar(
                         message = (e as? ApiException).commentActionErrorMessage(defaultMessage = "삭제에 실패했어요."),
@@ -426,11 +430,11 @@ class NotificationDetailViewModel @Inject constructor(
                 commentRepository.report(feedId = feedId, target = target)
             }.onSuccess {
                 // 신고된 댓글은 서버 목록에서 빠지므로 화면에서도 바로 뺀다.
-                removeTarget(target, isDeleted = false)
+                removeTarget(target)
                 sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = "댓글 신고가 접수되었어요."))
             }.onFailure { e ->
                 Timber.e(e, "Failed to report comment: $target")
-                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeTarget(target, isDeleted = false)
+                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) removeTarget(target)
                 sendSideEffect(
                     NotificationDetailSideEffect.ShowSnackbar(
                         message = (e as? ApiException).commentActionErrorMessage(defaultMessage = "신고에 실패했어요."),
@@ -440,67 +444,55 @@ class NotificationDetailViewModel @Inject constructor(
         }
     }
 
-    // 작성자가 지운 원댓글은 답글이 남았으면 "삭제된 댓글"로 남는다.
-    // 신고되거나 이미 없는 원댓글은 서버 개수에서 그 아래 답글까지 함께 빠지므로 화면 개수도 같이 줄인다.
-    private fun removeTarget(
-        target: CommentTarget,
-        isDeleted: Boolean,
-    ) {
+    // 원댓글이 지워지거나 신고되면 서버가 그 아래 답글까지 함께 지우므로 댓글 수도 답글 수만큼 같이 줄인다.
+    private fun removeTarget(target: CommentTarget) {
         updateState { state ->
             val comment = state.comments.firstOrNull { it.id == target.commentId } ?: return@updateState state
-            val updated =
-                when {
-                    target.replyId != null -> {
-                        if (comment.replies.none { it.id == target.replyId }) return@updateState state
-                        comment.withoutReply(target.replyId)
-                    }
-                    isDeleted -> comment.afterDeleted()
-                    else -> null
-                }
-            val removedCount =
-                if (target.replyId != null || isDeleted) {
-                    1
+            val replyId = target.replyId
+            val (comments, removedCount) =
+                if (replyId == null) {
+                    state.comments - comment to 1 + comment.replyCount
                 } else {
-                    (if (comment.isDeleted) 0 else 1) + comment.replyCount
+                    if (comment.replies.none { it.id == replyId }) return@updateState state
+                    state.comments.updateComment(comment.id) { it.withoutReply(replyId) } to 1
                 }
             state.copy(
-                comments = if (updated == null) state.comments - comment else state.comments.updateComment(comment.id) { updated },
+                comments = comments,
                 feed = state.feed?.let { feed -> feed.copy(commentCount = (feed.commentCount - removedCount).coerceAtLeast(0)) },
             )
         }
     }
 
-    private fun handleLike(commentId: Long) {
-        val comment = currentState.comments.firstOrNull { it.id == commentId } ?: return
-        if (!currentState.canWriteComment || comment.isDeleted || !pendingLikeIds.add(commentId)) return
-        updateState { it.copy(comments = it.comments.updateComment(commentId) { c -> c.toggledLike() }) }
-        ownLikeSignals[commentId] = (ownLikeSignals[commentId] ?: 0) + 1
+    private fun handleLike(target: CommentTarget) {
+        val threadId = target.commentId
+        val before = currentState.comments.firstOrNull { it.id == threadId }?.likeOf(target) ?: return
+        if (!currentState.canWriteComment || !pendingLikes.add(target)) return
+        likeVersions[target] = ++likeVersion
+        updateState { it.copy(comments = it.comments.updateComment(threadId) { c -> c.withLike(target, before.toggled()) }) }
+        // 답글 공감도 원댓글 스레드의 변경으로 알려진다.
+        ownLikeSignals[threadId] = (ownLikeSignals[threadId] ?: 0) + 1
         viewModelScope.launch {
             runCatchingCancellable {
-                commentRepository.toggleLike(feedId = feedId, comment = comment)
+                commentRepository.toggleLike(feedId = feedId, target = target, isLiked = before.isLiked)
             }.onSuccess { like ->
-                updateState { it.copy(comments = it.comments.updateComment(commentId) { c -> c.withLike(like) }) }
+                updateState { it.copy(comments = it.comments.updateComment(threadId) { c -> c.withLike(target, like) }) }
             }.onFailure { e ->
-                Timber.e(e, "Failed to toggle like: $commentId")
+                Timber.e(e, "Failed to toggle like: $target")
                 // 실패한 요청은 저장소가 신호를 보내지 않는다.
-                ownLikeSignals[commentId] = ((ownLikeSignals[commentId] ?: 0) - 1).coerceAtLeast(0)
-                updateState {
-                    it.copy(
-                        comments =
-                            it.comments.updateComment(commentId) { c ->
-                                c.copy(likeCount = comment.likeCount, isLiked = comment.isLiked)
-                            },
-                    )
-                }
+                ownLikeSignals[threadId] = ((ownLikeSignals[threadId] ?: 0) - 1).coerceAtLeast(0)
+                updateState { it.copy(comments = it.comments.updateComment(threadId) { c -> c.withLike(target, before) }) }
                 sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = (e as? ApiException).likeErrorMessage()))
+                // 대상이 이미 없으면 그 사이 온 삭제 신호를 내 공감 신호로 흘려보냈을 수 있어 스레드를 직접 다시 받는다.
+                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) refreshThread(threadId)
             }
-            pendingLikeIds.remove(commentId)
+            pendingLikes.remove(target)
         }
     }
 
     // 답글 목록은 원댓글 응답에 모두 들어 있지만, 한 스레드만 다시 받을 때는 답글 API를 끝까지 넘긴다.
     private fun refreshThread(commentId: Long) {
         if (currentState.comments.none { it.id == commentId }) return
+        val startedVersion = likeVersion
         viewModelScope.launch {
             runCatchingCancellable {
                 val thread = commentRepository.getCommentThread(feedId = feedId, commentId = commentId)
@@ -508,14 +500,13 @@ class NotificationDetailViewModel @Inject constructor(
             }.onSuccess { refreshed ->
                 updateState { state ->
                     val previous = state.comments.firstOrNull { it.id == commentId } ?: return@updateState state
-                    // 응답을 기다리는 공감은 화면 값이 더 최신이다.
+                    // 응답을 기다리거나 조회 뒤에 누른 공감은 화면 값이 더 최신이다.
+                    val newerLikes = pendingLikes + likeVersions.filterValues { it > startedVersion }.keys
                     val merged =
-                        if (commentId in pendingLikeIds) {
-                            refreshed.copy(likeCount = previous.likeCount, isLiked = previous.isLiked)
-                        } else {
-                            refreshed
-                        }
-                    val countDiff = (refreshed.replyCount - previous.replyCount) + if (refreshed.isDeleted && !previous.isDeleted) -1 else 0
+                        newerLikes
+                            .filter { it.commentId == commentId }
+                            .fold(refreshed) { acc, target -> previous.likeOf(target)?.let { acc.withLike(target, it) } ?: acc }
+                    val countDiff = refreshed.replyCount - previous.replyCount
                     state.copy(
                         comments = state.comments.updateComment(commentId) { merged },
                         feed = state.feed?.let { feed -> feed.copy(commentCount = (feed.commentCount + countDiff).coerceAtLeast(0)) },
@@ -523,7 +514,7 @@ class NotificationDetailViewModel @Inject constructor(
                 }
             }.onFailure { e ->
                 if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) {
-                    removeTarget(CommentTarget(commentId), isDeleted = false)
+                    removeTarget(CommentTarget(commentId))
                 } else {
                     Timber.w(e, "Failed to refresh comment thread: $commentId")
                 }

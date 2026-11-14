@@ -127,10 +127,8 @@ fun CommentRepliesScreen(
                     onValueChange = { onIntent(CommentRepliesIntent.OnReplyInputChanged(it)) },
                     onSubmit = { onIntent(CommentRepliesIntent.OnReplySubmit) },
                     profileImage = uiState.voterProfileImage,
-                    replyTargetNickname = comment.nickname.takeUnless { comment.isDeleted },
-                    enabled = uiState.canWriteReply,
+                    replyTargetNickname = comment.nickname,
                     submitEnabled = uiState.canSubmitReply,
-                    disabledPlaceholder = "삭제된 댓글에는 답글을 남길 수 없어요.",
                     maxLength = COMMENT_MAX_LENGTH,
                     modifier =
                         Modifier
@@ -172,7 +170,7 @@ fun CommentRepliesScreen(
                             replies = uiState.replies,
                             // 입력창이 이미 이 원댓글에 답글을 다는 중이라 [답글쓰기]는 두지 않는다.
                             onReplyClick = null,
-                            onLikeClick = { onIntent(CommentRepliesIntent.OnLikeClicked) },
+                            onLikeClick = { onIntent(CommentRepliesIntent.OnLikeClicked(it)) },
                             onDelete = { onIntent(CommentRepliesIntent.ShowDeleteDialog(it)) },
                             onReport = { onIntent(CommentRepliesIntent.ShowReportDialog(it)) },
                         )

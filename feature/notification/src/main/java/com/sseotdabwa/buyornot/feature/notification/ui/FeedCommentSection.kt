@@ -35,7 +35,6 @@ import com.sseotdabwa.buyornot.core.designsystem.components.CommentTag
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentTagStyle
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentThread
 import com.sseotdabwa.buyornot.core.designsystem.components.CommentVoteBubble
-import com.sseotdabwa.buyornot.core.designsystem.components.DeletedCommentItem
 import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.designsystem.icon.asImageVector
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
@@ -94,7 +93,9 @@ internal fun LazyListScope.commentSection(
                     FeedCommentThread(
                         comment = comment,
                         onReplyClick = { onIntent(NotificationDetailIntent.OnReplyClicked(comment.id)) }.takeIf { uiState.canWriteComment },
-                        onLikeClick = { onIntent(NotificationDetailIntent.OnLikeClicked(comment.id)) }.takeIf { uiState.canWriteComment },
+                        onLikeClick =
+                            { target: CommentTarget -> onIntent(NotificationDetailIntent.OnLikeClicked(target)) }
+                                .takeIf { uiState.canWriteComment },
                         onDelete = { onIntent(NotificationDetailIntent.ShowDeleteCommentDialog(it)) },
                         onReport = { onIntent(NotificationDetailIntent.ShowReportCommentDialog(it)) },
                         modifier = Modifier.padding(vertical = CommentItemVerticalPadding),
@@ -116,13 +117,13 @@ internal fun LazyListScope.commentSection(
  * 원댓글과 그 아래 답글 스레드.
  *
  * @param onReplyClick null이면 [답글쓰기]를 숨긴다 (답글 페이지의 고정 원댓글).
- * @param onLikeClick null이면 [공감]을 숨긴다.
+ * @param onLikeClick 공감을 누른 원댓글 또는 답글을 받는다. null이면 원댓글과 답글 모두 [공감]을 숨긴다.
  */
 @Composable
 internal fun FeedCommentThread(
     comment: Comment,
     onReplyClick: (() -> Unit)?,
-    onLikeClick: (() -> Unit)?,
+    onLikeClick: ((CommentTarget) -> Unit)?,
     onDelete: (CommentTarget) -> Unit,
     onReport: (CommentTarget) -> Unit,
     modifier: Modifier = Modifier,
@@ -130,34 +131,36 @@ internal fun FeedCommentThread(
 ) {
     CommentThread(
         parent = {
-            if (comment.isDeleted) {
-                DeletedCommentItem()
-            } else {
-                CommentItem(
-                    nickname = comment.nickname,
-                    profileImage = comment.profileImage.toProfileImageModel(),
-                    createdAt = TimeUtils.formatRelativeTime(comment.createdAt),
-                    content = comment.content,
-                    tag = comment.tag(),
-                    voteBubble = comment.voteBubble(),
-                    menuItems = menuItems(isMine = comment.isMine, CommentTarget(comment.id), onDelete, onReport),
-                    actions =
-                        if (onReplyClick == null && onLikeClick == null) {
-                            null
-                        } else {
-                            {
-                                if (onReplyClick != null) CommentReplyButton(replyCount = comment.replyCount, onClick = onReplyClick)
-                                if (onLikeClick != null) {
-                                    CommentLikeButton(likeCount = comment.likeCount, isLiked = comment.isLiked, onClick = onLikeClick)
-                                }
+            val target = CommentTarget(comment.id)
+            CommentItem(
+                nickname = comment.nickname,
+                profileImage = comment.profileImage.toProfileImageModel(),
+                createdAt = TimeUtils.formatRelativeTime(comment.createdAt),
+                content = comment.content,
+                tag = comment.tag(),
+                voteBubble = comment.voteBubble(),
+                menuItems = menuItems(isMine = comment.isMine, target, onDelete, onReport),
+                actions =
+                    if (onReplyClick == null && onLikeClick == null) {
+                        null
+                    } else {
+                        {
+                            if (onReplyClick != null) CommentReplyButton(replyCount = comment.replyCount, onClick = onReplyClick)
+                            if (onLikeClick != null) {
+                                CommentLikeButton(
+                                    likeCount = comment.likeCount,
+                                    isLiked = comment.isLiked,
+                                    onClick = { onLikeClick(target) },
+                                )
                             }
-                        },
-                )
-            }
+                        }
+                    },
+            )
         },
         replies = replies,
         replyKey = { it.id },
         reply = { reply ->
+            val target = CommentTarget(comment.id, reply.id)
             CommentItem(
                 nickname = reply.nickname,
                 profileImage = reply.profileImage.toProfileImageModel(),
@@ -165,7 +168,12 @@ internal fun FeedCommentThread(
                 content = reply.content,
                 size = CommentItemSize.REPLY,
                 tag = reply.tag(),
-                menuItems = menuItems(reply.isMine, CommentTarget(comment.id, reply.id), onDelete, onReport),
+                menuItems = menuItems(reply.isMine, target, onDelete, onReport),
+                // 답글에는 답글을 달 수 없어 [공감]만 둔다.
+                actions =
+                    onLikeClick?.let { onClick ->
+                        { CommentLikeButton(likeCount = reply.likeCount, isLiked = reply.isLiked, onClick = { onClick(target) }) }
+                    },
             )
         },
         modifier = modifier,

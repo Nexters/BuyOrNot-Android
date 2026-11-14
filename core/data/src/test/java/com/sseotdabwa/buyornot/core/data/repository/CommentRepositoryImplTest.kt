@@ -108,37 +108,72 @@ class CommentRepositoryImplTest {
         }
 
     @Test
-    fun `삭제된_댓글은_닉네임과_내용이_빈_문자열로_매핑되고_답글_목록을_포함한다`() =
+    fun `이미_없는_원댓글을_지우려_하면_에러를_던지면서도_변경_신호는_보낸다`() =
+        runTest(UnconfinedTestDispatcher()) {
+            api.deleteError = httpException(code = 404, body = """{"errorCode":"COMMENT_004","message":"댓글을 찾을 수 없습니다."}""")
+            val commentChange = async { repository.commentChanges.first() }
+            val threadChange = async { repository.threadChanges.first() }
+
+            val error = assertFailsWith<ApiException> { repository.deleteComment(feedId = 7, commentId = 1) }
+
+            assertEquals(CommentErrorCode.NOT_FOUND, error.code)
+            assertEquals(7L, commentChange.await())
+            assertEquals(CommentThreadChange(feedId = 7, commentId = 1), threadChange.await())
+        }
+
+    @Test
+    fun `원댓글에_달린_답글을_공감_수와_내_공감_여부까지_매핑한다`() =
         runTest {
             api.listResponse =
                 CommentListResponse(
                     content =
                         listOf(
-                            commentDto(id = 1, authorType = "MEMBER", voteChoice = null, isDeleted = true)
-                                .copy(
-                                    nickname = null,
-                                    content = null,
-                                    replyCount = 1,
-                                    replies = listOf(replyDto(id = 11, parentId = 1)),
-                                ),
+                            commentDto(id = 1, authorType = "MEMBER", voteChoice = null).copy(
+                                replyCount = 2,
+                                replies =
+                                    listOf(
+                                        replyDto(id = 11, parentId = 1).copy(likeCount = 3, isLiked = true),
+                                        replyDto(id = 12, parentId = 1),
+                                    ),
+                            ),
                         ),
                     nextCursor = null,
                     hasNext = false,
                 )
 
-            val page = repository.getComments(feedId = 10)
+            val replies = repository.getComments(feedId = 10).comments[0].replies
 
-            val comment = page.comments[0]
-            assertEquals(true, comment.isDeleted)
-            assertEquals("", comment.nickname)
-            assertEquals("", comment.content)
-            assertEquals(false, comment.isMine)
-            assertEquals(0, comment.likeCount)
-            assertEquals(false, comment.isLiked)
-            assertEquals(1, comment.replyCount)
-            assertEquals(1, comment.replies.size)
-            assertEquals(11L, comment.replies[0].id)
-            assertEquals(1L, comment.replies[0].parentId)
+            assertEquals(listOf(11L, 12L), replies.map { it.id })
+            assertEquals(1L, replies[0].parentId)
+            assertEquals(3, replies[0].likeCount)
+            assertEquals(true, replies[0].isLiked)
+            assertEquals(0, replies[1].likeCount)
+            assertEquals(false, replies[1].isLiked)
+        }
+
+    @Test
+    fun `답글_공감은_답글_id로_요청하고_원댓글_스레드의_변경으로_알린다`() =
+        runTest(UnconfinedTestDispatcher()) {
+            api.likeResponse = CommentLikeResponse(likeCount = 2, isLiked = true)
+            val threadChange = async { repository.threadChanges.first() }
+
+            val result = repository.likeReply(feedId = 10, commentId = 1, replyId = 11)
+
+            assertEquals(listOf(11L), api.likedCommentIds)
+            assertEquals(CommentThreadChange(feedId = 10, commentId = 1), threadChange.await())
+            assertEquals(2, result.likeCount)
+            assertEquals(true, result.isLiked)
+        }
+
+    @Test
+    fun `답글_공감_취소도_답글_id로_요청하고_원댓글_스레드의_변경으로_알린다`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val threadChange = async { repository.threadChanges.first() }
+
+            repository.unlikeReply(feedId = 10, commentId = 1, replyId = 11)
+
+            assertEquals(listOf(11L), api.unlikedCommentIds)
+            assertEquals(CommentThreadChange(feedId = 10, commentId = 1), threadChange.await())
         }
 
     @Test
@@ -185,7 +220,6 @@ class CommentRepositoryImplTest {
         authorType: String,
         voteChoice: String?,
         isMine: Boolean = false,
-        isDeleted: Boolean = false,
     ) = CommentDto(
         id = id,
         authorType = authorType,
@@ -196,7 +230,6 @@ class CommentRepositoryImplTest {
         isAuthor = false,
         voteChoice = voteChoice,
         createdAt = "2026-09-20T10:35:17",
-        isDeleted = isDeleted,
     )
 
     private fun httpException(
@@ -208,10 +241,13 @@ class CommentRepositoryImplTest {
 private class FakeCommentApiService : CommentApiService {
     var listResponse = CommentListResponse(content = emptyList(), nextCursor = null, hasNext = false)
     var createError: HttpException? = null
+    var deleteError: HttpException? = null
     var lastSort: String? = null
     var lastCreateRequest: CommentRequest? = null
     var likeResponse = CommentLikeResponse(likeCount = 0, isLiked = false)
     var lastReplyRequest: CommentRequest? = null
+    val likedCommentIds = mutableListOf<Long>()
+    val unlikedCommentIds = mutableListOf<Long>()
 
     override suspend fun getComments(
         feedId: Long,
@@ -235,7 +271,10 @@ private class FakeCommentApiService : CommentApiService {
     override suspend fun deleteComment(
         feedId: Long,
         commentId: Long,
-    ): BaseResponse<Unit> = BaseResponse(status = "200")
+    ): BaseResponse<Unit> {
+        deleteError?.let { throw it }
+        return BaseResponse(status = "200")
+    }
 
     override suspend fun reportComment(
         feedId: Long,
@@ -267,10 +306,16 @@ private class FakeCommentApiService : CommentApiService {
     override suspend fun likeComment(
         feedId: Long,
         commentId: Long,
-    ): BaseResponse<CommentLikeResponse> = BaseResponse(data = likeResponse, status = "200")
+    ): BaseResponse<CommentLikeResponse> {
+        likedCommentIds += commentId
+        return BaseResponse(data = likeResponse, status = "200")
+    }
 
     override suspend fun unlikeComment(
         feedId: Long,
         commentId: Long,
-    ): BaseResponse<CommentLikeResponse> = BaseResponse(data = likeResponse, status = "200")
+    ): BaseResponse<CommentLikeResponse> {
+        unlikedCommentIds += commentId
+        return BaseResponse(data = likeResponse, status = "200")
+    }
 }

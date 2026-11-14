@@ -87,6 +87,19 @@ interface CommentRepository {
         feedId: Long,
         commentId: Long,
     ): CommentLike
+
+    /** [commentId]에 달린 답글 [replyId]에 공감한다. */
+    suspend fun likeReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ): CommentLike
+
+    suspend fun unlikeReply(
+        feedId: Long,
+        commentId: Long,
+        replyId: Long,
+    ): CommentLike
 }
 
 data class CommentThreadChange(

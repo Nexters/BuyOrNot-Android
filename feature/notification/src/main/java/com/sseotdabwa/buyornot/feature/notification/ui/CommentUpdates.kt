@@ -8,7 +8,7 @@ import com.sseotdabwa.buyornot.domain.model.CommentReply
 import com.sseotdabwa.buyornot.domain.repository.CommentRepository
 
 /**
- * 삭제·신고 대상. [replyId]가 있으면 [commentId]에 달린 답글이고, 없으면 원댓글이다.
+ * 삭제·신고·공감 대상. [replyId]가 있으면 [commentId]에 달린 답글이고, 없으면 원댓글이다.
  */
 data class CommentTarget(
     val commentId: Long,
@@ -37,16 +37,20 @@ internal suspend fun CommentRepository.report(
     }
 }
 
-/** [comment]의 현재 공감 상태를 뒤집는다. */
+/** [isLiked]가 지금 공감한 상태이면 공감을 취소하고, 아니면 공감한다. */
 internal suspend fun CommentRepository.toggleLike(
     feedId: Long,
-    comment: Comment,
-): CommentLike =
-    if (comment.isLiked) {
-        unlikeComment(feedId = feedId, commentId = comment.id)
-    } else {
-        likeComment(feedId = feedId, commentId = comment.id)
+    target: CommentTarget,
+    isLiked: Boolean,
+): CommentLike {
+    val replyId = target.replyId
+    return when {
+        replyId == null && isLiked -> unlikeComment(feedId = feedId, commentId = target.commentId)
+        replyId == null -> likeComment(feedId = feedId, commentId = target.commentId)
+        isLiked -> unlikeReply(feedId = feedId, commentId = target.commentId, replyId = replyId)
+        else -> likeReply(feedId = feedId, commentId = target.commentId, replyId = replyId)
     }
+}
 
 // 한 스레드의 답글은 많지 않아 커서를 끝까지 넘겨 모두 받는다.
 internal suspend fun CommentRepository.getAllReplies(
@@ -67,40 +71,35 @@ internal fun List<Comment>.updateComment(
     transform: (Comment) -> Comment,
 ): List<Comment> = map { if (it.id == commentId) transform(it) else it }
 
-internal fun Comment.withLike(like: CommentLike): Comment = copy(likeCount = like.likeCount, isLiked = like.isLiked)
+internal fun List<CommentReply>.updateReply(
+    replyId: Long,
+    transform: (CommentReply) -> CommentReply,
+): List<CommentReply> = map { if (it.id == replyId) transform(it) else it }
 
-internal fun Comment.toggledLike(): Comment =
+/** [target]이 가리키는 원댓글 또는 답글의 지금 공감 상태. 목록에 없으면 null. */
+internal fun Comment.likeOf(target: CommentTarget): CommentLike? {
+    val replyId = target.replyId ?: return CommentLike(likeCount = likeCount, isLiked = isLiked)
+    return replies.firstOrNull { it.id == replyId }?.let { CommentLike(likeCount = it.likeCount, isLiked = it.isLiked) }
+}
+
+internal fun Comment.withLike(
+    target: CommentTarget,
+    like: CommentLike,
+): Comment {
+    val replyId = target.replyId ?: return copy(likeCount = like.likeCount, isLiked = like.isLiked)
+    return copy(replies = replies.updateReply(replyId) { it.copy(likeCount = like.likeCount, isLiked = like.isLiked) })
+}
+
+internal fun CommentLike.toggled(): CommentLike =
     if (isLiked) {
-        copy(isLiked = false, likeCount = (likeCount - 1).coerceAtLeast(0))
+        CommentLike(likeCount = (likeCount - 1).coerceAtLeast(0), isLiked = false)
     } else {
-        copy(isLiked = true, likeCount = likeCount + 1)
+        CommentLike(likeCount = likeCount + 1, isLiked = true)
     }
 
-// 답글이 남은 원댓글은 서버가 "삭제된 댓글"로 남겨 두므로 목록에서도 자리를 지킨다.
-internal fun Comment.afterDeleted(): Comment? =
-    if (replyCount > 0) {
-        copy(
-            isDeleted = true,
-            nickname = "",
-            profileImage = null,
-            content = "",
-            isMine = false,
-            isAuthor = false,
-            voteChoice = null,
-            likeCount = 0,
-            isLiked = false,
-        )
-    } else {
-        null
-    }
-
-// 삭제된 원댓글은 마지막 답글이 사라지면 서버에서도 정리되므로 함께 뺀다.
-internal fun Comment.withoutReply(replyId: Long): Comment? {
+internal fun Comment.withoutReply(replyId: Long): Comment {
     if (replies.none { it.id == replyId }) return this
-    val remaining = replies.filterNot { it.id == replyId }
-    val remainingCount = (replyCount - 1).coerceAtLeast(0)
-    if (isDeleted && remainingCount == 0) return null
-    return copy(replies = remaining, replyCount = remainingCount)
+    return copy(replies = replies.filterNot { it.id == replyId }, replyCount = (replyCount - 1).coerceAtLeast(0))
 }
 
 // 같은 내용으로 다시 보내도 또 거절되는 에러라 내용을 고칠 때까지 등록 버튼을 막는다.
