@@ -108,6 +108,20 @@ class CommentRepositoryImplTest {
         }
 
     @Test
+    fun `이미_없는_원댓글을_지우려_하면_에러를_던지면서도_변경_신호는_보낸다`() =
+        runTest(UnconfinedTestDispatcher()) {
+            api.deleteError = httpException(code = 404, body = """{"errorCode":"COMMENT_004","message":"댓글을 찾을 수 없습니다."}""")
+            val commentChange = async { repository.commentChanges.first() }
+            val threadChange = async { repository.threadChanges.first() }
+
+            val error = assertFailsWith<ApiException> { repository.deleteComment(feedId = 7, commentId = 1) }
+
+            assertEquals(CommentErrorCode.NOT_FOUND, error.code)
+            assertEquals(7L, commentChange.await())
+            assertEquals(CommentThreadChange(feedId = 7, commentId = 1), threadChange.await())
+        }
+
+    @Test
     fun `원댓글에_달린_답글을_공감_수와_내_공감_여부까지_매핑한다`() =
         runTest {
             api.listResponse =
@@ -227,6 +241,7 @@ class CommentRepositoryImplTest {
 private class FakeCommentApiService : CommentApiService {
     var listResponse = CommentListResponse(content = emptyList(), nextCursor = null, hasNext = false)
     var createError: HttpException? = null
+    var deleteError: HttpException? = null
     var lastSort: String? = null
     var lastCreateRequest: CommentRequest? = null
     var likeResponse = CommentLikeResponse(likeCount = 0, isLiked = false)
@@ -256,7 +271,10 @@ private class FakeCommentApiService : CommentApiService {
     override suspend fun deleteComment(
         feedId: Long,
         commentId: Long,
-    ): BaseResponse<Unit> = BaseResponse(status = "200")
+    ): BaseResponse<Unit> {
+        deleteError?.let { throw it }
+        return BaseResponse(status = "200")
+    }
 
     override suspend fun reportComment(
         feedId: Long,

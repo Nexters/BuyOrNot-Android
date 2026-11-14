@@ -54,6 +54,10 @@ class NotificationDetailViewModel @Inject constructor(
     // 같은 댓글을 연달아 누르면 요청이 겹쳐 서버 상태와 화면이 엇갈리므로 응답 전에는 다시 받지 않는다.
     private val pendingLikes = mutableSetOf<CommentTarget>()
 
+    // 스레드 조회가 시작된 뒤 누른 공감은 응답이 끝났어도 조회 결과보다 최신이라, 누른 순서를 기록해 병합 때 지킨다.
+    private var likeVersion = 0L
+    private val likeVersions = mutableMapOf<CommentTarget, Long>()
+
     // 내 공감도 저장소가 스레드 변경 신호로 다시 알려주는데, 이미 응답으로 맞춘 상태라 그 신호만큼은 다시 받지 않는다.
     private val ownLikeSignals = mutableMapOf<Long, Int>()
 
@@ -463,6 +467,7 @@ class NotificationDetailViewModel @Inject constructor(
         val threadId = target.commentId
         val before = currentState.comments.firstOrNull { it.id == threadId }?.likeOf(target) ?: return
         if (!currentState.canWriteComment || !pendingLikes.add(target)) return
+        likeVersions[target] = ++likeVersion
         updateState { it.copy(comments = it.comments.updateComment(threadId) { c -> c.withLike(target, before.toggled()) }) }
         // 답글 공감도 원댓글 스레드의 변경으로 알려진다.
         ownLikeSignals[threadId] = (ownLikeSignals[threadId] ?: 0) + 1
@@ -477,6 +482,8 @@ class NotificationDetailViewModel @Inject constructor(
                 ownLikeSignals[threadId] = ((ownLikeSignals[threadId] ?: 0) - 1).coerceAtLeast(0)
                 updateState { it.copy(comments = it.comments.updateComment(threadId) { c -> c.withLike(target, before) }) }
                 sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = (e as? ApiException).likeErrorMessage()))
+                // 대상이 이미 없으면 그 사이 온 삭제 신호를 내 공감 신호로 흘려보냈을 수 있어 스레드를 직접 다시 받는다.
+                if ((e as? ApiException)?.code == CommentErrorCode.NOT_FOUND) refreshThread(threadId)
             }
             pendingLikes.remove(target)
         }
@@ -485,6 +492,7 @@ class NotificationDetailViewModel @Inject constructor(
     // 답글 목록은 원댓글 응답에 모두 들어 있지만, 한 스레드만 다시 받을 때는 답글 API를 끝까지 넘긴다.
     private fun refreshThread(commentId: Long) {
         if (currentState.comments.none { it.id == commentId }) return
+        val startedVersion = likeVersion
         viewModelScope.launch {
             runCatchingCancellable {
                 val thread = commentRepository.getCommentThread(feedId = feedId, commentId = commentId)
@@ -492,9 +500,10 @@ class NotificationDetailViewModel @Inject constructor(
             }.onSuccess { refreshed ->
                 updateState { state ->
                     val previous = state.comments.firstOrNull { it.id == commentId } ?: return@updateState state
-                    // 응답을 기다리는 공감은 화면 값이 더 최신이다.
+                    // 응답을 기다리거나 조회 뒤에 누른 공감은 화면 값이 더 최신이다.
+                    val newerLikes = pendingLikes + likeVersions.filterValues { it > startedVersion }.keys
                     val merged =
-                        pendingLikes
+                        newerLikes
                             .filter { it.commentId == commentId }
                             .fold(refreshed) { acc, target -> previous.likeOf(target)?.let { acc.withLike(target, it) } ?: acc }
                     val countDiff = refreshed.replyCount - previous.replyCount

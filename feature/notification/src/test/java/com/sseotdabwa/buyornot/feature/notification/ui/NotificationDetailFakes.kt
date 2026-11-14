@@ -176,6 +176,9 @@ class FakeCommentRepository : CommentRepository {
     val threads = mutableMapOf<Long, CommentThread>()
     val replyPages = mutableMapOf<Long, CommentReplyPage>()
     var threadError: Throwable? = null
+
+    /** 스레드 응답을 붙잡아 두고 싶을 때 바꿔 끼운다. */
+    var beforeGetThread: suspend () -> Unit = {}
     var likeResult: CommentLike? = null
     var unlikeResult: CommentLike? = null
     var createReplyError: Throwable? = null
@@ -240,6 +243,7 @@ class FakeCommentRepository : CommentRepository {
         feedId: Long,
         commentId: Long,
     ): CommentThread {
+        beforeGetThread()
         threadError?.let { throw it }
         return threads.getValue(commentId)
     }

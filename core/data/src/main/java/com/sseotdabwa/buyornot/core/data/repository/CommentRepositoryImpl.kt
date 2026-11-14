@@ -11,6 +11,7 @@ import com.sseotdabwa.buyornot.core.network.dto.response.apiErrorOrNull
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
 import com.sseotdabwa.buyornot.domain.exception.ApiException
 import com.sseotdabwa.buyornot.domain.model.Comment
+import com.sseotdabwa.buyornot.domain.model.CommentErrorCode
 import com.sseotdabwa.buyornot.domain.model.CommentLike
 import com.sseotdabwa.buyornot.domain.model.CommentPage
 import com.sseotdabwa.buyornot.domain.model.CommentReply
@@ -70,10 +71,8 @@ class CommentRepositoryImpl @Inject constructor(
         feedId: Long,
         commentId: Long,
     ) {
-        withApiException { commentApiService.deleteComment(feedId, commentId).getOrThrow() }
-        _commentChanges.tryEmit(feedId)
         // 답글 페이지를 열어둔 다른 화면이 이 원댓글의 삭제를 반영하도록 함께 알린다.
-        _threadChanges.tryEmit(CommentThreadChange(feedId, commentId))
+        notifyThreadEvenIfGone(feedId, commentId) { commentApiService.deleteComment(feedId, commentId).getOrThrow() }
     }
 
     override suspend fun reportComment(
@@ -81,9 +80,7 @@ class CommentRepositoryImpl @Inject constructor(
         commentId: Long,
     ) {
         // 신고된 댓글은 목록·개수에서 빠지므로 피드 미리보기도 다시 불러와야 한다.
-        withApiException { commentApiService.reportComment(feedId, commentId).getOrThrow() }
-        _commentChanges.tryEmit(feedId)
-        _threadChanges.tryEmit(CommentThreadChange(feedId, commentId))
+        notifyThreadEvenIfGone(feedId, commentId) { commentApiService.reportComment(feedId, commentId).getOrThrow() }
     }
 
     override suspend fun getCommentThread(
@@ -131,9 +128,7 @@ class CommentRepositoryImpl @Inject constructor(
         commentId: Long,
         replyId: Long,
     ) {
-        withApiException { commentApiService.deleteComment(feedId, replyId).getOrThrow() }
-        _commentChanges.tryEmit(feedId)
-        _threadChanges.tryEmit(CommentThreadChange(feedId, commentId))
+        notifyThreadEvenIfGone(feedId, commentId) { commentApiService.deleteComment(feedId, replyId).getOrThrow() }
     }
 
     override suspend fun reportReply(
@@ -141,9 +136,7 @@ class CommentRepositoryImpl @Inject constructor(
         commentId: Long,
         replyId: Long,
     ) {
-        withApiException { commentApiService.reportComment(feedId, replyId).getOrThrow() }
-        _commentChanges.tryEmit(feedId)
-        _threadChanges.tryEmit(CommentThreadChange(feedId, commentId))
+        notifyThreadEvenIfGone(feedId, commentId) { commentApiService.reportComment(feedId, replyId).getOrThrow() }
     }
 
     override suspend fun likeComment(
@@ -192,6 +185,29 @@ class CommentRepositoryImpl @Inject constructor(
                 .getOrThrow()
                 .toDomain()
         }.also { _threadChanges.tryEmit(CommentThreadChange(feedId, commentId)) }
+
+    // 이미 없는 댓글(NOT_FOUND)이어도 서버에서는 지워진 상태라, 다른 화면이 남은 댓글과 개수를 맞추도록 신호는 보낸다.
+    private inline fun notifyThreadEvenIfGone(
+        feedId: Long,
+        commentId: Long,
+        block: () -> Unit,
+    ) {
+        try {
+            withApiException(block)
+        } catch (e: ApiException) {
+            if (e.code == CommentErrorCode.NOT_FOUND) notifyThreadChanged(feedId, commentId)
+            throw e
+        }
+        notifyThreadChanged(feedId, commentId)
+    }
+
+    private fun notifyThreadChanged(
+        feedId: Long,
+        commentId: Long,
+    ) {
+        _commentChanges.tryEmit(feedId)
+        _threadChanges.tryEmit(CommentThreadChange(feedId, commentId))
+    }
 
     // 금칙어·빈도 제한은 서버 메시지를 그대로 노출하므로 코드와 함께 메시지도 옮긴다.
     private inline fun <T> withApiException(block: () -> T): T =
