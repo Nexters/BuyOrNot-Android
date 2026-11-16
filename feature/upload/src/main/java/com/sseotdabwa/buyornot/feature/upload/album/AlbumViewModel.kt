@@ -6,6 +6,7 @@ import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.domain.model.MAX_FEED_IMAGE_COUNT
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -14,6 +15,9 @@ import javax.inject.Inject
 class AlbumViewModel @Inject constructor(
     private val gallerySource: GallerySource,
 ) : BaseViewModel<AlbumUiState, AlbumIntent, AlbumSideEffect>(AlbumUiState()) {
+    // 권한 결과와 화면 복귀가 겹쳐 여러 번 읽을 때 앞선 요청의 결과가 늦게 와서 최신 목록을 덮지 않게 마지막 요청만 남긴다.
+    private var loadJob: Job? = null
+
     override fun handleIntent(intent: AlbumIntent) {
         when (intent) {
             is AlbumIntent.OnAccessChanged -> onAccessChanged(intent.access)
@@ -40,22 +44,27 @@ class AlbumViewModel @Inject constructor(
 
     // 방금 찍은 사진은 목록을 다시 읽어야 보이고, 자리가 남았으면 바로 고른다.
     private fun loadGallery(captured: Uri? = null) {
-        viewModelScope.launch {
-            runCatchingCancellable { gallerySource.load() }
-                .onSuccess { gallery ->
-                    updateState { state ->
-                        val available = gallery.photos.mapTo(HashSet()) { it.uri }
-                        val kept = state.selected.filter { it in available }
-                        val selected =
-                            if (captured != null && captured !in kept && kept.size < MAX_FEED_IMAGE_COUNT) kept + captured else kept
-                        state.copy(
-                            photos = gallery.photos,
-                            buckets = gallery.buckets,
-                            selectedBucketId = state.selectedBucketId?.takeIf { id -> gallery.buckets.any { it.id == id } },
-                            selected = selected,
-                        )
-                    }
-                }.onFailure { e -> Timber.e(e, "Failed to load gallery") }
-        }
+        loadJob?.cancel()
+        loadJob =
+            viewModelScope.launch {
+                runCatchingCancellable { gallerySource.load() }
+                    .onSuccess { gallery ->
+                        updateState { state ->
+                            val available = gallery.photos.mapTo(HashSet()) { it.uri }
+                            val kept = state.selected.filter { it in available }
+                            val selected =
+                                if (captured != null && captured !in kept && kept.size < MAX_FEED_IMAGE_COUNT) kept + captured else kept
+                            if (captured != null && captured !in selected) {
+                                sendSideEffect(AlbumSideEffect.ShowSnackbar("최대 ${MAX_FEED_IMAGE_COUNT}장까지 선택할 수 있어요"))
+                            }
+                            state.copy(
+                                photos = gallery.photos,
+                                buckets = gallery.buckets,
+                                selectedBucketId = state.selectedBucketId?.takeIf { id -> gallery.buckets.any { it.id == id } },
+                                selected = selected,
+                            )
+                        }
+                    }.onFailure { e -> Timber.e(e, "Failed to load gallery") }
+            }
     }
 }

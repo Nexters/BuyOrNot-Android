@@ -20,6 +20,7 @@ import com.sseotdabwa.buyornot.feature.upload.upload.FeedImageUploader
 import com.sseotdabwa.buyornot.feature.upload.upload.UnreadableImageException
 import com.sseotdabwa.buyornot.feature.upload.util.LinkValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -47,6 +48,8 @@ class UploadViewModel @Inject constructor(
 
     // AI 초안을 만들려고 미리 올린 사진. 게시할 때 같은 사진을 다시 올리지 않으려고 화면에 보이는 Uri로 찾는다.
     private val uploadedImages = mutableMapOf<Uri, FeedImage>()
+
+    private var aiWritingJob: Job? = null
 
     companion object {
         private const val MAX_TITLE_LENGTH = 40
@@ -77,6 +80,7 @@ class UploadViewModel @Inject constructor(
                 }
             }
             is UploadIntent.ConfirmAlbum -> confirmAlbum(intent.uris, intent.useAi)
+            UploadIntent.CancelAiWriting -> cancelAiWriting()
             is UploadIntent.StartCropQueue -> startCropQueue(intent.uris)
             is UploadIntent.CropConfirmed -> onCropConfirmed(intent.croppedUri, intent.editSpec)
             is UploadIntent.CropSkipped -> onCropSkipped()
@@ -128,19 +132,27 @@ class UploadViewModel @Inject constructor(
         updateState {
             it.copy(selectedImages = images, aiWriting = AiWriting(imageCount = images.size, phase = AiWritingPhase.UPLOADING))
         }
-        viewModelScope.launch {
-            runCatchingCancellable {
-                val uploaded = images.map { uploadOnce(it.displayUri) }
-                updateState { it.copy(aiWriting = it.aiWriting?.copy(phase = AiWritingPhase.DRAFTING)) }
-                feedRepository.createAiDraft(uploaded.map { it.s3ObjectKey })
-            }.onSuccess { draft ->
-                // 제목과 내용이 모두 없으면 서버가 초안을 만들지 못한 것이다.
-                finishAiWriting(draft = draft.takeIf { it.title != null || it.content != null })
-            }.onFailure { e ->
-                Timber.e(e, "Failed to create AI draft")
-                finishAiWriting(draft = null)
+        aiWritingJob =
+            viewModelScope.launch {
+                runCatchingCancellable {
+                    val uploaded = images.map { uploadOnce(it.displayUri) }
+                    updateState { it.copy(aiWriting = it.aiWriting?.copy(phase = AiWritingPhase.DRAFTING)) }
+                    feedRepository.createAiDraft(uploaded.map { it.s3ObjectKey })
+                }.onSuccess { draft ->
+                    // 제목과 내용이 모두 없으면 서버가 초안을 만들지 못한 것이다.
+                    finishAiWriting(draft = draft.takeIf { it.title != null || it.content != null })
+                }.onFailure { e ->
+                    Timber.e(e, "Failed to create AI draft")
+                    finishAiWriting(draft = null)
+                }
             }
-        }
+    }
+
+    // 이미 올린 사진은 다시 확인하면 그대로 쓴다.
+    private fun cancelAiWriting() {
+        aiWritingJob?.cancel()
+        aiWritingJob = null
+        updateState { it.copy(aiWriting = null, selectedImages = emptyList()) }
     }
 
     // 초안이 없으면 사진만 둔 채 직접 쓰도록 안내한다.

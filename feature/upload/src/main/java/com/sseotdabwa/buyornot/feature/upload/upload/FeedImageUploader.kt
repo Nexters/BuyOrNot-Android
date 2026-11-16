@@ -16,6 +16,14 @@ class UnreadableImageException(
     uri: Uri,
 ) : IllegalStateException("이미지를 읽을 수 없습니다: $uri")
 
+private data class LocalImage(
+    val width: Int,
+    val height: Int,
+    val bytes: ByteArray,
+    val contentType: String,
+    val fileName: String,
+)
+
 interface FeedImageUploader {
     /**
      * 기기 사진을 presigned URL로 올리고 피드 등록·AI 초안에 쓸 key를 돌려준다.
@@ -30,15 +38,20 @@ internal class ContentResolverFeedImageUploader @Inject constructor(
     private val feedRepository: FeedRepository,
 ) : FeedImageUploader {
     override suspend fun upload(uri: Uri): FeedImage {
-        val (width, height, bytes) =
+        val image =
             withContext(Dispatchers.IO) {
                 val (width, height) = readDimensions(uri)
                 if (width <= 0 || height <= 0) throw UnreadableImageException(uri)
-                val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: throw UnreadableImageException(uri)
-                Triple(width, height, bytes)
+                LocalImage(
+                    width = width,
+                    height = height,
+                    bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: throw UnreadableImageException(uri),
+                    contentType = context.contentResolver.getType(uri) ?: "image/jpeg",
+                    fileName = fileName(uri) ?: "upload_image.jpg",
+                )
             }
-        val contentType = context.contentResolver.getType(uri) ?: "image/jpeg"
-        val uploadInfo = feedRepository.getPresignedUrl(fileName(uri) ?: "upload_image.jpg", contentType)
+        val (width, height, bytes, contentType) = image
+        val uploadInfo = feedRepository.getPresignedUrl(image.fileName, contentType)
         feedRepository.uploadImage(uploadInfo.uploadUrl, bytes, contentType)
         return FeedImage(
             s3ObjectKey = uploadInfo.s3ObjectKey,

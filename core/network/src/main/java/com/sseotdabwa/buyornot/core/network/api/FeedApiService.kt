@@ -12,6 +12,7 @@ import com.sseotdabwa.buyornot.core.network.dto.response.FeedResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.HotFeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.PresignedUrlResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.VoteResponse
+import com.sseotdabwa.buyornot.core.network.interceptor.ReadTimeoutInterceptor
 import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -95,7 +96,9 @@ interface FeedApiService {
         @Body body: RequestBody,
     ): Response<Unit>
 
+    // 서버가 AI 응답을 기다리는 시간이 클라이언트 기본 타임아웃보다 길어 그보다 오래 기다린다.
     @POST("/api/v1/feeds/ai-draft")
+    @Headers("${ReadTimeoutInterceptor.HEADER}: 40")
     suspend fun createAiDraft(
         @Body request: FeedAiDraftRequest,
     ): BaseResponse<FeedAiDraftResponse>

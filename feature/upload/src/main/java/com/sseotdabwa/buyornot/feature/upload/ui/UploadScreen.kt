@@ -121,7 +121,7 @@ fun UploadRoute(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    var photoUri by remember { mutableStateOf<Uri?>(null) }
+    var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
 
     val insertPhotoUri: () -> Uri? = { createCameraPhotoUri(context) }
 
@@ -164,7 +164,7 @@ fun UploadRoute(
     if (uiState.step == UploadStep.ALBUM) {
         val aiWriting = uiState.aiWriting
         BackHandler {
-            if (aiWriting == null) viewModel.handleIntent(UploadIntent.NavigateBack)
+            viewModel.handleIntent(if (aiWriting == null) UploadIntent.NavigateBack else UploadIntent.CancelAiWriting)
         }
         Box(modifier = modifier) {
             AlbumRoute(

@@ -99,6 +99,9 @@ sealed interface UploadIntent {
         val useAi: Boolean,
     ) : UploadIntent
 
+    /** AI 글 작성을 그만두고 앨범에서 사진을 다시 고른다. */
+    data object CancelAiWriting : UploadIntent
+
     data class StartCropQueue(
         val uris: List<Uri>,
     ) : UploadIntent

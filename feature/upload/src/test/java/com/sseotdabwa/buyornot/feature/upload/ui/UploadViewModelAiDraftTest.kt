@@ -132,6 +132,27 @@ class UploadViewModelAiDraftTest {
     }
 
     @Test
+    fun `AI_글_작성을_취소하면_앨범에_남고_이미_올린_사진은_다시_확인할_때_재사용한다`() {
+        val gate = CompletableDeferred<Unit>()
+        feedRepository.beforeAiDraft = { gate.await() }
+        val viewModel = createViewModel()
+        viewModel.handleIntent(UploadIntent.ConfirmAlbum(photos, useAi = true))
+
+        viewModel.handleIntent(UploadIntent.CancelAiWriting)
+
+        val cancelled = viewModel.uiState.value
+        assertEquals(UploadStep.ALBUM, cancelled.step)
+        assertNull(cancelled.aiWriting)
+        assertTrue(cancelled.selectedImages.isEmpty())
+
+        feedRepository.beforeAiDraft = {}
+        viewModel.handleIntent(UploadIntent.ConfirmAlbum(photos, useAi = true))
+
+        assertEquals(photos, uploader.uploaded)
+        assertEquals(UploadStep.FORM, viewModel.uiState.value.step)
+    }
+
+    @Test
     fun `AI로_글쓰기를_끄면_초안_요청_없이_사진만_채워_등록_화면으로_간다`() {
         val viewModel = createViewModel()
 

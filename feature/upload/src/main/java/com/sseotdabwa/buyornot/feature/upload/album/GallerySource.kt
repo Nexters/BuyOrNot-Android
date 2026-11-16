@@ -42,7 +42,8 @@ class GallerySource @Inject constructor(
                 .query(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     projection,
-                    null,
+                    // 촬영을 취소하고 지우지 못한 빈 항목은 열 수 없어 고르지 못하게 뺀다.
+                    "${MediaStore.Images.Media.SIZE} > 0",
                     null,
                     "${MediaStore.Images.Media.DATE_ADDED} DESC",
                 )?.use { cursor ->

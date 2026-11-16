@@ -108,7 +108,8 @@ internal fun AlbumRoute(
         onPauseOrDispose {}
     }
 
-    var capturedUri by remember { mutableStateOf<Uri?>(null) }
+    // 카메라 앱에 다녀오는 사이 접었다 펴거나 프로세스가 죽어도 찍은 사진을 이어받도록 저장한다.
+    var capturedUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     val cameraLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             val uri = capturedUri
@@ -121,9 +122,12 @@ internal fun AlbumRoute(
             }
         }
     val launchCamera = {
-        createCameraPhotoUri(context)?.let {
-            capturedUri = it
-            cameraLauncher.launch(it)
+        val uri = createCameraPhotoUri(context)
+        if (uri == null) {
+            snackbarState.show("사진을 저장할 수 없어요.")
+        } else {
+            capturedUri = uri
+            cameraLauncher.launch(uri)
         }
     }
     val cameraPermissionLauncher =
@@ -163,6 +167,7 @@ internal fun AlbumScreen(
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val visiblePhotos = remember(uiState.photos, uiState.selectedBucketId) { uiState.visiblePhotos }
     Column(
         modifier =
             modifier
@@ -196,7 +201,7 @@ internal fun AlbumScreen(
                     else -> Unit
                 }
                 item(key = "camera") { CameraCell(onClick = onCameraClick) }
-                items(items = uiState.visiblePhotos, key = { it.uri.toString() }) { photo ->
+                items(items = visiblePhotos, key = { it.uri.toString() }) { photo ->
                     val order = uiState.selected.indexOf(photo.uri)
                     PhotoCell(
                         uri = photo.uri,

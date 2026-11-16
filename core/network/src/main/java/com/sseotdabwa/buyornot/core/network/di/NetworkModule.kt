@@ -12,6 +12,7 @@ import com.sseotdabwa.buyornot.core.network.api.NotificationApiService
 import com.sseotdabwa.buyornot.core.network.api.UserApiService
 import com.sseotdabwa.buyornot.core.network.authenticator.TokenAuthenticator
 import com.sseotdabwa.buyornot.core.network.interceptor.AuthInterceptor
+import com.sseotdabwa.buyornot.core.network.interceptor.ReadTimeoutInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,6 +54,7 @@ object NetworkModule {
             .Builder()
             .addInterceptor(ChuckerInterceptor.Builder(context).build())
             .addInterceptor(authInterceptor)
+            .addInterceptor(ReadTimeoutInterceptor())
             .addInterceptor(
                 HttpLoggingInterceptor().apply {
                     level =
