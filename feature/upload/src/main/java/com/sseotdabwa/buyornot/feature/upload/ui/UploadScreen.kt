@@ -39,6 +39,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -609,9 +610,15 @@ private fun ContentInputField(
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
+        var titleFieldValue by rememberEndCursorFieldValue(title)
         BasicTextField(
-            value = title,
-            onValueChange = { if (it.length <= 40) onTitleChange(it) },
+            value = titleFieldValue,
+            onValueChange = {
+                if (it.text.length <= 40) {
+                    titleFieldValue = it
+                    onTitleChange(it.text)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             textStyle =
                 BuyOrNotTheme.typography.titleT2Bold.copy(
@@ -632,9 +639,15 @@ private fun ContentInputField(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        var contentFieldValue by rememberEndCursorFieldValue(content)
         BasicTextField(
-            value = content,
-            onValueChange = { if (it.length <= 100) onContentChange(it) },
+            value = contentFieldValue,
+            onValueChange = {
+                if (it.text.length <= 100) {
+                    contentFieldValue = it
+                    onContentChange(it.text)
+                }
+            },
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -665,6 +678,14 @@ private fun ContentInputField(
             color = BuyOrNotTheme.colors.gray600,
         )
     }
+}
+
+// AI 초안처럼 입력 밖에서 글이 바뀌면 이어 쓰기 쉽게 커서를 글 끝에 둔다.
+@Composable
+private fun rememberEndCursorFieldValue(text: String): MutableState<TextFieldValue> {
+    val state = remember { mutableStateOf(TextFieldValue(text, TextRange(text.length))) }
+    if (state.value.text != text) state.value = TextFieldValue(text, TextRange(text.length))
+    return state
 }
 
 @Composable

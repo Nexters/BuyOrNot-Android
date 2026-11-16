@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,7 +48,8 @@ fun BuyOrNotToggle(
         modifier =
             modifier
                 .size(width = ToggleWidth, height = ToggleHeight)
-                .background(color = trackColor, shape = CircleShape)
+                .clip(CircleShape)
+                .background(color = trackColor)
                 .toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange)
                 .padding(TogglePadding),
         verticalAlignment = Alignment.CenterVertically,
