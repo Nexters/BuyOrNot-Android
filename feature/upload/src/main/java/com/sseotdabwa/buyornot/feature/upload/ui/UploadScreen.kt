@@ -166,14 +166,22 @@ fun UploadRoute(
     if (uiState.step == UploadStep.ALBUM) {
         val aiWriting = uiState.aiWriting
         BackHandler {
-            viewModel.handleIntent(if (aiWriting == null) UploadIntent.NavigateBack else UploadIntent.CancelAiWriting)
+            viewModel.handleIntent(
+                if (aiWriting ==
+                    null
+                ) {
+                    UploadIntent.LeaveAlbum(albumViewModel.uiState.value.selected.size)
+                } else {
+                    UploadIntent.CancelAiWriting
+                },
+            )
         }
         Box(modifier = modifier) {
             AlbumRoute(
                 // 팝업은 터치만 막으므로, 작성 중에는 보조 기술이 뒤의 앨범 버튼에 닿지 않게 숨긴다.
                 modifier = if (aiWriting != null) Modifier.semantics { hideFromAccessibility() } else Modifier,
                 viewModel = albumViewModel,
-                onBack = { viewModel.handleIntent(UploadIntent.NavigateBack) },
+                onBack = { viewModel.handleIntent(UploadIntent.LeaveAlbum(albumViewModel.uiState.value.selected.size)) },
                 onConfirm = { uris, useAi -> viewModel.handleIntent(UploadIntent.ConfirmAlbum(uris, useAi)) },
             )
             if (aiWriting != null) AiWritingPopup(aiWriting = aiWriting)

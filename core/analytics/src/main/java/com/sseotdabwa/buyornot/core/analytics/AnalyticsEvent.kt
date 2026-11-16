@@ -21,16 +21,73 @@ sealed class AnalyticsEvent {
         val isLoggedIn: Boolean,
     ) : AnalyticsEvent()
 
+    /**
+     * @param writingMode [WritingMode] 값. AI 도입 전후·방식별 완료율을 나눠 보는 축이다.
+     * @param aiEditedFields AI 초안이 채운 필드 중 게시 전에 사용자가 고친 것. AI로 쓰지 않았으면 null.
+     */
     data class VoteCreateCompleted(
         val itemId: Long,
         val voteTitle: String,
         val optionCount: Int,
+        val writingMode: String,
+        val aiEditedFields: List<String>?,
     ) : AnalyticsEvent()
 
+    /**
+     * 입력이 하나라도 있는 상태에서 작성 화면을 떠남. 앨범 단계에서는 사진을 하나 이상 골랐을 때만 발행한다.
+     *
+     * @param step [Step] 값. 떠난 단계.
+     * @param writingMode 앨범에서 확인하기 전에 떠났으면 null.
+     */
     data class VoteCreateAbandoned(
         val filledFields: List<String>,
         val lastStep: String?,
+        val step: String,
+        val writingMode: String?,
+    ) : AnalyticsEvent() {
+        object Step {
+            const val ALBUM = "album"
+            const val FORM = "form"
+        }
+    }
+
+    /** 앨범 화면에서 사진을 고르고 [확인]을 누름. 이 시점에 AI로 쓸지가 정해진다. */
+    data class VoteCreatePhotosConfirmed(
+        val imageCount: Int,
+        val useAi: Boolean,
     ) : AnalyticsEvent()
+
+    /**
+     * AI 초안 요청이 끝남. 사진 업로드부터 초안 응답까지를 한 번으로 센다.
+     *
+     * @param result [Result] 값.
+     * @param filledFields 초안이 실제로 채운 필드. 성공했을 때만 있다.
+     */
+    data class AiDraftCompleted(
+        val result: String,
+        val imageCount: Int,
+        val durationMs: Long,
+        val filledFields: List<String>?,
+    ) : AnalyticsEvent() {
+        object Result {
+            const val SUCCESS = "success"
+
+            /** 응답은 왔지만 제목과 내용이 모두 비어 있었다. */
+            const val EMPTY = "empty"
+            const val FAILED = "failed"
+
+            /** 사용자가 기다리다 뒤로가기로 그만뒀다. */
+            const val CANCELLED = "cancelled"
+        }
+    }
+
+    object WritingMode {
+        const val AI = "ai"
+
+        /** AI를 켰지만 초안을 받지 못해 직접 썼다. */
+        const val AI_FAILED = "ai_failed"
+        const val MANUAL = "manual"
+    }
 
     /**
      * 푸시 알림 탭. 유입 분석의 시작점이며 전환은 Mixpanel Funnel의 시간 순서로 잇는다.

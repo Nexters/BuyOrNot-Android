@@ -102,6 +102,11 @@ sealed interface UploadIntent {
     /** AI 글 작성을 그만두고 앨범에서 사진을 다시 고른다. */
     data object CancelAiWriting : UploadIntent
 
+    /** 앨범 단계에서 화면을 떠남. 사진을 고른 채 떠났는지가 이탈 집계 기준이다. */
+    data class LeaveAlbum(
+        val selectedCount: Int,
+    ) : UploadIntent
+
     data class StartCropQueue(
         val uris: List<Uri>,
     ) : UploadIntent

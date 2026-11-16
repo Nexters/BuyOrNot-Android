@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
 import android.net.Uri
+import android.os.SystemClock
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
@@ -51,6 +52,13 @@ class UploadViewModel @Inject constructor(
 
     private var aiWritingJob: Job? = null
 
+    // 이탈·완료 이벤트에 붙일 작성 방식. 앨범에서 확인하기 전에는 정해지지 않는다.
+    private var writingMode: String? = null
+
+    // 게시 때 사용자가 AI 초안의 어느 필드를 고쳤는지 비교하려고, 초안이 채운 값을 필드 이름으로 들고 있다.
+    private var aiFilledValues: Map<String, String> = emptyMap()
+    private var aiStartedAtMillis = 0L
+
     companion object {
         private const val MAX_TITLE_LENGTH = 40
         private const val MAX_CONTENT_LENGTH = 100
@@ -80,6 +88,7 @@ class UploadViewModel @Inject constructor(
             }
             is UploadIntent.ConfirmAlbum -> confirmAlbum(intent.uris, intent.useAi)
             UploadIntent.CancelAiWriting -> cancelAiWriting()
+            is UploadIntent.LeaveAlbum -> leaveAlbum(intent.selectedCount)
             is UploadIntent.StartCropQueue -> startCropQueue(intent.uris)
             is UploadIntent.CropConfirmed -> onCropConfirmed(intent.croppedUri, intent.editSpec)
             is UploadIntent.CropSkipped -> onCropSkipped()
@@ -111,6 +120,8 @@ class UploadViewModel @Inject constructor(
                         AnalyticsEvent.VoteCreateAbandoned(
                             filledFields = currentState.filledFields,
                             lastStep = currentState.lastTouchedField,
+                            step = AnalyticsEvent.VoteCreateAbandoned.Step.FORM,
+                            writingMode = writingMode,
                         ),
                     )
                 }
@@ -124,10 +135,13 @@ class UploadViewModel @Inject constructor(
     ) {
         if (uris.isEmpty() || currentState.aiWriting != null) return
         val images = uris.take(MAX_FEED_IMAGE_COUNT).map { ImageEntry(originalUri = it, displayUri = it) }
+        analytics.track(AnalyticsEvent.VoteCreatePhotosConfirmed(imageCount = images.size, useAi = useAi))
         if (!useAi) {
+            writingMode = AnalyticsEvent.WritingMode.MANUAL
             updateState { it.copy(step = UploadStep.FORM, selectedImages = images) }
             return
         }
+        aiStartedAtMillis = SystemClock.elapsedRealtime()
         updateState {
             it.copy(selectedImages = images, aiWriting = AiWriting(imageCount = images.size, phase = AiWritingPhase.UPLOADING))
         }
@@ -139,19 +153,63 @@ class UploadViewModel @Inject constructor(
                     feedRepository.createAiDraft(uploaded.map { it.s3ObjectKey })
                 }.onSuccess { draft ->
                     // 제목과 내용이 모두 없으면 서버가 초안을 만들지 못한 것이다.
-                    finishAiWriting(draft = draft.takeIf { it.title != null || it.content != null })
+                    val usable = draft.takeIf { it.title != null || it.content != null }
+                    finishAiWriting(draft = usable)
+                    trackAiDraft(
+                        result =
+                            if (usable !=
+                                null
+                            ) {
+                                AnalyticsEvent.AiDraftCompleted.Result.SUCCESS
+                            } else {
+                                AnalyticsEvent.AiDraftCompleted.Result.EMPTY
+                            },
+                        imageCount = images.size,
+                    )
                 }.onFailure { e ->
                     Timber.e(e, "Failed to create AI draft")
                     finishAiWriting(draft = null)
+                    trackAiDraft(result = AnalyticsEvent.AiDraftCompleted.Result.FAILED, imageCount = images.size)
                 }
             }
     }
 
     // 이미 올린 사진은 다시 확인하면 그대로 쓴다.
     private fun cancelAiWriting() {
+        val aiWriting = currentState.aiWriting ?: return
         aiWritingJob?.cancel()
         aiWritingJob = null
+        writingMode = null
         updateState { it.copy(aiWriting = null, selectedImages = emptyList()) }
+        trackAiDraft(result = AnalyticsEvent.AiDraftCompleted.Result.CANCELLED, imageCount = aiWriting.imageCount)
+    }
+
+    private fun trackAiDraft(
+        result: String,
+        imageCount: Int,
+    ) {
+        analytics.track(
+            AnalyticsEvent.AiDraftCompleted(
+                result = result,
+                imageCount = imageCount,
+                durationMs = SystemClock.elapsedRealtime() - aiStartedAtMillis,
+                filledFields = aiFilledValues.keys.toList().takeIf { result == AnalyticsEvent.AiDraftCompleted.Result.SUCCESS },
+            ),
+        )
+    }
+
+    // 사진을 고르지 않고 나가면 입력이 없는 이탈이라 기존 규칙대로 세지 않는다.
+    private fun leaveAlbum(selectedCount: Int) {
+        sendSideEffect(UploadSideEffect.NavigateBack)
+        if (selectedCount == 0) return
+        analytics.track(
+            AnalyticsEvent.VoteCreateAbandoned(
+                filledFields = listOf("images"),
+                lastStep = null,
+                step = AnalyticsEvent.VoteCreateAbandoned.Step.ALBUM,
+                writingMode = null,
+            ),
+        )
     }
 
     // 초안이 없으면 사진만 둔 채 직접 쓰도록 안내한다.
@@ -175,6 +233,20 @@ class UploadViewModel @Inject constructor(
                 } ?: state
             filled.copy(step = UploadStep.FORM, aiWriting = null)
         }
+        writingMode = if (draft != null) AnalyticsEvent.WritingMode.AI else AnalyticsEvent.WritingMode.AI_FAILED
+        aiFilledValues =
+            if (draft == null) {
+                emptyMap()
+            } else {
+                currentState.let { state ->
+                    buildMap {
+                        if (draft.title != null) put("title", state.title)
+                        if (draft.content != null) put("content", state.content)
+                        if (draft.category != null) state.category?.let { put("category", it.name) }
+                        if (state.price.isNotEmpty() && draft.price != null) put("price", state.price)
+                    }
+                }
+            }
         sendSideEffect(
             if (draft != null) {
                 UploadSideEffect.ShowSnackbar("AI로 글 작성을 완료했어요!", icon = BuyOrNotIcons.CheckCircle)
@@ -290,6 +362,8 @@ class UploadViewModel @Inject constructor(
                         itemId = feedId,
                         voteTitle = currentState.title,
                         optionCount = currentState.selectedImageUris.size,
+                        writingMode = writingMode ?: AnalyticsEvent.WritingMode.MANUAL,
+                        aiEditedFields = aiEditedFields().takeIf { writingMode == AnalyticsEvent.WritingMode.AI },
                     ),
                 )
             }.onFailure { e ->
@@ -298,6 +372,18 @@ class UploadViewModel @Inject constructor(
                 sendSideEffect(UploadSideEffect.ShowSnackbar(message))
             }
         }
+    }
+
+    private fun aiEditedFields(): List<String> {
+        val state = currentState
+        val current =
+            mapOf(
+                "title" to state.title,
+                "content" to state.content,
+                "category" to state.category?.name.orEmpty(),
+                "price" to state.price,
+            )
+        return aiFilledValues.filter { (field, value) -> current[field] != value }.keys.toList()
     }
 
     private suspend fun uploadOnce(uri: Uri): FeedImage =

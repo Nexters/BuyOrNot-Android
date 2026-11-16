@@ -130,7 +130,11 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
 }
 
 class FakeAnalytics : Analytics {
-    override fun track(event: AnalyticsEvent) = Unit
+    val events = mutableListOf<AnalyticsEvent>()
+
+    override fun track(event: AnalyticsEvent) {
+        events += event
+    }
 
     override fun identify(userId: String?) = Unit
 }
