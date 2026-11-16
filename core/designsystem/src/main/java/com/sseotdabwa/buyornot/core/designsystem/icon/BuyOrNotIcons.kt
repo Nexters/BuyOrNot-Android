@@ -36,6 +36,7 @@ object BuyOrNotIcons {
     val Crop = IconResource(R.drawable.ic_crop)
     val Rotate = IconResource(R.drawable.ic_rotate)
     val Pencil = IconResource(R.drawable.ic_pencil)
+    val AiWriting = IconResource(R.drawable.ic_ai_writing)
 
     // 네비게이션 아이콘
     val ArrowLeft = IconResource(R.drawable.ic_arrow_left)

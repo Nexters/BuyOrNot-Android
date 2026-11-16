@@ -2,6 +2,7 @@ package com.sseotdabwa.buyornot.feature.mypage.viewmodel
 
 import com.sseotdabwa.buyornot.domain.model.BlockedUser
 import com.sseotdabwa.buyornot.domain.model.Feed
+import com.sseotdabwa.buyornot.domain.model.FeedAiDraft
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.ImageSource
@@ -126,6 +127,8 @@ class FakeFeedRepository(
         size: Int,
         category: List<String>?,
     ): HotFeedList = error("not used")
+
+    override suspend fun createAiDraft(s3ObjectKeys: List<String>): FeedAiDraft = error("not used")
 
     override suspend fun createFeed(
         category: FeedCategory,

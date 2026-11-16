@@ -1,17 +1,20 @@
 package com.sseotdabwa.buyornot.core.data.repository
 
 import com.sseotdabwa.buyornot.core.network.api.FeedApiService
+import com.sseotdabwa.buyornot.core.network.dto.request.FeedAiDraftRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.FeedRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.VoteRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.AuthorDto
 import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.FeedAiDraftResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.HotFeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.PresignedUrlResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.VoteResponse
+import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import kotlinx.coroutines.test.runTest
 import okhttp3.RequestBody
 import org.junit.Test
@@ -53,6 +56,33 @@ class FeedRepositoryImplTest {
             assertNull(repository.getFeed(1).voteClosedAt)
         }
 
+    @Test
+    fun `AI_초안_요청에_업로드한_key를_싣고_응답을_도메인으로_옮긴다`() =
+        runTest {
+            api.aiDraftResponse = FeedAiDraftResponse(title = "가습기 살까요", content = "건조해요", category = "INTERIOR", price = 29_000)
+
+            val draft = repository.createAiDraft(listOf("feeds/a.jpg", "feeds/b.jpg"))
+
+            assertEquals(listOf("feeds/a.jpg", "feeds/b.jpg"), api.lastAiDraftRequest?.s3ObjectKeys)
+            assertEquals("가습기 살까요", draft.title)
+            assertEquals("건조해요", draft.content)
+            assertEquals(FeedCategory.INTERIOR, draft.category)
+            assertEquals(29_000L, draft.price)
+        }
+
+    @Test
+    fun `AI_초안의_빈_제목과_내용은_만들지_못한_것으로_보고_null로_둔다`() =
+        runTest {
+            api.aiDraftResponse = FeedAiDraftResponse(title = " ", content = "", category = null, price = null)
+
+            val draft = repository.createAiDraft(listOf("feeds/a.jpg"))
+
+            assertNull(draft.title)
+            assertNull(draft.content)
+            assertNull(draft.category)
+            assertNull(draft.price)
+        }
+
     private fun feedItemDto(
         feedId: Long,
         voteClosedAt: String?,
@@ -79,6 +109,13 @@ private class FakeFeedApiService : FeedApiService {
     var lastHotCursor: String? = null
     var lastHotCategory: List<String>? = null
     var feedResponse: FeedItemDto? = null
+    var aiDraftResponse: FeedAiDraftResponse? = null
+    var lastAiDraftRequest: FeedAiDraftRequest? = null
+
+    override suspend fun createAiDraft(request: FeedAiDraftRequest): BaseResponse<FeedAiDraftResponse> {
+        lastAiDraftRequest = request
+        return BaseResponse(data = aiDraftResponse, status = "OK")
+    }
 
     override suspend fun getHotFeedList(
         cursor: String?,

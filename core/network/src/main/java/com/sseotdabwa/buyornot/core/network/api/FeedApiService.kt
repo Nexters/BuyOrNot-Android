@@ -1,9 +1,11 @@
 package com.sseotdabwa.buyornot.core.network.api
 
+import com.sseotdabwa.buyornot.core.network.dto.request.FeedAiDraftRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.FeedRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.VoteRequest
 import com.sseotdabwa.buyornot.core.network.dto.response.BaseResponse
+import com.sseotdabwa.buyornot.core.network.dto.response.FeedAiDraftResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedItemDto
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedListResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.FeedResponse
@@ -92,6 +94,11 @@ interface FeedApiService {
         @Header("Content-Type") contentType: String,
         @Body body: RequestBody,
     ): Response<Unit>
+
+    @POST("/api/v1/feeds/ai-draft")
+    suspend fun createAiDraft(
+        @Body request: FeedAiDraftRequest,
+    ): BaseResponse<FeedAiDraftResponse>
 
     @POST("/api/v2/feeds")
     suspend fun createFeed(

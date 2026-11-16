@@ -1,6 +1,7 @@
 package com.sseotdabwa.buyornot.core.data.repository
 
 import com.sseotdabwa.buyornot.core.network.api.FeedApiService
+import com.sseotdabwa.buyornot.core.network.dto.request.FeedAiDraftRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.FeedImageRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.FeedRequest
 import com.sseotdabwa.buyornot.core.network.dto.request.PresignedUrlRequest
@@ -14,6 +15,7 @@ import com.sseotdabwa.buyornot.core.network.dto.response.VoteResponse
 import com.sseotdabwa.buyornot.core.network.dto.response.getOrThrow
 import com.sseotdabwa.buyornot.domain.model.Author
 import com.sseotdabwa.buyornot.domain.model.Feed
+import com.sseotdabwa.buyornot.domain.model.FeedAiDraft
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
@@ -108,6 +110,19 @@ class FeedRepositoryImpl @Inject constructor(
             throw Exception("S3 업로드 실패: ${response.code()}")
         }
     }
+
+    override suspend fun createAiDraft(s3ObjectKeys: List<String>): FeedAiDraft =
+        feedApiService
+            .createAiDraft(FeedAiDraftRequest(s3ObjectKeys = s3ObjectKeys))
+            .getOrThrow()
+            .let { draft ->
+                FeedAiDraft(
+                    title = draft.title?.takeIf { it.isNotBlank() },
+                    content = draft.content?.takeIf { it.isNotBlank() },
+                    category = draft.category?.toFeedCategory(),
+                    price = draft.price,
+                )
+            }
 
     override suspend fun createFeed(
         category: FeedCategory,
