@@ -75,6 +75,17 @@ class UploadViewModelAiDraftTest {
     }
 
     @Test
+    fun `게시할_수_없는_범위의_가격은_채우지_않는다`() {
+        feedRepository.aiDraft = FeedAiDraft(title = "제목", content = "내용", category = FeedCategory.ETC, price = 3_000_000_000)
+        val viewModel = createViewModel()
+
+        viewModel.handleIntent(UploadIntent.ConfirmAlbum(photos, useAi = true))
+
+        assertEquals("", viewModel.uiState.value.price)
+        assertEquals("제목", viewModel.uiState.value.title)
+    }
+
+    @Test
     fun `초안의_제목과_내용이_모두_없으면_사진만_두고_실패를_알린다`() =
         runTest {
             feedRepository.aiDraft = FeedAiDraft(title = null, content = null, category = FeedCategory.FOOD, price = 5_000)

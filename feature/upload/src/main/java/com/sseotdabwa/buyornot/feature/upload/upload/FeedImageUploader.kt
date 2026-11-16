@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
 import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.ImageSource
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
@@ -46,7 +47,7 @@ internal class ContentResolverFeedImageUploader @Inject constructor(
                     width = width,
                     height = height,
                     bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: throw UnreadableImageException(uri),
-                    contentType = context.contentResolver.getType(uri) ?: "image/jpeg",
+                    contentType = contentType(uri) ?: throw UnreadableImageException(uri),
                     fileName = fileName(uri) ?: "upload_image.jpg",
                 )
             }
@@ -60,6 +61,13 @@ internal class ContentResolverFeedImageUploader @Inject constructor(
             imageHeight = height,
         )
     }
+
+    // 형식을 모르는 사진을 JPEG로 올리면 서버가 잘못된 형식으로 저장하므로, 확장자로도 못 정하면 읽지 못한 것으로 본다.
+    private fun contentType(uri: Uri): String? =
+        context.contentResolver.getType(uri)
+            ?: MimeTypeMap.getFileExtensionFromUrl(uri.toString())?.lowercase()?.let {
+                MimeTypeMap.getSingleton().getMimeTypeFromExtension(it)
+            }
 
     private fun fileName(uri: Uri): String? =
         context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->

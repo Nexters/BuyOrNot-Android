@@ -54,7 +54,6 @@ class UploadViewModel @Inject constructor(
     companion object {
         private const val MAX_TITLE_LENGTH = 40
         private const val MAX_CONTENT_LENGTH = 100
-        private const val MAX_PRICE_DIGITS = 10
     }
 
     override fun handleIntent(intent: UploadIntent) {
@@ -160,7 +159,8 @@ class UploadViewModel @Inject constructor(
         updateState { state ->
             val filled =
                 draft?.let {
-                    val price = it.price?.toString()?.takeIf { digits -> digits.length <= MAX_PRICE_DIGITS }
+                    // 게시할 때 Int로 보내므로 그 범위를 넘는 가격은 채우지 않는다.
+                    val price = it.price?.takeIf { value -> value in 1..Int.MAX_VALUE }?.toString()
                     state.copy(
                         title = it.title?.take(MAX_TITLE_LENGTH) ?: state.title,
                         content = it.content?.take(MAX_CONTENT_LENGTH) ?: state.content,

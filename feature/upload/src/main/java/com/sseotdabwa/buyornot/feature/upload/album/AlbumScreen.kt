@@ -77,6 +77,7 @@ internal fun AlbumRoute(
     viewModel: AlbumViewModel,
     onBack: () -> Unit,
     onConfirm: (uris: List<Uri>, useAi: Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -136,6 +137,7 @@ internal fun AlbumRoute(
         }
 
     AlbumScreen(
+        modifier = modifier,
         uiState = uiState,
         onBack = onBack,
         onConfirm = { onConfirm(uiState.selected, uiState.useAi) },

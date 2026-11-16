@@ -64,6 +64,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -168,6 +170,8 @@ fun UploadRoute(
         }
         Box(modifier = modifier) {
             AlbumRoute(
+                // 팝업은 터치만 막으므로, 작성 중에는 보조 기술이 뒤의 앨범 버튼에 닿지 않게 숨긴다.
+                modifier = if (aiWriting != null) Modifier.semantics { hideFromAccessibility() } else Modifier,
                 viewModel = albumViewModel,
                 onBack = { viewModel.handleIntent(UploadIntent.NavigateBack) },
                 onConfirm = { uris, useAi -> viewModel.handleIntent(UploadIntent.ConfirmAlbum(uris, useAi)) },

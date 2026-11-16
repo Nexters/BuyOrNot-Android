@@ -24,11 +24,15 @@ data class Gallery(
     val buckets: List<GalleryBucket>,
 )
 
-/** 기기 사진을 최근에 추가한 순서로 읽는다. 읽기 권한이 있어야 하고, 일부만 허용됐으면 허용된 사진만 나온다. */
-class GallerySource @Inject constructor(
+interface GallerySource {
+    /** 기기 사진을 최근에 추가한 순서로 읽는다. 읽기 권한이 있어야 하고, 일부만 허용됐으면 허용된 사진만 나온다. */
+    suspend fun load(): Gallery
+}
+
+internal class MediaStoreGallerySource @Inject constructor(
     @ApplicationContext private val context: Context,
-) {
-    suspend fun load(): Gallery =
+) : GallerySource {
+    override suspend fun load(): Gallery =
         withContext(Dispatchers.IO) {
             val projection =
                 arrayOf(
