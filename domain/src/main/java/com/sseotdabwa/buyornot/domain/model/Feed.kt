@@ -1,5 +1,8 @@
 package com.sseotdabwa.buyornot.domain.model
 
+/** 피드 하나에 올릴 수 있는 사진 수. 서버의 피드 등록·AI 초안 검증과 같다. */
+const val MAX_FEED_IMAGE_COUNT = 3
+
 /**
  * 피드 이미지 도메인 모델
  */

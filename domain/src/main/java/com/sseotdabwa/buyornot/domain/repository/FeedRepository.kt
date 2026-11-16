@@ -1,8 +1,10 @@
 package com.sseotdabwa.buyornot.domain.repository
 
 import com.sseotdabwa.buyornot.domain.model.Feed
+import com.sseotdabwa.buyornot.domain.model.FeedAiDraft
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
+import com.sseotdabwa.buyornot.domain.model.MAX_FEED_IMAGE_COUNT
 import com.sseotdabwa.buyornot.domain.model.UploadInfo
 import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.model.VoteResult
@@ -94,6 +96,13 @@ interface FeedRepository {
         bytes: ByteArray,
         contentType: String,
     )
+
+    /**
+     * 업로드한 사진으로 투표 글 초안을 만든다.
+     *
+     * @param s3ObjectKeys [getPresignedUrl]로 받아 업로드를 마친 key. 1장 이상 [MAX_FEED_IMAGE_COUNT]장 이하.
+     */
+    suspend fun createAiDraft(s3ObjectKeys: List<String>): FeedAiDraft
 
     suspend fun createFeed(
         category: FeedCategory,

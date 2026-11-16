@@ -1,8 +1,8 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
-import android.content.Context
 import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
+import com.sseotdabwa.buyornot.core.designsystem.icon.IconResource
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 
@@ -12,7 +12,25 @@ data class ImageEntry(
     val editSpec: EditSpec = EditSpec(),
 )
 
+enum class UploadStep {
+    ALBUM,
+    FORM,
+}
+
+/** AI 글 작성 진행 단계. 사진을 올린 뒤 초안 API의 응답을 기다린다. */
+enum class AiWritingPhase {
+    UPLOADING,
+    DRAFTING,
+}
+
+data class AiWriting(
+    val imageCount: Int,
+    val phase: AiWritingPhase,
+)
+
 data class UploadUiState(
+    val step: UploadStep = UploadStep.ALBUM,
+    val aiWriting: AiWriting? = null,
     val isLoading: Boolean = false,
     val selectedImages: List<ImageEntry> = emptyList(),
     val cropQueue: List<Uri> = emptyList(),
@@ -76,6 +94,14 @@ sealed interface UploadIntent {
         val content: String,
     ) : UploadIntent
 
+    data class ConfirmAlbum(
+        val uris: List<Uri>,
+        val useAi: Boolean,
+    ) : UploadIntent
+
+    /** AI 글 작성을 그만두고 앨범에서 사진을 다시 고른다. */
+    data object CancelAiWriting : UploadIntent
+
     data class StartCropQueue(
         val uris: List<Uri>,
     ) : UploadIntent
@@ -95,9 +121,7 @@ sealed interface UploadIntent {
         val index: Int,
     ) : UploadIntent
 
-    data class Submit(
-        val context: Context,
-    ) : UploadIntent
+    data object Submit : UploadIntent
 
     data class UpdateCategorySheetVisibility(
         val isVisible: Boolean,
@@ -117,6 +141,7 @@ sealed interface UploadIntent {
 sealed interface UploadSideEffect {
     data class ShowSnackbar(
         val message: String,
+        val icon: IconResource? = null,
     ) : UploadSideEffect
 
     data class LaunchCrop(

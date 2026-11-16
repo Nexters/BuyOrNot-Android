@@ -1,2 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="com.sseotdabwa.buyornot.feature.upload" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.sseotdabwa.buyornot.feature.upload">
+
+    <!-- 투표 등록 첫 화면이 기기 사진을 직접 보여주는 앨범이라 사진 읽기 권한이 필요하다. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+</manifest>

@@ -15,6 +15,7 @@ import com.sseotdabwa.buyornot.domain.model.CommentReplyPage
 import com.sseotdabwa.buyornot.domain.model.CommentSort
 import com.sseotdabwa.buyornot.domain.model.CommentThread
 import com.sseotdabwa.buyornot.domain.model.Feed
+import com.sseotdabwa.buyornot.domain.model.FeedAiDraft
 import com.sseotdabwa.buyornot.domain.model.FeedCategory
 import com.sseotdabwa.buyornot.domain.model.FeedImage
 import com.sseotdabwa.buyornot.domain.model.FeedStatus
@@ -160,6 +161,8 @@ class FakeFeedRepository(
         bytes: ByteArray,
         contentType: String,
     ) = error("not used")
+
+    override suspend fun createAiDraft(s3ObjectKeys: List<String>): FeedAiDraft = error("not used")
 
     override suspend fun createFeed(
         category: FeedCategory,

@@ -1,11 +1,8 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
 import android.Manifest
-import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
-import android.provider.MediaStore
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -42,6 +39,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,6 +64,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -91,6 +91,10 @@ import com.sseotdabwa.buyornot.core.designsystem.shape.BubbleShape
 import com.sseotdabwa.buyornot.core.designsystem.theme.BuyOrNotTheme
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
+import com.sseotdabwa.buyornot.domain.model.MAX_FEED_IMAGE_COUNT
+import com.sseotdabwa.buyornot.feature.upload.album.AlbumRoute
+import com.sseotdabwa.buyornot.feature.upload.album.AlbumViewModel
+import com.sseotdabwa.buyornot.feature.upload.util.createCameraPhotoUri
 import java.text.DecimalFormat
 
 @Composable
@@ -100,6 +104,7 @@ fun UploadRoute(
     onNavigateToHomeReview: () -> Unit = {},
     onNavigateToCrop: (Uri, EditSpec) -> Unit = { _, _ -> },
     viewModel: UploadViewModel = hiltViewModel(),
+    albumViewModel: AlbumViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarState = LocalSnackbarState.current
@@ -108,7 +113,7 @@ fun UploadRoute(
     LaunchedEffect(Unit) {
         viewModel.sideEffect.collect { sideEffect ->
             when (sideEffect) {
-                is UploadSideEffect.ShowSnackbar -> snackbarState.show(sideEffect.message)
+                is UploadSideEffect.ShowSnackbar -> snackbarState.show(sideEffect.message, icon = sideEffect.icon)
                 is UploadSideEffect.NavigateBack -> onNavigateBack()
                 is UploadSideEffect.NavigateToHomeReview -> onNavigateToHomeReview()
                 is UploadSideEffect.LaunchCrop -> onNavigateToCrop(sideEffect.uri, sideEffect.editSpec)
@@ -118,25 +123,9 @@ fun UploadRoute(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    var photoUri by remember { mutableStateOf<Uri?>(null) }
+    var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
 
-    val insertPhotoUri: () -> Uri? = {
-        val contentValues =
-            ContentValues().apply {
-                put(
-                    MediaStore.Images.Media.DISPLAY_NAME,
-                    "buyornot_${System.currentTimeMillis()}.jpg",
-                )
-                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/BuyOrNot")
-                }
-            }
-        context.contentResolver.insert(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            contentValues,
-        )
-    }
+    val insertPhotoUri: () -> Uri? = { createCameraPhotoUri(context) }
 
     val cameraLauncher =
         rememberLauncherForActivityResult(
@@ -168,18 +157,36 @@ fun UploadRoute(
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 3),
+            contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = MAX_FEED_IMAGE_COUNT),
         ) { uris: List<Uri> ->
             if (uris.isNotEmpty()) viewModel.handleIntent(UploadIntent.StartCropQueue(uris))
             keyboardController?.hide()
         }
+
+    if (uiState.step == UploadStep.ALBUM) {
+        val aiWriting = uiState.aiWriting
+        BackHandler {
+            viewModel.handleIntent(if (aiWriting == null) UploadIntent.NavigateBack else UploadIntent.CancelAiWriting)
+        }
+        Box(modifier = modifier) {
+            AlbumRoute(
+                // 팝업은 터치만 막으므로, 작성 중에는 보조 기술이 뒤의 앨범 버튼에 닿지 않게 숨긴다.
+                modifier = if (aiWriting != null) Modifier.semantics { hideFromAccessibility() } else Modifier,
+                viewModel = albumViewModel,
+                onBack = { viewModel.handleIntent(UploadIntent.NavigateBack) },
+                onConfirm = { uris, useAi -> viewModel.handleIntent(UploadIntent.ConfirmAlbum(uris, useAi)) },
+            )
+            if (aiWriting != null) AiWritingPopup(aiWriting = aiWriting)
+        }
+        return
+    }
 
     UploadScreen(
         modifier = modifier,
         uiState = uiState,
         onIntent = viewModel::handleIntent,
         onPickImage = {
-            if (uiState.selectedImages.size < 3) {
+            if (uiState.selectedImages.size < MAX_FEED_IMAGE_COUNT) {
                 viewModel.handleIntent(UploadIntent.UpdatePhotoPickerSheetVisibility(true))
             }
         },
@@ -188,7 +195,7 @@ fun UploadRoute(
         },
         onSubmit = {
             keyboardController?.hide()
-            viewModel.handleIntent(UploadIntent.Submit(context))
+            viewModel.handleIntent(UploadIntent.Submit)
         },
     )
 
@@ -377,7 +384,7 @@ fun UploadScreen(
                         tint = BuyOrNotTheme.colors.gray800,
                     )
                     Text(
-                        text = "${uiState.selectedImages.size}/3",
+                        text = "${uiState.selectedImages.size}/$MAX_FEED_IMAGE_COUNT",
                         style = BuyOrNotTheme.typography.subTitleS5SemiBold,
                         color = BuyOrNotTheme.colors.gray800,
                     )
@@ -607,9 +614,15 @@ private fun ContentInputField(
     Column(
         modifier = Modifier.fillMaxWidth(),
     ) {
+        var titleFieldValue by rememberEndCursorFieldValue(title)
         BasicTextField(
-            value = title,
-            onValueChange = { if (it.length <= 40) onTitleChange(it) },
+            value = titleFieldValue,
+            onValueChange = {
+                if (it.text.length <= 40) {
+                    titleFieldValue = it
+                    onTitleChange(it.text)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             textStyle =
                 BuyOrNotTheme.typography.titleT2Bold.copy(
@@ -630,9 +643,15 @@ private fun ContentInputField(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        var contentFieldValue by rememberEndCursorFieldValue(content)
         BasicTextField(
-            value = content,
-            onValueChange = { if (it.length <= 100) onContentChange(it) },
+            value = contentFieldValue,
+            onValueChange = {
+                if (it.text.length <= 100) {
+                    contentFieldValue = it
+                    onContentChange(it.text)
+                }
+            },
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -665,6 +684,14 @@ private fun ContentInputField(
     }
 }
 
+// AI 초안처럼 입력 밖에서 글이 바뀌면 이어 쓰기 쉽게 커서를 글 끝에 둔다.
+@Composable
+private fun rememberEndCursorFieldValue(text: String): MutableState<TextFieldValue> {
+    val state = remember { mutableStateOf(TextFieldValue(text, TextRange(text.length))) }
+    if (state.value.text != text) state.value = TextFieldValue(text, TextRange(text.length))
+    return state
+}
+
 @Composable
 private fun ImagePickerRow(
     selectedImages: List<ImageEntry>,
@@ -677,7 +704,7 @@ private fun ImagePickerRow(
     ) {
         CameraButton(
             selectedCount = selectedImages.size,
-            enabled = selectedImages.size < 3,
+            enabled = selectedImages.size < MAX_FEED_IMAGE_COUNT,
             onClick = onPickImage,
         )
 
@@ -719,7 +746,7 @@ private fun CameraButton(
                 tint = BuyOrNotTheme.colors.gray600,
             )
             Text(
-                text = "$selectedCount/3",
+                text = "$selectedCount/$MAX_FEED_IMAGE_COUNT",
                 style = BuyOrNotTheme.typography.subTitleS5SemiBold,
                 color = BuyOrNotTheme.colors.gray600,
             )

@@ -1,24 +1,30 @@
 package com.sseotdabwa.buyornot.feature.upload.ui
 
-import android.content.Context
-import android.graphics.BitmapFactory
 import android.net.Uri
-import android.provider.OpenableColumns
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import com.sseotdabwa.buyornot.core.analytics.Analytics
 import com.sseotdabwa.buyornot.core.analytics.AnalyticsEvent
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
+import com.sseotdabwa.buyornot.core.designsystem.icon.BuyOrNotIcons
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.core.ui.crop.state.EditSpec
+import com.sseotdabwa.buyornot.domain.model.FeedAiDraft
 import com.sseotdabwa.buyornot.domain.model.FeedImage
-import com.sseotdabwa.buyornot.domain.model.ImageSource
+import com.sseotdabwa.buyornot.domain.model.MAX_FEED_IMAGE_COUNT
 import com.sseotdabwa.buyornot.domain.model.UserType
 import com.sseotdabwa.buyornot.domain.repository.FeedRepository
 import com.sseotdabwa.buyornot.domain.repository.UserPreferencesRepository
+import com.sseotdabwa.buyornot.feature.upload.upload.FeedImageUploader
+import com.sseotdabwa.buyornot.feature.upload.upload.UnreadableImageException
 import com.sseotdabwa.buyornot.feature.upload.util.LinkValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.text.DecimalFormat
 import javax.inject.Inject
 
 @HiltViewModel
@@ -26,6 +32,7 @@ class UploadViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
     private val analytics: Analytics,
+    private val feedImageUploader: FeedImageUploader,
 ) : BaseViewModel<UploadUiState, UploadIntent, UploadSideEffect>(UploadUiState()) {
     init {
         viewModelScope.launch {
@@ -39,8 +46,12 @@ class UploadViewModel @Inject constructor(
         }
     }
 
+    // AI 초안을 만들려고 미리 올린 사진. 게시할 때 같은 사진을 다시 올리지 않으려고 화면에 보이는 Uri로 찾는다.
+    private val uploadedImages = mutableMapOf<Uri, FeedImage>()
+
+    private var aiWritingJob: Job? = null
+
     companion object {
-        private const val MAX_IMAGE_COUNT = 3
         private const val MAX_TITLE_LENGTH = 40
         private const val MAX_CONTENT_LENGTH = 100
     }
@@ -67,6 +78,8 @@ class UploadViewModel @Inject constructor(
                     updateState { it.copy(content = intent.content, lastTouchedField = "content") }
                 }
             }
+            is UploadIntent.ConfirmAlbum -> confirmAlbum(intent.uris, intent.useAi)
+            UploadIntent.CancelAiWriting -> cancelAiWriting()
             is UploadIntent.StartCropQueue -> startCropQueue(intent.uris)
             is UploadIntent.CropConfirmed -> onCropConfirmed(intent.croppedUri, intent.editSpec)
             is UploadIntent.CropSkipped -> onCropSkipped()
@@ -75,7 +88,7 @@ class UploadViewModel @Inject constructor(
                 updateState {
                     it.copy(selectedImages = it.selectedImages.filterIndexed { i, _ -> i != intent.index })
                 }
-            is UploadIntent.Submit -> submitFeed(intent.context)
+            UploadIntent.Submit -> submitFeed()
             is UploadIntent.UpdateCategorySheetVisibility ->
                 updateState {
                     it.copy(showCategorySheet = intent.isVisible)
@@ -105,11 +118,77 @@ class UploadViewModel @Inject constructor(
         }
     }
 
+    private fun confirmAlbum(
+        uris: List<Uri>,
+        useAi: Boolean,
+    ) {
+        if (uris.isEmpty() || currentState.aiWriting != null) return
+        val images = uris.take(MAX_FEED_IMAGE_COUNT).map { ImageEntry(originalUri = it, displayUri = it) }
+        if (!useAi) {
+            updateState { it.copy(step = UploadStep.FORM, selectedImages = images) }
+            return
+        }
+        updateState {
+            it.copy(selectedImages = images, aiWriting = AiWriting(imageCount = images.size, phase = AiWritingPhase.UPLOADING))
+        }
+        aiWritingJob =
+            viewModelScope.launch {
+                runCatchingCancellable {
+                    val uploaded = images.map { uploadOnce(it.displayUri) }
+                    updateState { it.copy(aiWriting = it.aiWriting?.copy(phase = AiWritingPhase.DRAFTING)) }
+                    feedRepository.createAiDraft(uploaded.map { it.s3ObjectKey })
+                }.onSuccess { draft ->
+                    // 제목과 내용이 모두 없으면 서버가 초안을 만들지 못한 것이다.
+                    finishAiWriting(draft = draft.takeIf { it.title != null || it.content != null })
+                }.onFailure { e ->
+                    Timber.e(e, "Failed to create AI draft")
+                    finishAiWriting(draft = null)
+                }
+            }
+    }
+
+    // 이미 올린 사진은 다시 확인하면 그대로 쓴다.
+    private fun cancelAiWriting() {
+        aiWritingJob?.cancel()
+        aiWritingJob = null
+        updateState { it.copy(aiWriting = null, selectedImages = emptyList()) }
+    }
+
+    // 초안이 없으면 사진만 둔 채 직접 쓰도록 안내한다.
+    private fun finishAiWriting(draft: FeedAiDraft?) {
+        updateState { state ->
+            val filled =
+                draft?.let {
+                    // 게시할 때 Int로 보내므로 그 범위를 넘는 가격은 채우지 않는다.
+                    val price = it.price?.takeIf { value -> value in 1..Int.MAX_VALUE }?.toString()
+                    state.copy(
+                        title = it.title?.take(MAX_TITLE_LENGTH) ?: state.title,
+                        content = it.content?.take(MAX_CONTENT_LENGTH) ?: state.content,
+                        category = it.category ?: state.category,
+                        price = price ?: state.price,
+                        priceFieldValue =
+                            price?.let { digits ->
+                                val formatted = DecimalFormat("#,###").format(digits.toLong())
+                                TextFieldValue(text = formatted, selection = TextRange(formatted.length))
+                            } ?: state.priceFieldValue,
+                    )
+                } ?: state
+            filled.copy(step = UploadStep.FORM, aiWriting = null)
+        }
+        sendSideEffect(
+            if (draft != null) {
+                UploadSideEffect.ShowSnackbar("AI로 글 작성을 완료했어요!", icon = BuyOrNotIcons.CheckCircle)
+            } else {
+                UploadSideEffect.ShowSnackbar("AI 글 작성을 실패했어요. 내용을 입력해 주세요.")
+            },
+        )
+    }
+
     private fun startCropQueue(uris: List<Uri>) {
-        val remaining = MAX_IMAGE_COUNT - currentState.selectedImages.size
+        val remaining = MAX_FEED_IMAGE_COUNT - currentState.selectedImages.size
         val queue = uris.take(remaining)
         val hasOverflow = queue.size < uris.size
-        if (hasOverflow) sendSideEffect(UploadSideEffect.ShowSnackbar("최대 ${MAX_IMAGE_COUNT}장까지 추가할 수 있어요"))
+        if (hasOverflow) sendSideEffect(UploadSideEffect.ShowSnackbar("최대 ${MAX_FEED_IMAGE_COUNT}장까지 추가할 수 있어요"))
         if (queue.isEmpty()) return
         val first = queue.first()
         updateState { it.copy(cropQueue = queue.drop(1), currentCropOriginal = first, recropIndex = null) }
@@ -172,7 +251,7 @@ class UploadViewModel @Inject constructor(
         sendSideEffect(UploadSideEffect.LaunchCrop(entry.originalUri, entry.editSpec))
     }
 
-    private fun submitFeed(context: Context) {
+    private fun submitFeed() {
         if (currentState.isLoading) return
 
         val title = currentState.title.trim().takeIf { it.isNotBlank() }
@@ -192,31 +271,8 @@ class UploadViewModel @Inject constructor(
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
 
-            val dimensionMap = uris.associateWith { getImageDimensions(context, it) }
-            if (dimensionMap.values.any { (w, h) -> w <= 0 || h <= 0 }) {
-                updateState { it.copy(isLoading = false) }
-                sendSideEffect(UploadSideEffect.ShowSnackbar("이미지를 읽을 수 없습니다."))
-                return@launch
-            }
-
             runCatchingCancellable {
-                val feedImages =
-                    uris.map { uri ->
-                        val (width, height) = dimensionMap.getValue(uri)
-                        val contentType = context.contentResolver.getType(uri) ?: "image/jpeg"
-                        val fileName = getFileName(context, uri) ?: "upload_image.jpg"
-                        val uploadInfo = feedRepository.getPresignedUrl(fileName, contentType)
-                        val bytes =
-                            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                                ?: throw Exception("파일을 읽을 수 없습니다.")
-                        feedRepository.uploadImage(uploadInfo.uploadUrl, bytes, contentType)
-                        FeedImage(
-                            s3ObjectKey = uploadInfo.s3ObjectKey,
-                            image = ImageSource(uploadInfo.viewUrl),
-                            imageWidth = width,
-                            imageHeight = height,
-                        )
-                    }
+                val feedImages = uris.map { uploadOnce(it) }
 
                 feedRepository.createFeed(
                     category = category,
@@ -236,39 +292,14 @@ class UploadViewModel @Inject constructor(
                         optionCount = currentState.selectedImageUris.size,
                     ),
                 )
-            }.onFailure {
+            }.onFailure { e ->
                 updateState { it.copy(isLoading = false) }
-                sendSideEffect(UploadSideEffect.ShowSnackbar("업로드에 실패했습니다."))
+                val message = if (e is UnreadableImageException) "이미지를 읽을 수 없습니다." else "업로드에 실패했습니다."
+                sendSideEffect(UploadSideEffect.ShowSnackbar(message))
             }
         }
     }
 
-    private fun getFileName(
-        context: Context,
-        uri: Uri,
-    ): String? {
-        var name: String? = null
-        val cursor = context.contentResolver.query(uri, null, null, null, null)
-        cursor?.use {
-            if (it.moveToFirst()) {
-                val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (nameIndex != -1) name = it.getString(nameIndex)
-            }
-        }
-        return name
-    }
-
-    private fun getImageDimensions(
-        context: Context,
-        uri: Uri,
-    ): Pair<Int, Int> =
-        try {
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                BitmapFactory.decodeStream(inputStream, null, options)
-                options.outWidth to options.outHeight
-            } ?: (0 to 0)
-        } catch (e: Exception) {
-            0 to 0
-        }
+    private suspend fun uploadOnce(uri: Uri): FeedImage =
+        uploadedImages[uri] ?: feedImageUploader.upload(uri).also { uploadedImages[uri] = it }
 }
