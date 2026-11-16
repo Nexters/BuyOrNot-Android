@@ -62,6 +62,23 @@ class UploadViewModelAnalyticsTest {
     }
 
     @Test
+    fun `게시_요청_중에_고친_입력은_완료_이벤트에_반영하지_않는다`() {
+        feedRepository.aiDraft = FeedAiDraft(title = "가습기 살까요", content = "건조해요", category = FeedCategory.INTERIOR, price = 29_000)
+        val gate = CompletableDeferred<Unit>()
+        feedRepository.beforeCreateFeed = { gate.await() }
+        val viewModel = createViewModel()
+        viewModel.handleIntent(UploadIntent.ConfirmAlbum(photos, useAi = true))
+
+        viewModel.handleIntent(UploadIntent.Submit)
+        viewModel.handleIntent(UploadIntent.UpdateTitle("요청 중에 바꾼 제목"))
+        gate.complete(Unit)
+
+        val completed = events<AnalyticsEvent.VoteCreateCompleted>().single()
+        assertEquals("가습기 살까요", completed.voteTitle)
+        assertEquals(emptyList(), completed.aiEditedFields)
+    }
+
+    @Test
     fun `AI_초안을_받지_못한_채_등록_화면에서_나가면_AI_실패_작성으로_이탈을_남긴다`() {
         feedRepository.aiDraftError = IllegalStateException("timeout")
         val viewModel = createViewModel()

@@ -339,6 +339,10 @@ class UploadViewModel @Inject constructor(
         val category = currentState.category ?: return
         val price = currentState.price.toIntOrNull() ?: return
         val content = currentState.content
+        // 요청 중에도 입력을 고칠 수 있어, 서버로 보내는 값과 같은 시점의 상태로 완료 이벤트를 만든다.
+        val submittedTitle = currentState.title
+        val submittedWritingMode = writingMode ?: AnalyticsEvent.WritingMode.MANUAL
+        val submittedAiEditedFields = aiEditedFields().takeIf { submittedWritingMode == AnalyticsEvent.WritingMode.AI }
 
         viewModelScope.launch {
             updateState { it.copy(isLoading = true) }
@@ -360,10 +364,10 @@ class UploadViewModel @Inject constructor(
                 analytics.track(
                     AnalyticsEvent.VoteCreateCompleted(
                         itemId = feedId,
-                        voteTitle = currentState.title,
-                        optionCount = currentState.selectedImageUris.size,
-                        writingMode = writingMode ?: AnalyticsEvent.WritingMode.MANUAL,
-                        aiEditedFields = aiEditedFields().takeIf { writingMode == AnalyticsEvent.WritingMode.AI },
+                        voteTitle = submittedTitle,
+                        optionCount = uris.size,
+                        writingMode = submittedWritingMode,
+                        aiEditedFields = submittedAiEditedFields,
                     ),
                 )
             }.onFailure { e ->
