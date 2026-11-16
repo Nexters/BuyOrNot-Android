@@ -51,6 +51,9 @@ class FakeFeedRepository : FeedRepository {
     val aiDraftRequests = mutableListOf<List<String>>()
     val createdFeeds = mutableListOf<CreatedFeed>()
 
+    /** 게시 응답을 붙잡아 두고 싶을 때 바꿔 끼운다. */
+    var beforeCreateFeed: suspend () -> Unit = {}
+
     override val feedCreatedRevision: StateFlow<Long> = MutableStateFlow(0L)
 
     override suspend fun createAiDraft(s3ObjectKeys: List<String>): FeedAiDraft {
@@ -68,6 +71,7 @@ class FakeFeedRepository : FeedRepository {
         title: String?,
         link: String?,
     ): Long {
+        beforeCreateFeed()
         createdFeeds += CreatedFeed(category, price, content, images.map { it.s3ObjectKey }, title)
         return 1L
     }
@@ -130,7 +134,11 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
 }
 
 class FakeAnalytics : Analytics {
-    override fun track(event: AnalyticsEvent) = Unit
+    val events = mutableListOf<AnalyticsEvent>()
+
+    override fun track(event: AnalyticsEvent) {
+        events += event
+    }
 
     override fun identify(userId: String?) = Unit
 }

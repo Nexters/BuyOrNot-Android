@@ -66,12 +66,28 @@ internal fun AnalyticsEvent.toMixpanelEvent(): Pair<String, JSONObject> {
                 props.put("item_id", itemId)
                 props.put("vote_title", voteTitle)
                 props.put("option_count", optionCount)
+                props.put("writing_mode", writingMode)
+                if (aiEditedFields != null) props.put("ai_edited_fields", JSONArray(aiEditedFields))
                 "vote_create_completed"
             }
             is AnalyticsEvent.VoteCreateAbandoned -> {
                 props.put("filled_fields", JSONArray(filledFields))
                 if (lastStep != null) props.put("last_step", lastStep)
+                props.put("step", step)
+                if (writingMode != null) props.put("writing_mode", writingMode)
                 "vote_create_abandoned"
+            }
+            is AnalyticsEvent.VoteCreatePhotosConfirmed -> {
+                props.put("image_count", imageCount)
+                props.put("use_ai", useAi)
+                "vote_create_photos_confirmed"
+            }
+            is AnalyticsEvent.AiDraftCompleted -> {
+                props.put("result", result)
+                props.put("image_count", imageCount)
+                props.put("duration_ms", durationMs)
+                if (filledFields != null) props.put("filled_fields", JSONArray(filledFields))
+                "ai_draft_completed"
             }
             is AnalyticsEvent.PushOpened -> {
                 props.put("push_type", pushType)
