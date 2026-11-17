@@ -46,11 +46,12 @@ import com.sseotdabwa.buyornot.core.ui.permission.openAppSettings
 import com.sseotdabwa.buyornot.core.ui.permission.rememberNotificationPermission
 import com.sseotdabwa.buyornot.core.ui.snackbar.LocalSnackbarState
 import com.sseotdabwa.buyornot.domain.model.NotificationFilter
+import com.sseotdabwa.buyornot.domain.model.NotificationType
 
 @Composable
 fun NotificationRoute(
     onBackClick: () -> Unit,
-    onNotificationClick: (Long, Long) -> Unit,
+    onNotificationClick: (notificationId: Long, feedId: Long, commentId: Long?) -> Unit,
     viewModel: NotificationViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -92,7 +93,7 @@ fun NotificationRoute(
                     )
                 }
                 is NotificationSideEffect.NavigateToNotificationDetail -> {
-                    onNotificationClick(sideEffect.notificationId, sideEffect.feedId)
+                    onNotificationClick(sideEffect.notificationId, sideEffect.feedId, sideEffect.commentId)
                 }
             }
         }
@@ -164,6 +165,7 @@ fun NotificationScreen(
                 Spacer(modifier = Modifier.height(20.dp))
                 NotificationFilterRow(
                     selectedFilter = uiState.selectedFilter,
+                    unreadFilters = uiState.unreadFilters,
                     onFilterSelected = { filter ->
                         onIntent(NotificationIntent.OnFilterSelected(filter))
                     },
@@ -235,15 +237,12 @@ fun NotificationScreen(
                     key = { it.id },
                 ) { notification ->
                     NotificationItem(
-                        id = notification.id,
                         image = notification.image,
-                        label = notification.title,
-                        message = notification.description,
+                        headline = notification.headline,
+                        message = notification.message,
                         time = notification.time,
                         isRead = notification.isRead,
-                        onClick = {
-                            onIntent(NotificationIntent.OnNotificationClick(notification.id, notification.feedId))
-                        },
+                        onClick = { onIntent(NotificationIntent.OnNotificationClick(notification)) },
                     )
 
                     BuyOrNotDivider(
@@ -280,6 +279,7 @@ fun NotificationScreen(
 @Composable
 private fun NotificationFilterRow(
     selectedFilter: NotificationFilter,
+    unreadFilters: Set<NotificationFilter>,
     onFilterSelected: (NotificationFilter) -> Unit,
 ) {
     val filters = NotificationFilter.entries
@@ -295,11 +295,13 @@ private fun NotificationFilterRow(
                     NotificationFilter.ALL -> "전체"
                     NotificationFilter.MY_VOTE -> "내가 올린 투표"
                     NotificationFilter.PARTICIPATED -> "참여한 투표"
+                    NotificationFilter.COMMENT -> "댓글"
                 }
             BuyOrNotChip(
                 text = filterText,
                 isSelected = selectedFilter == filter,
                 onClick = { onFilterSelected(filter) },
+                showDotBadge = filter in unreadFilters,
             )
         }
     }
@@ -322,25 +324,29 @@ private fun NotificationScreenPreview() {
         NotificationScreen(
             uiState =
                 NotificationUiState(
-                    notifications =
+                    allNotifications =
                         listOf(
                             NotificationItem(
                                 id = 1L,
                                 feedId = 101L,
+                                commentId = null,
+                                type = NotificationType.MY_FEED_CLOSED,
                                 image = PreviewImages.square,
-                                title = "투표 종료",
-                                description = "78% '애매하긴 해!'",
-                                time = "2시간 전",
-                                isRead = false,
+                                headline = "록시땅 바디로션",
+                                message = "‘애매하긴 해..’ 승!",
+                                time = "3일 전",
+                                isRead = true,
                             ),
                             NotificationItem(
                                 id = 2L,
                                 feedId = 102L,
+                                commentId = 7L,
+                                type = NotificationType.COMMENT_REPLIED,
                                 image = PreviewImages.square,
-                                title = "투표 종료",
-                                description = "56% '사! 가즈아!'",
-                                time = "3시간 전",
-                                isRead = true,
+                                headline = "록시땅 바디로션",
+                                message = "‘그래서 결국 사셨나요?’",
+                                time = null,
+                                isRead = false,
                             ),
                         ),
                 ),

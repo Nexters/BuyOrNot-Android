@@ -62,6 +62,8 @@ data class NotificationDetailUiState(
     val reportingComment: CommentTarget? = null,
     /** 댓글 진입점으로 들어왔을 때 댓글 영역으로 한 번 스크롤한다. */
     val pendingScrollToComments: Boolean = false,
+    /** [pendingScrollToComments]로 스크롤할 때 댓글 영역 머리 대신 이 원댓글로 간다. */
+    val pendingScrollCommentId: Long? = null,
     /** [의견 남기기]로 들어왔을 때 입력창에 한 번 포커스한다. */
     val pendingFocusCommentInput: Boolean = false,
 ) {

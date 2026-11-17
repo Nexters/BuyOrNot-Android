@@ -366,8 +366,10 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
     override suspend fun updateProfileImage(newImage: ImageSource) = Unit
 }
 
-class FakeNotificationRepository : NotificationRepository {
-    override suspend fun getNotifications(type: String?): List<Notification> = emptyList()
+class FakeNotificationRepository(
+    private val notifications: List<Notification> = emptyList(),
+) : NotificationRepository {
+    override suspend fun getNotifications(): List<Notification> = notifications
 
     override suspend fun markAsRead(notificationId: Long) = Unit
 

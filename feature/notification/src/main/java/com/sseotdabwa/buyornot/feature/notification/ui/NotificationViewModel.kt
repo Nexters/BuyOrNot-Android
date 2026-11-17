@@ -5,7 +5,10 @@ import com.sseotdabwa.buyornot.core.common.util.TimeUtils
 import com.sseotdabwa.buyornot.core.common.util.runCatchingCancellable
 import com.sseotdabwa.buyornot.core.ui.base.BaseViewModel
 import com.sseotdabwa.buyornot.core.ui.image.toImageModel
+import com.sseotdabwa.buyornot.domain.model.Notification
 import com.sseotdabwa.buyornot.domain.model.NotificationFilter
+import com.sseotdabwa.buyornot.domain.model.NotificationType
+import com.sseotdabwa.buyornot.domain.model.VoteChoice
 import com.sseotdabwa.buyornot.domain.repository.AppPreferencesRepository
 import com.sseotdabwa.buyornot.domain.repository.NotificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,15 +50,13 @@ class NotificationViewModel @Inject constructor(
             is NotificationIntent.OnPermissionRequested -> handlePermissionRequest()
             is NotificationIntent.OnPermissionGranted -> handlePermissionGranted()
             is NotificationIntent.OnPermissionDenied -> handlePermissionDenied()
-            is NotificationIntent.OnNotificationClick -> handleNotificationClick(intent.notificationId, intent.feedId)
+            is NotificationIntent.OnNotificationClick -> handleNotificationClick(intent.notification)
             is NotificationIntent.OnRefreshNotifications -> loadNotifications()
         }
     }
 
     private fun handleFilterSelection(filter: NotificationFilter) {
-        if (uiState.value.selectedFilter == filter) return
         updateState { it.copy(selectedFilter = filter) }
-        loadNotifications()
     }
 
     private fun handlePermissionRequest() {
@@ -77,21 +78,22 @@ class NotificationViewModel @Inject constructor(
         updateState { it.copy(hasNotificationPermission = false) }
     }
 
-    /**
-     * 알림 클릭 처리 (로컬 상태 업데이트 및 상세 이동)
-     */
-    private fun handleNotificationClick(
-        notificationId: Long,
-        feedId: Long,
-    ) {
-        val updatedNotifications =
-            uiState.value.notifications.map {
-                if (it.id == notificationId) it.copy(isRead = true) else it
-            }
-        updateState { it.copy(notifications = updatedNotifications) }
-
-        // 화면 이동 SideEffect 발생
-        sendSideEffect(NotificationSideEffect.NavigateToNotificationDetail(notificationId, feedId))
+    private fun handleNotificationClick(notification: NotificationItem) {
+        updateState { state ->
+            state.copy(
+                allNotifications =
+                    state.allNotifications.map {
+                        if (it.id == notification.id) it.copy(isRead = true) else it
+                    },
+            )
+        }
+        sendSideEffect(
+            NotificationSideEffect.NavigateToNotificationDetail(
+                notificationId = notification.id,
+                feedId = notification.feedId,
+                commentId = notification.commentId,
+            ),
+        )
     }
 
     /**
@@ -113,36 +115,14 @@ class NotificationViewModel @Inject constructor(
         updateState { it.copy(hasNotificationPermission = hasPermission) }
     }
 
-    /**
-     * 실제 알림 데이터 로드
-     */
     private fun loadNotifications() {
         viewModelScope.launch {
-            val type =
-                when (uiState.value.selectedFilter) {
-                    NotificationFilter.ALL -> null
-                    NotificationFilter.MY_VOTE -> "MY_FEED_CLOSED"
-                    NotificationFilter.PARTICIPATED -> "PARTICIPATED_FEED_CLOSED"
-                }
-
             runCatchingCancellable {
-                notificationRepository.getNotifications(type)
+                notificationRepository.getNotifications()
             }.onSuccess { notifications ->
-                val notificationItems =
-                    notifications.map {
-                        NotificationItem(
-                            id = it.notificationId,
-                            feedId = it.feedId,
-                            image = it.feedImage.toImageModel(),
-                            title = it.title,
-                            description = it.feedTitle,
-                            time = TimeUtils.formatRelativeTime(it.voteClosedAt),
-                            isRead = it.isRead,
-                        )
-                    }
                 updateState {
                     it.copy(
-                        notifications = notificationItems,
+                        allNotifications = notifications.map { notification -> notification.toItem() },
                         isError = false,
                     )
                 }
@@ -152,3 +132,34 @@ class NotificationViewModel @Inject constructor(
         }
     }
 }
+
+private val VOTE_CLOSED_TYPES = setOf(NotificationType.MY_FEED_CLOSED, NotificationType.PARTICIPATED_FEED_CLOSED)
+
+private fun Notification.toItem(): NotificationItem =
+    NotificationItem(
+        id = notificationId,
+        feedId = feedId,
+        commentId = commentId,
+        type = type,
+        image = feedImage.toImageModel(),
+        headline = feedTitle.ifBlank { title },
+        message = message(),
+        time = if (type == NotificationType.COMMENT_REPLIED) null else TimeUtils.formatRelativeTime(voteClosedAt),
+        isRead = isRead,
+    )
+
+private fun Notification.message(): String {
+    // 동률(TIE)·무투표(ZERO)는 시안이 없어 서버 문구를 쓴다.
+    val winningChoice = VoteChoice.entries.find { it.name == resultLabel }
+    return when {
+        type in VOTE_CLOSED_TYPES && winningChoice != null -> "‘${winningChoice.inboxLabel()}’ 승!"
+        type == NotificationType.COMMENT_REPLIED && body.isNotBlank() -> "‘$body’"
+        else -> body.ifBlank { title }
+    }
+}
+
+private fun VoteChoice.inboxLabel(): String =
+    when (this) {
+        VoteChoice.YES -> "사! 가즈아!"
+        VoteChoice.NO -> "애매하긴 해.."
+    }

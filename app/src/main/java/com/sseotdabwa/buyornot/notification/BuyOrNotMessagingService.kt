@@ -46,6 +46,7 @@ class BuyOrNotMessagingService : FirebaseMessagingService() {
 
         val feedId = message.data[FcmKeys.FEED_ID]?.toLongOrNull()
         val notificationId = message.data[FcmKeys.NOTIFICATION_ID]?.toLongOrNull()
+        val commentId = message.data[FcmKeys.COMMENT_ID]?.toLongOrNull()
         val type = message.data[FcmKeys.TYPE]
         val screen = message.data[FcmKeys.SCREEN]
         Timber.tag(TAG).d("onMessageReceived - type=$type, screen=$screen, feedId=$feedId, notificationId=$notificationId")
@@ -55,6 +56,7 @@ class BuyOrNotMessagingService : FirebaseMessagingService() {
             screen = screen,
             feedId = feedId,
             notificationId = notificationId,
+            commentId = commentId,
             title = message.notification?.title ?: DEFAULT_TITLE,
             body = message.notification?.body ?: DEFAULT_BODY,
         )
@@ -65,6 +67,7 @@ class BuyOrNotMessagingService : FirebaseMessagingService() {
         screen: String?,
         feedId: Long?,
         notificationId: Long?,
+        commentId: Long?,
         title: String,
         body: String,
     ) {
@@ -82,6 +85,7 @@ class BuyOrNotMessagingService : FirebaseMessagingService() {
                 if (screen != null) putExtra(FcmKeys.SCREEN, screen)
                 if (feedId != null) putExtra(FcmKeys.FEED_ID, feedId.toString())
                 if (notificationId != null) putExtra(FcmKeys.NOTIFICATION_ID, notificationId.toString())
+                if (commentId != null) putExtra(FcmKeys.COMMENT_ID, commentId.toString())
             }
         // notify id / requestCode: notificationId > feedId > 마케팅 고정 상수 순으로 안정적인 id를 사용한다.
         val systemNotificationId = (notificationId ?: feedId)?.hashCode() ?: MARKETING_NOTIFICATION_ID

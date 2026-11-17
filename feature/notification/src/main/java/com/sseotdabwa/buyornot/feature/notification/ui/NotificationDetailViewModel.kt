@@ -45,6 +45,9 @@ class NotificationDetailViewModel @Inject constructor(
     private val notificationId: Long = savedStateHandle["notificationId"] ?: -1L
     private val feedId: Long = checkNotNull(savedStateHandle["feedId"])
 
+    // 답글 알림이 가리키는 원댓글. 첫 댓글 페이지가 와야 그 댓글이 목록에 있는지 알 수 있어 그때까지 들고 있는다.
+    private var focusCommentId: Long? = savedStateHandle.get<Long>(KEY_FOCUS_COMMENT_ID)?.takeIf { it > 0L }
+
     private var currentUserId: Long? = null
 
     // 댓글 목록 요청 세대. 정렬 변경·새로고침 시 증가시켜, 늦게 도착한 이전 목록/다음 페이지 응답이
@@ -137,7 +140,8 @@ class NotificationDetailViewModel @Inject constructor(
             is NotificationDetailIntent.OnReplyClicked ->
                 sendSideEffect(NotificationDetailSideEffect.NavigateToReplies(feedId = feedId, commentId = intent.commentId))
             is NotificationDetailIntent.OnLikeClicked -> handleLike(intent.target)
-            NotificationDetailIntent.OnCommentScrollHandled -> updateState { it.copy(pendingScrollToComments = false) }
+            NotificationDetailIntent.OnCommentScrollHandled ->
+                updateState { it.copy(pendingScrollToComments = false, pendingScrollCommentId = null) }
             NotificationDetailIntent.OnCommentFocusHandled -> updateState { it.copy(pendingFocusCommentInput = false) }
         }
     }
@@ -324,12 +328,26 @@ class NotificationDetailViewModel @Inject constructor(
                         nextCommentCursor = page.nextCursor,
                     )
                 }
+                requestFocusedCommentScroll()
             }.onFailure { e ->
                 if (generation != commentGeneration) return@onFailure
                 Timber.e(e, "Failed to load comments: $feedId")
                 updateState { it.copy(isCommentsLoading = false) }
+                requestFocusedCommentScroll()
                 sendSideEffect(NotificationDetailSideEffect.ShowSnackbar(message = "댓글을 불러오지 못했어요."))
             }
+        }
+    }
+
+    private fun requestFocusedCommentScroll() {
+        val commentId = focusCommentId ?: return
+        focusCommentId = null
+        savedStateHandle[KEY_FOCUS_COMMENT_ID] = -1L
+        updateState { state ->
+            state.copy(
+                pendingScrollToComments = true,
+                pendingScrollCommentId = commentId.takeIf { id -> state.comments.any { it.id == id } },
+            )
         }
     }
 
@@ -535,6 +553,7 @@ class NotificationDetailViewModel @Inject constructor(
         // NotificationDetailRoute의 인자 이름과 같아야 한다.
         const val KEY_SCROLL_TO_COMMENTS = "scrollToComments"
         const val KEY_FOCUS_COMMENT_INPUT = "focusCommentInput"
+        const val KEY_FOCUS_COMMENT_ID = "focusCommentId"
     }
 }
 

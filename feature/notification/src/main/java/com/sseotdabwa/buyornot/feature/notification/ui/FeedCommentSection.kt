@@ -64,6 +64,13 @@ private val CommentSort.label: String
             CommentSort.LATEST -> "최신순"
         }
 
+/** [commentSection]이 [headerIndex]부터 그릴 때 [commentId] 댓글의 목록 위치. 목록에 없으면 null이다. */
+internal fun commentItemIndex(
+    comments: List<Comment>,
+    commentId: Long?,
+    headerIndex: Int,
+): Int? = comments.indexOfFirst { it.id == commentId }.takeIf { it >= 0 }?.let { headerIndex + 1 + it }
+
 /** 피드 상세의 댓글 영역: 정렬 헤더 + 댓글 목록 + 다음 페이지 로딩. */
 internal fun LazyListScope.commentSection(
     uiState: NotificationDetailUiState,

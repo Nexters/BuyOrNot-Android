@@ -11,11 +11,13 @@ import javax.inject.Singleton
  *
  * @param feedId [EntryDestination.FEED_DETAIL]일 때만 존재한다.
  * @param notificationId 읽음 처리에 쓴다. 마케팅 알림과 앱 링크에는 없다.
+ * @param commentId 답글 알림이 가리키는 원댓글. 피드 상세에서 이 댓글로 스크롤한다.
  */
 data class PendingNavigation(
     val destination: EntryDestination,
     val feedId: Long? = null,
     val notificationId: Long? = null,
+    val commentId: Long? = null,
 )
 
 /**

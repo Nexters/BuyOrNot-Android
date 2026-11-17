@@ -15,4 +15,5 @@ data class NotificationResponse(
     val resultLabel: String,
     val viewUrl: String,
     val feedTitle: String?,
+    val commentId: Long? = null,
 )

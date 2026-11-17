@@ -12,6 +12,8 @@ data class Notification(
     val resultLabel: String,
     val feedImage: ImageSource,
     val feedTitle: String,
+    /** 답글 알림이 가리키는 원댓글. 답글 알림이 아니거나 답글이 지워졌으면 null이다. */
+    val commentId: Long? = null,
 )
 
 enum class NotificationType {
@@ -23,6 +25,7 @@ enum class NotificationType {
     MARKETING_INACTIVE_3D,
     MARKETING_INACTIVE_7D,
     MARKETING_ONBOARDING_INACTIVE,
+    COMMENT_REPLIED,
     UNKNOWN,
     ;
 

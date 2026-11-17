@@ -299,7 +299,8 @@ fun NotificationDetailScreen(
 
 /**
  * 댓글 진입점으로 들어왔을 때 댓글 영역으로 스크롤하고, [의견 남기기]로 들어왔으면 입력창에 포커스한다.
- * 피드가 그려진 뒤에만 스크롤할 수 있으므로 피드 로딩을 기다린다.
+ * 피드가 그려진 뒤에만 스크롤할 수 있으므로 피드 로딩을 기다린다. 답글 알림은 댓글을 받은 뒤에야
+ * 스크롤을 요청하므로 그 요청에도 다시 실행한다.
  */
 @Composable
 private fun CommentEntryEffects(
@@ -312,7 +313,7 @@ private fun CommentEntryEffects(
     val isFeedShown = uiState.feed != null && !uiState.isLoading
     val currentUiState by rememberUpdatedState(uiState)
     // 스크롤 두 번이 서로를 취소하지 않도록 한 effect에서 처리하고, 중간에 취소돼도 다시 실행되지 않게 finally에서 완료 처리한다.
-    LaunchedEffect(isFeedShown) {
+    LaunchedEffect(isFeedShown, uiState.pendingScrollToComments) {
         if (!isFeedShown) return@LaunchedEffect
         val state = currentUiState
         val shouldFocus = state.pendingFocusCommentInput && state.canWriteComment
@@ -321,7 +322,9 @@ private fun CommentEntryEffects(
             return@LaunchedEffect
         }
         try {
-            listState.animateScrollToItem(commentHeaderIndex)
+            listState.animateScrollToItem(
+                commentItemIndex(state.comments, state.pendingScrollCommentId, commentHeaderIndex) ?: commentHeaderIndex,
+            )
             if (shouldFocus) focusRequester.requestFocus()
         } finally {
             onIntent(NotificationDetailIntent.OnCommentScrollHandled)

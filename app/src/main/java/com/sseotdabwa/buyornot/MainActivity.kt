@@ -177,6 +177,7 @@ class MainActivity : ComponentActivity() {
         val screen = intent.getStringExtra(FcmKeys.SCREEN)
         val feedId = intent.longExtraOrNull(FcmKeys.FEED_ID)
         val notificationId = intent.longExtraOrNull(FcmKeys.NOTIFICATION_ID)
+        val commentId = intent.longExtraOrNull(FcmKeys.COMMENT_ID)
         if (screen == null && feedId == null) return
 
         // 소비 마커. 이게 없으면 회전·프로세스 재생성 때 onCreate가 같은 Intent를 다시 받아
@@ -184,6 +185,7 @@ class MainActivity : ComponentActivity() {
         intent.removeExtra(FcmKeys.SCREEN)
         intent.removeExtra(FcmKeys.FEED_ID)
         intent.removeExtra(FcmKeys.NOTIFICATION_ID)
+        intent.removeExtra(FcmKeys.COMMENT_ID)
         setIntent(intent)
 
         val destination = pushDestinationOf(screen, feedId)
@@ -197,6 +199,7 @@ class MainActivity : ComponentActivity() {
                 destination = destination,
                 feedId = feedId,
                 notificationId = notificationId,
+                commentId = commentId,
             ),
         )
     }
