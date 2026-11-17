@@ -21,6 +21,7 @@ data object NotificationRoute
  *
  * @property scrollToComments 댓글 진입점에서 들어왔으면 댓글 영역으로 스크롤한다.
  * @property focusCommentInput [의견 남기기]로 들어왔으면 댓글 입력창에 포커스한다.
+ * @property focusCommentId 답글 알림으로 들어왔으면 이 원댓글로 스크롤한다. 첫 댓글 페이지에 없으면 댓글 영역으로 간다.
  */
 @Serializable
 data class NotificationDetailRoute(
@@ -28,6 +29,7 @@ data class NotificationDetailRoute(
     val notificationId: Long = -1L,
     val scrollToComments: Boolean = false,
     val focusCommentInput: Boolean = false,
+    val focusCommentId: Long = -1L,
 )
 
 /**
@@ -44,7 +46,7 @@ data class CommentRepliesRoute(
 
 fun NavGraphBuilder.notificationGraph(
     onBackClick: () -> Unit,
-    onNotificationClick: (Long, Long) -> Unit,
+    onNotificationClick: (notificationId: Long, feedId: Long, commentId: Long?) -> Unit,
     onLinkClick: (url: String) -> Unit = {},
     onShareClick: (feedId: Long, title: String) -> Unit = { _, _ -> },
     onImageClick: (images: List<ImageModel>, page: Int) -> Unit = { _, _ -> },
@@ -87,8 +89,9 @@ fun NavHostController.navigateToNotification(navOptions: NavOptions? = null) {
 fun NavHostController.navigateToNotificationDetail(
     notificationId: Long = -1L,
     feedId: Long,
+    commentId: Long? = null,
 ) {
-    navigate(NotificationDetailRoute(feedId = feedId, notificationId = notificationId))
+    navigate(NotificationDetailRoute(feedId = feedId, notificationId = notificationId, focusCommentId = commentId ?: -1L))
 }
 
 /**
@@ -108,11 +111,19 @@ fun NavHostController.navigateToFeedComments(
 }
 
 /**
- * FCM 딥링크 진입점. notificationId가 있으면 함께 넘겨 markAsRead까지 수행한다.
+ * FCM 딥링크 진입점. notificationId가 있으면 함께 넘겨 markAsRead까지 수행하고,
+ * commentId가 있으면 그 원댓글로 스크롤한다.
  */
 fun NavHostController.navigateToFeedDetail(
     feedId: Long,
     notificationId: Long? = null,
+    commentId: Long? = null,
 ) {
-    navigate(NotificationDetailRoute(feedId = feedId, notificationId = notificationId ?: -1L))
+    navigate(
+        NotificationDetailRoute(
+            feedId = feedId,
+            notificationId = notificationId ?: -1L,
+            focusCommentId = commentId ?: -1L,
+        ),
+    )
 }

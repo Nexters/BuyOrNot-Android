@@ -296,7 +296,7 @@ class FakeUserPreferencesRepository : UserPreferencesRepository {
 }
 
 class FakeNotificationRepository : NotificationRepository {
-    override suspend fun getNotifications(type: String?): List<Notification> = emptyList()
+    override suspend fun getNotifications(): List<Notification> = emptyList()
 
     override suspend fun markAsRead(notificationId: Long) = Unit
 

@@ -31,6 +31,7 @@ class NotificationDetailViewModelTest {
     private fun createViewModel(
         feedRepository: FakeFeedRepository,
         scrollToComments: Boolean = false,
+        focusCommentId: Long = -1L,
         userRepository: FakeUserRepository = FakeUserRepository(),
     ) = NotificationDetailViewModel(
         savedStateHandle =
@@ -38,6 +39,7 @@ class NotificationDetailViewModelTest {
                 mapOf(
                     "feedId" to 10L,
                     NotificationDetailViewModel.KEY_SCROLL_TO_COMMENTS to scrollToComments,
+                    NotificationDetailViewModel.KEY_FOCUS_COMMENT_ID to focusCommentId,
                 ),
             ),
         analytics = FakeAnalytics(),
@@ -288,6 +290,40 @@ class NotificationDetailViewModelTest {
         viewModel.handleIntent(NotificationDetailIntent.OnCommentScrollHandled)
 
         assertFalse(viewModel.uiState.value.pendingScrollToComments)
+    }
+
+    @Test
+    fun `답글_알림으로_들어오면_댓글을_받은_뒤_그_원댓글로_한_번만_스크롤한다`() {
+        commentRepository.firstPages[CommentSort.REGISTERED] =
+            CommentPage(listOf(testComment(1), testComment(2)), nextCursor = null, hasNext = false)
+        val viewModel = createViewModel(FakeFeedRepository(testFeed()), focusCommentId = 2L)
+
+        assertTrue(viewModel.uiState.value.pendingScrollToComments)
+        assertEquals(2L, viewModel.uiState.value.pendingScrollCommentId)
+        viewModel.handleIntent(NotificationDetailIntent.OnCommentScrollHandled)
+        viewModel.handleIntent(NotificationDetailIntent.OnCommentSortSelected(CommentSort.LATEST))
+
+        assertFalse(viewModel.uiState.value.pendingScrollToComments)
+        assertEquals(null, viewModel.uiState.value.pendingScrollCommentId)
+    }
+
+    @Test
+    fun `답글_알림의_원댓글이_첫_페이지에_없으면_댓글_영역으로_스크롤한다`() {
+        commentRepository.firstPages[CommentSort.REGISTERED] =
+            CommentPage(listOf(testComment(1)), nextCursor = 5L, hasNext = true)
+        val viewModel = createViewModel(FakeFeedRepository(testFeed()), focusCommentId = 99L)
+
+        assertTrue(viewModel.uiState.value.pendingScrollToComments)
+        assertEquals(null, viewModel.uiState.value.pendingScrollCommentId)
+    }
+
+    @Test
+    fun `답글_알림으로_들어왔는데_댓글을_못_받으면_댓글_영역으로_스크롤한다`() {
+        commentRepository.beforeGet = { _, _ -> throw IllegalStateException("network") }
+        val viewModel = createViewModel(FakeFeedRepository(testFeed()), focusCommentId = 2L)
+
+        assertTrue(viewModel.uiState.value.pendingScrollToComments)
+        assertEquals(null, viewModel.uiState.value.pendingScrollCommentId)
     }
 
     @Test

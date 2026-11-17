@@ -5,7 +5,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -37,6 +39,7 @@ fun BuyOrNotChip(
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    showDotBadge: Boolean = false,
 ) {
     // 상태 변화를 감지하기 위한 interactionSource
     val interactionSource = remember { MutableInteractionSource() }
@@ -87,14 +90,15 @@ fun BuyOrNotChip(
             border = BorderStroke(width = 1.dp, color = borderColor),
             interactionSource = interactionSource,
         ) {
-            Box(
+            Row(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                contentAlignment = Alignment.Center,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
                     text = text,
                     style = textStyle,
                 )
+                if (showDotBadge) NotificationDotBadge()
             }
         }
     }
@@ -145,6 +149,19 @@ fun BuyOrNotChipPreview() {
             text = "Selected Chip",
             isSelected = isSelected,
             onClick = { isSelected = !isSelected },
+        )
+    }
+}
+
+@Preview(name = "Chip with dot badge")
+@Composable
+private fun BuyOrNotChipDotBadgePreview() {
+    BuyOrNotTheme {
+        BuyOrNotChip(
+            text = "댓글",
+            isSelected = false,
+            onClick = {},
+            showDotBadge = true,
         )
     }
 }

@@ -9,6 +9,9 @@ object FcmKeys {
     const val FEED_ID = "feedId"
     const val NOTIFICATION_ID = "notificationId"
 
+    /** 답글 알림이 가리키는 원댓글. 답글 알림에만 온다. */
+    const val COMMENT_ID = "commentId"
+
     /**
      * 알림 유형. 8종 모두에 항상 포함되므로 **알림 탭으로 열린 Intent인지 판별하는 마커**로도 쓴다.
      *

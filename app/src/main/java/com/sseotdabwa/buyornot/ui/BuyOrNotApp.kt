@@ -91,7 +91,9 @@ fun BuyOrNotApp(
         when (navigation.destination) {
             // feedId는 앱 링크·FCM 양쪽 경로에서 FEED_DETAIL일 때 존재가 보장된다.
             EntryDestination.FEED_DETAIL ->
-                navigation.feedId?.let { navController.navigateToFeedDetail(it, navigation.notificationId) }
+                navigation.feedId?.let {
+                    navController.navigateToFeedDetail(it, navigation.notificationId, navigation.commentId)
+                }
 
             EntryDestination.FEED_CREATE -> navController.navigateToUpload()
 

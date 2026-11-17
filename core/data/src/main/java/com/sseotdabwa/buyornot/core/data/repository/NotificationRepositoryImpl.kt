@@ -12,8 +12,8 @@ import javax.inject.Inject
 class NotificationRepositoryImpl @Inject constructor(
     private val notificationApiService: NotificationApiService,
 ) : NotificationRepository {
-    override suspend fun getNotifications(type: String?): List<Notification> =
-        notificationApiService.getNotifications(type).getOrThrow().map { it.toDomain() }
+    override suspend fun getNotifications(): List<Notification> =
+        notificationApiService.getNotifications().getOrThrow().map { it.toDomain() }
 
     override suspend fun markAsRead(notificationId: Long) {
         notificationApiService.markAsRead(notificationId).getOrThrow()
@@ -34,5 +34,6 @@ class NotificationRepositoryImpl @Inject constructor(
             resultLabel = resultLabel,
             feedImage = ImageSource(viewUrl),
             feedTitle = feedTitle.orEmpty(),
+            commentId = commentId,
         )
 }

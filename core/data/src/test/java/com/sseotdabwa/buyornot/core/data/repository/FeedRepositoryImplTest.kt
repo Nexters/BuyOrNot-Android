@@ -71,6 +71,14 @@ class FeedRepositoryImplTest {
         }
 
     @Test
+    fun `AI_초안이_치이카와로_분류하면_기타가_아닌_치이카와로_옮긴다`() =
+        runTest {
+            api.aiDraftResponse = FeedAiDraftResponse(title = "하치와레 인형", content = "귀여워요", category = "CHIIKAWA", price = 25_000)
+
+            assertEquals(FeedCategory.CHIIKAWA, repository.createAiDraft(listOf("feeds/a.jpg")).category)
+        }
+
+    @Test
     fun `AI_초안의_빈_제목과_내용은_만들지_못한_것으로_보고_null로_둔다`() =
         runTest {
             api.aiDraftResponse = FeedAiDraftResponse(title = " ", content = "", category = null, price = null)

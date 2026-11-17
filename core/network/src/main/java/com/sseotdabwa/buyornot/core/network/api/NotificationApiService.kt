@@ -6,13 +6,10 @@ import com.sseotdabwa.buyornot.core.network.dto.response.UnreadCountResponse
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.Path
-import retrofit2.http.Query
 
 interface NotificationApiService {
     @GET("/api/v1/notifications")
-    suspend fun getNotifications(
-        @Query("type") type: String?,
-    ): BaseResponse<List<NotificationResponse>>
+    suspend fun getNotifications(): BaseResponse<List<NotificationResponse>>
 
     @PATCH("/api/v1/notifications/{notificationId}/read")
     suspend fun markAsRead(
