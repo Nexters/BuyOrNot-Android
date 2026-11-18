@@ -44,7 +44,7 @@ android {
 
     defaultConfig {
         applicationId = "com.sseotdabwa.buyornot"
-        versionCode = 13
+        versionCode = 14
         versionName = "0.5.4"
 
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${localProperties.getProperty("kakao.nativeAppKey", "")}\"")
