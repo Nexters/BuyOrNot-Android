@@ -6,6 +6,11 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
 
+    <!-- screenOrientation="portrait"가 이 기능을 필수로 암시해 세로 화면이 없는 기기에서 설치가 막히지 않게 한다. -->
+    <uses-feature
+        android:name="android.hardware.screen.portrait"
+        android:required="false" />
+
     <application
         android:name=".BuyOrNotApplication"
         android:allowBackup="true"
